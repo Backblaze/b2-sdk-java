@@ -30,13 +30,13 @@ SAMPLE
     can probably learn everything you need to know about by looking at
     B2Sample.java.
 
-  * Be sure to add b2sdk4j.jar to your class path.
+  * Be sure to add b2sdk4j-N.N.N.jar to your class path.
 
 HOW TO USE
 ==========
 
-  * Add the b2sdk4j.jar to your class path (XXX: provide snippets for
-    maven and other build systems?)
+  * Add the b2sdk4j-N.N.N.jar to your class path (XXX: provide snippets for
+    maven and other build systems)
 
   * create a B2StorageClient. here's the simplest way to do it:
 
