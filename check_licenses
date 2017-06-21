@@ -1,0 +1,126 @@
+#!/usr/bin/env python
+
+######################################################################
+#
+# File: check_licenses
+#
+# Copyright 2017, Backblaze Inc. All Rights Reserved.
+#
+# License https://www.backblaze.com/using_b2_code.html
+#
+######################################################################
+
+import sys
+import argparse
+import os
+import re
+from os.path import isdir, join
+
+USAGE = """Looks for some important copyright and licensing incantations at the top of files.
+Prints the file name and what's missing for each file that's missing incantations.
+
+Usages:
+
+    check_licenses directoryOrFile [...]
+
+"""
+
+def handle_args(argv):
+    parser = argparse.ArgumentParser(description=USAGE)
+    parser.add_argument('directoriesOrFiles', nargs='+', help='The directories or files to check')
+    parsed_args = parser.parse_args()
+    return parsed_args
+
+IN_TESTLIB_RE = re.compile("/testlib/[^/]+$")
+IN_LIB_RE = re.compile("/lib/[^/]+$")
+
+COPYRIGHT_RE = re.compile("Copyright 201[0-9], Backblaze Inc. All Rights Reserved.")
+LICENSE_RE = re.compile("License https://www.backblaze.com/using_b2_code.html")
+
+# how many lines at the top of a file should we look at?
+NUMBER_OF_LINES_TO_EXAMINE = 10
+
+# return true iff we should skip the file with the given path
+def shouldSkip(path):
+    if (("/.idea/" in path) or
+        # some intellij config files
+        path.startswith(".idea/") or
+        path.endswith(".iml") or
+
+        # external dependencies
+        IN_LIB_RE.search(path) or
+        IN_TESTLIB_RE.search(path) or
+
+        # the license *is* the license.  :)
+        path.endswith("/LICENSE") or
+
+        # special case this.  no license?
+        path.endswith("/README.md") or
+
+        # don't look at class files. they're generated binary!
+        path.endswith(".class")
+    ):
+        #print "SKIPPING " + path
+        return True
+    return False
+
+# works on one directorOrFile.  appends any issues to 'errors'
+def check(directoryOrFile, errors):
+    if shouldSkip(directoryOrFile):
+        return
+    
+    if isdir(directoryOrFile):
+       for entry in sorted(os.listdir(directoryOrFile)):
+       	   check(join(directoryOrFile, entry), errors)
+    else:
+        #print "checking " + directoryOrFile
+        check_file(directoryOrFile, errors)
+
+# examines the file with the specified path.
+# adds issues to 'errors'.
+# throws if there's a big problem, like not being able to read the file.
+def check_file(path, errors):
+    has_copyright_line = False
+    has_license_line = False
+
+    with open(path, "rb") as f:
+        line_num = 0
+        for line in f:
+            line_num += 1
+            if line_num > NUMBER_OF_LINES_TO_EXAMINE:
+                break
+            #print line
+            has_copyright_line = has_copyright_line or COPYRIGHT_RE.search(line)
+            has_license_line = has_license_line or LICENSE_RE.search(line)
+
+    missing = ""
+    if not has_copyright_line:
+        missing = "copyright"
+    if not has_license_line:
+        if missing:
+            missing += " and "
+        missing += "license"
+    if not has_copyright_line or not has_license_line:
+        errors.append("%s: missing %s" % (path, missing))
+                
+
+def main():
+    args = handle_args(sys.argv)
+
+    for directoryOrFile in args.directoriesOrFiles:
+    	errors = []
+	check(directoryOrFile, errors)
+
+    print "there were %d errors" % (len(errors))
+    if errors:
+        for err in errors:
+            print "ERR: " + err
+        sys.exit(1)
+
+    
+
+
+
+if __name__ == '__main__':
+    main()
+    sys.exit(0)
