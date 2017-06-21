@@ -1,4 +1,5 @@
 # see https://docs.travis-ci.com/user/languages/java/#Projects-Using-Gradle
+# before checking in, check the contents of this file using http://lint.travis-ci.org/
 
 language: java
 
