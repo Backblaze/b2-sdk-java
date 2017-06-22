@@ -12,9 +12,13 @@ cache:
   - $HOME/.gradle/caches/
   - $HOME/.gradle/wrapper/
 
+script:
+- bundle exec ./gradlew build
+
 deploy:
   provider: releases
-  api_key: $GH_RELEASES_OAUTH_ENCRYPTED
+  api_key:
+    secure: $GH_RELEASES_OAUTH_ENCRYPTED
   file: $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-0.0.1.jar
   on:
     repo: Backblaze/b2sdk4j
