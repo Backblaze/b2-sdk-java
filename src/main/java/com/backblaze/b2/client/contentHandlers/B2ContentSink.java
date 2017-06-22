@@ -26,6 +26,11 @@ public interface B2ContentSink {
      * If you don't read to the end of the inputStream, the connection
      * probably won't be re-usable, so read to the end unless you have
      * a good reason not to.
+     *
+     * @param responseHeaders the headers from the response
+     * @param in an input stream to read the content of the response
+     * @throws B2Exception if there's trouble
+     * @throws IOException if there's an IOException
      */
     void readContent(B2Headers responseHeaders,
                      InputStream in) throws B2Exception, IOException;

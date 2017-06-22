@@ -37,7 +37,7 @@ import java.util.concurrent.ExecutorService;
  * Here are some design principles:
  *
  *   Be type-safe.
- *   Use different types for requests & responses.
+ *   Use different types for requests &amp; responses.
  *   Keep things final.
  *   Use builder classes to instantiate objects
  *     so it's easier to add new attributes.
@@ -197,7 +197,7 @@ public interface B2StorageClient extends Closeable {
      *
      * It will automatically call B2 to get batches of answers as needed.  If there's
      * any trouble during hasNext() or next(), it will throw a B2RuntimeException
-     * since Iterable&lt;&gt doesn't allow checked exceptions to be thrown.
+     * since Iterable&lt;&gt; doesn't allow checked exceptions to be thrown.
      *
      * @param request specifies which fileVersions to list.
      * @return a new iterable to iterate over fileVersions that match the given request.
@@ -222,7 +222,7 @@ public interface B2StorageClient extends Closeable {
      *
      * It will automatically call B2 to get batches of answers as needed.  If there's
      * any trouble during hasNext() or next(), it will throw a B2RuntimeException
-     * since Iterable&lt;&gt doesn't allow checked exceptions to be thrown.
+     * since Iterable&lt;&gt; doesn't allow checked exceptions to be thrown.
      *
      * @param request specifies which fileVersions to list.
      * @return a new iterable to iterate over fileVersions that match the given request.
@@ -248,7 +248,7 @@ public interface B2StorageClient extends Closeable {
      *
      * It will automatically call B2 to get batches of answers as needed.  If there's
      * any trouble during hasNext() or next(), it will throw a B2RuntimeException
-     * since Iterable&lt;&gt doesn't allow checked exceptions to be thrown.
+     * since Iterable&lt;&gt; doesn't allow checked exceptions to be thrown.
      *
      * @param request specifies which unfinished large files to list
      * @return a new iterable to iterate over fileVersions that match the given request.
@@ -274,7 +274,7 @@ public interface B2StorageClient extends Closeable {
      *
      * It will automatically call B2 to get batches of answers as needed.  If there's
      * any trouble during hasNext() or next(), it will throw a B2RuntimeException
-     * since Iterable&lt;&gt doesn't allow checked exceptions to be thrown.
+     * since Iterable&lt;&gt; doesn't allow checked exceptions to be thrown.
      *
      * @param request specifies which parts to list
      * @return a new iterable to iterate over parts that match the given request.

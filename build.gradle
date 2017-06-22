@@ -36,6 +36,13 @@ jar {
     }
 }
 
+javadoc {
+    source = sourceSets.main.allJava
+    classpath = sourceSets.main.runtimeClasspath
+    options.addStringOption("tag", "apiNote:a:NOTE")
+}
+
+
 uploadArchives {
     repositories {
        flatDir {

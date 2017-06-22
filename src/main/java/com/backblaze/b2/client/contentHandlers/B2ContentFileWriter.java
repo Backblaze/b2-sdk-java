@@ -15,7 +15,7 @@ import java.io.OutputStream;
 /**
  * This is a B2ContentWriter which records the incoming data into a file on disk.
  *
- * It is careful to flush & sync the file when closing it.
+ * It is careful to flush &amp; sync the file when closing it.
  */
 public class B2ContentFileWriter extends B2ContentWriter {
     private final File outputFile;
