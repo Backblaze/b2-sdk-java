@@ -13,7 +13,8 @@ cache:
   - $HOME/.gradle/wrapper/
 
 script:
-- bundle exec ./gradlew build
+  - ./gradlew build
+  - find $TRAVIS_BUILD_DIR
 
 deploy:
   provider: releases
