@@ -13,7 +13,8 @@ cache:
   - $HOME/.gradle/wrapper/
 
 script:
-  - echo "myVariableHere=$GH_RELEASES_OAUTH_ENCRYPTED"
+  - echo "$TEST_VAR"
+  - echo "myVariableHere=$GH_RELEASES_OAUTH_ENCRYPTED" | awk '{gsub(//, "_"); print}'
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
   - ./gradlew build
   - find $TRAVIS_BUILD_DIR
@@ -21,7 +22,7 @@ script:
 deploy:
   provider: releases
   api_key:
-    secure: "$GH_RELEASES_OAUTH_ENCRYPTED"
+    secure: $GH_RELEASES_OAUTH_ENCRYPTED
   file: $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-0.0.1.jar
   on:
     repo: Backblaze/b2sdk4j
