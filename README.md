@@ -1,4 +1,10 @@
 
+| Status |
+| :------------ |
+| [![Build Status](https://travis-ci.com/Backblaze/b2sdk4j.svg?token=ahms42Sqt2n6jisLX78s&branch=master)](https://travis-ci.com/Backblaze/b2sdk4j) |
+| [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://www.backblaze.com/using_b2_code.html)
+
+
 INTRO
 =====
 
