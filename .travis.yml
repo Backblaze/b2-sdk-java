@@ -1,28 +1,22 @@
 language: java
-
 jdk:
 - oraclejdk8
-
 before_cache:
 - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
 - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
-
 cache:
   directories:
   - $HOME/.gradle/caches/
   - $HOME/.gradle/wrapper/
-
 script:
-  - echo "$TEST_VAR"
-  - echo "myVariableHere=$GH_RELEASES_OAUTH_ENCRYPTED" | awk '{gsub(//, "_"); print}'
-  - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
-  - ./gradlew build
-  - find $TRAVIS_BUILD_DIR
+- mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+- ./gradlew build
+- find $TRAVIS_BUILD_DIR
 
 deploy:
   provider: releases
   api_key:
-    secure: $GH_RELEASES_OAUTH_ENCRYPTED
+    secure: OhviM+m2dMzoXw67gQP2Kopi6s2uw2jHLotcDM7pEYVlbP9RTniW16aGkQLlLyRzLZvXngEqxMMJT9OOLM9Xo621M/IzrtNzn4FU4REVU3IRi5fV7egaaMJgf3v0j6mMwK6OenWPRlte0dhUSwzd5AySwz0pL3EY8cQHuin9vsvaGntgkBv1zx+wYDwFYsOu6UY5rSiTBMZWAjyk/WbB1RZcA65y600g3KV+q7ALzitrwrCyqn0ggf4q6riXQuicuzhXV9uz4k8HxFkTF9XAV85yTxeKIWF3uDz19MzF0O4bXxAsv/WNoCUFuw+Dfd0KNe0ZgO03RXP/Y0MzhpSeTUNlGO73oama8t2YuoDpfCskNs+5xqXGzH8bWw7T9JHMjuCO5XaTNmisei9YEO4/iTNePcBAgoOFCVpr3DKrNmcvTyyFphj/GK4Q3nPKf09Twp1NMov6Zf8tE5zHB/9j5kKVKIQRj2bgfIshHJdFwCxuekHZlOBu81Qy4RtlqZHR1HMVkJU3XfYKRuH8+50/BSm47fHaa8eZdUeH7U3bo9+LUyny1JD4n7OlK2D+U7XnCs4EhTCDkWGMQ9huQ+qTpsIwm36toMvBDPElSUBKfuFh/tFY9azLoAMmk5cWQcUWEjT7dKXwWBFjB77AG0DisuoNIaKoLgyB35hrZOhAgvA=
   file: $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-0.0.1.jar
   on:
     repo: Backblaze/b2sdk4j
