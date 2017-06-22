@@ -1,15 +1,20 @@
-# see https://docs.travis-ci.com/user/languages/java/#Projects-Using-Gradle
-# before checking in, check the contents of this file using http://lint.travis-ci.org/
-
 language: java
 
 jdk:
-  - oraclejdk8
+- oraclejdk8
 
 before_cache:
-  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
 cache:
   directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
+
+deploy:
+  provider: releases
+  api_key: $GH_RELEASES_OAUTH_ENCRYPTED
+  file: $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-0.0.1.jar
+  on:
+    repo: Backblaze/b2sdk4j
