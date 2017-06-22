@@ -10,7 +10,7 @@ cache:
   - $HOME/.gradle/wrapper/
 script:
 - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
-- ./gradlew build
+- ./gradlew build javadoc
 - find $TRAVIS_BUILD_DIR
 
 deploy:
