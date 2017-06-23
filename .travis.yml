@@ -1,17 +1,28 @@
 language: java
 jdk:
 - oraclejdk8
+
+before_install:
+- mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+
+script:
+- ./gradlew build javadoc
+- zip -r build/libs/b2sdk4j-sources.zip src
+- cd build/docs; zip -r $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-javadocs.zip javadocs
+- find $TRAVIS_BUILD_DIR
+- b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
+- b2 upload_file --contentType application/octet b2sdk4j build/libs/b2sdk4j.jar build/libs/b2sdk4j.jar
+- b2 upload_file --contentType application/octet b2sdk4j build/libs/b2sdk4j-sources.jar build/libs/b2sdk4j-sources.zip
+- b2 upload_file --contentType application/octet b2sdk4j build/libs/b2sdk4j-javadocs.jar build/libs/b2sdk4j-javadocs.zip
+
 before_cache:
 - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
 - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
 cache:
   directories:
   - $HOME/.gradle/caches/
   - $HOME/.gradle/wrapper/
-script:
-- mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
-- ./gradlew build javadoc
-- find $TRAVIS_BUILD_DIR
 
 # deploy:
 #   provider: releases
