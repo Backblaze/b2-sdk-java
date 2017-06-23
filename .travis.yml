@@ -13,11 +13,19 @@ script:
 - ./gradlew build javadoc
 - find $TRAVIS_BUILD_DIR
 
+# deploy:
+#   provider: releases
+#   api_key:
+#     secure: OhviM+m2dMzoXw67gQP2Kopi6s2uw2jHLotcDM7pEYVlbP9RTniW16aGkQLlLyRzLZvXngEqxMMJT9OOLM9Xo621M/IzrtNzn4FU4REVU3IRi5fV7egaaMJgf3v0j6mMwK6OenWPRlte0dhUSwzd5AySwz0pL3EY8cQHuin9vsvaGntgkBv1zx+wYDwFYsOu6UY5rSiTBMZWAjyk/WbB1RZcA65y600g3KV+q7ALzitrwrCyqn0ggf4q6riXQuicuzhXV9uz4k8HxFkTF9XAV85yTxeKIWF3uDz19MzF0O4bXxAsv/WNoCUFuw+Dfd0KNe0ZgO03RXP/Y0MzhpSeTUNlGO73oama8t2YuoDpfCskNs+5xqXGzH8bWw7T9JHMjuCO5XaTNmisei9YEO4/iTNePcBAgoOFCVpr3DKrNmcvTyyFphj/GK4Q3nPKf09Twp1NMov6Zf8tE5zHB/9j5kKVKIQRj2bgfIshHJdFwCxuekHZlOBu81Qy4RtlqZHR1HMVkJU3XfYKRuH8+50/BSm47fHaa8eZdUeH7U3bo9+LUyny1JD4n7OlK2D+U7XnCs4EhTCDkWGMQ9huQ+qTpsIwm36toMvBDPElSUBKfuFh/tFY9azLoAMmk5cWQcUWEjT7dKXwWBFjB77AG0DisuoNIaKoLgyB35hrZOhAgvA=
+#   file: $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-0.0.1.jar
+#   skip_cleanup: true
+#   on:
+#     repo: Backblaze/b2sdk4j
+
 deploy:
-  provider: releases
-  api_key:
-    secure: OhviM+m2dMzoXw67gQP2Kopi6s2uw2jHLotcDM7pEYVlbP9RTniW16aGkQLlLyRzLZvXngEqxMMJT9OOLM9Xo621M/IzrtNzn4FU4REVU3IRi5fV7egaaMJgf3v0j6mMwK6OenWPRlte0dhUSwzd5AySwz0pL3EY8cQHuin9vsvaGntgkBv1zx+wYDwFYsOu6UY5rSiTBMZWAjyk/WbB1RZcA65y600g3KV+q7ALzitrwrCyqn0ggf4q6riXQuicuzhXV9uz4k8HxFkTF9XAV85yTxeKIWF3uDz19MzF0O4bXxAsv/WNoCUFuw+Dfd0KNe0ZgO03RXP/Y0MzhpSeTUNlGO73oama8t2YuoDpfCskNs+5xqXGzH8bWw7T9JHMjuCO5XaTNmisei9YEO4/iTNePcBAgoOFCVpr3DKrNmcvTyyFphj/GK4Q3nPKf09Twp1NMov6Zf8tE5zHB/9j5kKVKIQRj2bgfIshHJdFwCxuekHZlOBu81Qy4RtlqZHR1HMVkJU3XfYKRuH8+50/BSm47fHaa8eZdUeH7U3bo9+LUyny1JD4n7OlK2D+U7XnCs4EhTCDkWGMQ9huQ+qTpsIwm36toMvBDPElSUBKfuFh/tFY9azLoAMmk5cWQcUWEjT7dKXwWBFjB77AG0DisuoNIaKoLgyB35hrZOhAgvA=
-  file: $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-0.0.1.jar
+  provider: pages
   skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  local_dir: build/docs/javadoc
   on:
-    repo: Backblaze/b2sdk4j
+    branch: master
