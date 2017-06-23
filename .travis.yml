@@ -28,7 +28,7 @@ script:
   - cp -v build/libs/b2sdk4j-*jar build/outputs
 
   # make the 'sources' zip
-  - zip -r outputs/b2sdk4j-sources.zip src
+  - zip -r build/outputs/b2sdk4j-sources.zip src
 
   # make the javadocs zip
   - (cd build/docs && zip -r $TRAVIS_BUILD_DIR/build/outputs/b2sdk4j-javadocs.zip javadoc)
