@@ -31,11 +31,11 @@ script:
   - zip -r build/outputs/b2sdk4j-sources.zip src
 
   # make the javadocs zip
-  - (cd build/docs && zip -r $TRAVIS_BUILD_DIR/build/outputs/b2sdk4j-javadocs.zip javadoc)
+  - (cd build/docs; zip -r $TRAVIS_BUILD_DIR/build/outputs/b2sdk4j-javadocs.zip javadoc)
 
   # zip up the outputs
   - echo OUTPUT_ZIP=$OUTPUT_ZIP
-  - zip build/$OUTPUT_ZIP build/outputs/*
+  - (cd build/outputs; zip $TRAVIS_BUILD_DIR/build/$OUTPUT_ZIP *)
 
   #
   # upload to b2
