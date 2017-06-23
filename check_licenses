@@ -25,20 +25,50 @@ Usages:
 
 """
 
-def handle_args(argv):
-    parser = argparse.ArgumentParser(description=USAGE)
-    parser.add_argument('directoriesOrFiles', nargs='+', help='The directories or files to check')
-    parsed_args = parser.parse_args()
-    return parsed_args
-
 IN_TESTLIB_RE = re.compile("/testlib/[^/]+$")
 IN_LIB_RE = re.compile("/lib/[^/]+$")
+
+
+########################
+#
+# for checking licenses
+#
+########################
 
 COPYRIGHT_RE = re.compile("Copyright 201[0-9], Backblaze Inc. All Rights Reserved.")
 LICENSE_RE = re.compile("License https://www.backblaze.com/using_b2_code.html")
 
 # how many lines at the top of a file should we look at?
 NUMBER_OF_LINES_TO_EXAMINE = 10
+
+########################
+#
+# for checking layering
+#
+########################
+
+LAYERS = [
+    'sample',
+    'client',
+    'client.webApiClients',
+    'client.structures',
+    'client.contentHandlers',
+    'client.contentSources',
+    'client.exceptions',
+    'json',
+    'util',
+    ]
+PACKAGE_PATTERN = re.compile(r'^package (.*);')
+IMPORT_PATTERN = re.compile(r'import *(static *)?([^ ]*);')
+PREFIX = 'com.backblaze.b2.'
+
+
+def handle_args(argv):
+    parser = argparse.ArgumentParser(description=USAGE)
+    parser.add_argument('directoriesOrFiles', nargs='+', help='The directories or files to check')
+    parsed_args = parser.parse_args()
+    return parsed_args
+
 
 # returns true iff we think this dirname is a component of the path.
 def is_in_dir(dir, path):
@@ -125,11 +155,84 @@ def check_license(path, errors):
     if not has_copyright_line or not has_license_line:
         errors.append("%s: missing %s" % (path, missing))
 
+
+def package_for_import(path):
+    """
+    Remove trailing class names:
+        java.util.ArrayList -> java.util
+        com.backblaze.www.api.rebuild.FixBatchServlet.Request -> com.backblaze.www.api.rebuild
+        com.backblaze.util.BzDateTimeUtil.MAX_DAY -> com.backblaze.util
+    """
+    words = path.split('.')
+    for i in xrange(len(words)):
+        if words[i][0].isupper() or words[i] == '*':
+            words = words[:i]
+            break
+    return '.'.join(words)
+
+
 def check_layering(path, errors):
+    try:
+        check_layering_might_throw(path, errors)
+    except Exception as e:
+        errors.append("%s: %s" % (path, str(e)))
+
+# returns true iff this is one of our packages
+def is_one_of_our_packages(full_package_name):
+    return full_package_name.startswith(PREFIX)
+
+
+# returns the index of the given package.
+# things in lower-numbered packages can look at things in higher-numbered packages.
+def get_package_index(full_package_name):
+    if not is_one_of_our_packages(full_package_name):
+        raise Exception("unexpected package '%s' (not within %s)" % (full_package_name, PREFIX))
+
+    package = full_package_name[len(PREFIX):]
+
+    if not package in LAYERS:
+        raise Exception("unexpected package '%s' (not within LAYERS)" % (package))
+    
+    package_index = LAYERS.index(package)
+    return package_index
+
+    
+def check_layering_might_throw(path, errors):
+    package = None
+    package_index = 999999
+
     if not path.endswith(".java"):
         return
 
-    #errors.append("%s: implement layering check!" % (path))
+    with open(path, 'r') as f:
+        for line in f:
+
+            match = PACKAGE_PATTERN.match(line)
+            if match is not None:
+                assert package is None # there's an earlier package statement in this file?
+                package = match.group(1)
+                package_index = get_package_index(package)
+
+            match = IMPORT_PATTERN.match(line)
+            if match is not None:
+                assert package is not None  # no package statement yet?
+
+                imported_name = match.group(2)
+                imported = package_for_import(imported_name)
+                if is_one_of_our_packages(imported):
+                    imported_index = get_package_index(imported)
+
+                    if imported_index < package_index:
+                        errors.append("%s: imports %s which is higher in the layering" % (path, imported_name))
+
+            if line.startswith('class'):
+                # too far into the file for more imports, so skip the
+                # rest of the file.  this check could be better.  it
+                # could consider interfaces, enums, and modifiers on
+                # these things.  oh well.  we don't have tons of code.
+                break
+    
+
 
 
 def main():
