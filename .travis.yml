@@ -4,11 +4,12 @@ jdk:
 
 before_install:
 - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+- sudo pip install b2
 
 script:
 - ./gradlew build javadoc
 - zip -r build/libs/b2sdk4j-sources.zip src
-- cd build/docs; zip -r $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-javadocs.zip javadocs
+- cd build/docs && zip -r $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-javadocs.zip javadocs
 - find $TRAVIS_BUILD_DIR
 - b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
 - b2 upload_file --contentType application/octet b2sdk4j build/libs/b2sdk4j.jar build/libs/b2sdk4j.jar
