@@ -9,9 +9,10 @@ before_install:
 script:
 - ./gradlew build javadoc
 - zip -r build/libs/b2sdk4j-sources.zip src
-- cd build/docs && zip -r $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-javadocs.zip javadoc
+- (cd build/docs && zip -r $TRAVIS_BUILD_DIR/build/libs/b2sdk4j-javadocs.zip javadoc)
 - find $TRAVIS_BUILD_DIR
 - b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
+- echo ====== PWD=`pwd` ======
 - b2 upload_file --contentType application/octet b2sdk4j build/libs/b2sdk4j-0.0.1.jar build/libs/b2sdk4j.jar
 - b2 upload_file --contentType application/octet b2sdk4j build/libs/b2sdk4j-javadocs.zip build/libs/b2sdk4j-javadocs.zip
 - b2 upload_file --contentType application/octet b2sdk4j build/libs/b2sdk4j-sources.zip build/libs/b2sdk4j-sources.zip
