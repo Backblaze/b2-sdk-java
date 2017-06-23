@@ -40,12 +40,27 @@ LICENSE_RE = re.compile("License https://www.backblaze.com/using_b2_code.html")
 # how many lines at the top of a file should we look at?
 NUMBER_OF_LINES_TO_EXAMINE = 10
 
+# returns true iff we think this dirname is a component of the path.
+def is_in_dir(dir, path):
+    return (path.startswith(dir + "/") or (("/" + dir + "/") in path))
+
 # return true iff we should skip the file with the given path
 def shouldSkip(path):
     if (("/.idea/" in path) or
         # some intellij config files
         path.startswith(".idea/") or
         path.endswith(".iml") or
+
+        # git
+        is_in_dir(".git", path) or
+
+        # gradle
+        is_in_dir(".gradle", path) or
+        is_in_dir("gradle", path) or
+        path.endswith("/gradlew") or
+        path.endswith("/gradlew.bat") or
+        is_in_dir("build", path) or
+        
 
         # external dependencies
         IN_LIB_RE.search(path) or
@@ -80,6 +95,13 @@ def check(directoryOrFile, errors):
 # adds issues to 'errors'.
 # throws if there's a big problem, like not being able to read the file.
 def check_file(path, errors):
+    check_license(path, errors)
+    check_layering(path, errors)
+
+# looks for licensing problems in the specified file
+# adds issues to 'errors'.
+# throws if there's a big problem, like not being able to read the file.
+def check_license(path, errors):
     has_copyright_line = False
     has_license_line = False
 
@@ -102,7 +124,13 @@ def check_file(path, errors):
         missing += "license"
     if not has_copyright_line or not has_license_line:
         errors.append("%s: missing %s" % (path, missing))
-                
+
+def check_layering(path, errors):
+    if not path.endswith(".java"):
+        return
+
+    #errors.append("%s: implement layering check!" % (path))
+
 
 def main():
     args = handle_args(sys.argv)
