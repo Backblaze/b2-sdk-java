@@ -113,7 +113,7 @@ FAQ
 XXX: what to put here?  let's wait and see what's actually asked.  :)
 XXX: probably some common errors people see.  
 XXX: probably yet another reminder to add the jar to the path?
-XXX: maybe "what are those @BzJson annotations?" and/or "why bzjson instead of <my favorite JSON mechanism>?"
+XXX: maybe "what are those @B2Json annotations?" and/or "why B2Json instead of <my favorite JSON mechanism>?"
 
   * Can I control how many answers are fetched at once for the iterables?
     Yes.  If the request structure you provide specifies a maxCount (or similar
@@ -135,7 +135,7 @@ The middle layer, consists of the B2StorageClientWebifier.  The webifier's job i
 
 The bottom layer is the WebApiClient.  It provides a few simple methods, such as postJsonReturnJson(), postDataReturnJson(), and getContent().  We stub WebApiClient to test the B2StorageClientImpl.  This layer isolates the rest of the SDK from the HTTPS implementation so that developers can provide their own web client if they want.  b2sdk4j's default implementation uses the [Apache HttpClient][].
 
-One of the main helpers is our BzJson class.  It uses annotations on class members
+One of the main helpers is our B2Json class.  It uses annotations on class members
 and constructors to convert between Java classes and JSON.  (We can discuss why we
 use it instead of Gson or other alternatives later, if we want.)
 
@@ -148,20 +148,19 @@ I'd also like to test with InterruptedException.
 
 I'd like to verify that it's possible to replace the WebApiClient implementation in an environment that doesn't have the Apache HttpClient we use.  I want to be sure we're not inadvertently pulling in classes that won't exist in such an environment.
 
-For developers who are building on the SDK, we have a provided an initial implementation of B2StorageClient which simulates the service.  So far, it has a minimal feature set.  Let us know if you'd like to work on it.
+For developers who are building on the SDK, we have a provided an initial implementation of B2StorageClient which simulates the service.  So far, it has a minimal feature set.  Let us know if you'd like to work on it.  (Actually, it's not in the repo yet.)
 
-Run the following:
-  * check_licenses .
-  * generate_docs
 
 
 Development TO DOs
 ==================
+* remove B2StorageClient.uploadFile().
 * update javadocs
-* update generate_docs
 * any good way to exercise all the exception handling, esp in the WebApiClientImpl?
 * implement a WebApiClient that uses java.net instead of HttpComponents and make sure
-  the SDK can be used without HttpComponents.
+  the SDK can be used without HttpComponents.  to do this, split the SDK into
+  'b2sdk4j-core', 'b2sdk4j-httpclient'.  move the existing builder to 'b2sdk4j-httpclient'.
+  see if there's something common and useful that can be shared in b2sdk4j-core.
 * add parameters for sockets?
 * check public/default/private protection levels! (maybe put all files in one pkg to tighten protections?)
 * continue converting B2 service code to use new sdk.
@@ -170,17 +169,15 @@ Development TO DOs
 
 Packaging TO DOs
 ================
-* add to github (under backblaze organization)
-* select a build system (maven? gradle? is there another choice?)
-* automate builds & tests.
-* add javadocs
+* improve javadocs
+* when we're ready, make the b2sdk4j repository public & switch the build to travis-ci.org
 
 Eventual Development TO DOs
 ===========================
 
 * provide easy support for resuming iterables.
 
-* maybe make BzJson's method for finding JsonTypeHandlers more flexible.  (probably mostly needed for compatibility with earlier Java 6 and/or 7 which don't have java.time classes and we're not supporting those initially.)
+* maybe make B2Json's method for finding JsonTypeHandlers more flexible.  (probably mostly needed for compatibility with earlier Java 6 and/or 7 which don't have java.time classes and we're not supporting those initially.)
 
 * from [integration checklist][]
   * Parallelizing downloads of large files. (how should we handle
