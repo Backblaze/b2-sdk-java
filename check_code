@@ -242,13 +242,13 @@ def main():
     	errors = []
 	check(directoryOrFile, errors)
 
-    print "there were %d errors" % (len(errors))
     if errors:
+        print "check_code: there were %d errors" % (len(errors))
         for err in errors:
             print "ERR: " + err
         sys.exit(1)
-
-    
+    else:
+        print "check_code: looks good."
 
 
 

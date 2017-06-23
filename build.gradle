@@ -26,10 +26,6 @@ repositories {
 }
 
 
-// we want a way to publish our artifacts to github.
-
-
-
 sourceCompatibility = 1.8
 version = '0.0.1'
 jar {
@@ -45,11 +41,11 @@ javadoc {
     options.addStringOption("tag", "apiNote:a:NOTE")
 }
 
-
-uploadArchives {
-    repositories {
-       flatDir {
-           dirs 'repos'
-       }
-    }
+// whenever we might compileJava, run check_code.  this runs fast
+// enough (less than a second) that i'm not going to try to avoid
+// running it.
+task checkCode(type: Exec) {
+    commandLine "python", "./check_code"
 }
+classes.dependsOn checkCode
+
