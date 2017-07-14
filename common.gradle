@@ -1,0 +1,33 @@
+// Copyright 2017, Backblaze Inc. All Rights Reserved.
+// License https://www.backblaze.com/using_b2_code.html
+
+apply plugin: 'java'
+
+dependencies {
+    testImplementation group: 'junit', name: 'junit', version: '4.11+'
+    testImplementation "org.mockito:mockito-core:1.9.5"
+}
+
+// we need a repository to fetch our external dependencies.
+// https://docs.gradle.org/4.0/userguide/artifact_dependencies_tutorial.html
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+version = '0.0.1'
+
+javadoc {
+    source = sourceSets.main.allJava
+    classpath = sourceSets.main.runtimeClasspath
+    options.addStringOption("tag", "apiNote:a:NOTE")
+}
+
+// whenever we might compileJava, run check_code.  this runs fast
+// enough (less than a second) that i'm not going to try to avoid
+// running it.
+task checkCode(type: Exec) {
+    commandLine "python", "./check_code"
+}
+classes.dependsOn checkCode
+
