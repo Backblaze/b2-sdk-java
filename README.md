@@ -155,6 +155,9 @@ For developers who are building on the SDK, we have a provided an initial implem
 Development TO DOs
 ==================
 * remove B2StorageClient.uploadFile().
+  to do that, i need to provide info or a decision procedure for determining whether to use
+  uploadSmallFile or uploadLargeFile.  there's a max size for small files and minimum size
+  for large files.
 * update javadocs
 * any good way to exercise all the exception handling, esp in the WebApiClientImpl?
 * implement a WebApiClient that uses java.net instead of HttpComponents and make sure
