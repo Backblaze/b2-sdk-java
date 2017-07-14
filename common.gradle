@@ -27,7 +27,7 @@ javadoc {
 // enough (less than a second) that i'm not going to try to avoid
 // running it.
 task checkCode(type: Exec) {
-    commandLine "python", "./check_code"
+    commandLine "python", "../check_code"
 }
 classes.dependsOn checkCode
 

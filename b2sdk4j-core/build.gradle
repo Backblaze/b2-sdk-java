@@ -1,7 +1,7 @@
 // Copyright 2017, Backblaze Inc. All Rights Reserved.
 // License https://www.backblaze.com/using_b2_code.html
 
-apply from: 'common.gradle'
+apply from: '../common.gradle'
 
 // the default B2WebApiClient implementation is built on httpclient, which needs commons-logging.
 // i'd like to break that dependency out so the core doesn't need it.  meanwhile...
