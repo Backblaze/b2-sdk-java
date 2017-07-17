@@ -1,3 +1,7 @@
 .gradle
 .idea
+core/build/
+httpclient/build/
+samples/build/
+
 

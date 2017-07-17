@@ -15,7 +15,7 @@ import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
-import com.backblaze.b2.client.webApiHttpClient.B2StorageClientBuilder;
+import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
 import com.backblaze.b2.util.B2ExecutorUtils;
 
 import java.io.File;
@@ -46,7 +46,7 @@ public class B2SimpleSample {
                 .builder(accountId, applicationKey, "B2SimpleSample/0.0.1")
                 .setMasterUrl("http://api.testb2.blaze:8180")  // XXX: this is for me to do local development of the SDK.  it defaults to the real URL.
                 .build();
-        final B2StorageClient client = B2StorageClientBuilder.builder(config).build();
+        final B2StorageClient client = B2StorageHttpClientBuilder.builder(config).build();
 
 
         final B2Bucket bucket = client.createBucket(bucketName, B2BucketTypes.ALL_PRIVATE);

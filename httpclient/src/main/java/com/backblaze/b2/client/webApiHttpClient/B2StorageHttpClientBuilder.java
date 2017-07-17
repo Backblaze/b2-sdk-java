@@ -15,20 +15,20 @@ import com.backblaze.b2.client.B2StorageClientWebifierImpl;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.util.B2Preconditions;
 
-public class B2StorageClientBuilder {
+public class B2StorageHttpClientBuilder {
 
     private static final String DEFAULT_MASTER_URL = "https://api.backblazeb2.com/";
     private final B2ClientConfig config;
     private B2WebApiClient webApiClient;
 
-    public static B2StorageClientBuilder builder(B2ClientConfig config) {
-        return new B2StorageClientBuilder(config);
+    public static B2StorageHttpClientBuilder builder(B2ClientConfig config) {
+        return new B2StorageHttpClientBuilder(config);
     }
 
     // We don't usually have several builder() methods, but this builder
     // is used by *everyone*, so i want to make it so that most users don't
     // need to worry about making an authorizer.
-    public static B2StorageClientBuilder builder(String accountId, String applicationKey, String userAgent) {
+    public static B2StorageHttpClientBuilder builder(String accountId, String applicationKey, String userAgent) {
         final B2AccountAuthorizer accountAuthorizer = B2AccountAuthorizerSimpleImpl
                 .builder(accountId, applicationKey)
                 .build();
@@ -38,11 +38,11 @@ public class B2StorageClientBuilder {
         return builder(config);
     }
 
-    private B2StorageClientBuilder(B2ClientConfig config) {
+    private B2StorageHttpClientBuilder(B2ClientConfig config) {
         this.config = config;
     }
 
-    public B2StorageClientBuilder setWebApiClient(B2WebApiClient webApiClient) {
+    public B2StorageHttpClientBuilder setWebApiClient(B2WebApiClient webApiClient) {
         B2Preconditions.checkState(this.webApiClient == null, "already set?");
         this.webApiClient = webApiClient;
         return this;
