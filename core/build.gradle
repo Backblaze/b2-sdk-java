@@ -3,9 +3,12 @@
 
 apply from: '../common.gradle'
 
+String jarName = 'b2sdk4j-core'
+
 jar {
+    baseName jarName
     manifest {
-        attributes 'Implementation-Title': 'b2sdk4j-core',
+        attributes 'Implementation-Title': jarName,
                    'Implementation-Version': version
     }
 }

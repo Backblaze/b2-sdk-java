@@ -9,9 +9,12 @@ dependencies {
     compile project(':httpclient')
 }
 
+String jarName = 'b2sdk4j-samples'
+
 jar {
+    baseName jarName
     manifest {
-        attributes 'Implementation-Title': 'b2sdk4j-samples',
+        attributes 'Implementation-Title': jarName,
                    'Implementation-Version': version
     }
 }

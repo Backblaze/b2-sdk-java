@@ -16,9 +16,12 @@ dependencies {
 }
 
 
+String jarName = 'b2sdk4j-httpclient'
+
 jar {
+    baseName jarName
     manifest {
-        attributes 'Implementation-Title': 'b2sdk4j-httpclient',
+        attributes 'Implementation-Title': jarName,
                    'Implementation-Version': version
     }
 }
