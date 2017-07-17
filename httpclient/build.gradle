@@ -1,0 +1,26 @@
+// Copyright 2017, Backblaze Inc. All Rights Reserved.
+// License https://www.backblaze.com/using_b2_code.html
+
+apply from: '../common.gradle'
+
+// this implementation is built on httpclient, which needs commons-logging.
+dependencies {
+    // we need the core of the project!
+    compile project(':core')
+    
+    // apache http commons (https://hc.apache.org/httpcomponents-client-ga/httpclient/dependency-info.html)
+    implementation 'org.apache.httpcomponents:httpclient:4.5.3'
+
+    // apache commons logging  (https://mvnrepository.com/artifact/commons-logging/commons-logging/1.2)
+    implementation group: 'commons-logging', name: 'commons-logging', version: '1.2'
+}
+
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'b2sdk4j-httpclient',
+                   'Implementation-Version': version
+    }
+}
+
+

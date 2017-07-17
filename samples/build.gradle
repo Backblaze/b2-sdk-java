@@ -1,0 +1,19 @@
+// Copyright 2017, Backblaze Inc. All Rights Reserved.
+// License https://www.backblaze.com/using_b2_code.html
+
+apply from: '../common.gradle'
+
+// this implementation is built on httpclient, which needs commons-logging.
+dependencies {
+    // we need the core of the project!
+    compile project(':httpclient')
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'b2sdk4j-samples',
+                   'Implementation-Version': version
+    }
+}
+
+
