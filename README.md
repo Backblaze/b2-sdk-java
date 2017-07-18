@@ -49,9 +49,10 @@ SAMPLE
 
   * Be sure to add the jars to your class path along with their dependencies.  
     If you put all the jar files into one directory and change to the directory,
-    here's a sample command line to run:
+    here's a sample command line to run (after replacing 'N.N.N' with the version
+    of the sdk you're using):
 
-    java -cp b2sdk4j-samples-0.0.1.jar:b2sdk4j-httpclient-0.0.1.jar:b2sdk4j-core-0.0.1.jar:httpclient-4.5.3.jar:httpcore-4.4.4.jar:commons-logging-1.2.jar  com.backblaze.b2.sample.B2Sample
+    java -cp b2sdk4j-samples-N.N.N.jar:b2sdk4j-httpclient-N.N.N.jar:b2sdk4j-core-0.0.1.jar:httpclient-4.5.3.jar:httpcore-4.4.4.jar:commons-logging-1.2.jar  com.backblaze.b2.sample.B2Sample
 
 
 
