@@ -69,4 +69,11 @@ public class B2HeadersImpl implements B2Headers {
             return new B2HeadersImpl(pairs);
         }
     }
+
+    @Override
+    public String toString() {
+        return "B2HeadersImpl{" +
+                "pairs=" + pairs +
+                '}';
+    }
 }

@@ -29,6 +29,7 @@ import com.backblaze.b2.client.structures.B2HideFileRequest;
 import com.backblaze.b2.client.structures.B2LifecycleRule;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
+import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
@@ -78,38 +79,23 @@ public class B2Sample {
 
 
         bigHeader(writer, "Create Bucket");
-
-        final B2Bucket bucket;
-        {
-            B2CreateBucketRequest request = B2CreateBucketRequest
-                    .builder(bucketName, B2BucketTypes.ALL_PRIVATE)
-                    .build();
-            bucket = client.createBucket(request);
-
-            // maybe have this convenience:
-            //   bucket = client.createBucket(bucketName, bucketType);
-            // or
-            //   bucket = client.createBucket(B2CreateBucketRequest.build(bucketName, bucketType));
-        }
+        final B2Bucket bucket = client.createBucket(bucketName, B2BucketTypes.ALL_PRIVATE);
         final String bucketId = bucket.getBucketId();
 
         // list buckets.
         bigHeader(writer, "List Buckets");
-        {
-            for (B2Bucket scan : client.buckets()) {
-                writer.println(" " + scan);
-            }
+        for (B2Bucket scan : client.buckets()) {
+            writer.println(" " + scan);
         }
 
-        // upload a file from the disk.
-        //
+        // create a file on disk that we can upload.
+        final File fileOnDisk = new File("/tmp/B2Sample-uploadMe.txt");
+        writeToFile(fileOnDisk, "hello world!\n".getBytes());
 
-        bigHeader(writer, "Upload files");
+        // upload a file from the disk.
+        bigHeader(writer, "Upload file from disk");
         final B2FileVersion file1;
         {
-            final File fileOnDisk = new File("/tmp/B2Sample-uploadMe.txt");
-            writeToFile(fileOnDisk, "hello world!\n".getBytes());
-
             try {
                 final B2ContentSource source = B2FileContentSource.build(fileOnDisk);
 
@@ -127,6 +113,7 @@ public class B2Sample {
         }
 
         // upload a file from memory.
+        bigHeader(writer, "Upload file from memory");
         final B2FileVersion file2;
         {
             final B2ContentSource source = B2ByteArrayContentSource.build("this came from memory!".getBytes());
@@ -139,122 +126,88 @@ public class B2Sample {
             writer.println("uploaded " + file2);
         }
 
+        // create the an array with enough bytes for a large file
+        bigHeader(writer, "create large file in memory");
+        final byte[] largeFileBytes = makeLargeFileBytes();
+
         // uploading a large file is about the same.
-        // but you can also specify a TransferManager or something like that to manage the uploads.
-        // do we want/need to expose the start/finish/listParts apis for large files?
-        // maybe there should be an object that manages a large file upload.  maybe it's hidden.
+        bigHeader(writer, "Upload large file");
         final B2FileVersion file3;
         {
-            final File fileOnDisk = new File("/tmp/B2Sample-uploadMeLarge.txt");
-            writeToFile(fileOnDisk, makeLargeFileBytes());
+            final File largeFileOnDisk = new File("/tmp/B2Sample-uploadMeLarge.txt");
+            writeToFile(largeFileOnDisk, largeFileBytes);
 
             final String fileName = "demo/large/superLarge.txt";
-            final B2ContentSource source = B2FileContentSource.builder(fileOnDisk).build();
+            final B2ContentSource source = B2FileContentSource.builder(largeFileOnDisk).build();
 
             B2UploadFileRequest request = B2UploadFileRequest
                     .builder(bucketId, fileName, B2ContentTypes.APPLICATION_OCTET, source)
                     .setCustomField("color", "green")
-                    //.setTransferManager(xferMgr); // XXX: or an executorService? or params? or maybe they're on the client?
                     .build();
-            file3 = client.uploadFile(request, executor);
+            file3 = client.uploadLargeFile(request, executor);
             writer.println("uploaded " + file3);
         }
 
-        //
         // list the parts of unfinished large files.  (XXX: needs to be a partially uploaded one!)
-        //
-        //bigHeader(writer, "List Parts of any unfinished large files");
-        //for (B2FileVersion largeFileVersion : client.unfinishedLargeFiles(bucketId)) {
-        //    System.out.println("====== unfinished large: " + largeFileVersion.getFileId() + " ======");
-        //    for (B2Part part : client.parts(file3.getFileId())) {
-        //        System.out.println("  " + part);
-        //    }
-        //}
-
+        bigHeader(writer, "list parts of any unfinished large files");
+        for (B2FileVersion largeFileVersion : client.unfinishedLargeFiles(bucketId)) {
+            System.out.println("====== unfinished large: " + largeFileVersion.getFileId() + " ======");
+            for (B2Part part : client.parts(file3.getFileId())) {
+                System.out.println("  " + part);
+            }
+        }
 
         // upload some more files here so the folder structure is interesting.
+        // XXX...
 
         // list all file versions
         // the listBlahBuilders will have setters to control depth, delimiter, page size, total count, etc.
         // the object returned (and used only for iteration below) has a method to grab a "resumePoint"
         //   which can be given to a builder later to resume where we left off.  (one for resumeWithCurrent?
         //   and one for resumeWithNext? always resumeWithNext and you can save it from before calling next?)
-        bigHeader(writer, "List File Versions");
-        {
-            final B2ListFileVersionsRequest request = B2ListFileVersionsRequest
-                    .builder(bucketId)
-                    .build();
-            for (B2FileVersion version : client.fileVersions(request)) {
-                writer.println("fileVersions: " + version);
-            }
+        bigHeader(writer, "list file versions");
+        for (B2FileVersion version : client.fileVersions(bucketId)) {
+            writer.println("fileVersion: " + version);
         }
 
+
         // list all file names
-        bigHeader(writer, "List File Names");
-        {
-            final B2ListFileNamesRequest request = B2ListFileNamesRequest
-                    .builder(bucketId)
-                    .build();
-            for (B2FileVersion version : client.fileNames(request)) {
-                writer.println("fileNames: " + version);
-            }
+        bigHeader(writer, "list file names");
+        for (B2FileVersion version : client.fileNames(bucketId)) {
+            writer.println("fileName: " + version);
         }
 
         // list file versions in a given directory
-        bigHeader(writer, "List File Versions in a single directory");
+        bigHeader(writer, "list file versions in a single directory");
         {
             final B2ListFileVersionsRequest request = B2ListFileVersionsRequest
                     .builder(bucketId)
                     .setWithinFolder("demo/large/")
                     .build();
             for (B2FileVersion version : client.fileVersions(request)) {
-                writer.println("fileNamesWithinFolder: " + version);
+                writer.println("fileNameWithinFolder: " + version);
             }
         }
 
         // XXX: start a large file, so there's something to list and cancel below!
 
         // list unfinished large files.  and cancel them.
-        bigHeader(writer, "List and cancel unfinished large files");
-        {
-            for (B2FileVersion largeFileVersion : client.unfinishedLargeFiles(bucketId)) {
-                // long hand:
-                B2CancelLargeFileRequest cancelRequest = B2CancelLargeFileRequest
-                        .builder(largeFileVersion.getFileId())
-                        .build();
-                client.cancelLargeFile(cancelRequest);
-
-                // or convenience method:
-                //   client.cancelLargeFile(largeFileVersion.getFileId());
-                // or:
-                //   client.cancelLargeFile(largeFileVersion);
-            }
+        bigHeader(writer, "list and cancel unfinished large files");
+        for (B2FileVersion largeFileVersion : client.unfinishedLargeFiles(bucketId)) {
+            client.cancelLargeFile(largeFileVersion.getFileId());
         }
 
-        // downloadById b2 file
+        // downloadById b2 file into memory.
         bigHeader(writer, "Download b2 file and print it");
         {
-            final B2DownloadByIdRequest request = B2DownloadByIdRequest
-                    .builder(file1.getFileId())
-                    .build();
-            final B2ContentSink handler = (headers, input) -> {
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                while (true) {
-                    int nextByte = (byte) input.read();
-                    if (nextByte == -1) {
-                        break;
-                    }
-                    outputStream.write(nextByte);
-                }
-                String s = outputStream.toString();
-                writer.println("read from file [" + s + "]");
-            };
-            client.downloadById(request, handler);
+            B2ContentMemoryWriter sink = B2ContentMemoryWriter.build();
+            client.downloadById(file1.getFileId(), sink);
+            writer.println("read from file [" + new String(sink.getBytes()) + "]");
         }
 
         // we provide a helpful handler implementation for saving to a file.
         // this is an example of using it with a download_by_name & a range.
-        bigHeader(writer, "Download b2 file to disk");
+        bigHeader(writer, "download b2 file to disk");
         {
             final B2DownloadByNameRequest request = B2DownloadByNameRequest
                     .builder(bucketName, file1.getFileName())
@@ -274,22 +227,11 @@ public class B2Sample {
         {
             final B2ContentMemoryWriter handler = B2ContentMemoryWriter.build();
             client.downloadById(file3.getFileId(), handler);
-            B2Preconditions.checkState(Arrays.equals(makeLargeFileBytes(), handler.getBytes()));
+            B2Preconditions.checkState(Arrays.equals(largeFileBytes, handler.getBytes()));
         }
 
         // delete file versions
-        {
-            final B2DeleteFileVersionRequest request = B2DeleteFileVersionRequest
-                    .builder(file1.getFileName(), file1.getFileId())
-                    .build();
-            client.deleteFileVersion(request);
-
-            // a more convenient way...
-            //   client.deleteFileVersion(file1);
-
-            // slightly less convenient
-            //   client.deleteFileVersion(B2DeleteFileVersionRequest.builder(file1).build());
-        }
+        client.deleteFileVersion(file1);
 
         // get a download authorization.
         {
@@ -301,36 +243,17 @@ public class B2Sample {
         }
 
         // get file info.
-        {
-            final B2GetFileInfoRequest request = B2GetFileInfoRequest
-                    .builder(file2.getFileId())
-                    .build();
-            B2FileVersion file2again = client.getFileInfo(request);
-            writer.println("file2Again: " + file2again);
-
-            // convenience version:
-            //client.getFileInfo(file2.getFileId());
-        }
+        B2FileVersion file2again = client.getFileInfo(file2.getFileId());
+        writer.println("file2Again: " + file2again);
 
         // hide file
-        {
-            B2HideFileRequest request = B2HideFileRequest
-                    .builder(bucketId, file2.getFileName())
-                    .build();
-            client.hideFile(request);
-
-            // convenience functions:
-            //client.hideFile(file2.getBucketId(), file2.getFileName());
-            //client.hideFile(file2); // ??
-        }
+        client.hideFile(bucketId, file2.getFileName());
 
         // update the bucket
         {
             final List<B2LifecycleRule> lifecycleRules = new ArrayList<>();
             final Map<String, String> bucketInfo = new TreeMap<>();
 
-            // i'm inclined to *always* require ifRevisionIs.  if we want to be flexible,
-            // i can make it possible to opt out.
             final B2UpdateBucketRequest request = B2UpdateBucketRequest
                     .builder(bucket)
                     .setBucketType(B2BucketTypes.ALL_PUBLIC)
@@ -360,23 +283,12 @@ public class B2Sample {
 
 
         // delete all files, so we can delete the bucket.
-        {
-            // convenience version of fileVersions.
-            for (B2FileVersion version : client.fileVersions(bucketId)) {
-                client.deleteFileVersion(version);
-            }
+        for (B2FileVersion version : client.fileVersions(bucketId)) {
+            client.deleteFileVersion(version);
         }
 
         // delete the bucket
-        {
-            final B2DeleteBucketRequest request = B2DeleteBucketRequest
-                    .builder(bucketId)
-                    .build();
-            client.deleteBucket(request);
-
-            // or convenience method:
-            // client.deleteBucket(bucketId);
-        }
+        client.deleteBucket(bucketId);
     }
 
     private static void deleteBucketIfAny(PrintWriter writer,
@@ -419,7 +331,7 @@ public class B2Sample {
      */
     private static byte[] makeLargeFileBytes() {
         final int MB = 1000 * 1000;
-        final byte[] bytes = new byte[2 * MB];
+        final byte[] bytes = new byte[10 * MB];
 
         int iByte = 0;
         for (int iPart = 0; iPart < 2; iPart++) {
