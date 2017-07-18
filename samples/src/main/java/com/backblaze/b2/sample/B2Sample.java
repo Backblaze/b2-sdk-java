@@ -4,7 +4,6 @@
  */
 package com.backblaze.b2.sample;
 
-import com.backblaze.b2.client.B2ClientConfig;
 import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.contentHandlers.B2ContentFileWriter;
 import com.backblaze.b2.client.contentHandlers.B2ContentMemoryWriter;
@@ -30,7 +29,6 @@ import com.backblaze.b2.client.structures.B2HideFileRequest;
 import com.backblaze.b2.client.structures.B2LifecycleRule;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
-import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
@@ -55,24 +53,15 @@ import static com.backblaze.b2.util.B2ExecutorUtils.createThreadFactory;
 
 public class B2Sample {
 
-    // emailc57fbed9c0bb@test.backblaze.com
-    private static final String accountId = "5857d33a7f65";
-    private static final String applicationKey = "100e703fc514db5d5ea413c5ff37d42cc39bddea23";
+    private static final String USER_AGENT = "B2Sample";
 
     public static void main(String[] args) throws B2Exception {
         PrintWriter writer = new PrintWriter(System.out, true);
 
-        final B2ClientConfig config = B2ClientConfig
-                .builder(accountId, applicationKey, "B2Sample")
-                .setMasterUrl("http://api.testb2.blaze:8180")  // XXX: this is for me to do local development of the SDK.  it defaults to the real URL.
-                .setTestModeOrNull(B2TestMode.EXPIRE_SOME_ACCOUNT_AUTHORIZATION_TOKENS) // XXX: for testing
-                .build();
-        // convenience version that should be good for most people, most of the time.
-        // final B2StorageClient client2 = B2StorageClient.builder(accountId, applicationKey).build();
-
         final ExecutorService executor = Executors.newFixedThreadPool(10, createThreadFactory("B2Sample-executor-%02d"));
 
-        try (final B2StorageClient client = B2StorageHttpClientBuilder.builder(config).build()) {
+        final B2StorageClient client = B2StorageHttpClientBuilder.builder(USER_AGENT).build();
+        try {
             mainGuts(writer, client, executor);
         } finally {
             B2ExecutorUtils.shutdownAndAwaitTermination(executor, 10, 10);
@@ -82,8 +71,7 @@ public class B2Sample {
     private static void mainGuts(PrintWriter writer,
                                  B2StorageClient client,
                                  ExecutorService executor) throws B2Exception {
-
-        final String bucketName = "sample-" + accountId;
+        final String bucketName = "sample-" + client.getAccountId();
 
         bigHeader(writer, "cleanup existing bucket, if any");
         deleteBucketIfAny(writer, client, bucketName);

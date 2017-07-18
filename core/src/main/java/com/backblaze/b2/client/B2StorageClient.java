@@ -82,6 +82,11 @@ public interface B2StorageClient extends Closeable {
 //    }
 
     /**
+     * @return the accountId for this client.
+     */
+    String getAccountId();
+
+    /**
      * Creates a new bucket with the given request.
      *
      * @param request the request to create the bucket.

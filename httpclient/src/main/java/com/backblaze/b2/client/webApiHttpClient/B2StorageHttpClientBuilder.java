@@ -12,6 +12,9 @@ import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.B2StorageClientImpl;
 import com.backblaze.b2.client.B2StorageClientWebifier;
 import com.backblaze.b2.client.B2StorageClientWebifierImpl;
+import com.backblaze.b2.client.credentialsSources.B2Credentials;
+import com.backblaze.b2.client.credentialsSources.B2CredentialsFromEnvironmentSource;
+import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.util.B2Preconditions;
 
@@ -36,6 +39,16 @@ public class B2StorageHttpClientBuilder {
                 .builder(accountAuthorizer, userAgent)
                 .build();
         return builder(config);
+    }
+
+    /**
+     * @param userAgent the user agent to use when performing http requests.
+     * @return a storage builder.
+     * @throws B2Exception if there's a problem getting the credentials from the environment.
+     */
+    public static B2StorageHttpClientBuilder builder(String userAgent) throws B2Exception {
+        final B2Credentials credentials = B2CredentialsFromEnvironmentSource.build().getCredentials();
+        return builder(credentials.getAccountId(), credentials.getApplicationKey(), userAgent);
     }
 
     private B2StorageHttpClientBuilder(B2ClientConfig config) {

@@ -106,6 +106,11 @@ public class B2StorageClientImpl implements B2StorageClient {
     }
 
     @Override
+    public String getAccountId() {
+        return config.getAccountAuthorizer().getAccountId();
+    }
+
+    @Override
     public B2StorageClientWebifier getWebifier() {
         return webifier;
     }

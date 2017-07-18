@@ -55,6 +55,7 @@ LAYERS = [
     'client.structures',
     'client.contentHandlers',
     'client.contentSources',
+    'client.credentialsSources',
     'client.exceptions',
     'json',
     'util',
