@@ -35,14 +35,19 @@ script:
   # copy the generated jar files
   - cp -v */build/libs/b2sdk4j-*.jar build/outputs
 
+  # find the jar's version.
+  - VERSION=`egrep 'version.=' common.gradle | awk "-F'" '{print $2}'`
+  - echo VERSION=$VERSION
+  - echo VERSION=${VERSION}
+
   # make the 'sources' zip
-  - zip -r build/outputs/b2sdk4j-core-sources.zip core/src
-  - zip -r build/outputs/b2sdk4j-httpclient-sources.zip httpclient/src
-  - zip -r build/outputs/b2sdk4j-samples-sources.zip samples/src
+  - zip -r build/outputs/b2sdk4j-core-${VERSION}-sources.zip core/src
+  - zip -r build/outputs/b2sdk4j-httpclient-${VERSION}-sources.zip httpclient/src
+  - zip -r build/outputs/b2sdk4j-samples-${VERSION}-sources.zip samples/src
 
   # make the javadocs zip
-  - (cd core/build/docs; zip -r $TRAVIS_BUILD_DIR/build/outputs/b2sdk4j-core-javadocs.zip javadoc)
-  - (cd httpclient/build/docs; zip -r $TRAVIS_BUILD_DIR/build/outputs/b2sdk4j-httpclient-javadocs.zip javadoc)
+  - (cd core/build/docs; zip -r $TRAVIS_BUILD_DIR/build/outputs/b2sdk4j-core-${VERSION}-javadocs.zip javadoc)
+  - (cd httpclient/build/docs; zip -r $TRAVIS_BUILD_DIR/build/outputs/b2sdk4j-httpclient-${VERSION}-javadocs.zip javadoc)
 
   # zip up the outputs
   - echo OUTPUT_ZIP=$OUTPUT_ZIP
