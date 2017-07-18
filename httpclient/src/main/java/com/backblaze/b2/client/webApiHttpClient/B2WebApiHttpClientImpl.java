@@ -43,13 +43,13 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
-public class B2WebApiClientImpl implements B2WebApiClient {
+public class B2WebApiHttpClientImpl implements B2WebApiClient {
     private final static String UTF8 = "UTF-8";
 
     private final B2Json bzJson = B2Json.get();
     private final CloseableHttpClient httpClient;
 
-    public B2WebApiClientImpl() {
+    public B2WebApiHttpClientImpl() {
         // XXX: accept configuration parameters.
         // XXX: be sure we're checking ssl certs & specifying acceptable ciphers.
 
