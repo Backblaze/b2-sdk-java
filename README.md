@@ -29,6 +29,11 @@ FEATURES
 
 * The SDK requires Java 8.
 
+* The SDK provides three jars:
+  * **b2sdk4j-core** provides almost all of the SDK.  it does not contain the code for making HTTP requests (B2WebApiClient).
+  * **b2sdk4j-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.  It is separate so that if you provide your own B2WebApiClient, you won't need to pull in HttpClient or its dependencies.**
+  * **b2sdk4j-samples** has some samples.
+
 SAMPLE
 ======
 
@@ -36,19 +41,40 @@ SAMPLE
     can probably learn everything you need to know about by looking at
     B2Sample.java.
 
-  * Be sure to add b2sdk4j-N.N.N.jar to your class path.
+  * To run B2Sample, you will need to add your credentials to your environment
+    in these environment variables:
+
+    * B2_ACCOUNT_ID
+    * B2_APPLICATION_KEY
+
+  * Be sure to add the jars to your class path along with their dependencies.  
+    If you put all the jar files into one directory and change to the directory,
+    here's a sample command line to run:
+
+    java -cp b2sdk4j-samples-0.0.1.jar:b2sdk4j-httpclient-0.0.1.jar:b2sdk4j-core-0.0.1.jar:httpclient-4.5.3.jar:httpcore-4.4.4.jar:commons-logging-1.2.jar  com.backblaze.b2.sample.B2Sample
+
+
 
 HOW TO USE
 ==========
 
-  * Add the b2sdk4j-N.N.N.jar to your class path (XXX: provide snippets for
+  * Add the jars to your class path (XXX: provide snippets for
     maven and other build systems)
 
-  * create a B2StorageClient. here's the simplest way to do it:
+  * create a B2StorageClient.
 
-        B2StorageClient client = B2StorageClient.builder(accountId,
+    * if your code has access to the accountId and appliationKey,
+      here's the simplest way to do it:
+
+        B2StorageClient client = B2StorageHttpClientBuilder.builder(accountId,
                                            applicationKey,
                                            userAgent).build();
+
+    * if you want to get the credentials from the environment,
+      as B2Sample does, here's how to create your client:
+
+      B2StorageClient client = B2StorageHttpClientBuilder.builder(userAgent).build();
+
 
   * There's a very straight-forward mapping from B2 API calls to
     methods on the B2StorageClient.
@@ -133,7 +159,7 @@ The top-most layer consists of the B2StorageClientImpl and the various Request a
 
 The middle layer, consists of the B2StorageClientWebifier.  The webifier's job is to translate logical B2 API calls (such as list file names, or upload a file) into the appropriate HTTP requests and to interpret the responses.  The webifier isolates the B2StorageClientImpl from doing this mapping.  We stub the webifier layer to test B2StorageClientImpl.
 
-The bottom layer is the WebApiClient.  It provides a few simple methods, such as postJsonReturnJson(), postDataReturnJson(), and getContent().  We stub WebApiClient to test the B2StorageClientImpl.  This layer isolates the rest of the SDK from the HTTPS implementation so that developers can provide their own web client if they want.  b2sdk4j's default implementation uses the [Apache HttpClient][].
+The bottom layer is the B2WebApiClient.  It provides a few simple methods, such as postJsonReturnJson(), postDataReturnJson(), and getContent().  We stub B2WebApiClient to test the B2StorageClientImpl.  This layer isolates the rest of the SDK from the HTTPS implementation so that developers can provide their own web client if they want.  The b2sdk4j-httpclient jar provides an implementation that uses the [Apache HttpClient][].
 
 One of the main helpers is our B2Json class.  It uses annotations on class members
 and constructors to convert between Java classes and JSON.  (We can discuss why we
@@ -142,11 +168,11 @@ use it instead of Gson or other alternatives later, if we want.)
 TESTING
 =======
 
-We have lots of unit tests to verify that each of the classes performs as expected.  As mentioned in the "Structure" section, we stub lower layers to test the layer above it.  (XXX: I'm not yet sure how to fully unit test the WebApiClientImpl.  Perhaps I'll make a standalone program that either exercises that alone, or perhaps the whole API, against the production server. BrianB says that the CLI looks for a config file with the accountId/appKey and, if it's present, does tests against the live service.)
+We have lots of unit tests to verify that each of the classes performs as expected.  As mentioned in the "Structure" section, we stub lower layers to test the layer above it.  (XXX: I'm not yet sure how to fully unit test the B2WebApiHttpClientImpl.  Perhaps I'll make a standalone program that either exercises that alone, or perhaps the whole API, against the production server. BrianB says that the CLI looks for a config file with the accountId/appKey and, if it's present, does tests against the live service.)
 
 I'd also like to test with InterruptedException.
 
-I'd like to verify that it's possible to replace the WebApiClient implementation in an environment that doesn't have the Apache HttpClient we use.  I want to be sure we're not inadvertently pulling in classes that won't exist in such an environment.
+I'd like to verify that it's possible to replace the B2WebApiClient implementation in an environment that doesn't have the Apache HttpClient we use.  I want to be sure we're not inadvertently pulling in classes that won't exist in such an environment.  The first step of this was to remove the HttpClient implementation from the core jar.
 
 For developers who are building on the SDK, we have a provided an initial implementation of B2StorageClient which simulates the service.  So far, it has a minimal feature set.  Let us know if you'd like to work on it.  (Actually, it's not in the repo yet.)
 
