@@ -31,6 +31,11 @@ public class B2JsonMapHandler extends B2JsonNonUrlTypeHandler<Map> {
         out.startObject();
         //noinspection unchecked
         for (Map.Entry entry : (Set<Map.Entry>) obj.entrySet()) {
+            // Some maps allow key to be null. That's not legal in json though, so don't allow it.
+            if (entry.getKey() == null) {
+                throw new B2JsonException("Map key is null");
+
+            }
             out.startObjectFieldName();
             //noinspection unchecked
             keyHandler.serialize(entry.getKey(), out);

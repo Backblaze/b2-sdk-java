@@ -603,6 +603,28 @@ public class B2JsonTest {
         checkDeserializeSerialize(json2, MapHolder.class);
     }
 
+    private static class MapWithNullKeyHolder {
+        @B2Json.optional
+        Map<String, String> map;
+
+        @B2Json.constructor(params = "map")
+        public MapWithNullKeyHolder(Map<String, String> map) {
+            this.map = map;
+        }
+    }
+    @Test
+    public void testSerializationOfMapWithNullKeyGeneratesException() {
+        Map<String, String> map = new HashMap<>();
+        map.put(null, "Text");
+        MapWithNullKeyHolder mapWithNullKeyHolder = new MapWithNullKeyHolder(map);
+        try {
+            bzJson.toJson(mapWithNullKeyHolder);
+            assertTrue("Map with null key should not be allowed to be serialized", false);
+        } catch (B2JsonException ex) {
+            assertEquals("Map key is null", ex.getMessage());
+        }
+    }
+
     private static class TreeMapHolder {
         @B2Json.optional
         TreeMap<LocalDate, Integer> treeMap;
