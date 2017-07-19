@@ -60,8 +60,8 @@ script:
   - b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
   - b2 upload_file --contentType application/octet b2sdk4j build/$OUTPUT_ZIP builds/$OUTPUT_ZIP
 
-  # list all files to help debug stuff!
-  - find $TRAVIS_BUILD_DIR
+  ## list all files to help debug stuff!
+  #- find $TRAVIS_BUILD_DIR
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
