@@ -51,14 +51,14 @@ public class B2 implements AutoCloseable {
                     "    b2 delete_file_version <fileName> <fileId>\n" +
                     //"    b2 download_file_by_id [--noProgress] <fileId> <localFileName>\n" +
                     //"    b2 download_file_by_name [--noProgress] <bucketName> <fileName> <localFileName>\n" +
-                    //"    b2 get_file_info <fileId>\n" +
+                    "    b2 get_file_info <fileId>\n" +
                     //"    b2 help [commandName]\n" +
                     "    b2 hide_file <bucketName> <fileName>\n" +
                     "    b2 list_buckets\n" +
                     "    b2 list_file_names <bucketName> [<startFileName>] [<maxPerFetch>]  // unlike the python b2 cmd, this will continue fetching, until done.\n" +
                     "    b2 list_file_versions <bucketName> [<startFileName>] [<startFileId>] [<maxPerFetch>]  // unlike the python b2 cmd, this will continue fetching, until done.\n" +
                     //"    b2 list_parts <largeFileId>\n" +
-                    //"    b2 list_unfinished_large_files <bucketName>\n" +
+                    "    b2 list_unfinished_large_files <bucketName>\n" +
                     //"    b2 make_url <fileId>\n" +
                     "    b2 update_bucket <bucketName> [allPublic | allPrivate]\n" +
                     "    b2 upload_file [--sha1 <sha1sum>] [--contentType <contentType>] [--info <key>=<value>]* \\\n" +
@@ -136,6 +136,8 @@ public class B2 implements AutoCloseable {
                 b2.list_file_names(remainingArgs);
             } else if ("list_file_versions".equals(command)) {
                 b2.list_file_versions(remainingArgs);
+            } else if ("list_unfinished_large_files".equals(command)) {
+                b2.list_unfinished_large_files(remainingArgs);
             } else if ("update_bucket".equals(command)) {
                 b2.update_bucket(remainingArgs);
             } else if ("upload_file".equals(command)) {
@@ -426,6 +428,17 @@ public class B2 implements AutoCloseable {
         final B2ListFileVersionsRequest request = builder.build();
 
         for (B2FileVersion version : client.fileVersions(request)) {
+            out.println(version);
+        }
+    }
+
+    private void list_unfinished_large_files(String[] args) throws B2Exception {
+        // <bucketName>
+        checkArgCount(args, 1);
+        final String bucketName = args[0];
+        final B2Bucket bucket = getBucketByNameOrDie(bucketName);
+
+        for (B2FileVersion version : client.unfinishedLargeFiles(bucket.getBucketId())) {
             out.println(version);
         }
     }
