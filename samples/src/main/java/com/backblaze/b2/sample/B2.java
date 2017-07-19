@@ -48,7 +48,7 @@ public class B2 implements AutoCloseable {
                     //"    b2 cancel_large_file <fileId>\n" +
                     "    b2 create_bucket <bucketName> [allPublic | allPrivate]\n" +
                     "    b2 delete_bucket <bucketName>\n" +
-                    //"    b2 delete_file_version <fileName> <fileId>\n" +
+                    "    b2 delete_file_version <fileName> <fileId>\n" +
                     //"    b2 download_file_by_id [--noProgress] <fileId> <localFileName>\n" +
                     //"    b2 download_file_by_name [--noProgress] <bucketName> <fileName> <localFileName>\n" +
                     //"    b2 get_file_info <fileId>\n" +
@@ -124,6 +124,8 @@ public class B2 implements AutoCloseable {
                 b2.create_bucket(remainingArgs);
             } else if ("delete_bucket".equals(command)) {
                 b2.delete_bucket(remainingArgs);
+            } else if ("delete_file_version".equals(command)) {
+                b2.delete_file_version(remainingArgs);
             } else if ("hide_file".equals(command)) {
                 b2.hide_file(remainingArgs);
             } else if ("list_buckets".equals(command)) {
@@ -337,6 +339,14 @@ public class B2 implements AutoCloseable {
         checkArgCount(args, 1);
         final B2Bucket bucket = getBucketByNameOrDie(args[0]);
         client.deleteBucket(bucket.getBucketId());
+    }
+
+    private void delete_file_version(String[] args) throws B2Exception {
+        // <fileName> <fileId>
+        checkArgCount(args, 2);
+        final String b2Path = args[0];
+        final String fileId = args[1];
+        client.deleteFileVersion(b2Path, fileId);
     }
 
     private void hide_file(String[] args) throws B2Exception {
