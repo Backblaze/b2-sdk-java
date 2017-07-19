@@ -11,12 +11,14 @@ import com.backblaze.b2.client.contentSources.B2FileContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2FileVersion;
+import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
 import com.backblaze.b2.util.B2ExecutorUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Map;
@@ -53,7 +55,7 @@ public class B2 implements AutoCloseable {
                     //"    b2 hide_file <bucketName> <fileName>\n" +
                     "    b2 list_buckets\n" +
                     //"    b2 list_file_names <bucketName> [<startFileName>] [<maxToShow>]\n" +
-                    "    b2 list_file_versions <bucketName> [<startFileName>] [<startFileId>] [<maxToShow>]\n" +
+                    "    b2 list_file_versions <bucketName> [<startFileName>] [<startFileId>] [<maxPerFetch>]  // unlike the python b2 cmd, this will continue fetching, until done.\n" +
                     //"    b2 list_parts <largeFileId>\n" +
                     //"    b2 list_unfinished_large_files <bucketName>\n" +
                     //"    b2 make_url <fileId>\n" +
@@ -61,6 +63,10 @@ public class B2 implements AutoCloseable {
                     "    b2 upload_file [--sha1 <sha1sum>] [--contentType <contentType>] [--info <key>=<value>]* \\\n" +
                     "        [--noProgress] [--threads N] <bucketName> <localFilePath> <b2FileName>\n" +
                     "    b2 version\n";
+
+    private static final long KILOBYTES = 1000;
+    private static final long MEGABYTES = 1000 * KILOBYTES;
+    //private static final long GIGABYTES = 1000 * MEGABYTES;
 
     // where we should write normal output to.
     private final PrintStream out;
@@ -103,7 +109,7 @@ public class B2 implements AutoCloseable {
         System.exit(1);
     }
 
-    public static void main(String[] args) throws B2Exception {
+    public static void main(String[] args) throws B2Exception, IOException {
         //out.println("args = [" + String.join(",", args) + "]");
 
         if (args.length == 0) {
@@ -172,6 +178,28 @@ public class B2 implements AutoCloseable {
         }
         return args[iArg];
     }
+    private String getArgOrNull(String[] args,
+                               int iArg) {
+        if (iArg >= args.length) {
+            return null;
+        }
+        return args[iArg];
+    }
+    private Integer getPositiveIntOrNull(String[] args,
+                                         String arg,
+                                         int iArg) {
+        final String asString = getArgOrNull(args, iArg);
+        if (asString == null) {
+            return null;
+        }
+
+        try {
+            return Integer.parseInt(asString);
+        } catch (NumberFormatException e) {
+            usageAndExit("argument for '" + arg  + "' must be an integer");
+            return 666;  // we never get here.
+        }
+    }
 
     private int getIntArgOrDie(String[] args,
                                String arg,
@@ -189,7 +217,6 @@ public class B2 implements AutoCloseable {
                                        String arg,
                                        int iArg,
                                        int iLastArg) {
-        final String asString = getArgOrDie(args, arg, iArg, iLastArg);
         int value = getIntArgOrDie(args, arg, iArg, iLastArg);
         if (value <= 0) {
             usageAndExit("argument for '" + arg + "' must be a POSITIVE integer");
@@ -315,14 +342,35 @@ public class B2 implements AutoCloseable {
     }
 
     private void list_file_versions(String[] args) throws B2Exception {
+        // list_file_versions <bucketName> [<startFileName> <startFileId>] [<maxPerFetch>]
         checkArgCount(args, 1, 4);
-        final B2Bucket bucket = getBucketByNameOrDie(args[0]);
-        for (B2FileVersion version : client.fileVersions(bucket.getBucketId())) {
+
+        final String bucketName = args[0];
+        final String startFileName = getArgOrNull(args, 1);
+        final String startFileId = getArgOrNull(args, 2);
+        final Integer maxPerFetch = getPositiveIntOrNull(args, "maxPerFetch", 3);
+
+        if (startFileName != null) {
+            checkArgs(startFileId != null, "if you specify startFileName, you must specify startFileId too");
+        }
+
+        final B2Bucket bucket = getBucketByNameOrDie(bucketName);
+
+        final B2ListFileVersionsRequest.Builder builder = B2ListFileVersionsRequest
+                .builder(bucket.getBucketId())
+                .setMaxFileCount(maxPerFetch);
+        if (startFileName != null) {
+            builder.setStart(startFileName, startFileId);
+        }
+
+        final B2ListFileVersionsRequest request = builder.build();
+
+        for (B2FileVersion version : client.fileVersions(request)) {
             out.println(version);
         }
     }
 
-    private void upload_file(String[] args) throws B2Exception {
+    private void upload_file(String[] args) throws B2Exception, IOException {
         B2UploadFileRequest request = makeUploadRequestFromArgs(args);
         if (shouldBeSmallFile(request)) {
             client.uploadSmallFile(request);
@@ -331,8 +379,10 @@ public class B2 implements AutoCloseable {
         }
     }
 
-    private boolean shouldBeSmallFile(B2UploadFileRequest request) {
-        return true;
+    private boolean shouldBeSmallFile(B2UploadFileRequest request) throws IOException {
+        // XXX: improve this.  right now it's just a convenient size for my playing with it.
+        //      it should be based on the server's recommendedPartSize.
+        return request.getContentSource().getContentLength() < (10 * MEGABYTES);
     }
 
     private void version(String[] args) {
