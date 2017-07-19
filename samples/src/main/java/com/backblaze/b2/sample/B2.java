@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.sample;
 
+import com.backblaze.b2.client.B2FilePolicy;
 import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.contentHandlers.B2ContentFileWriter;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
@@ -542,17 +543,13 @@ public class B2 implements AutoCloseable {
 
     private void upload_file(String[] args) throws B2Exception, IOException {
         B2UploadFileRequest request = makeUploadRequestFromArgs(args);
-        if (shouldBeSmallFile(request)) {
-            client.uploadSmallFile(request);
-        } else {
-            client.uploadLargeFile(request, getExecutor());
-        }
-    }
 
-    private boolean shouldBeSmallFile(B2UploadFileRequest request) throws IOException {
-        // XXX: improve this.  right now it's just a convenient size for my playing with it.
-        //      it should be based on the server's recommendedPartSize.
-        return request.getContentSource().getContentLength() < (10 * MEGABYTES);
+        final long contentLength = request.getContentSource().getContentLength();
+        if (client.getFilePolicy().shouldBeLargeFile(contentLength)) {
+            client.uploadLargeFile(request, getExecutor());
+        } else {
+            client.uploadSmallFile(request);
+        }
     }
 
     private void version(String[] args) {

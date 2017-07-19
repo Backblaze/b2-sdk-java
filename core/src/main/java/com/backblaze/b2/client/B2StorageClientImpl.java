@@ -111,14 +111,15 @@ public class B2StorageClientImpl implements B2StorageClient {
     }
 
     @Override
+    public B2FilePolicy getFilePolicy() throws B2Exception {
+        return getPartSizes();
+    }
+
+    @Override
     public B2StorageClientWebifier getWebifier() {
         return webifier;
     }
 
-
-    /*forTests!*/ B2ClientConfig getConfig() {
-        return config;
-    }
 
     @Override
     public B2Bucket createBucket(B2CreateBucketRequest request) throws B2Exception {
@@ -138,7 +139,7 @@ public class B2StorageClientImpl implements B2StorageClient {
         final long contentLength = getContentLength(request.getContentSource());
         final B2PartSizes partSizes = getPartSizes();
 
-        if (partSizes.shouldTreatAsLargeFile(contentLength)) {
+        if (partSizes.shouldBeLargeFile(contentLength)) {
             return uploadLargeFileGuts(executor, partSizes, request, contentLength);
         } else {
             return uploadSmallFile(request);

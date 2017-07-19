@@ -61,30 +61,16 @@ import java.util.concurrent.ExecutorService;
  */
 public interface B2StorageClient extends Closeable {
 
-//    /**
-//     * @param accountId the accountId to be used by the authorizer
-//     * @param applicationKey the applicationKey to be used by the authorizer
-//     * @param userAgent the user agent
-//     * @return a new B2StorageClientBuilder with a simple B2AccountAuthorizer
-//     *         which will use b2_authorize_account with the given
-//     *         accountId and applicationKey.
-//     */
-//    static B2StorageClientBuilder builder(String accountId, String applicationKey, String userAgent) {
-//        return B2StorageClientBuilder.builder(accountId, applicationKey, userAgent);
-//    }
-//
-//    /**
-//     * @param config the configuration for the builder.
-//     * @return a new B2StorageClientBuilder with the given config.
-//     */
-//    static B2StorageClientBuilder builder(B2ClientConfig config) {
-//        return B2StorageClientBuilder.builder(config);
-//    }
-
     /**
      * @return the accountId for this client.
      */
     String getAccountId();
+
+    /**
+     * @return an object for answering policy questions, such as
+     *         whether to upload a file as a small or large file.
+     */
+    B2FilePolicy getFilePolicy() throws B2Exception;
 
     /**
      * Creates a new bucket with the given request.

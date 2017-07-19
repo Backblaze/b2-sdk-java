@@ -16,6 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class B2PartSizesTest {
+    private final long GB = 1000 * 1000 * 1000;
     private final B2AccountAuthorization accountAuth = B2TestHelpers.makeAuth(1);
     private final B2PartSizes partSizes = B2PartSizes.from(accountAuth);
     private final long minSize = partSizes.getMinimumPartSize();
@@ -32,12 +33,15 @@ public class B2PartSizesTest {
 
     @Test
     public void testCharacterizingSizes() {
-        assertTrue(!partSizes.isBigEnoughToBeLargeFile(100));
-        assertTrue(partSizes.isBigEnoughToBeLargeFile(100+1));
+        assertTrue(!partSizes.mustBeLargeFile(5 * GB));
+        assertTrue(partSizes.mustBeLargeFile((5 * GB) + 1));
 
-        assertTrue(!partSizes.shouldTreatAsLargeFile(101));
-        assertTrue(!partSizes.shouldTreatAsLargeFile(1999));
-        assertTrue(partSizes.shouldTreatAsLargeFile(2000));
+        assertTrue(!partSizes.couldBeLargeFile(100));
+        assertTrue(partSizes.couldBeLargeFile(100+1));
+
+        assertTrue(!partSizes.shouldBeLargeFile(101));
+        assertTrue(!partSizes.shouldBeLargeFile(1999));
+        assertTrue(partSizes.shouldBeLargeFile(2000));
     }
 
     @Test

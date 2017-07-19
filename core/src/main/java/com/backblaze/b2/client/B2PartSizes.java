@@ -10,7 +10,10 @@ import com.backblaze.b2.util.B2Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 
-class B2PartSizes {
+class B2PartSizes implements B2FilePolicy {
+    @SuppressWarnings("FieldCanBeLocal")
+    private final long MAX_SMALL_FILE_BYTES = 5L * 1000 * 1000 * 1000;
+
     private final long minimumPartSize;
     private final long recommendedPartSize;
 
@@ -32,34 +35,35 @@ class B2PartSizes {
         );
     }
 
-    public long getMinimumPartSize() {
+    long getMinimumPartSize() {
         return minimumPartSize;
     }
 
-    public long getRecommendedPartSize() {
+    long getRecommendedPartSize() {
         return recommendedPartSize;
     }
 
-    /**
-     * Note that this is a minimum requirement.
-     *
-     * @param contentLength the length of some content.
-     * @return true iff the content is large enough to be a large file.
-     */
-    boolean isBigEnoughToBeLargeFile(long contentLength) {
+    @Override
+    public boolean mustBeLargeFile(long contentLength) {
+        return contentLength > MAX_SMALL_FILE_BYTES;
+    }
+
+    @Override
+    public boolean couldBeLargeFile(long contentLength) {
         // this is greater than because there must be at least two parts
         // and the first one must be minimumPartSize and the second must
         // be at least one byte long.
         return contentLength > minimumPartSize;
     }
 
-    boolean shouldTreatAsLargeFile(long contentLength) {
+    @Override
+    public  boolean shouldBeLargeFile(long contentLength) {
         // if we can't make at least two reasonably-sized parts, we should just upload as a small file!
         return contentLength >= (2 * recommendedPartSize);
     }
 
     List<B2PartSpec> pickParts(long contentLength) {
-        B2Preconditions.checkArgument(isBigEnoughToBeLargeFile(contentLength),
+        B2Preconditions.checkArgument(couldBeLargeFile(contentLength),
                 "contentLength=" + contentLength + " is too small to make at least two parts.  minimumPartSize=" + minimumPartSize);
 
         // how many parts should we make?  be sure to not go over the maximum we're allowed!
