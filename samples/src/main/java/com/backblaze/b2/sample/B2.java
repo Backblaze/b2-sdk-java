@@ -13,6 +13,7 @@ import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
+import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
@@ -57,7 +58,7 @@ public class B2 implements AutoCloseable {
                     "    b2 list_buckets\n" +
                     "    b2 list_file_names <bucketName> [<startFileName>] [<maxPerFetch>]  // unlike the python b2 cmd, this will continue fetching, until done.\n" +
                     "    b2 list_file_versions <bucketName> [<startFileName>] [<startFileId>] [<maxPerFetch>]  // unlike the python b2 cmd, this will continue fetching, until done.\n" +
-                    //"    b2 list_parts <largeFileId>\n" +
+                    "    b2 list_parts <largeFileId>\n" +
                     "    b2 list_unfinished_large_files <bucketName>\n" +
                     //"    b2 make_url <fileId>\n" +
                     "    b2 update_bucket <bucketName> [allPublic | allPrivate]\n" +
@@ -136,6 +137,8 @@ public class B2 implements AutoCloseable {
                 b2.list_file_names(remainingArgs);
             } else if ("list_file_versions".equals(command)) {
                 b2.list_file_versions(remainingArgs);
+            } else if ("list_parts".equals(command)) {
+                b2.list_parts(remainingArgs);
             } else if ("list_unfinished_large_files".equals(command)) {
                 b2.list_unfinished_large_files(remainingArgs);
             } else if ("update_bucket".equals(command)) {
@@ -440,6 +443,16 @@ public class B2 implements AutoCloseable {
 
         for (B2FileVersion version : client.unfinishedLargeFiles(bucket.getBucketId())) {
             out.println(version);
+        }
+    }
+
+    private void list_parts(String[] args) throws B2Exception {
+        // <largeFileId>
+        checkArgCount(args, 1);
+        final String largeFileId = args[0];
+
+        for (B2Part part : client.parts(largeFileId)) {
+            out.println(part);
         }
     }
 
