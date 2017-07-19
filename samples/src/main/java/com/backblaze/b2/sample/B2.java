@@ -126,6 +126,8 @@ public class B2 implements AutoCloseable {
                 b2.delete_bucket(remainingArgs);
             } else if ("delete_file_version".equals(command)) {
                 b2.delete_file_version(remainingArgs);
+            } else if ("get_file_info".equals(command)) {
+                b2.get_file_info(remainingArgs);
             } else if ("hide_file".equals(command)) {
                 b2.hide_file(remainingArgs);
             } else if ("list_buckets".equals(command)) {
@@ -347,6 +349,14 @@ public class B2 implements AutoCloseable {
         final String b2Path = args[0];
         final String fileId = args[1];
         client.deleteFileVersion(b2Path, fileId);
+    }
+
+    private void get_file_info(String[] args) throws B2Exception {
+        // <fileId>
+        checkArgCount(args, 1);
+        final String fileId = args[0];
+        final B2FileVersion version = client.getFileInfo(fileId);
+        out.println(version);
     }
 
     private void hide_file(String[] args) throws B2Exception {
