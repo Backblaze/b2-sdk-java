@@ -45,7 +45,7 @@ public class B2 implements AutoCloseable {
 
     private static final String USAGE =
             "USAGE:\n" +
-                    //"    b2 cancel_all_unfinished_large_files <bucketName>\n" +
+                    "    b2 cancel_all_unfinished_large_files <bucketName>\n" +
                     "    b2 cancel_large_file <fileId>\n" +
                     "    b2 create_bucket <bucketName> [allPublic | allPrivate]\n" +
                     "    b2 delete_bucket <bucketName>\n" +
@@ -121,7 +121,9 @@ public class B2 implements AutoCloseable {
         final String command = args[0];
         final String[] remainingArgs = Arrays.copyOfRange(args, 1, args.length);
         try (B2 b2 = new B2()) {
-            if ("cancel_large_file".equals(command)) {
+            if ("cancel_all_unfinished_large_files".equals(command)) {
+                b2.cancel_all_unfinished_large_files(remainingArgs);
+            } else if ("cancel_large_file".equals(command)) {
                 b2.cancel_large_file(remainingArgs);
             } else if ("create_bucket".equals(command)) {
                 b2.create_bucket(remainingArgs);
@@ -328,6 +330,17 @@ public class B2 implements AutoCloseable {
     //
     ////////////////////////////////////////////////////////////////////////
 
+
+    private void cancel_all_unfinished_large_files(String[] args) throws B2Exception {
+        // <bucketName>
+        checkArgCount(args, 1);
+        final String bucketName = args[0];
+        final B2Bucket bucket = getBucketByNameOrDie(bucketName);
+        for (B2FileVersion version : client.unfinishedLargeFiles(bucket.getBucketId())) {
+            out.println("  about to cancel unfinished large file: " + version);
+            client.cancelLargeFile(version.getFileId());
+        }
+    }
 
     private void cancel_large_file(String[] args) throws B2Exception {
         // <largeFileId>
