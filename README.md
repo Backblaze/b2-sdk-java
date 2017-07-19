@@ -178,25 +178,6 @@ I'd like to verify that it's possible to replace the B2WebApiClient implementati
 For developers who are building on the SDK, we have a provided an initial implementation of B2StorageClient which simulates the service.  So far, it has a minimal feature set.  Let us know if you'd like to work on it.  (Actually, it's not in the repo yet.)
 
 
-
-Development TO DOs
-==================
-* remove B2StorageClient.uploadFile().
-  to do that, i need to provide info or a decision procedure for determining whether to use
-  uploadSmallFile or uploadLargeFile.  there's a max size for small files and minimum size
-  for large files.
-* update javadocs
-* any good way to exercise all the exception handling, esp in the WebApiClientImpl?
-* implement a WebApiClient that uses java.net instead of HttpComponents and make sure
-  the SDK can be used without HttpComponents.  to do this, split the SDK into
-  'b2sdk4j-core', 'b2sdk4j-httpclient'.  move the existing builder to 'b2sdk4j-httpclient'.
-  see if there's something common and useful that can be shared in b2sdk4j-core.
-* add parameters for sockets?
-* check public/default/private protection levels! (maybe put all files in one pkg to tighten protections?)
-* continue converting B2 service code to use new sdk.
-* make notes for developers about JVM's TTL for DNS?
-* etc, etc.
-
 Packaging TO DOs
 ================
 * improve javadocs
@@ -204,6 +185,19 @@ Packaging TO DOs
 
 Eventual Development TO DOs
 ===========================
+
+Here are some things we could do someday, in no particular order:
+
+* implement a WebApiClient that uses java.net instead of HttpComponents and make sure
+  the SDK can be used without HttpComponents.
+
+* any good way to exercise all the exception handling, esp in the WebApiClientImpl?
+
+* add parameters for sockets?
+
+* check public/default/private protection levels!
+
+* make notes for developers about JVM's TTL for DNS?
 
 * provide easy support for resuming iterables.
 

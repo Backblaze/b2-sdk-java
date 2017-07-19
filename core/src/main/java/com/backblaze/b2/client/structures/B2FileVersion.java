@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.structures;
 
+import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.json.B2Json;
 
 import java.util.Map;
@@ -65,6 +66,10 @@ public class B2FileVersion {
 
     public String getContentSha1() {
         return contentSha1;
+    }
+
+    public String getLargeFileSha1OrNull() {
+        return fileInfo.get(B2Headers.LARGE_FILE_SHA1_INFO_NAME);
     }
 
     public Map<String, String> getFileInfo() {

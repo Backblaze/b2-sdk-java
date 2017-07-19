@@ -5,6 +5,7 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
+import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.structures.B2FileVersion;
@@ -109,12 +110,21 @@ class B2LargeFileUploader {
                                                                              long contentLength,
                                                                              B2UploadFileRequest request) throws B2Exception {
         throwIfMismatch("fileName", request.getFileName(), largeFileVersion.getFileName());
-        throwIfMismatch("contentLength", Long.toString(contentLength), Long.toString(largeFileVersion.getContentLength()));
-        throwIfMismatch("sha1", getSha1FromRequest(request), largeFileVersion.getContentSha1());
+        throwIfMismatch("sha1", getSha1FromRequest(request), largeFileVersion.getLargeFileSha1OrNull());
         if (!request.getContentType().equals(B2ContentTypes.B2_AUTO)) {
             throwIfMismatch("contentType", request.getContentType(), largeFileVersion.getContentType());
         }
-        throwIfMismatch("fileInfo", toString(request.getFileInfo()), toString(largeFileVersion.getFileInfo()));
+
+        // we can't check the contentLength because it's not set on large files until their finished.  :(
+        // throwIfMismatch("contentLength", Long.toString(contentLength), Long.toString(largeFileVersion.getContentLength()));
+
+
+        // LARGE_FILE_SHA1 is a bit "special" since the SDK quietly adds it for the user.
+        // we've checked LARGE_FILE_SHA1 above, so here, remove it and check any other entries against the request.
+        final Map<String,String> infos = new TreeMap<>();
+        infos.putAll(largeFileVersion.getFileInfo());
+        infos.remove(B2Headers.LARGE_FILE_SHA1);
+        throwIfMismatch("fileInfo", toString(request.getFileInfo()), toString(infos));
     }
 
     private static void throwIfMismatch(String name, String contentSourceValue, String largeFileVersionValue) throws B2LocalException {

@@ -6,6 +6,7 @@ package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
+import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2InternalErrorException;
 import com.backblaze.b2.client.exceptions.B2LocalException;
@@ -198,27 +199,6 @@ public class B2LargeFileUploaderTest {
     }
 
     @Test
-    public void testThrowIfLargeFileVersionDoesntSeemToMatchRequest_mismatchingContentLength() throws IOException, B2Exception {
-        final B2UploadFileRequest request = B2UploadFileRequest
-                .builder(bucketId(1), fileName(2), B2ContentTypes.APPLICATION_OCTET, contentSource)
-                .build();
-        final B2FileVersion largeFileVersion = new B2FileVersion(
-                fileId(1),
-                fileName(2),
-                contentSource.getContentLength() + 1,  // this is the mismatch!
-                B2ContentTypes.APPLICATION_OCTET,
-                null, // sha1
-                B2Collections.mapOf(),
-                "action",
-                1234
-        );
-
-        thrown.expect(B2LocalException.class);
-        thrown.expectMessage("contentSource has contentLength '2000', but largeFileVersion has '2001'");
-        B2LargeFileUploader.throwIfLargeFileVersionDoesntSeemToMatchRequest(largeFileVersion, contentSource.getContentLength(), request);
-    }
-
-    @Test
     public void testThrowIfLargeFileVersionDoesntSeemToMatchRequest_mismatchingSha1() throws IOException, B2Exception {
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(2), B2ContentTypes.APPLICATION_OCTET, contentSource)
@@ -228,8 +208,8 @@ public class B2LargeFileUploaderTest {
                 fileName(2),
                 contentSource.getContentLength(),
                 B2ContentTypes.APPLICATION_OCTET,
-                makeSha1(1),  // this is the mismatch!  (contentSource has null)
-                B2Collections.mapOf(),
+                null, // sha1 of the file (always null for large files.  they use LARGE_FILE_SHA1!)
+                B2Collections.mapOf(B2Headers.LARGE_FILE_SHA1_INFO_NAME, makeSha1(1)),
                 "action",
                 1234
         );

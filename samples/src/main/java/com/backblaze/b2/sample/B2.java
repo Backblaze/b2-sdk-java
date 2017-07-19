@@ -4,7 +4,6 @@
  */
 package com.backblaze.b2.sample;
 
-import com.backblaze.b2.client.B2FilePolicy;
 import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.contentHandlers.B2ContentFileWriter;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
@@ -54,6 +53,7 @@ public class B2 implements AutoCloseable {
                     "    b2 delete_file_version <fileName> <fileId>\n" +
                     "    b2 download_file_by_id [--noProgress] <fileId> <localFileName>\n" +
                     "    b2 download_file_by_name [--noProgress] <bucketName> <fileName> <localFileName>\n" +
+                    "    b2 finish_uploading_large_file [--noProgress] [--threads N] <bucketName> <largeFileId> <localFileName>\n" +
                     "    b2 get_file_info <fileId>\n" +
                     //"    b2 help [commandName]\n" +
                     "    b2 hide_file <bucketName> <fileName>\n" +
@@ -66,10 +66,9 @@ public class B2 implements AutoCloseable {
                     "    b2 update_bucket <bucketName> [allPublic | allPrivate]\n" +
                     "    b2 upload_file [--sha1 <sha1sum>] [--contentType <contentType>] [--info <key>=<value>]* \\\n" +
                     "        [--noProgress] [--threads N] <bucketName> <localFilePath> <b2FileName>\n" +
+                    "    b2 upload_large_file [--sha1 <sha1sum>] [--contentType <contentType>] [--info <key>=<value>]* \\\n" +
+                    "        [--noProgress] [--threads N] <bucketName> <localFilePath> <b2FileName>\n" +
                     "    b2 version\n";
-
-    private static final long KILOBYTES = 1000;
-    private static final long MEGABYTES = 1000 * KILOBYTES;
 
     // where we should write normal output to.
     private final PrintStream out;
@@ -136,6 +135,8 @@ public class B2 implements AutoCloseable {
                 b2.download_file_by_id(remainingArgs);
             } else if ("download_file_by_name".equals(command)) {
                 b2.download_file_by_name(remainingArgs);
+            } else if ("finish_uploading_large_file".equals(command)) {
+                b2.finish_uploading_large_file(remainingArgs);
             } else if ("get_file_info".equals(command)) {
                 b2.get_file_info(remainingArgs);
             } else if ("hide_file".equals(command)) {
@@ -153,7 +154,9 @@ public class B2 implements AutoCloseable {
             } else if ("update_bucket".equals(command)) {
                 b2.update_bucket(remainingArgs);
             } else if ("upload_file".equals(command)) {
-                b2.upload_file(remainingArgs);
+                b2.upload_file(remainingArgs, false);
+            } else if ("upload_large_file".equals(command)) {
+                b2.upload_file(remainingArgs, true);
             } else if ("version".equals(command)) {
                 b2.version(remainingArgs);
             } else {
@@ -259,6 +262,9 @@ public class B2 implements AutoCloseable {
             final String arg = args[iArg];
             if ("--noProgress".equals(arg)) {
                 showProgress = false;
+            } else if ("--threads".equals(arg)) {
+                iArg++;
+                numThreads = getPositiveIntArgOrDie(args, arg, iArg, iLastArg);
             } else {
                 usageAndExit("unexpected argument '" + arg + "'");
             }
@@ -279,6 +285,18 @@ public class B2 implements AutoCloseable {
         }
 
         usageAndExit("can't find bucket named '" + bucketName + "'");
+        throw new RuntimeException("usageAndExit never returns!");
+    }
+
+    private B2FileVersion getUnfinishedLargeFileOrDie(String bucketId,
+                                                      String largeFileId) throws B2Exception {
+        for (B2FileVersion version : client.unfinishedLargeFiles(bucketId)) {
+            if (version.getFileId().equals(largeFileId)) {
+                return version;
+            }
+        }
+
+        usageAndExit("can't find unfinished large file " + largeFileId);
         throw new RuntimeException("usageAndExit never returns!");
     }
 
@@ -441,13 +459,43 @@ public class B2 implements AutoCloseable {
         client.downloadByName(bucketName, b2Path, sink);
     }
 
+    private void finish_uploading_large_file(String[] args) throws B2Exception, IOException {
+        // [--noProgress] [--threads N] <bucketName> <largeFileId> <localPath>
+        checkArgCount(args, 3, 5);
+        final int iLastArg = args.length - 1;
+        final String bucketName = args[iLastArg-2];
+        final String largeFileId = args[iLastArg-1];
+        final String localPath = args[iLastArg];
+
+        handleCommonArgsOrDie(args, 0, iLastArg-3);
+
+        final B2Bucket bucket = getBucketByNameOrDie(bucketName);
+        final B2FileVersion largeFileVersion = getUnfinishedLargeFileOrDie(bucket.getBucketId(), largeFileId);
+
+        final B2ContentSource source = B2FileContentSource
+                .builder(new File(localPath))
+                .setSha1(largeFileVersion.getContentSha1())
+                .build();
+
+        B2UploadFileRequest request = B2UploadFileRequest
+                .builder(bucket.getBucketId(),
+                        largeFileVersion.getFileName(),
+                        largeFileVersion.getContentType(),
+                        source)
+                .setCustomFields(largeFileVersion.getFileInfo())
+                .build();
+
+        client.finishUploadingLargeFile(largeFileVersion, request, getExecutor());
+    }
+
+
     private void get_file_info(String[] args) throws B2Exception {
         // <fileId>
         checkArgCount(args, 1);
         final String fileId = args[0];
         final B2FileVersion version = client.getFileInfo(fileId);
         out.println(version);
-        out.println("fileInfo:  " + version.getFileInfo());
+        out.println("  fileInfo:  " + version.getFileInfo());
     }
 
     private void hide_file(String[] args) throws B2Exception {
@@ -528,6 +576,7 @@ public class B2 implements AutoCloseable {
 
         for (B2FileVersion version : client.unfinishedLargeFiles(bucket.getBucketId())) {
             out.println(version);
+            out.println("  fileInfo:  " + version.getFileInfo());
         }
     }
 
@@ -541,11 +590,12 @@ public class B2 implements AutoCloseable {
         }
     }
 
-    private void upload_file(String[] args) throws B2Exception, IOException {
+    private void upload_file(String[] args,
+                             boolean forceLarge) throws B2Exception, IOException {
         B2UploadFileRequest request = makeUploadRequestFromArgs(args);
 
         final long contentLength = request.getContentSource().getContentLength();
-        if (client.getFilePolicy().shouldBeLargeFile(contentLength)) {
+        if (forceLarge || client.getFilePolicy().shouldBeLargeFile(contentLength)) {
             client.uploadLargeFile(request, getExecutor());
         } else {
             client.uploadSmallFile(request);
