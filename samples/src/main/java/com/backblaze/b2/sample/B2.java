@@ -53,7 +53,7 @@ public class B2 implements AutoCloseable {
                     //"    b2 download_file_by_name [--noProgress] <bucketName> <fileName> <localFileName>\n" +
                     //"    b2 get_file_info <fileId>\n" +
                     //"    b2 help [commandName]\n" +
-                    //"    b2 hide_file <bucketName> <fileName>\n" +
+                    "    b2 hide_file <bucketName> <fileName>\n" +
                     "    b2 list_buckets\n" +
                     "    b2 list_file_names <bucketName> [<startFileName>] [<maxPerFetch>]  // unlike the python b2 cmd, this will continue fetching, until done.\n" +
                     "    b2 list_file_versions <bucketName> [<startFileName>] [<startFileId>] [<maxPerFetch>]  // unlike the python b2 cmd, this will continue fetching, until done.\n" +
@@ -124,6 +124,8 @@ public class B2 implements AutoCloseable {
                 b2.create_bucket(remainingArgs);
             } else if ("delete_bucket".equals(command)) {
                 b2.delete_bucket(remainingArgs);
+            } else if ("hide_file".equals(command)) {
+                b2.hide_file(remainingArgs);
             } else if ("list_buckets".equals(command)) {
                 b2.list_buckets(remainingArgs);
             } else if ("list_file_names".equals(command)) {
@@ -335,6 +337,15 @@ public class B2 implements AutoCloseable {
         checkArgCount(args, 1);
         final B2Bucket bucket = getBucketByNameOrDie(args[0]);
         client.deleteBucket(bucket.getBucketId());
+    }
+
+    private void hide_file(String[] args) throws B2Exception {
+        // <bucketName> <fileName>
+        checkArgCount(args, 2);
+        final String bucketName = args[0];
+        final String b2Path = args[1];
+        final B2Bucket bucket = getBucketByNameOrDie(bucketName);
+        client.hideFile(bucket.getBucketId(), b2Path);
     }
 
     private void list_buckets(String[] args) throws B2Exception {
