@@ -5,6 +5,7 @@
 package com.backblaze.b2.sample;
 
 import com.backblaze.b2.client.B2StorageClient;
+import com.backblaze.b2.client.contentHandlers.B2ContentFileWriter;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2FileContentSource;
@@ -50,8 +51,8 @@ public class B2 implements AutoCloseable {
                     "    b2 create_bucket <bucketName> [allPublic | allPrivate]\n" +
                     "    b2 delete_bucket <bucketName>\n" +
                     "    b2 delete_file_version <fileName> <fileId>\n" +
-                    //"    b2 download_file_by_id [--noProgress] <fileId> <localFileName>\n" +
-                    //"    b2 download_file_by_name [--noProgress] <bucketName> <fileName> <localFileName>\n" +
+                    "    b2 download_file_by_id [--noProgress] <fileId> <localFileName>\n" +
+                    "    b2 download_file_by_name [--noProgress] <bucketName> <fileName> <localFileName>\n" +
                     "    b2 get_file_info <fileId>\n" +
                     //"    b2 help [commandName]\n" +
                     "    b2 hide_file <bucketName> <fileName>\n" +
@@ -68,7 +69,6 @@ public class B2 implements AutoCloseable {
 
     private static final long KILOBYTES = 1000;
     private static final long MEGABYTES = 1000 * KILOBYTES;
-    //private static final long GIGABYTES = 1000 * MEGABYTES;
 
     // where we should write normal output to.
     private final PrintStream out;
@@ -131,6 +131,10 @@ public class B2 implements AutoCloseable {
                 b2.delete_bucket(remainingArgs);
             } else if ("delete_file_version".equals(command)) {
                 b2.delete_file_version(remainingArgs);
+            } else if ("download_file_by_id".equals(command)) {
+                b2.download_file_by_id(remainingArgs);
+            } else if ("download_file_by_name".equals(command)) {
+                b2.download_file_by_name(remainingArgs);
             } else if ("get_file_info".equals(command)) {
                 b2.get_file_info(remainingArgs);
             } else if ("hide_file".equals(command)) {
@@ -182,6 +186,7 @@ public class B2 implements AutoCloseable {
         checkArgCount(args, exactCount, exactCount);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void checkArgCountIsAtLeast(String[] args,
                                         int minCount) {
         checkArgCount(args, minCount, Integer.MAX_VALUE);
@@ -203,6 +208,7 @@ public class B2 implements AutoCloseable {
         }
         return args[iArg];
     }
+    @SuppressWarnings("SameParameterValue")
     private Integer getPositiveIntOrNull(String[] args,
                                          String arg,
                                          int iArg) {
@@ -240,6 +246,22 @@ public class B2 implements AutoCloseable {
             usageAndExit("argument for '" + arg + "' must be a POSITIVE integer");
         }
         return value;
+    }
+
+    /**
+     * processes arguments from args[iFirstArg], through args[iLastArg], inclusive,
+     * setting member variables as needed or does usageAndExit if the argument is unexpected.
+     */
+    @SuppressWarnings("SameParameterValue")
+    private void handleCommonArgsOrDie(String[] args, int iFirstArg, int iLastArg) {
+        for (int iArg = iFirstArg; iArg <= iLastArg; iArg++) {
+            final String arg = args[iArg];
+            if ("--noProgress".equals(arg)) {
+                showProgress = false;
+            } else {
+                usageAndExit("unexpected argument '" + arg + "'");
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -382,6 +404,40 @@ public class B2 implements AutoCloseable {
         final String b2Path = args[0];
         final String fileId = args[1];
         client.deleteFileVersion(b2Path, fileId);
+    }
+
+    private void download_file_by_id(String[] args) throws B2Exception {
+        // [--noProgress] <fileId> <localFileName>
+        checkArgCount(args, 2, 3);
+        final int iLastArg = args.length - 1;
+        final String fileId = args[iLastArg-1];
+        final String localFileName = args[iLastArg];
+
+        handleCommonArgsOrDie(args, 0, iLastArg-2);
+
+        final B2ContentFileWriter sink = B2ContentFileWriter
+                .builder(new File(localFileName))
+                .setVerifySha1ByRereadingFromDestination(true)
+                .build();
+        client.downloadById(fileId, sink);
+    }
+
+    private void download_file_by_name(String[] args) throws B2Exception {
+        // [--noProgress] <bucketName> <fileName> <localFileName>
+        checkArgCount(args, 3, 4);
+
+        final int iLastArg = args.length - 1;
+        final String bucketName = args[iLastArg-2];
+        final String b2Path = args[iLastArg-1];
+        final String localFileName = args[iLastArg];
+
+        handleCommonArgsOrDie(args, 0, iLastArg-3);
+
+        final B2ContentFileWriter sink = B2ContentFileWriter
+                .builder(new File(localFileName))
+                .setVerifySha1ByRereadingFromDestination(true)
+                .build();
+        client.downloadByName(bucketName, b2Path, sink);
     }
 
     private void get_file_info(String[] args) throws B2Exception {
