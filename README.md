@@ -180,7 +180,6 @@ For developers who are building on the SDK, we have a provided an initial implem
 
 Packaging TO DOs
 ================
-* improve javadocs
 * when we're ready, make the b2sdk4j repository public & switch the build to travis-ci.org
 
 Eventual Development TO DOs
@@ -191,7 +190,11 @@ Here are some things we could do someday, in no particular order:
 * implement a WebApiClient that uses java.net instead of HttpComponents and make sure
   the SDK can be used without HttpComponents.
 
-* any good way to exercise all the exception handling, esp in the WebApiClientImpl?
+* add a progress listener to upload calls so clients can track progress. (maybe downloads too.)
+  possibly as a wrapper on the contentSource, to track the bytes being pulled.
+  that's not 100% accurate, but it should be a lot simpler than hooking into the B2WebApiClient.
+
+* any good way to exercise all the exception handling in B2WebApiClient implementations?
 
 * add parameters for sockets?
 
