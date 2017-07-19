@@ -244,6 +244,10 @@ Eventual Development TO DOs
             }
         }
 
+  * teach B2ContentFileWriter to use a temporary file name during download
+    and to not move the file until the verification is complete.  meanwhile,
+    write to a .tmp file yourself and move to the real name only after success.
+
 Potential future features
 =========================
   * Should we have some other higher-level operations in the SDK?
