@@ -357,6 +357,7 @@ public class B2 implements AutoCloseable {
         final String fileId = args[0];
         final B2FileVersion version = client.getFileInfo(fileId);
         out.println(version);
+        out.println("fileInfo:  " + version.getFileInfo());
     }
 
     private void hide_file(String[] args) throws B2Exception {
