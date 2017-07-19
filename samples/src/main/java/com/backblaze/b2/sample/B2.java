@@ -11,6 +11,7 @@ import com.backblaze.b2.client.contentSources.B2FileContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2FileVersion;
+import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
@@ -54,7 +55,7 @@ public class B2 implements AutoCloseable {
                     //"    b2 help [commandName]\n" +
                     //"    b2 hide_file <bucketName> <fileName>\n" +
                     "    b2 list_buckets\n" +
-                    //"    b2 list_file_names <bucketName> [<startFileName>] [<maxToShow>]\n" +
+                    "    b2 list_file_names <bucketName> [<startFileName>] [<maxPerFetch>]  // unlike the python b2 cmd, this will continue fetching, until done.\n" +
                     "    b2 list_file_versions <bucketName> [<startFileName>] [<startFileId>] [<maxPerFetch>]  // unlike the python b2 cmd, this will continue fetching, until done.\n" +
                     //"    b2 list_parts <largeFileId>\n" +
                     //"    b2 list_unfinished_large_files <bucketName>\n" +
@@ -125,6 +126,8 @@ public class B2 implements AutoCloseable {
                 b2.delete_bucket(remainingArgs);
             } else if ("list_buckets".equals(command)) {
                 b2.list_buckets(remainingArgs);
+            } else if ("list_file_names".equals(command)) {
+                b2.list_file_names(remainingArgs);
             } else if ("list_file_versions".equals(command)) {
                 b2.list_file_versions(remainingArgs);
             } else if ("update_bucket".equals(command)) {
@@ -340,6 +343,31 @@ public class B2 implements AutoCloseable {
             out.println(bucket);
         }
     }
+
+    private void list_file_names(String[] args) throws B2Exception {
+        // <bucketName> [<startFileName>] [<maxPerFetch >]
+        checkArgCount(args, 1, 3);
+
+        final String bucketName = args[0];
+        final String startFileName = getArgOrNull(args, 1);
+        final Integer maxPerFetch = getPositiveIntOrNull(args, "maxPerFetch", 2);
+
+        final B2Bucket bucket = getBucketByNameOrDie(bucketName);
+
+        final B2ListFileNamesRequest.Builder builder = B2ListFileNamesRequest
+                .builder(bucket.getBucketId())
+                .setMaxFileCount(maxPerFetch);
+        if (startFileName != null) {
+            builder.setStartFileName(startFileName);
+        }
+
+        final B2ListFileNamesRequest request = builder.build();
+
+        for (B2FileVersion version : client.fileNames(request)) {
+            out.println(version);
+        }
+    }
+
 
     private void list_file_versions(String[] args) throws B2Exception {
         // list_file_versions <bucketName> [<startFileName> <startFileId>] [<maxPerFetch>]
