@@ -133,20 +133,6 @@ public class B2StorageClientImpl implements B2StorageClient {
     }
 
     @Override
-    public B2FileVersion uploadFile(B2UploadFileRequest request,
-                                    ExecutorService executor) throws B2Exception {
-        // note that we assume that the contents of the B2ContentSource don't change during the upload.
-        final long contentLength = getContentLength(request.getContentSource());
-        final B2PartSizes partSizes = getPartSizes();
-
-        if (partSizes.shouldBeLargeFile(contentLength)) {
-            return uploadLargeFileGuts(executor, partSizes, request, contentLength);
-        } else {
-            return uploadSmallFile(request);
-        }
-    }
-
-    @Override
     public B2FileVersion finishUploadingLargeFile(B2FileVersion fileVersion,
                                                   B2UploadFileRequest request,
                                                   ExecutorService executor) throws B2Exception {

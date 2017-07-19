@@ -123,20 +123,6 @@ public interface B2StorageClient extends Closeable {
     }
 
     /**
-     * Uploads the specified content.  If the content is large enough,
-     * it will be uploaded as separate parts to form a B2 large file.
-     *
-     * @param request describes the content to upload and extra metadata about it.
-     * @param executor the executor to use for uploading parts of large files in
-     *                 parallel. the caller retains ownership of the executor and
-     *                 is responsible for shutting it down.
-     * @return the B2FileVersion that represents it.
-     * @throws B2Exception if there's any trouble.
-     */
-    B2FileVersion uploadFile(B2UploadFileRequest request,
-                             ExecutorService executor) throws B2Exception;
-
-    /**
      * Uploads the specified content as a normal B2 file.
      * The file must be smaller than the maximum file size (5 GB).
      *

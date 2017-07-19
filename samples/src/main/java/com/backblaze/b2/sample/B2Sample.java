@@ -7,7 +7,6 @@ package com.backblaze.b2.sample;
 import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.contentHandlers.B2ContentFileWriter;
 import com.backblaze.b2.client.contentHandlers.B2ContentMemoryWriter;
-import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.contentSources.B2ByteArrayContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
@@ -15,19 +14,11 @@ import com.backblaze.b2.client.contentSources.B2FileContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketTypes;
-import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
-import com.backblaze.b2.client.structures.B2CreateBucketRequest;
-import com.backblaze.b2.client.structures.B2DeleteBucketRequest;
-import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
-import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
-import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
-import com.backblaze.b2.client.structures.B2HideFileRequest;
 import com.backblaze.b2.client.structures.B2LifecycleRule;
-import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
@@ -37,7 +28,6 @@ import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2ExecutorUtils;
 import com.backblaze.b2.util.B2Preconditions;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -104,7 +94,7 @@ public class B2Sample {
                         .builder(bucketId, fileName, B2ContentTypes.B2_AUTO, source)
                         .setCustomField("color", "blue")
                         .build();
-                file1 = client.uploadFile(request, executor);
+                file1 = client.uploadSmallFile(request);
                 writer.println("uploaded " + file1);
             } finally {
                 //noinspection ResultOfMethodCallIgnored
@@ -122,7 +112,7 @@ public class B2Sample {
                     .builder(bucketId, fileName, B2ContentTypes.B2_AUTO, source)
                     .setCustomField("color", "red")
                     .build();
-            file2 = client.uploadFile(request, executor);
+            file2 = client.uploadSmallFile(request);
             writer.println("uploaded " + file2);
         }
 

@@ -48,7 +48,6 @@ import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
-import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2ExecutorUtils;
@@ -70,14 +69,12 @@ import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.client.B2TestHelpers.bucketName;
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
-import static com.backblaze.b2.client.B2TestHelpers.makeAuth;
 import static com.backblaze.b2.client.B2TestHelpers.makePart;
 import static com.backblaze.b2.client.B2TestHelpers.makeSha1;
 import static com.backblaze.b2.client.B2TestHelpers.makeVersion;
 import static com.backblaze.b2.util.B2Collections.listOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -657,16 +654,7 @@ public class B2StorageClientImplTest {
 //    }
 
     @Test
-    public void testSmallFileUploadDirectly() throws B2Exception, IOException {
-        checkSmallFileUpload(false);
-    }
-
-    @Test
-    public void testSmallFileUploadThroughSmartUpload() throws B2Exception, IOException {
-        checkSmallFileUpload(true);
-    }
-
-    private void checkSmallFileUpload(boolean throughSmartApi) throws B2Exception, IOException {
+    public void testSmallFileUpload() throws B2Exception, IOException {
         // arrange for an uploadUrl
         final B2GetUploadUrlRequest uploadUrlRequest = new B2GetUploadUrlRequest(bucketId(1));
         final B2UploadUrlResponse uploadUrl = new B2UploadUrlResponse(bucketId(1), "uploadUrl", "uploadAuthToken");
@@ -682,12 +670,7 @@ public class B2StorageClientImplTest {
                 .setCustomField("color", "blue")
                 .build();
 
-        if (throughSmartApi) {
-            client.uploadFile(request, executor);
-            verify(contentSource, times(1)).getContentLength();
-        } else {
-            client.uploadSmallFile(request);
-        }
+        client.uploadSmallFile(request);
 
         verifyNoMoreInteractions(contentSource); // the webifier is a mock, so it doesn't do normal things
 
@@ -703,38 +686,7 @@ public class B2StorageClientImplTest {
     }
 
     @Test
-    public void testUploadWithExceptionInGetContentLength() throws B2Exception, IOException {
-
-        // arrange for an uploadUrl
-        final B2GetUploadUrlRequest uploadUrlRequest = new B2GetUploadUrlRequest(bucketId(1));
-        final B2UploadUrlResponse uploadUrl = new B2UploadUrlResponse(bucketId(1), "uploadUrl", "uploadAuthToken");
-        when(webifier.getUploadUrl(anyObject(), eq(uploadUrlRequest))).thenReturn(uploadUrl);
-
-        // make a content source that's small enough to be a small file.
-        final B2ContentSource contentSource = mock(B2ContentSource.class);
-        when(contentSource.getContentLength()).thenThrow(new IOException("testing!"));
-
-        final B2UploadFileRequest request = B2UploadFileRequest
-                .builder(bucketId(1), fileName(1), B2ContentTypes.TEXT_PLAIN, contentSource)
-                .build();
-
-        thrown.expect(B2Exception.class);
-        thrown.expectMessage("failed to get contentLength from source: java.io.IOException: testing!");
-
-        client.uploadFile(request, executor);
-    }
-
-    @Test
-    public void testLargeFileUploadDirectly() throws B2Exception, IOException {
-        checkLargeFileUpload(false);
-    }
-
-    @Test
-    public void testLargeFileUploadThroughSmartUpload() throws B2Exception, IOException {
-        checkLargeFileUpload(true);
-    }
-
-    private void checkLargeFileUpload(boolean throughSmartApi) throws IOException, B2Exception {
+    public void testLargeFileUpload() throws B2Exception, IOException {
         // make a content source that's barely big enough to be a large file.
         final long contentLen = (2 * ACCOUNT_AUTH.getRecommendedPartSize());
         final B2ContentSource contentSource = mock(B2ContentSource.class);
@@ -762,11 +714,7 @@ public class B2StorageClientImplTest {
         final B2FinishLargeFileRequest finishRequest = new B2FinishLargeFileRequest(largeFileVersion.getFileId(), listOf(B2TestHelpers.SAMPLE_SHA1));
         when(webifier.finishLargeFile(anyObject(), eq(finishRequest))).thenReturn(largeFileVersion);
 
-        if (throughSmartApi) {
-            client.uploadFile(request, executor);
-        } else {
-            client.uploadLargeFile(request, executor);
-        }
+        client.uploadLargeFile(request, executor);
 
         verify(contentSource, times(1)).getContentLength();
         verify(contentSource, times(2)).getSha1OrNull(); // once above while making the startLargeRequest for the mock & once for real
