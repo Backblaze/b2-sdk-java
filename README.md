@@ -16,7 +16,10 @@ STATUS
 
 As a whole, b2sdk4j is currently **ALPHA** software.
 
-The core library is being used internally at Backblaze for new Java B2 client code.  For production code, we use a different implementation of B2WebApiClient to match the rest of our system.  We are in the process of slowly transitioning our existing code to the library.
+The core library is being used internally at Backblaze for new Java B2
+client code.  For production code, we use a different implementation
+of B2WebApiClient to match the rest of our system.  We are in the
+process of slowly transitioning our existing code to the library.
 
 We don't currently expect to make very many incompatible changes to the API or behavior.
 
