@@ -11,6 +11,11 @@ INTRO
 b2sdk4j is a Java sdk for B2 clients.  See the [B2 API docs][] to get some
 context.
 
+STATUS
+======
+
+This library is currently <span style="color:blue">**ALPHA**</span> software.  That said, we don't currently expect to make many incompatible changes to the API or behavior.
+
 FEATURES
 ========
 
