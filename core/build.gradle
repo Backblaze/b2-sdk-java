@@ -3,7 +3,7 @@
 
 apply from: '../common.gradle'
 
-String jarName = 'b2sdk4j-core'
+String jarName = 'b2-sdk-core'
 
 jar {
     baseName jarName

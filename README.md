@@ -1,20 +1,20 @@
 
 | Status |
 | :------------ |
-| [![Build Status](https://travis-ci.org/Backblaze/b2sdk4j.svg?branch=master)](https://travis-ci.org/Backblaze/b2sdk4j) |
+| [![Build Status](https://travis-ci.org/Backblaze/b2-sdk-java.svg?branch=master)](https://travis-ci.org/Backblaze/b2-sdk-java) |
 | [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://www.backblaze.com/using_b2_code.html)
 
 
 INTRO
 =====
 
-b2sdk4j is a Java sdk for B2 clients.  See the [B2 API docs][] to get some
+b2-sdk-java is a Java sdk for B2 clients.  See the [B2 API docs][] to get some
 context.
 
 STATUS
 ======
 
-As a whole, b2sdk4j is currently **ALPHA** software.
+As a whole, b2-sdk-java is currently **ALPHA** software.
 
 The core library is being used internally at Backblaze for new Java B2
 client code.  For production code, we use a different implementation
@@ -42,9 +42,9 @@ FEATURES
 * The SDK requires Java 8.
 
 * The SDK provides three jars:
-  * **b2sdk4j-core** provides almost all of the SDK.  it does not contain the code for making HTTP requests (B2WebApiClient).
-  * **b2sdk4j-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.  It is separate so that if you provide your own B2WebApiClient, you won't need to pull in HttpClient or its dependencies.**
-  * **b2sdk4j-samples** has some samples.
+  * **b2-sdk-core** provides almost all of the SDK.  it does not contain the code for making HTTP requests (B2WebApiClient).
+  * **b2-sdk-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.  It is separate so that if you provide your own B2WebApiClient, you won't need to pull in HttpClient or its dependencies.**
+  * **b2-sdk-samples** has some samples.
 
 SAMPLE
 ======
@@ -64,7 +64,7 @@ SAMPLE
     here's a sample command line to run (after replacing 'N.N.N' with the version
     of the sdk you're using):
 
-    java -cp b2sdk4j-samples-N.N.N.jar:b2sdk4j-httpclient-N.N.N.jar:b2sdk4j-core-0.0.1.jar:httpclient-4.5.3.jar:httpcore-4.4.4.jar:commons-logging-1.2.jar  com.backblaze.b2.sample.B2Sample
+    java -cp b2-sdk-samples-N.N.N.jar:b2-sdk-httpclient-N.N.N.jar:b2-sdk-core-0.0.1.jar:httpclient-4.5.3.jar:httpcore-4.4.4.jar:commons-logging-1.2.jar  com.backblaze.b2.sample.B2Sample
 
 
 
@@ -172,7 +172,7 @@ The top-most layer consists of the B2StorageClientImpl and the various Request a
 
 The middle layer, consists of the B2StorageClientWebifier.  The webifier's job is to translate logical B2 API calls (such as list file names, or upload a file) into the appropriate HTTP requests and to interpret the responses.  The webifier isolates the B2StorageClientImpl from doing this mapping.  We stub the webifier layer to test B2StorageClientImpl.
 
-The bottom layer is the B2WebApiClient.  It provides a few simple methods, such as postJsonReturnJson(), postDataReturnJson(), and getContent().  We stub B2WebApiClient to test the B2StorageClientImpl.  This layer isolates the rest of the SDK from the HTTPS implementation so that developers can provide their own web client if they want.  The b2sdk4j-httpclient jar provides an implementation that uses the [Apache HttpClient][].
+The bottom layer is the B2WebApiClient.  It provides a few simple methods, such as postJsonReturnJson(), postDataReturnJson(), and getContent().  We stub B2WebApiClient to test the B2StorageClientImpl.  This layer isolates the rest of the SDK from the HTTPS implementation so that developers can provide their own web client if they want.  The b2-sdk-httpclient jar provides an implementation that uses the [Apache HttpClient][].
 
 One of the main helpers is our B2Json class.  It uses annotations on class members
 and constructors to convert between Java classes and JSON.  (We can discuss why we
@@ -189,10 +189,6 @@ I'd like to verify that it's possible to replace the B2WebApiClient implementati
 
 For developers who are building on the SDK, we have a provided an initial implementation of B2StorageClient which simulates the service.  So far, it has a minimal feature set.  Let us know if you'd like to work on it.  (Actually, it's not in the repo yet.)
 
-
-Packaging TO DOs
-================
-* when we're ready, make the b2sdk4j repository public & switch the build to travis-ci.org
 
 Eventual Development TO DOs
 ===========================

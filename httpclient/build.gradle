@@ -16,7 +16,7 @@ dependencies {
 }
 
 
-String jarName = 'b2sdk4j-httpclient'
+String jarName = 'b2-sdk-httpclient'
 
 jar {
     baseName jarName
