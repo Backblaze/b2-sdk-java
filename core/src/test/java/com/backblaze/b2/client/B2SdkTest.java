@@ -12,7 +12,7 @@ public class B2SdkTest {
     @Test
     public void testName() {
         // this should be quite stable!
-        assertEquals("b2sdk4j", B2Sdk.getName());
+        assertEquals("b2-sdk-java", B2Sdk.getName());
     }
 
     @Test

@@ -6,7 +6,7 @@ package com.backblaze.b2.client.exceptions;
 
 /**
  * B2Exception is a checked exception class that's the base class for
- * all B2-specific exceptions thrown by b2sdk4j.
+ * all B2-specific exceptions thrown by b2-sdk-java.
  */
 public class B2Exception extends Exception {
     private final String code;

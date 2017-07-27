@@ -10,7 +10,7 @@ public interface B2Sdk {
      *         it's a string that matches [a-zA-Z][-_.a-zA-Z0-9]*
      */
     static String getName() {
-        return "b2sdk4j";
+        return "b2-sdk-java";
     }
 
     /**
