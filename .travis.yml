@@ -58,7 +58,7 @@ script:
   #
 
   - b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
-  - b2 upload_file --contentType application/octet b2-sdk-java build/$OUTPUT_ZIP builds/$OUTPUT_ZIP
+  - b2 upload_file --contentType application/octet the-b2-sdk-java build/$OUTPUT_ZIP builds/$OUTPUT_ZIP
 
   ## list all files to help debug stuff!
   #- find $TRAVIS_BUILD_DIR
