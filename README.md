@@ -42,9 +42,9 @@ FEATURES
 * The SDK requires Java 8.
 
 * The SDK provides three jars:
-  * **b2-sdk-core** provides almost all of the SDK.  it does not contain the code for making HTTP requests (B2WebApiClient).
-  * **b2-sdk-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.  It is separate so that if you provide your own B2WebApiClient, you won't need to pull in HttpClient or its dependencies.**
-  * **b2-sdk-samples** has some samples.
+* **b2-sdk-core** provides almost all of the SDK.  it does not contain the code for making HTTP requests (B2WebApiClient).
+* **b2-sdk-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.  It is separate so that if you provide your own B2WebApiClient, you won't need to pull in HttpClient or its dependencies.**
+* **b2-sdk-samples** has some samples.
 
 SAMPLE
 ======
@@ -79,9 +79,11 @@ HOW TO USE
     * if your code has access to the accountId and appliationKey,
       here's the simplest way to do it:
 
-        B2StorageClient client = B2StorageHttpClientBuilder.builder(accountId,
+      ```java
+      B2StorageClient client = B2StorageHttpClientBuilder.builder(accountId,
                                            applicationKey,
                                            userAgent).build();
+      ```
 
     * if you want to get the credentials from the environment,
       as B2Sample does, here's how to create your client:
@@ -132,19 +134,22 @@ HOW TO USE
 
     For instance, you can use the fileVersions() iterable:
 
-        final B2ListFileVersionsRequest request = B2ListFileVersionsRequest
+    ```java
+    final B2ListFileVersionsRequest request = B2ListFileVersionsRequest
             .builder(bucketId)
             .build();
-        for (B2FileVersion version : client.fileVersions(request)) {
-            writer.println("fileVersion: " + version);
-        }
+    for (B2FileVersion version : client.fileVersions(request)) {
+        writer.println("fileVersion: " + version);
+    }```
 
     Similar to other methods, there is a convenience version of the
     fileVersions() which just takes a bucketId:
 
-        for (B2FileVersion version : client.fileVersions(bucketId)) {
-          writer.println("fileVersion: " + version);
-        }
+    ```java
+    for (B2FileVersion version : client.fileVersions(bucketId)) {
+      writer.println("fileVersion: " + version);
+    }
+    ```
 
 FAQ
 ===
@@ -154,11 +159,67 @@ XXX: probably some common errors people see.
 XXX: probably yet another reminder to add the jar to the path?
 XXX: maybe "what are those @B2Json annotations?" and/or "why B2Json instead of <my favorite JSON mechanism>?"
 
+  * Can I add metadata to the files I upload?  How?
+
+    You can add some immutable name-value pairs to each file at the time you upload it.
+    See the "File Info" section of the [B2 Files][] documentation for details.
+    In the SDK, you can add pairs by calling setCustomField(), as seen in this
+    example from B2Sample.java:
+
+    ```java
+    B2UploadFileRequest request = B2UploadFileRequest
+        .builder(bucketId, fileName, B2ContentTypes.APPLICATION_OCTET, source)
+        .setCustomField("color", "green")
+        .build();
+    ```
+
+  * Do I have to iterate over all of the buckets in an account to find the one I'm looking for?
+
+    For buckets, the b2_list_buckets web call always gives a list.  Since there are at
+    most 100 buckets and once we've found one of them, we've got all of them, the servers
+    always return the whole list to the caller, so the SDK always provides all of them to
+    the Java caller.
+
+    As Java programmers, that was driving us nuts, so we provided a simple helper.
+    B2StorageClient.getBucketOrNullByName() grabs the list and does the loop for you,
+    if you're looking up a bucket by name.  It really depends on context whether that's
+    useful or good for you.  If you're going to be doing lots of the lookups, it'd be
+    much better to get them once and cache the answer, but we didn't want the SDK to
+    make assumptions about how long the cache would be valid.
+
+  * Do I have to iterate over all of the files in a bucket to find the one I'm looking for?
+
+    Nope.  You can add filters to the B2ListFileVersionsRequest or
+    B2ListFileNamesRequest.  See the builders for those classes for details.
+    Here's an example:
+
+    ```java
+    B2ListFileVersionsRequest request = B2ListFileVersionsRequest
+        .builder(bucketId)
+        .setStartFileName(fileName)
+        .build();
+    ```
+
+
   * Can I control how many answers are fetched at once for the iterables?
+
     Yes.  If the request structure you provide specifies a maxCount (or similar
     field), the SDK will use that in its requests to B2.  If you do not specify
     a maxCount, the SDK will default to requesting the maximum number that counts
     as "one transaction" for billing purposes.
+
+  * Is there a way to access the payload of reads as a memory-friendly InputStream?
+
+    Yep.  Take a look at the B2ContentSink interface.  It is passed the responseHeaders
+    and an InputStream to read from.  B2ContentMemoryWriter and B2ContentFileWriter are
+    just two possible implementations of B2ContentSink.  The main consideration with
+    writing a B2ContentSink is handling exceptions, but that's normal right?  :)
+    If there's an exception, you'll want to clean up anything you've done before
+    returning, and you might get called again if the SDK retries.
+
+    The two existing sink classes have a few nice features related to checking the
+    SHA-1 after the download which you may want to mimic in your implementation.
+
 
 
 STRUCTURE
@@ -235,19 +296,21 @@ Here are some things we could do someday, in no particular order:
     another optional filter parameter 'fileName' on the list file apis
     to simplify the request and the loop:
 
-        B2ListFileVersionsRequest request = B2ListFileVersionsRequest
-          .builder(bucketId)
-          .setStartFileName(fileNameToDelete)
-          .setPrefix(fileNameToDelete)
-          .build();
+    ```java
+    B2ListFileVersionsRequest request = B2ListFileVersionsRequest
+      .builder(bucketId)
+      .setStartFileName(fileNameToDelete)
+      .setPrefix(fileNameToDelete)
+      .build();
 
-        for (B2FileVersion version : client.fileVersions(request)) {
-            if (version.getFileName().equals(fileNameToDelete)) {
-                client.deleteFileVersion(version);
-            } else {
-                break;
-            }
+    for (B2FileVersion version : client.fileVersions(request)) {
+        if (version.getFileName().equals(fileNameToDelete)) {
+            client.deleteFileVersion(version);
+        } else {
+            break;
         }
+    }
+    ```
 
   * teach B2ContentFileWriter to use a temporary file name during download
     and to not move the file until the verification is complete.  meanwhile,
@@ -271,3 +334,4 @@ Potential future features
 [B2 API Docs]: https://www.backblaze.com/b2/docs/
 [Calling the API]: https://www.backblaze.com/b2/docs/calling.html
 [Apache HttpClient]: https://hc.apache.org/httpcomponents-client-ga/
+[B2 Files]: https://www.backblaze.com/b2/docs/files.html
