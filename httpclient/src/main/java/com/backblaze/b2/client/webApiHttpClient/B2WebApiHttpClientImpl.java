@@ -32,7 +32,6 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -40,6 +39,8 @@ import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+
+import static com.backblaze.b2.util.B2IoUtils.closeQuietly;
 
 public class B2WebApiHttpClientImpl implements B2WebApiClient {
     private final static String UTF8 = "UTF-8";
@@ -260,16 +261,6 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         }
 
         return vHeaders;
-    }
-
-    private static void closeQuietly(Closeable closeable) {
-        try {
-            if (closeable != null) {
-                closeable.close();
-            }
-        } catch (IOException ioe) {
-            // ignore
-        }
     }
 
 

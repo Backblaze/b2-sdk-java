@@ -19,6 +19,7 @@ import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
 import com.backblaze.b2.util.B2ExecutorUtils;
+import com.backblaze.b2.util.B2IoUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -98,6 +99,8 @@ public class B2 implements AutoCloseable {
 
     @Override
     public void close() {
+        B2IoUtils.closeQuietly(client);
+
         if (executor != null) {
             B2ExecutorUtils.shutdownAndAwaitTermination(executor, 10, 10);
             executor = null;

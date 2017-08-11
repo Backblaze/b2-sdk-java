@@ -51,8 +51,7 @@ public class B2Sample {
 
         final ExecutorService executor = Executors.newFixedThreadPool(10, createThreadFactory("B2Sample-executor-%02d"));
 
-        final B2StorageClient client = B2StorageHttpClientBuilder.builder(USER_AGENT).build();
-        try {
+        try (final B2StorageClient client = B2StorageHttpClientBuilder.builder(USER_AGENT).build()) {
             mainGuts(writer, client, executor);
         } finally {
             B2ExecutorUtils.shutdownAndAwaitTermination(executor, 10, 10);
