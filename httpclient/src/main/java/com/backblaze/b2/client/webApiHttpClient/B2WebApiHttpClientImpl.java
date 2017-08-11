@@ -29,8 +29,6 @@ import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 
@@ -47,18 +45,12 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     private final static String UTF8 = "UTF-8";
 
     private final B2Json bzJson = B2Json.get();
-    private final CloseableHttpClient httpClient;
+    private final HttpClientFactory clientFactory;
 
-    public B2WebApiHttpClientImpl() {
-        // XXX: accept configuration parameters.
-        // XXX: be sure we're checking ssl certs & specifying acceptable ciphers.
-
-        this.httpClient = HttpClients.createDefault();
-
-        //this.httpClient = HttpClients.custom()
-        //        .setConnectionManager(poolInfo.connectionManager)
-        //        .setDefaultRequestConfig(poolInfo.requestConfig)
-        //        .build();
+    B2WebApiHttpClientImpl(HttpClientFactory clientFactory) {
+        this.clientFactory = (clientFactory != null) ?
+                clientFactory :
+                HttpClientFactoryImpl.build();
     }
 
 
@@ -100,7 +92,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
             get.setHeaders(makeHeaders(headersOrNull));
         }
 
-        try (CloseableHttpResponse response = httpClient.execute(get)) {
+        try (CloseableHttpResponse response = clientFactory.create().execute(get)) {
             int statusCode = response.getStatusLine().getStatusCode();
             HttpEntity responseEntity = response.getEntity();
             if (200 <= statusCode && statusCode < 300) {
@@ -124,6 +116,11 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
         }
+    }
+
+    @Override
+    public void close() {
+        clientFactory.close();
     }
 
     private B2Headers makeHeaders(Header[] allHeaders) {
@@ -164,7 +161,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                 post.setEntity(requestEntity);
             }
 
-            response = httpClient.execute(post);
+            response = clientFactory.create().execute(post);
 
             HttpEntity responseEntity = response.getEntity();
             String responseText = EntityUtils.toString(responseEntity, "UTF-8");

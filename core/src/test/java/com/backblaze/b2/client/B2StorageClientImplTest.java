@@ -804,10 +804,7 @@ public class B2StorageClientImplTest {
 
     @Test
     public void testClose() {
-        // i can't really
-        client.close();
-
-        final B2AccountAuthorizer authorizer = B2AccountAuthorizerSimpleImpl.builder(ACCOUNT_ID, APPLICATION_KEY).build();
+        final B2AccountAuthorizer authorizer = mock(B2AccountAuthorizer.class);
         final B2ClientConfig config = mock(B2ClientConfig.class);
         when(config.getAccountAuthorizer()).thenReturn(authorizer);
 
@@ -815,11 +812,11 @@ public class B2StorageClientImplTest {
 
         // closing the client should close the config the first time.
         client.close();
-        verify(config, times(1)).close();
+        verify(webifier, times(1)).close();
 
         // closing the client should do nothing the second time.
         client.close();
-        verify(config, times(1)).close();
+        verify(webifier, times(1)).close();
     }
 
 }

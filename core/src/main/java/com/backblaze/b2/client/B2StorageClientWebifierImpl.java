@@ -109,6 +109,11 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     @Override
+    public void close() {
+        webApiClient.close();
+    }
+
+    @Override
     public B2AccountAuthorization authorizeAccount(B2AuthorizeAccountRequest request) throws B2Exception {
         final B2HeadersImpl.Builder headersBuilder = B2HeadersImpl
                 .builder()

@@ -59,7 +59,7 @@ import com.backblaze.b2.client.structures.B2UploadUrlResponse;
  *   isn't.
  *
  */
-public interface B2StorageClientWebifier {
+public interface B2StorageClientWebifier extends AutoCloseable {
     /**
      * @param request the account authorization request.
      * @return an account authorization.
@@ -132,4 +132,12 @@ public interface B2StorageClientWebifier {
 
     B2ListPartsResponse listParts(B2AccountAuthorization b2AccountAuthorization,
                                   B2ListPartsRequest request) throws B2Exception;
+
+
+    /**
+     * Closes this object and its underlying resources.
+     * This is overridden from AutoCloseable to declare that it can't throw any exception.
+     */
+    @Override
+    void close();
 }

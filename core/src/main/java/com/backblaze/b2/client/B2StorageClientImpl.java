@@ -101,7 +101,7 @@ public class B2StorageClientImpl implements B2StorageClient {
     public synchronized void close() {
         if (!closed) {
             closed = true;
-            config.close();
+            webifier.close();
         }
     }
 

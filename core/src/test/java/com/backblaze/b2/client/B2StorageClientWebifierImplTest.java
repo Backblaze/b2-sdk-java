@@ -154,6 +154,10 @@ public class B2StorageClientWebifierImplTest {
                                B2ContentSink handler) throws B2Exception {
             throw new B2UnauthorizedException("unauthorized", null, "unauthorized msg");
         }
+
+        @Override
+        public void close() {
+        }
     }
 
 
@@ -244,6 +248,10 @@ public class B2StorageClientWebifierImplTest {
                     indent(url) + "\n" +
                     "headers:\n" +
                     indent(toString(headersOrNull)) + "\n");
+        }
+
+        @Override
+        public void close() {
         }
 
         void check(String expectedRequest) {

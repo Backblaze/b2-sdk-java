@@ -15,7 +15,7 @@ import java.util.Objects;
  *      * @param executor the executor to use for doing things in parallel (such as uploading large file parts)
 
  */
-public class B2ClientConfig implements Closeable {
+public class B2ClientConfig {
     private final B2AccountAuthorizer accountAuthorizer;
     private final String userAgent;
     private final String masterUrl;
@@ -73,12 +73,6 @@ public class B2ClientConfig implements Closeable {
                 .builder(accountId, applicationKey)
                 .build(),
                 userAgent);
-    }
-
-    /**
-     * This is usually called by the client which is using it.
-     */
-    public void close() {
     }
 
     /**

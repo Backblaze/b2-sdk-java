@@ -10,7 +10,7 @@ import com.backblaze.b2.client.exceptions.B2Exception;
 
 import java.io.InputStream;
 
-public interface B2WebApiClient {
+public interface B2WebApiClient extends AutoCloseable {
     /**
      * POSTs to a web service that takes JSON and returns JSON.
      *
@@ -55,7 +55,14 @@ public interface B2WebApiClient {
      * @param handler the object which will be called with the response's headers and content
      * @throws B2Exception if there's any trouble
      */
-    public void getContent(String url,
-                           B2Headers headersOrNull,
-                           B2ContentSink handler) throws B2Exception;
+    void getContent(String url,
+                    B2Headers headersOrNull,
+                    B2ContentSink handler) throws B2Exception;
+
+    /**
+     * Closes this object and its underlying resources.
+     * This is overridden from AutoCloseable to declare that it can't throw any exception.
+     */
+    @Override
+    void close();
 }

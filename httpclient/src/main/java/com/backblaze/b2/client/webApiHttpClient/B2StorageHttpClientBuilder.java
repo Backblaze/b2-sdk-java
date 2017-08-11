@@ -23,6 +23,7 @@ public class B2StorageHttpClientBuilder {
     private static final String DEFAULT_MASTER_URL = "https://api.backblazeb2.com/";
     private final B2ClientConfig config;
     private B2WebApiClient webApiClient;
+    private HttpClientFactory httpClientFactory;
 
     public static B2StorageHttpClientBuilder builder(B2ClientConfig config) {
         return new B2StorageHttpClientBuilder(config);
@@ -55,19 +56,10 @@ public class B2StorageHttpClientBuilder {
         this.config = config;
     }
 
-    public B2StorageHttpClientBuilder setWebApiClient(B2WebApiClient webApiClient) {
-        B2Preconditions.checkState(this.webApiClient == null, "already set?");
-        this.webApiClient = webApiClient;
-        return this;
-    }
-
-    // setTimeouts
-    // setRetryPolicy (useUploadNonce?)
-
     public B2StorageClient build() {
         final B2WebApiClient webApiClient = (this.webApiClient != null) ?
                 this.webApiClient :
-                new B2WebApiHttpClientImpl();
+                new B2WebApiHttpClientImpl(httpClientFactory);
         final B2StorageClientWebifier webifier = new B2StorageClientWebifierImpl(
                 webApiClient,
                 config.getUserAgent() + " " + B2Sdk.getName() + "/" + B2Sdk.getVersion(),
@@ -76,5 +68,17 @@ public class B2StorageHttpClientBuilder {
         return new B2StorageClientImpl(
                 webifier,
                 config);
+    }
+
+    public B2StorageHttpClientBuilder setHttpClientFactory(HttpClientFactory httpClientFactory) {
+        B2Preconditions.checkState(webApiClient == null, "httpClientFactory is only used if webApiClient isn't specified, so at most one of them can be non-null!");
+        this.httpClientFactory = httpClientFactory;
+        return this;
+    }
+
+    public B2StorageHttpClientBuilder setWebApiClient(B2WebApiClient webApiClient) {
+        B2Preconditions.checkState(httpClientFactory == null, "httpClientFactory is only used if webApiClient isn't specified, so at most one of them can be non-null!");
+        this.webApiClient = webApiClient;
+        return this;
     }
 }
