@@ -38,12 +38,9 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
         return builder().build();
     }
 
-    private static Builder builder() {
+    public static Builder builder() {
         return new Builder();
     }
-
-    // XXX: accept configuration parameters.
-    // XXX: be sure we're checking ssl certs & specifying acceptable ciphers.
 
     @Override
     public CloseableHttpClient create() throws B2Exception {
@@ -65,15 +62,48 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
      * is only allowed to execute build() once.
      */
     public static class Builder {
-        private static final int defaultConnectionRequestTimeoutSeconds = 5;
-        private static final int defaultConnectTimeoutSeconds = 5;
-        private static final int defaultSocketTimeoutSeconds = 20;
-        private static final int defaultMaxTotalConnectionsInPool = 100;
-        private static final int defaultMaxConnectionsPerRoute = 100;
+        private static final int DEFAULT_CONNECTION_REQUEST_TIMEOUT_SECONDS = 5;
+        private static final int DEFAULT_CONNECT_TIMEOUT_SECONDS = 5;
+        private static final int DEFAULT_SOCKET_TIMEOUT_SECONDS = 20;
 
-        //private HttpClientConnectionManager connectionManager;
-        //private RequestConfig requestConfig;
+        private static final int DEFAULT_MAX_TOTAL_CONNECTIONS_IN_POOL = 100;
+        private static final int DEFAULT_MAX_CONNECTIONS_PER_ROUTE = 100;
+
         private boolean builtOneAlready;
+
+        // for RequestConfig
+        private int connectionRequestTimeoutSeconds = DEFAULT_CONNECTION_REQUEST_TIMEOUT_SECONDS;
+        private int connectTimeoutSeconds = DEFAULT_CONNECT_TIMEOUT_SECONDS;
+        private int socketTimeoutSeconds = DEFAULT_SOCKET_TIMEOUT_SECONDS;
+
+        // for connection pool
+        private int maxTotalConnectionsInPool = DEFAULT_MAX_TOTAL_CONNECTIONS_IN_POOL;
+        private int maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
+
+        public Builder setConnectionRequestTimeoutSeconds(int connectionRequestTimeoutSeconds) {
+            this.connectionRequestTimeoutSeconds = connectionRequestTimeoutSeconds;
+            return this;
+        }
+
+        public Builder setConnectTimeoutSeconds(int connectTimeoutSeconds) {
+            this.connectTimeoutSeconds = connectTimeoutSeconds;
+            return this;
+        }
+
+        public Builder setSocketTimeoutSeconds(int socketTimeoutSeconds) {
+            this.socketTimeoutSeconds = socketTimeoutSeconds;
+            return this;
+        }
+
+        public Builder setMaxTotalConnectionsInPool(int maxTotalConnectionsInPool) {
+            this.maxTotalConnectionsInPool = maxTotalConnectionsInPool;
+            return this;
+        }
+
+        public Builder setMaxConnectionsPerRoute(int maxConnectionsPerRoute) {
+            this.maxConnectionsPerRoute = maxConnectionsPerRoute;
+            return this;
+        }
 
 
         @SuppressWarnings("WeakerAccess")
@@ -82,29 +112,17 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
             builtOneAlready = true;
 
             return new HttpClientFactoryImpl(
-                    getOrCreateConnectionManager(),
-                    getOrCreateRequestConfig());
+                    createConnectionManager(),
+                    createRequestConfig());
         }
 
-        private RequestConfig getOrCreateRequestConfig() {
-            //if (requestConfig != null) {
-            //    return requestConfig;
-            //}
-            
+        private RequestConfig createRequestConfig() {
             return RequestConfig.custom()
-                    .setConnectionRequestTimeout(defaultConnectionRequestTimeoutSeconds * 1000) // time waiting for cxn from mgr
-                    .setConnectTimeout(defaultConnectTimeoutSeconds * 1000) // time waiting for remote server to connect
-                    .setSocketTimeout(defaultSocketTimeoutSeconds * 1000) // time waiting for answer after connecting
+                    .setConnectionRequestTimeout(connectionRequestTimeoutSeconds * 1000) // time waiting for cxn from pool
+                    .setConnectTimeout(connectTimeoutSeconds * 1000) // time waiting for remote server to connect
+                    .setSocketTimeout(socketTimeoutSeconds * 1000) // time waiting for answer after connecting
                     .build();
 
-        }
-
-        private HttpClientConnectionManager getOrCreateConnectionManager() {
-            //if (connectionManager != null) {
-            //    return connectionManager;
-            //}
-
-            return createConnectionManager();
         }
 
         private HttpClientConnectionManager createConnectionManager() {
@@ -130,10 +148,9 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
                             .build();
 
             final PoolingHttpClientConnectionManager mgr = new PoolingHttpClientConnectionManager(registry);
-            mgr.setMaxTotal(defaultMaxTotalConnectionsInPool);
-            mgr.setDefaultMaxPerRoute(defaultMaxConnectionsPerRoute);
+            mgr.setMaxTotal(maxTotalConnectionsInPool);
+            mgr.setDefaultMaxPerRoute(maxConnectionsPerRoute);
             return mgr;
         }
-
     }
 }
