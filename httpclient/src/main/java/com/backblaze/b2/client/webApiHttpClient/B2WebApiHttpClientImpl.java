@@ -48,7 +48,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     private final B2Json bzJson = B2Json.get();
     private final HttpClientFactory clientFactory;
 
-    B2WebApiHttpClientImpl(HttpClientFactory clientFactory) {
+    public B2WebApiHttpClientImpl(HttpClientFactory clientFactory) {
         this.clientFactory = (clientFactory != null) ?
                 clientFactory :
                 HttpClientFactoryImpl.build();
