@@ -16,11 +16,13 @@ public class B2PreconditionsTest {
         checkThrows(IllegalArgumentException.class, "test", () -> B2Preconditions.checkArgument(false, "test"));
         checkThrows(IllegalStateException.class, null, () -> B2Preconditions.checkState(false));
         checkThrows(IllegalStateException.class, "test", () -> B2Preconditions.checkState(false, "test"));
+        checkThrows(IllegalArgumentException.class, "argument test must not be null!", () -> B2Preconditions.checkArgumentIsNotNull(null, "test"));
 
         checkDoesntThrow(() -> B2Preconditions.checkArgument(true));
         checkDoesntThrow(() -> B2Preconditions.checkArgument(true, "test"));
         checkDoesntThrow(() -> B2Preconditions.checkState(true));
         checkDoesntThrow(() -> B2Preconditions.checkState(true, "test"));
+        checkDoesntThrow(() -> B2Preconditions.checkArgumentIsNotNull("ceci n'est pas une null.", "pipe"));
     }
 
     private void checkDoesntThrow(Runnable toRun) {
