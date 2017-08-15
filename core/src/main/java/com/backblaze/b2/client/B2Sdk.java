@@ -18,6 +18,6 @@ public interface B2Sdk {
      *         it's a string that matches [0-9][0-9.]*
      */
     static String getVersion() {
-        return "0.0.1";
+        return "0.0.5";
     }
 }
