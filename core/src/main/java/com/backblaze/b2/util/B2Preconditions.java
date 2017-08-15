@@ -28,4 +28,10 @@ public interface B2Preconditions {
             throw new IllegalStateException(String.valueOf(msg));
         }
     }
+
+    static void checkArgumentIsNotNull(Object argument, Object argumentName) {
+        if (argument == null) {
+            throw new IllegalArgumentException("argument " + argumentName + " must not be null!");
+        }
+    }
 }
