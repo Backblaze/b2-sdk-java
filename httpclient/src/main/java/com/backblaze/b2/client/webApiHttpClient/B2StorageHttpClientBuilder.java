@@ -59,7 +59,7 @@ public class B2StorageHttpClientBuilder {
     public B2StorageClient build() {
         final B2WebApiClient webApiClient = (this.webApiClient != null) ?
                 this.webApiClient :
-                new B2WebApiHttpClientImpl(httpClientFactory);
+                B2WebApiHttpClientImpl.builder().setHttpClientFactory(httpClientFactory).build();
         final B2StorageClientWebifier webifier = new B2StorageClientWebifierImpl(
                 webApiClient,
                 config.getUserAgent() + " " + B2Sdk.getName() + "/" + B2Sdk.getVersion(),

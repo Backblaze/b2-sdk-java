@@ -106,7 +106,6 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
         }
 
 
-        @SuppressWarnings("WeakerAccess")
         public HttpClientFactoryImpl build() {
             B2Preconditions.checkState(!builtOneAlready, "called build() more than once?!");
             builtOneAlready = true;

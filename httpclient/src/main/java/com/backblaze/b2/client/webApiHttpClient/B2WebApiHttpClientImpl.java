@@ -48,10 +48,15 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     private final B2Json bzJson = B2Json.get();
     private final HttpClientFactory clientFactory;
 
-    public B2WebApiHttpClientImpl(HttpClientFactory clientFactory) {
+    private B2WebApiHttpClientImpl(HttpClientFactory clientFactory) {
         this.clientFactory = (clientFactory != null) ?
                 clientFactory :
                 HttpClientFactoryImpl.build();
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public static Builder builder() {
+        return new Builder();
     }
 
 
@@ -293,6 +298,25 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         } catch (UnsupportedEncodingException e) {
             // this is very, very bad and it's not gonna get better by itself.
             throw new RuntimeException("No UTF-8 charset", e);
+        }
+    }
+
+    /**
+     * This Builder creates HttpClientFactoryImpls.
+     * If the httpClientFactory isn't set, a new instance
+     * of the default implementation will be used.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static class Builder {
+        private HttpClientFactory httpClientFactory;
+
+        public Builder setHttpClientFactory(HttpClientFactory httpClientFactory) {
+            this.httpClientFactory = httpClientFactory;
+            return this;
+        }
+
+        public B2WebApiHttpClientImpl build() {
+            return new B2WebApiHttpClientImpl(httpClientFactory);
         }
     }
 }
