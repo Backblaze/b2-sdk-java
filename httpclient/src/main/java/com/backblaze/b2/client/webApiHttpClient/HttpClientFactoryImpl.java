@@ -11,6 +11,7 @@ import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -21,7 +22,14 @@ import javax.net.ssl.SSLContext;
 
 /**
  * This is the default HttpClientFactory implementation.
- * It's not very configurable from the outside yet.
+ *
+ * Created HttpClients always support 'https' because that's what the
+ * production B2 servers require.  By default, the created HttpClients
+ * do not support 'http' to ensure we don't send data over http by accident.
+ *
+ * If you have a non-https implementation of B2 that you test against,
+ * you *may* choose to enable 'http' support when creating the factory.
+ * We really do *not* recommend that in production.
  */
 public class HttpClientFactoryImpl implements HttpClientFactory {
     private final HttpClientConnectionManager connectionManager;
@@ -71,6 +79,11 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
 
         private boolean builtOneAlready;
 
+        // should the clients support 'http'?  (they always support 'https'.)
+        // this is off by default, and that's a good way to leave it.
+        // http is only supported for use with some test environments.
+        private boolean supportInsecureHttp;
+
         // for RequestConfig
         private int connectionRequestTimeoutSeconds = DEFAULT_CONNECTION_REQUEST_TIMEOUT_SECONDS;
         private int connectTimeoutSeconds = DEFAULT_CONNECT_TIMEOUT_SECONDS;
@@ -79,6 +92,11 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
         // for connection pool
         private int maxTotalConnectionsInPool = DEFAULT_MAX_TOTAL_CONNECTIONS_IN_POOL;
         private int maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
+
+        public Builder setSupportInsecureHttp(boolean supportInsecureHttp) {
+            this.supportInsecureHttp = supportInsecureHttp;
+            return this;
+        }
 
         public Builder setConnectionRequestTimeoutSeconds(int connectionRequestTimeoutSeconds) {
             this.connectionRequestTimeoutSeconds = connectionRequestTimeoutSeconds;
@@ -135,16 +153,25 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
             //     i've seen some code use ALLOW_ALL_HOSTNAME_VERIFIER, but that's deprecated and bad.
             //
             // we are NOT using the default registry because the default supports http
-            // and there's no reason for the SDK to do http, ever.
+            // and we usually don't want to suport http.
+            //
+            // This code is based on https://hc.apache.org/httpcomponents-client-ga/tutorial/html/connmgmt.html
 
-            SSLContext sslcontext = SSLContexts.createDefault();
-            ConnectionSocketFactory sslFactory = new SSLConnectionSocketFactory(sslcontext);
+            RegistryBuilder<ConnectionSocketFactory> registryBuilder = RegistryBuilder.create();
 
-            // Copied from: https://hc.apache.org/httpcomponents-client-ga/tutorial/html/connmgmt.html
-            Registry<ConnectionSocketFactory> registry =
-                    RegistryBuilder.<ConnectionSocketFactory>create()
-                            .register("https", sslFactory)
-                            .build();
+            // we *always* support https, since that's what the official b2 servers require.
+            {
+                SSLContext sslcontext = SSLContexts.createDefault();
+                ConnectionSocketFactory sslFactory = new SSLConnectionSocketFactory(sslcontext);
+                registryBuilder.register("https", sslFactory);
+            }
+
+            if (supportInsecureHttp) {
+                ConnectionSocketFactory plainFactory = new PlainConnectionSocketFactory();
+                registryBuilder.register("http", plainFactory);
+            }
+
+            final Registry<ConnectionSocketFactory> registry = registryBuilder.build();
 
             final PoolingHttpClientConnectionManager mgr = new PoolingHttpClientConnectionManager(registry);
             mgr.setMaxTotal(maxTotalConnectionsInPool);
