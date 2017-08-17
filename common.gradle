@@ -15,7 +15,7 @@ repositories {
 }
 
 sourceCompatibility = 1.8
-version = '0.0.5'
+version = '0.0.6'
 
 javadoc {
     source = sourceSets.main.allJava

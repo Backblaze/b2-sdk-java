@@ -18,6 +18,6 @@ public class B2SdkTest {
     @Test
     public void testVersion() {
         // we'll have to update this for each release.  :)
-        assertEquals("0.0.5", B2Sdk.getVersion());
+        assertEquals("0.0.6", B2Sdk.getVersion());
     }
 }
