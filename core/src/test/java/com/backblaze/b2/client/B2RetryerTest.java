@@ -26,7 +26,6 @@ import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.Request
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -34,7 +33,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-public class B2BackoffRetryerTest {
+public class B2RetryerTest {
     // we need to mock this so we don't really sleep.
     private final B2Sleeper sleeper = mock(B2Sleeper.class);
 
@@ -42,10 +41,10 @@ public class B2BackoffRetryerTest {
     // used primarily to check whether clear() was called.
     private final B2AccountAuthorizationCache goodAuthCache;
 
-    private final B2BackoffRetryer retryer = new B2BackoffRetryer(sleeper);
+    private final B2Retryer retryer = new B2Retryer(sleeper);
 
 
-    private static class Guts implements B2BackoffRetryer.RetryableCallable<String> {
+    private static class Guts implements B2Retryer.RetryableCallable<String> {
         private final Object[] results;
         private int iCurrentResult;
 
@@ -74,6 +73,7 @@ public class B2BackoffRetryerTest {
             }
         }
 
+        @SuppressWarnings("SameParameterValue")
         B2Exception getAsException(int i) {
             final Object result = results[i];
             B2Preconditions.checkArgument(result instanceof B2Exception);
@@ -81,14 +81,18 @@ public class B2BackoffRetryerTest {
         }
     }
 
-    public B2BackoffRetryerTest() throws B2Exception {
+    private B2RetryPolicy makePolicy() {
+        return new B2DefaultRetryPolicy();
+    }
+
+    public B2RetryerTest() throws B2Exception {
         goodAuthCache = mock(B2AccountAuthorizationCache.class);
         doReturn(makeAuth(1)).when(goodAuthCache).get();
     }
 
     @Test
     public void testFirstTimeSuccess() throws B2Exception {
-        assertEquals("one", retryer.doRetry(goodAuthCache, () -> "one"));
+        assertEquals("one", retryer.doRetry(goodAuthCache, () -> "one", makePolicy()));
         verify(goodAuthCache, never()).clear();
     }
 
@@ -98,7 +102,7 @@ public class B2BackoffRetryerTest {
 
         boolean caughtIt = false;
         try {
-            retryer.doRetry(goodAuthCache, guts);
+            retryer.doRetry(goodAuthCache, guts, makePolicy());
         } catch (B2UnauthorizedException e) {
             assertEquals(ACCOUNT_AUTHORIZATION, e.getRequestCategory());
             assertEquals(1, guts.getCallCount());
@@ -121,11 +125,11 @@ public class B2BackoffRetryerTest {
                 "hello"
                 );
 
-        assertEquals("hello", retryer.doRetry(goodAuthCache, guts));
+        assertEquals("hello", retryer.doRetry(goodAuthCache, guts, makePolicy()));
         assertEquals(7, guts.getCallCount());
 
         verify(goodAuthCache, times(6)).clear();
-        verify(sleeper, never()).sleepSecondsOrThrow(anyInt(), anyObject());
+        verify(sleeper, never()).sleepSeconds(anyInt());
     }
 
     @Test
@@ -144,13 +148,13 @@ public class B2BackoffRetryerTest {
 
         boolean caughtIt = false;
         try {
-            retryer.doRetry(goodAuthCache, guts);
+            retryer.doRetry(goodAuthCache, guts, makePolicy());
         } catch (B2UnauthorizedException e) {
             assertTrue(guts.getAsException(7) == e);
             assertEquals(8, guts.getCallCount());
             verify(goodAuthCache, times(5)).clear(); // once for each OTHER.
-            verify(sleeper, never()).sleepSecondsOrThrow(anyInt(), anyObject());
-            //verify(sleeper, times(1)).sleepSecondsOrThrow(1, guts.getAsException(0));
+            verify(sleeper, never()).sleepSeconds(anyInt());
+            //verify(sleeper, times(1)).sleepSeconds(1);
             caughtIt = true;
         }
         assertTrue(caughtIt);
@@ -168,17 +172,17 @@ public class B2BackoffRetryerTest {
                 "yippee"
         );
 
-        assertEquals("yippee", retryer.doRetry(goodAuthCache, guts));
+        assertEquals("yippee", retryer.doRetry(goodAuthCache, guts, makePolicy()));
 
         assertEquals(7, guts.getCallCount());
         verify(goodAuthCache, never()).clear();
 
-        verify(sleeper, times(1)).sleepSecondsOrThrow(1, guts.getAsException(0));
-        verify(sleeper, times(1)).sleepSecondsOrThrow(2, guts.getAsException(1));
-        verify(sleeper, times(1)).sleepSecondsOrThrow(4, guts.getAsException(2));
-        verify(sleeper, times(1)).sleepSecondsOrThrow(8, guts.getAsException(3));
-        verify(sleeper, times(1)).sleepSecondsOrThrow(16, guts.getAsException(4));
-        verify(sleeper, times(1)).sleepSecondsOrThrow(32, guts.getAsException(5));
+        verify(sleeper, times(1)).sleepSeconds(1);
+        verify(sleeper, times(1)).sleepSeconds(2);
+        verify(sleeper, times(1)).sleepSeconds(4);
+        verify(sleeper, times(1)).sleepSeconds(8);
+        verify(sleeper, times(1)).sleepSeconds(16);
+        verify(sleeper, times(1)).sleepSeconds(32);
         verifyNoMoreInteractions(sleeper);
     }
 
@@ -197,19 +201,19 @@ public class B2BackoffRetryerTest {
 
         boolean caughtIt = false;
         try {
-            retryer.doRetry(goodAuthCache, guts);
+            retryer.doRetry(goodAuthCache, guts, makePolicy());
         } catch (B2Exception e) {
             assertEquals(8, guts.getCallCount());
             assertTrue(e == guts.getAsException(7));
             verify(goodAuthCache, never()).clear();
 
-            verify(sleeper, times(1)).sleepSecondsOrThrow(1, guts.getAsException(0));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(2, guts.getAsException(1));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(4, guts.getAsException(2));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(8, guts.getAsException(3));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(16, guts.getAsException(4));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(32, guts.getAsException(5));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(64, guts.getAsException(6));
+            verify(sleeper, times(1)).sleepSeconds(1);
+            verify(sleeper, times(1)).sleepSeconds(2);
+            verify(sleeper, times(1)).sleepSeconds(4);
+            verify(sleeper, times(1)).sleepSeconds(8);
+            verify(sleeper, times(1)).sleepSeconds(16);
+            verify(sleeper, times(1)).sleepSeconds(32);
+            verify(sleeper, times(1)).sleepSeconds(64);
             verifyNoMoreInteractions(sleeper);
 
             caughtIt = true;
@@ -232,19 +236,19 @@ public class B2BackoffRetryerTest {
 
         boolean caughtIt = false;
         try {
-            retryer.doRetry(goodAuthCache, guts);
+            retryer.doRetry(goodAuthCache, guts, makePolicy());
         } catch (B2Exception e) {
             assertEquals(8, guts.getCallCount());
             assertTrue(e == guts.getAsException(7));
             verify(goodAuthCache, never()).clear();
 
-            verify(sleeper, times(1)).sleepSecondsOrThrow(6, guts.getAsException(0));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(1, guts.getAsException(1));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(5, guts.getAsException(2));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(7, guts.getAsException(3));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(1, guts.getAsException(4));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(2, guts.getAsException(5));
-            verify(sleeper, times(1)).sleepSecondsOrThrow(4, guts.getAsException(6));
+            verify(sleeper, times(1)).sleepSeconds(6);
+            verify(sleeper, times(2)).sleepSeconds(1);
+            verify(sleeper, times(1)).sleepSeconds(5);
+            verify(sleeper, times(1)).sleepSeconds(7);
+            //verify(sleeper, times(1)).sleepSeconds(1);  combined with check above.
+            verify(sleeper, times(1)).sleepSeconds(2);
+            verify(sleeper, times(1)).sleepSeconds(4);
             verifyNoMoreInteractions(sleeper);
 
             caughtIt = true;
@@ -265,7 +269,7 @@ public class B2BackoffRetryerTest {
 
         boolean caughtIt = false;
         try {
-            retryer.doRetry(goodAuthCache, guts);
+            retryer.doRetry(goodAuthCache, guts, makePolicy());
         } catch (B2Exception | RuntimeException e) {
             assertEquals(1, guts.getCallCount());
             if (exceptionToThrowFromCallable instanceof B2Exception) {

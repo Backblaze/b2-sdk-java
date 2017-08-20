@@ -64,7 +64,7 @@ import static org.mockito.Mockito.when;
  */
 public class B2LargeFileUploaderTest {
     private final B2Sleeper sleeper = mock(B2Sleeper.class);
-    private final B2BackoffRetryer retryer = new B2BackoffRetryer(sleeper);
+    private final B2Retryer retryer = new B2Retryer(sleeper);
     private final B2StorageClientWebifier webifier = mock(B2StorageClientWebifier.class);
     private final B2AccountAuthorizationCache accountAuthCache = mock(B2AccountAuthorizationCache.class);
 
