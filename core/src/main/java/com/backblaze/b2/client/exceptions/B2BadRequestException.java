@@ -5,7 +5,7 @@
 package com.backblaze.b2.client.exceptions;
 
 public class B2BadRequestException extends B2Exception {
-    static final int STATUS = 400;
+    public static final int STATUS = 400;
 
     public B2BadRequestException(String code,
                                  Integer retryAfterSecondsOrNull,

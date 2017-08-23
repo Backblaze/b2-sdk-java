@@ -5,7 +5,7 @@
 package com.backblaze.b2.client.exceptions;
 
 public class B2RequestTimeoutException extends B2Exception {
-    static final int STATUS = 408;
+    public static final int STATUS = 408;
 
     public B2RequestTimeoutException(String code,
                                      Integer retryAfterSecondsOrNull,

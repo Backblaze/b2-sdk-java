@@ -11,7 +11,7 @@ package com.backblaze.b2.client.exceptions;
  * have non-standard STATUS code.
  */
 public class B2LocalException extends B2Exception {
-    static final int STATUS = 999;
+    public static final int STATUS = 999;
 
     public B2LocalException(String code,
                             String message) {

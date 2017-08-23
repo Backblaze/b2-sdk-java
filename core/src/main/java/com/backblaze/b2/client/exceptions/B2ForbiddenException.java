@@ -5,7 +5,7 @@
 package com.backblaze.b2.client.exceptions;
 
 public class B2ForbiddenException extends B2Exception {
-    static final int STATUS = 403;
+    public static final int STATUS = 403;
 
     public B2ForbiddenException(String code,
                                 Integer retryAfterSecondsOrNull,

@@ -5,7 +5,7 @@
 package com.backblaze.b2.client.exceptions;
 
 public class B2UnauthorizedException extends B2Exception {
-    static final int STATUS = 401;
+    public static final int STATUS = 401;
 
     // XXX: ideally this would be "jar private" so far so that only
     // internal classes could use it.  this may be an argument for

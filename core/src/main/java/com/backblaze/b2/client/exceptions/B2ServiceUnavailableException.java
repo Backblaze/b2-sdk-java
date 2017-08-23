@@ -5,7 +5,7 @@
 package com.backblaze.b2.client.exceptions;
 
 public class B2ServiceUnavailableException extends B2Exception {
-    static final int STATUS = 503;
+    public static final int STATUS = 503;
 
     public B2ServiceUnavailableException(String code,
                                          Integer retryAfterSecondsOrNull,

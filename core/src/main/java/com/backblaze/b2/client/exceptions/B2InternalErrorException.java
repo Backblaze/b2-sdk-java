@@ -5,8 +5,8 @@
 package com.backblaze.b2.client.exceptions;
 
 public class B2InternalErrorException extends B2Exception {
-    static final String CODE = "internal_error";
-    static final int STATUS = 500;
+    public static final String CODE = "internal_error";
+    public static final int STATUS = 500;
 
     public B2InternalErrorException(String message) {
         this(CODE, message);

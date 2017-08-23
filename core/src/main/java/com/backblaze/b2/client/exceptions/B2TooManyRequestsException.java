@@ -5,7 +5,7 @@
 package com.backblaze.b2.client.exceptions;
 
 public class B2TooManyRequestsException extends B2Exception {
-    static final int STATUS = 429;
+    public static final int STATUS = 429;
 
 
     public B2TooManyRequestsException(String code, Integer retryAfterSecondsOrNull, String message) {

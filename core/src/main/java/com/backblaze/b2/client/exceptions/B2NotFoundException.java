@@ -5,8 +5,8 @@
 package com.backblaze.b2.client.exceptions;
 
 public class B2NotFoundException extends B2Exception {
-    static final String CODE = "not_found";
-    static final int STATUS = 404;
+    public static final String CODE = "not_found";
+    public static final int STATUS = 404;
 
     public B2NotFoundException(Integer retryAfterSecondsOrNull,
                                String message) {
