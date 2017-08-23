@@ -56,12 +56,12 @@ public class B2StorageClientImpl implements B2StorageClient {
     private final B2StorageClientWebifier webifier;
     private final String accountId;
     private final B2ClientConfig config;
+    private final Supplier<B2RetryPolicy> retryPolicySupplier;
     private final B2Retryer retryer;
 
     private final B2AccountAuthorizationCache accountAuthCache;
     private final B2UploadUrlCache uploadUrlCache;
 
-    private final Supplier<B2RetryPolicy> retryPolicySupplier = B2DefaultRetryPolicy::new;
 
     // protected by synchronized(this)
     // starts out false.  it is changed to true when close() is called.
@@ -70,26 +70,31 @@ public class B2StorageClientImpl implements B2StorageClient {
     /**
      * Creates a client with the given webifier and config and a default B2Sleeper.
      * This is the normal constructor.
+     *
      * @param webifier the object to convert API calls into web calls.
-     * @param config the object used to configure this.
+     * @param config   the object used to configure this.
      */
     public B2StorageClientImpl(B2StorageClientWebifier webifier,
-                               B2ClientConfig config) {
-        this(webifier, config, new B2Retryer(new B2Sleeper()));
+                               B2ClientConfig config,
+                               Supplier<B2RetryPolicy> retryPolicySupplier) {
+        this(webifier, config, retryPolicySupplier, new B2Retryer(new B2Sleeper()));
     }
 
     /**
-     * Creates a client with default webifier and config and the specified B2Sleeper.
-     * This is used by tests where we don't really want to sleep.
+     * Creates a client with default webifier and config and the specified B2Retryer.
+     * This is used by tests where we don't really want to sleep so we make a retryer
+     * with a mock B2Sleeper.
      * @param webifier the object to convert API calls into web calls.
      * @param config the object used to configure this.
      */
     B2StorageClientImpl(B2StorageClientWebifier webifier,
                         B2ClientConfig config,
+                        Supplier<B2RetryPolicy> retryPolicySupplier,
                         B2Retryer retryer) {
         this.webifier = webifier;
         this.accountId = config.getAccountAuthorizer().getAccountId();
         this.config = config;
+        this.retryPolicySupplier = retryPolicySupplier;
         this.retryer = retryer;
         this.accountAuthCache = new B2AccountAuthorizationCache(webifier, config.getAccountAuthorizer());
         this.uploadUrlCache = new B2UploadUrlCache(webifier, accountAuthCache);
@@ -300,16 +305,16 @@ public class B2StorageClientImpl implements B2StorageClient {
     // For use by our iterators
     // XXX: make private somehow, or move to B2StorageClient interface.
     //
-    public B2ListFileVersionsResponse listFileVersions(B2ListFileVersionsRequest request) throws B2Exception {
+    B2ListFileVersionsResponse listFileVersions(B2ListFileVersionsRequest request) throws B2Exception {
         return retryer.doRetry(accountAuthCache, () -> webifier.listFileVersions(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
-    public B2ListFileNamesResponse listFileNames(B2ListFileNamesRequest request) throws B2Exception {
+    B2ListFileNamesResponse listFileNames(B2ListFileNamesRequest request) throws B2Exception {
         return retryer.doRetry(accountAuthCache, () -> webifier.listFileNames(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
-    public B2ListUnfinishedLargeFilesResponse listUnfinishedLargeFiles(B2ListUnfinishedLargeFilesRequest request) throws B2Exception {
+    B2ListUnfinishedLargeFilesResponse listUnfinishedLargeFiles(B2ListUnfinishedLargeFilesRequest request) throws B2Exception {
         return retryer.doRetry(accountAuthCache, () -> webifier.listUnfinishedLargeFiles(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
-    public B2ListPartsResponse listParts(B2ListPartsRequest request) throws B2Exception {
+    B2ListPartsResponse listParts(B2ListPartsRequest request) throws B2Exception {
         return retryer.doRetry(accountAuthCache, () -> webifier.listParts(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
 }

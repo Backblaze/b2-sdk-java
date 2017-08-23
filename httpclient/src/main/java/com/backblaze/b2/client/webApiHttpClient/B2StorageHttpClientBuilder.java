@@ -7,6 +7,8 @@ package com.backblaze.b2.client.webApiHttpClient;
 import com.backblaze.b2.client.B2AccountAuthorizer;
 import com.backblaze.b2.client.B2AccountAuthorizerSimpleImpl;
 import com.backblaze.b2.client.B2ClientConfig;
+import com.backblaze.b2.client.B2DefaultRetryPolicy;
+import com.backblaze.b2.client.B2RetryPolicy;
 import com.backblaze.b2.client.B2Sdk;
 import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.B2StorageClientImpl;
@@ -18,21 +20,26 @@ import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.util.B2Preconditions;
 
+import java.util.function.Supplier;
+
 public class B2StorageHttpClientBuilder {
 
     private static final String DEFAULT_MASTER_URL = "https://api.backblazeb2.com/";
     private final B2ClientConfig config;
     private B2WebApiClient webApiClient;
     private HttpClientFactory httpClientFactory;
+    private Supplier<B2RetryPolicy> retryPolicySupplier;
 
-    public static B2StorageHttpClientBuilder builder(B2ClientConfig config) {
+    private static B2StorageHttpClientBuilder builder(B2ClientConfig config) {
         return new B2StorageHttpClientBuilder(config);
     }
 
     // We don't usually have several builder() methods, but this builder
     // is used by *everyone*, so i want to make it so that most users don't
     // need to worry about making an authorizer.
-    public static B2StorageHttpClientBuilder builder(String accountId, String applicationKey, String userAgent) {
+    private static B2StorageHttpClientBuilder builder(String accountId,
+                                                      String applicationKey,
+                                                      String userAgent) {
         final B2AccountAuthorizer accountAuthorizer = B2AccountAuthorizerSimpleImpl
                 .builder(accountId, applicationKey)
                 .build();
@@ -65,9 +72,13 @@ public class B2StorageHttpClientBuilder {
                 config.getUserAgent() + " " + B2Sdk.getName() + "/" + B2Sdk.getVersion(),
                 (config.getMasterUrl() == null) ? DEFAULT_MASTER_URL : config.getMasterUrl(),
                 config.getTestModeOrNull());
+        final Supplier<B2RetryPolicy> retryPolicySupplier = (this.retryPolicySupplier != null) ?
+                this.retryPolicySupplier :
+                B2DefaultRetryPolicy.supplier();
         return new B2StorageClientImpl(
                 webifier,
-                config);
+                config,
+                retryPolicySupplier);
     }
 
     public B2StorageHttpClientBuilder setHttpClientFactory(HttpClientFactory httpClientFactory) {
@@ -76,9 +87,16 @@ public class B2StorageHttpClientBuilder {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public B2StorageHttpClientBuilder setWebApiClient(B2WebApiClient webApiClient) {
         B2Preconditions.checkState(httpClientFactory == null, "httpClientFactory is only used if webApiClient isn't specified, so at most one of them can be non-null!");
         this.webApiClient = webApiClient;
+        return this;
+    }
+
+    @SuppressWarnings("unused")
+    public B2StorageHttpClientBuilder setRetryPolicySupplier(Supplier<B2RetryPolicy> retryPolicySupplier) {
+        this.retryPolicySupplier = retryPolicySupplier;
         return this;
     }
 }

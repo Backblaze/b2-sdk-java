@@ -6,6 +6,8 @@ package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.exceptions.B2Exception;
 
+import java.util.function.Supplier;
+
 /**
  * B2DefaultRetryPolicy implements the retry policy described in the B2
  * documentation.  It should be reasonable and sufficient for almost every
@@ -13,9 +15,9 @@ import com.backblaze.b2.client.exceptions.B2Exception;
  *
  * Each attempted operation should have a unique instance of this class
  * because it stores state about retries between calls.  Use an instance
- * of Supplier<B2RetryPolicy> which provides a new instance on each call.
+ * of Supplier&lt;B2RetryPolicy&gt; which provides a new instance on each call.
  */
-class B2DefaultRetryPolicy implements B2RetryPolicy {
+public class B2DefaultRetryPolicy implements B2RetryPolicy {
     // MAX_ATTEMPTS is the largest number of times we're willing to try a call, including the original attempt.
     // our documentation proposes backing off up to 64 seconds, so that's how i picked 8.
     //   attempt#1, sleepSecs(1), attempt#2, sleepSecs(2), attempt#3, sleep(Secs4),
@@ -25,6 +27,13 @@ class B2DefaultRetryPolicy implements B2RetryPolicy {
     private static final int MAX_ATTEMPTS = 8;
 
     private int waitBetweenRetrySecs = 1;
+
+    /**
+     * @return a supplier to create new instances of this class.
+     */
+    public static Supplier<B2RetryPolicy> supplier() {
+        return B2DefaultRetryPolicy::new;
+    }
 
     @Override
     public Integer gotRetryableAfterDelay(int attemptsSoFar,

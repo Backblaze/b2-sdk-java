@@ -103,7 +103,7 @@ public class B2StorageClientImplTest {
             .build();
     private final B2Sleeper sleeper = mock(B2Sleeper.class);
     private final BackoffRetryerWithCounter retryer = new BackoffRetryerWithCounter(sleeper);
-    private final B2StorageClientImpl client = new B2StorageClientImpl(webifier, config, retryer);
+    private final B2StorageClientImpl client = new B2StorageClientImpl(webifier, config, B2DefaultRetryPolicy.supplier(), retryer);
     private final ExecutorService executor = Executors.newFixedThreadPool(1);
 
     @Rule
@@ -567,7 +567,7 @@ public class B2StorageClientImplTest {
 
     @Test
     public void test_forCoverage() {
-        new B2StorageClientImpl(webifier, config);
+        new B2StorageClientImpl(webifier, config, B2DefaultRetryPolicy.supplier());
     }
 
     @Test
@@ -810,7 +810,7 @@ public class B2StorageClientImplTest {
         final B2ClientConfig config = mock(B2ClientConfig.class);
         when(config.getAccountAuthorizer()).thenReturn(authorizer);
 
-        final B2StorageClientImpl client = new B2StorageClientImpl(webifier, config);
+        final B2StorageClientImpl client = new B2StorageClientImpl(webifier, config, B2DefaultRetryPolicy.supplier());
 
         // closing the client should close the config the first time.
         client.close();

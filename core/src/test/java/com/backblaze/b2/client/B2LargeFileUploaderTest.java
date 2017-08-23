@@ -496,7 +496,7 @@ public class B2LargeFileUploaderTest {
                 retryer,
                 webifier,
                 accountAuthCache,
-                B2DefaultRetryPolicy::new,
+                B2DefaultRetryPolicy.supplier(),
                 executor,
                 partSizes,
                 request,

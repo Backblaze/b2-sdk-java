@@ -17,7 +17,7 @@ import com.backblaze.b2.client.exceptions.B2Exception;
  *
  * By the way, attemptsSoFar starts at 1.
  */
-interface B2RetryPolicy {
+public interface B2RetryPolicy {
     /**
      * Called when callable.call() returns without an exception.
      *
