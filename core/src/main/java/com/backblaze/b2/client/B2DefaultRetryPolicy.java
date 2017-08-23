@@ -11,7 +11,7 @@ import com.backblaze.b2.client.exceptions.B2Exception;
  * documentation.  It should be reasonable and sufficient for almost every
  * use of B2.
  *
- * Each attempted operation should have a unique instead of this class
+ * Each attempted operation should have a unique instance of this class
  * because it stores state about retries between calls.  Use an instance
  * of Supplier<B2RetryPolicy> which provides a new instance on each call.
  */
