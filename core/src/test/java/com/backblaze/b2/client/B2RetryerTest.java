@@ -38,6 +38,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class B2RetryerTest {
+    private static final String OP = "operation";
+
     // we need to mock this so we don't really sleep.
     private final B2Sleeper sleeper = mock(B2Sleeper.class);
 
@@ -94,9 +96,9 @@ public class B2RetryerTest {
 
     @Test
     public void testFirstTimeSuccess() throws B2Exception {
-        assertEquals("one", retryer.doRetry(goodAuthCache, () -> "one", policy));
+        assertEquals("one", retryer.doRetry(OP, goodAuthCache, () -> "one", policy));
         verify(goodAuthCache, never()).clear();
-        verify(policy, times(1)).succeeded(eq(1), anyLong());
+        verify(policy, times(1)).succeeded(eq(OP), eq(1), anyLong());
         verifyNoMoreInteractions(policy);
     }
 
@@ -106,12 +108,12 @@ public class B2RetryerTest {
 
         boolean caughtIt = false;
         try {
-            retryer.doRetry(goodAuthCache, guts, policy);
+            retryer.doRetry(OP, goodAuthCache, guts, policy);
         } catch (B2UnauthorizedException e) {
             assertEquals(ACCOUNT_AUTHORIZATION, e.getRequestCategory());
             assertEquals(1, guts.getCallCount());
             verify(goodAuthCache, never()).clear();
-            verify(policy, times(1)).gotUnretryable(eq(1), anyLong(), any(B2UnauthorizedException.class));
+            verify(policy, times(1)).gotUnretryable(eq(OP), eq(1), anyLong(), any(B2UnauthorizedException.class));
             verifyNoMoreInteractions(policy);
             caughtIt = true;
         }
@@ -120,7 +122,7 @@ public class B2RetryerTest {
 
     @Test
     public void testAuthThrowsRetryableUnauthSeveralTimesButWorksBeforeWeGiveUp() throws B2Exception {
-        when(policy.gotRetryableImmediately(anyInt(), anyLong(), any())).thenReturn(true);
+        when(policy.gotRetryableImmediately(eq(OP), anyInt(), anyLong(), any())).thenReturn(true);
 
         // this throws a B2UnauthorizedException until the last attempt, when it replies.
         final Guts guts = new Guts(
@@ -133,17 +135,17 @@ public class B2RetryerTest {
                 "hello"
                 );
 
-        assertEquals("hello", retryer.doRetry(goodAuthCache, guts, policy));
+        assertEquals("hello", retryer.doRetry(OP, goodAuthCache, guts, policy));
         assertEquals(7, guts.getCallCount());
 
         verify(goodAuthCache, times(6)).clear();
         verify(sleeper, never()).sleepSeconds(anyInt());
-        verify(policy, times(6)).gotRetryableImmediately(anyInt(), anyLong(), any(B2UnauthorizedException.class));
+        verify(policy, times(6)).gotRetryableImmediately(eq(OP), anyInt(), anyLong(), any(B2UnauthorizedException.class));
     }
 
     @Test
     public void testAuthThrowsRetryableUnauthTooManyTimesAndWeGiveUp() throws B2Exception {
-        when(policy.gotRetryableImmediately(anyInt(), anyLong(), any())).thenReturn(true, true, true, true, true, true, true, false);
+        when(policy.gotRetryableImmediately(eq(OP), anyInt(), anyLong(), any())).thenReturn(true, true, true, true, true, true, true, false);
 
         final Guts guts = new Guts(
                 unauthorized(OTHER),
@@ -159,13 +161,13 @@ public class B2RetryerTest {
 
         boolean caughtIt = false;
         try {
-            retryer.doRetry(goodAuthCache, guts, policy);
+            retryer.doRetry(OP, goodAuthCache, guts, policy);
         } catch (B2UnauthorizedException e) {
             assertTrue(guts.getAsException(7) == e);
             assertEquals(8, guts.getCallCount());
             verify(goodAuthCache, times(5)).clear(); // once for each OTHER.
             verify(sleeper, never()).sleepSeconds(anyInt());
-            verify(policy, times(8)).gotRetryableImmediately(anyInt(), anyLong(), any());
+            verify(policy, times(8)).gotRetryableImmediately(eq(OP), anyInt(), anyLong(), any());
             verifyNoMoreInteractions(policy);
             caughtIt = true;
         }
@@ -184,8 +186,8 @@ public class B2RetryerTest {
                 "yippee"
         );
 
-        when(policy.gotRetryableAfterDelay(anyInt(), anyLong(), any())).thenReturn(3, 5, 7, 11, 13, 17);
-        assertEquals("yippee", retryer.doRetry(goodAuthCache, guts, policy));
+        when(policy.gotRetryableAfterDelay(eq(OP), anyInt(), anyLong(), any())).thenReturn(3, 5, 7, 11, 13, 17);
+        assertEquals("yippee", retryer.doRetry(OP, goodAuthCache, guts, policy));
 
         assertEquals(7, guts.getCallCount());
         verify(goodAuthCache, never()).clear();
@@ -215,7 +217,7 @@ public class B2RetryerTest {
 
         boolean caughtIt = false;
         try {
-            retryer.doRetry(goodAuthCache, guts, new B2DefaultRetryPolicy());
+            retryer.doRetry(OP, goodAuthCache, guts, new B2DefaultRetryPolicy());
         } catch (B2Exception e) {
             assertEquals(8, guts.getCallCount());
             assertTrue(e == guts.getAsException(7));
@@ -250,7 +252,7 @@ public class B2RetryerTest {
 
         boolean caughtIt = false;
         try {
-            retryer.doRetry(goodAuthCache, guts, policy);
+            retryer.doRetry(OP, goodAuthCache, guts, policy);
         } catch (B2Exception | RuntimeException e) {
             assertEquals(1, guts.getCallCount());
             if (exceptionToThrowFromCallable instanceof B2Exception) {
@@ -263,9 +265,9 @@ public class B2RetryerTest {
             verifyNoMoreInteractions(sleeper);
 
             if (exceptionToThrowFromCallable instanceof B2Exception) {
-                verify(policy, times(1)).gotUnretryable(eq(1), anyLong(), eq((B2Exception) exceptionToThrowFromCallable));
+                verify(policy, times(1)).gotUnretryable(eq(OP), eq(1), anyLong(), eq((B2Exception) exceptionToThrowFromCallable));
             } else {
-                verify(policy, times(1)).gotUnexpectedUnretryable(eq(1), anyLong(), eq(exceptionToThrowFromCallable));
+                verify(policy, times(1)).gotUnexpectedUnretryable(eq(OP), eq(1), anyLong(), eq(exceptionToThrowFromCallable));
             }
             verifyNoMoreInteractions(policy);
 

@@ -36,7 +36,8 @@ public class B2DefaultRetryPolicy implements B2RetryPolicy {
     }
 
     @Override
-    public Integer gotRetryableAfterDelay(int attemptsSoFar,
+    public Integer gotRetryableAfterDelay(String operation,
+                                          int attemptsSoFar,
                                           long tookMsecs,
                                           B2Exception e) {
         if (attemptsSoFar < MAX_ATTEMPTS) {
@@ -63,7 +64,8 @@ public class B2DefaultRetryPolicy implements B2RetryPolicy {
     }
 
     @Override
-    public boolean gotRetryableImmediately(int attemptsSoFar,
+    public boolean gotRetryableImmediately(String operation,
+                                           int attemptsSoFar,
                                            long tookMsecs,
                                            B2Exception e) {
         return (attemptsSoFar < MAX_ATTEMPTS);

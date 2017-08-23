@@ -62,7 +62,8 @@ class B2LargeFileUploader {
         final List<B2PartSpec> allPartSpecs = partSizes.pickParts(contentLength);
 
         // start the large file.
-        final B2FileVersion largeFileVersion = retryer.doRetry(accountAuthCache, () ->
+        final B2FileVersion largeFileVersion = retryer.doRetry("b2_start_large_file",
+                accountAuthCache, () ->
                 webifier.startLargeFile(accountAuthCache.get(), B2StartLargeFileRequest.buildFrom(request)),
                 retryPolicySupplier.get()
         );
@@ -230,13 +231,14 @@ class B2LargeFileUploader {
         B2FinishLargeFileRequest finishRequest = B2FinishLargeFileRequest
                 .builder(largeFileVersion.getFileId(), partSha1s)
                 .build();
-        return retryer.doRetry(accountAuthCache, () -> webifier.finishLargeFile(accountAuthCache.get(), finishRequest), new B2DefaultRetryPolicy());
+        return retryer.doRetry("b2_finish_large_file", accountAuthCache, () -> webifier.finishLargeFile(accountAuthCache.get(), finishRequest), new B2DefaultRetryPolicy());
     }
 
     private B2Part uploadOnePart(B2UploadPartUrlCache uploadPartUrlCache,
                                  B2UploadFileRequest request,
                                  B2PartSpec partSpec) throws B2Exception {
-        return retryer.doRetry(accountAuthCache,
+        return retryer.doRetry("b2_upload_part",
+                accountAuthCache,
                 (isRetry) -> {
                     final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
 

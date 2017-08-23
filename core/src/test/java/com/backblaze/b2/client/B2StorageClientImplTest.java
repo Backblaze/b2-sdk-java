@@ -122,19 +122,21 @@ public class B2StorageClientImplTest {
         }
 
         @Override
-        <T> T doRetry(B2AccountAuthorizationCache accountAuthCache,
+        <T> T doRetry(String operation,
+                      B2AccountAuthorizationCache accountAuthCache,
                       Callable<T> callable,
                       B2RetryPolicy retryPolicy) throws B2Exception {
             callCount++;
-            return super.doRetry(accountAuthCache, callable, retryPolicy);
+            return super.doRetry(operation, accountAuthCache, callable, retryPolicy);
         }
 
         @Override
-        <T> T doRetry(B2AccountAuthorizationCache accountAuthCache,
+        <T> T doRetry(String operation,
+                      B2AccountAuthorizationCache accountAuthCache,
                       RetryableCallable<T> callable,
                       B2RetryPolicy retryPolicy) throws B2Exception {
             callCount++;
-            return super.doRetry(accountAuthCache, callable, retryPolicy);
+            return super.doRetry(operation, accountAuthCache, callable, retryPolicy);
         }
 
         void assertCallCountIs(int expectedCallCount) {

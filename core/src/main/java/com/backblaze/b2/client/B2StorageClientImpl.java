@@ -132,12 +132,12 @@ public class B2StorageClientImpl implements B2StorageClient {
     @Override
     public B2Bucket createBucket(B2CreateBucketRequest request) throws B2Exception {
         B2CreateBucketRequestReal realRequest = new B2CreateBucketRequestReal(accountId, request);
-        return retryer.doRetry(accountAuthCache, () -> webifier.createBucket(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
+        return retryer.doRetry("b2_create_bucket", accountAuthCache, () -> webifier.createBucket(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
     }
 
     @Override
     public B2ListBucketsResponse listBuckets() throws B2Exception {
-        return retryer.doRetry(accountAuthCache, () -> webifier.listBuckets(accountAuthCache.get(), B2ListBucketsRequest.builder(accountId).build()), retryPolicySupplier.get());
+        return retryer.doRetry("b2_list_buckets", accountAuthCache, () -> webifier.listBuckets(accountAuthCache.get(), B2ListBucketsRequest.builder(accountId).build()), retryPolicySupplier.get());
     }
 
     @Override
@@ -158,7 +158,8 @@ public class B2StorageClientImpl implements B2StorageClient {
 
     @Override
     public B2FileVersion uploadSmallFile(B2UploadFileRequest request) throws B2Exception {
-        return retryer.doRetry(accountAuthCache,
+        return retryer.doRetry("b2_upload_file",
+                accountAuthCache,
                 (isRetry) -> {
                     final B2UploadUrlResponse uploadUrlResponse = uploadUrlCache.get(request.getBucketId(), isRetry);
                     final B2FileVersion version = webifier.uploadFile(uploadUrlResponse, request);
@@ -194,7 +195,7 @@ public class B2StorageClientImpl implements B2StorageClient {
      * @throws B2Exception if there's trouble.
      */
     private B2PartSizes getPartSizes() throws B2Exception {
-        return B2PartSizes.from(retryer.doRetry(accountAuthCache, accountAuthCache::get, retryPolicySupplier.get()));
+        return B2PartSizes.from(retryer.doRetry("get_part_sizes", accountAuthCache, accountAuthCache::get, retryPolicySupplier.get()));
     }
 
     /**
@@ -233,7 +234,8 @@ public class B2StorageClientImpl implements B2StorageClient {
 
     @Override
     public void cancelLargeFile(B2CancelLargeFileRequest request) throws B2Exception {
-        retryer.doRetry(accountAuthCache,
+        retryer.doRetry("b2_cancel_large_file",
+                accountAuthCache,
                 () -> {
                     webifier.cancelLargeFile(accountAuthCache.get(), request);
                     return 0; // to meet Callable api!
@@ -244,7 +246,8 @@ public class B2StorageClientImpl implements B2StorageClient {
     @Override
     public void downloadById(B2DownloadByIdRequest request,
                              B2ContentSink handler) throws B2Exception {
-        retryer.doRetry(accountAuthCache,
+        retryer.doRetry("b2_download_file_by_id",
+                accountAuthCache,
                 () -> {
                     B2AccountAuthorization accountAuth = accountAuthCache.get();
                     webifier.downloadById(accountAuth, request, handler);
@@ -256,7 +259,8 @@ public class B2StorageClientImpl implements B2StorageClient {
     @Override
     public void downloadByName(B2DownloadByNameRequest request,
                                B2ContentSink handler) throws B2Exception {
-        retryer.doRetry(accountAuthCache,
+        retryer.doRetry("b2_download_file_by_name",
+                accountAuthCache,
                 () -> {
                     B2AccountAuthorization accountAuth = accountAuthCache.get();
                     webifier.downloadByName(accountAuth, request, handler);
@@ -267,7 +271,8 @@ public class B2StorageClientImpl implements B2StorageClient {
 
     @Override
     public void deleteFileVersion(B2DeleteFileVersionRequest request) throws B2Exception {
-        retryer.doRetry(accountAuthCache,
+        retryer.doRetry("b2_delete_file_version",
+                accountAuthCache,
                 () -> {
                     webifier.deleteFileVersion(accountAuthCache.get(), request);
                     return 0; // to meet Callable api!
@@ -277,28 +282,28 @@ public class B2StorageClientImpl implements B2StorageClient {
 
     @Override
     public B2DownloadAuthorization getDownloadAuthorization(B2GetDownloadAuthorizationRequest request) throws B2Exception {
-        return retryer.doRetry(accountAuthCache, () -> webifier.getDownloadAuthorization(accountAuthCache.get(), request), retryPolicySupplier.get());
+        return retryer.doRetry("b2_get_download_authorization", accountAuthCache, () -> webifier.getDownloadAuthorization(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
 
     @Override
     public B2FileVersion getFileInfo(B2GetFileInfoRequest request) throws B2Exception {
-        return retryer.doRetry(accountAuthCache, () -> webifier.getFileInfo(accountAuthCache.get(), request), retryPolicySupplier.get());
+        return retryer.doRetry("b2_get_file_info", accountAuthCache, () -> webifier.getFileInfo(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
 
     @Override
     public B2FileVersion hideFile(B2HideFileRequest request) throws B2Exception {
-        return retryer.doRetry(accountAuthCache, () -> webifier.hideFile(accountAuthCache.get(), request), retryPolicySupplier.get());
+        return retryer.doRetry("b2_hide_file", accountAuthCache, () -> webifier.hideFile(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
 
     @Override
     public B2Bucket updateBucket(B2UpdateBucketRequest request) throws B2Exception {
-        return retryer.doRetry(accountAuthCache, () -> webifier.updateBucket(accountAuthCache.get(), request), retryPolicySupplier.get());
+        return retryer.doRetry("b2_update_bucket", accountAuthCache, () -> webifier.updateBucket(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
 
     @Override
     public B2Bucket deleteBucket(B2DeleteBucketRequest request) throws B2Exception {
         B2DeleteBucketRequestReal realRequest = new B2DeleteBucketRequestReal(accountId, request.getBucketId());
-        return retryer.doRetry(accountAuthCache, () -> webifier.deleteBucket(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
+        return retryer.doRetry("b2_delete_bucket", accountAuthCache, () -> webifier.deleteBucket(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
     }
 
     //
@@ -306,15 +311,15 @@ public class B2StorageClientImpl implements B2StorageClient {
     // XXX: make private somehow, or move to B2StorageClient interface.
     //
     B2ListFileVersionsResponse listFileVersions(B2ListFileVersionsRequest request) throws B2Exception {
-        return retryer.doRetry(accountAuthCache, () -> webifier.listFileVersions(accountAuthCache.get(), request), retryPolicySupplier.get());
+        return retryer.doRetry("b2_list_file_versions", accountAuthCache, () -> webifier.listFileVersions(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
     B2ListFileNamesResponse listFileNames(B2ListFileNamesRequest request) throws B2Exception {
-        return retryer.doRetry(accountAuthCache, () -> webifier.listFileNames(accountAuthCache.get(), request), retryPolicySupplier.get());
+        return retryer.doRetry("b2_list_file_names", accountAuthCache, () -> webifier.listFileNames(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
     B2ListUnfinishedLargeFilesResponse listUnfinishedLargeFiles(B2ListUnfinishedLargeFilesRequest request) throws B2Exception {
-        return retryer.doRetry(accountAuthCache, () -> webifier.listUnfinishedLargeFiles(accountAuthCache.get(), request), retryPolicySupplier.get());
+        return retryer.doRetry("b2_list_unfinished_large_files", accountAuthCache, () -> webifier.listUnfinishedLargeFiles(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
     B2ListPartsResponse listParts(B2ListPartsRequest request) throws B2Exception {
-        return retryer.doRetry(accountAuthCache, () -> webifier.listParts(accountAuthCache.get(), request), retryPolicySupplier.get());
+        return retryer.doRetry("b2_list_parts", accountAuthCache, () -> webifier.listParts(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
 }

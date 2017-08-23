@@ -36,10 +36,11 @@ class B2Retryer {
      * You are encouraged to use this version because if your code's behaviour
      * doesn't change based on whether it's a retry, there's less for you to test.
      */
-    <T> T doRetry(B2AccountAuthorizationCache accountAuthCache,
+    <T> T doRetry(String operation,
+                  B2AccountAuthorizationCache accountAuthCache,
                   Callable<T> callable,
                   B2RetryPolicy retryPolicy) throws B2Exception {
-        return doRetry(accountAuthCache, isRetry -> callable.call(), retryPolicy);
+        return doRetry(operation, accountAuthCache, isRetry -> callable.call(), retryPolicy);
     }
 
     /**
@@ -58,7 +59,8 @@ class B2Retryer {
      *                     or the last retryable error if we
      *                     run out of retries.
      */
-    <T> T doRetry(B2AccountAuthorizationCache accountAuthCache,
+    <T> T doRetry(String operation,
+                  B2AccountAuthorizationCache accountAuthCache,
                   RetryableCallable<T> callable,
                   B2RetryPolicy retryPolicy) throws B2Exception {
 
@@ -79,7 +81,7 @@ class B2Retryer {
 
                     final T value = callable.call(isRetry);
                     tookMsecs = System.currentTimeMillis() - beforeMsecs;
-                    retryPolicy.succeeded(attemptsSoFar, tookMsecs);
+                    retryPolicy.succeeded(operation, attemptsSoFar, tookMsecs);
 
                     return value;
                 } finally {
@@ -90,21 +92,21 @@ class B2Retryer {
                 switch (e.getRequestCategory()) {
                     case ACCOUNT_AUTHORIZATION:
                         // unauthorized during account authorization is NOT retryable.
-                        retryPolicy.gotUnretryable(attemptsSoFar, tookMsecs, e);
+                        retryPolicy.gotUnretryable(operation, attemptsSoFar, tookMsecs, e);
                         throw e;
 
                     case UPLOADING:
                         // nothing to do.  the upload url won't have been returned to the
                         // pool, so it won't be reused.  we'll try again with another url.
                         // (in fact, the B2UploadUrlCache will always get a new URL for retries.)
-                        if (!retryPolicy.gotRetryableImmediately(attemptsSoFar, tookMsecs, e)) {
+                        if (!retryPolicy.gotRetryableImmediately(operation, attemptsSoFar, tookMsecs, e)) {
                             throw e;
                         }
                         continue; // to go around the loop and try again.
 
                     case OTHER:
                         accountAuthCache.clear();
-                        if (!retryPolicy.gotRetryableImmediately(attemptsSoFar, tookMsecs, e)) {
+                        if (!retryPolicy.gotRetryableImmediately(operation, attemptsSoFar, tookMsecs, e)) {
                             throw e;
                         }
 
@@ -117,7 +119,7 @@ class B2Retryer {
                     B2RequestTimeoutException |
                     B2NetworkBaseException e) {
 
-                final Integer waitSeconds = retryPolicy.gotRetryableAfterDelay(attemptsSoFar, tookMsecs, e);
+                final Integer waitSeconds = retryPolicy.gotRetryableAfterDelay(operation, attemptsSoFar, tookMsecs, e);
                 if (waitSeconds == null) {
                     // i haven't convinced myself that making a special "too many retries"
                     // exception to hold the underlying cause is sufficiently useful, so
@@ -135,7 +137,7 @@ class B2Retryer {
                 sleeper.sleepSeconds(waitSeconds);
             } catch (B2Exception e) {
                 // other types of exceptions aren't retryable!
-                retryPolicy.gotUnretryable(attemptsSoFar, tookMsecs, e);
+                retryPolicy.gotUnretryable(operation, attemptsSoFar, tookMsecs, e);
                 throw e;
             } catch (Exception e) {
                 // callable.call() throws Exception, so I have to catch Exception (shudder!).
@@ -143,7 +145,7 @@ class B2Retryer {
                 if (e instanceof InterruptedException) {
                     Thread.currentThread().interrupt(); // reset the flag!
                 }
-                retryPolicy.gotUnexpectedUnretryable(attemptsSoFar, tookMsecs, e);
+                retryPolicy.gotUnexpectedUnretryable(operation, attemptsSoFar, tookMsecs, e);
                 throw new B2Exception("unexpected", 500, null, "unexpected: " + e, e);
             }
         }

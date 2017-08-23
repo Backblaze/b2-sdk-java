@@ -21,11 +21,13 @@ public interface B2RetryPolicy {
     /**
      * Called when callable.call() returns without an exception.
      *
+     * @param operation the name of what is being retried.  *usually* the name of a b2 operation.
      * @param attemptsSoFar how many times have we called callable.call() so far?
      * @param tookMsecs     how long did this attempt take?
      */
     @SuppressWarnings("unused")
-    default void succeeded(int attemptsSoFar,
+    default void succeeded(String operation,
+                           int attemptsSoFar,
                            long tookMsecs) {
     }
 
@@ -41,36 +43,42 @@ public interface B2RetryPolicy {
      * WARNING: if we only hit retryable errors and this never returns null,
      * we will keep retrying indefinitely.  You have been warned.
      *
+     * @param operation the name of what is being retried.  *usually* the name of a b2 operation.
      * @param attemptsSoFar how many times have we called callable.call() so far?
      * @param tookMsecs     how long did this attempt take?
      * @param e             the retryable exception.
      * @return null to stop trying OR the number of seconds to sleep before trying again.
      */
-    Integer gotRetryableAfterDelay(int attemptsSoFar,
+    Integer gotRetryableAfterDelay(String operation,
+                                   int attemptsSoFar,
                                    long tookMsecs,
                                    B2Exception e);
 
     /**
      * Callable.call() threw a retryable B2Exception.  We will retry immediately.
      *
+     * @param operation the name of what is being retried.  *usually* the name of a b2 operation.
      * @param attemptsSoFar how many times have we called callable.call() so far?
      * @param tookMsecs     how long did this attempt take?
      * @param e             the retryable exception.
      * @return true iff we should try again.
      */
-    boolean gotRetryableImmediately(int attemptsSoFar,
+    boolean gotRetryableImmediately(String operation,
+                                    int attemptsSoFar,
                                     long tookMsecs,
                                     B2Exception e);
 
     /**
      * Callable.call() threw an unretryable B2Exception.  No more attempts will be made.
      *
+     * @param operation the name of what is being retried.  *usually* the name of a b2 operation.
      * @param attemptsSoFar how many times have we called callable.call() so far?
      * @param tookMsecs     how long did this attempt take?
      * @param e             the unretryable exception.
      */
     @SuppressWarnings("unused")
-    default void gotUnretryable(int attemptsSoFar,
+    default void gotUnretryable(String operation,
+                                int attemptsSoFar,
                                 long tookMsecs,
                                 B2Exception e) {
 
@@ -80,11 +88,13 @@ public interface B2RetryPolicy {
      * Callable.call() threw an Exception that wasn't a B2Exception.  No more
      * attempts will be made.
      *
+     * @param operation the name of what is being retried.  *usually* the name of a b2 operation.
      * @param attemptsSoFar how many times have we called callable.call() so far?
      * @param tookMsecs     how long did this attempt take?
      * @param e             the unexpected, unretryable exception.
      */
-    default void gotUnexpectedUnretryable(int attemptsSoFar,
+    default void gotUnexpectedUnretryable(String operation,
+                                          int attemptsSoFar,
                                           long tookMsecs,
                                           Exception e) {
     }
