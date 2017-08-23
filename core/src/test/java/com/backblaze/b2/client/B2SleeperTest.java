@@ -4,8 +4,6 @@
  */
 package com.backblaze.b2.client;
 
-import com.backblaze.b2.client.exceptions.B2Exception;
-import com.backblaze.b2.client.exceptions.B2LocalException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -20,9 +18,9 @@ public class B2SleeperTest {
 
 
     @Test
-    public void testSleeping() throws B2Exception {
+    public void testSleeping() {
         final long beforeMsec = System.currentTimeMillis();
-        sleeper.sleepSecondsOrThrow(1, new B2LocalException("test", "testing"));
+        sleeper.sleepSeconds(1);
         final long afterMsec = System.currentTimeMillis();
 
         // we should've slept most of a second! (and not thrown)
@@ -30,19 +28,14 @@ public class B2SleeperTest {
     }
 
     @Test
-    public void testInterruptedSleep() throws B2Exception {
+    public void testInterruptedSleep() {
         // interrupt this thread, so sleeping will throw.
         Thread.currentThread().interrupt();
 
-        thrown.expect(B2Exception.class);
-        thrown.expectMessage("testing");
+        // try to sleep.  it shouldn't throw...
+        sleeper.sleepSeconds(1);
 
-        try {
-            // try to sleep.  it should throw.
-            sleeper.sleepSecondsOrThrow(1, new B2LocalException("test", "testing"));
-        } finally {
-            assertTrue(Thread.interrupted()); // this clears the flag.
-            // if we don't clear the flag, IDEA's code coverage doesn't think we ran code.
-        }
+        // ...and the thread should still be flagged as interrupted.
+        assertTrue(Thread.interrupted()); // this checks & clears the flag.
     }
 }

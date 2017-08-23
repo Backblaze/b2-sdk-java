@@ -114,7 +114,7 @@ public class B2StorageClientImplTest {
         B2ExecutorUtils.shutdownAndAwaitTermination(executor, 10, 10);
     }
 
-    private static class BackoffRetryerWithCounter extends B2BackoffRetryer {
+    private static class BackoffRetryerWithCounter extends B2Retryer {
         private int callCount = 0;
 
         BackoffRetryerWithCounter(B2Sleeper sleeper) {
@@ -123,16 +123,18 @@ public class B2StorageClientImplTest {
 
         @Override
         <T> T doRetry(B2AccountAuthorizationCache accountAuthCache,
-                      Callable<T> callable) throws B2Exception {
+                      Callable<T> callable,
+                      B2RetryPolicy retryPolicy) throws B2Exception {
             callCount++;
-            return super.doRetry(accountAuthCache, callable);
+            return super.doRetry(accountAuthCache, callable, retryPolicy);
         }
 
         @Override
         <T> T doRetry(B2AccountAuthorizationCache accountAuthCache,
-                      RetryableCallable<T> callable) throws B2Exception {
+                      RetryableCallable<T> callable,
+                      B2RetryPolicy retryPolicy) throws B2Exception {
             callCount++;
-            return super.doRetry(accountAuthCache, callable);
+            return super.doRetry(accountAuthCache, callable, retryPolicy);
         }
 
         void assertCallCountIs(int expectedCallCount) {

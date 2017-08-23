@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 class B2LargeFileUploader {
-    private final B2BackoffRetryer backoffRetryer;
+    private final B2Retryer retryer;
     private final B2StorageClientWebifier webifier;
     private final B2AccountAuthorizationCache accountAuthCache;
     private final ExecutorService executor;
@@ -37,14 +37,14 @@ class B2LargeFileUploader {
     private final B2UploadFileRequest request;
     private final long contentLength;
 
-    B2LargeFileUploader(B2BackoffRetryer backoffRetryer,
+    B2LargeFileUploader(B2Retryer retryer,
                         B2StorageClientWebifier webifier,
                         B2AccountAuthorizationCache accountAuthCache,
                         ExecutorService executor,
                         B2PartSizes partSizes,
                         B2UploadFileRequest request,
                         long contentLength) {
-        this.backoffRetryer = backoffRetryer;
+        this.retryer = retryer;
         this.webifier = webifier;
         this.accountAuthCache = accountAuthCache;
         this.executor = executor;
@@ -58,8 +58,9 @@ class B2LargeFileUploader {
         final List<B2PartSpec> allPartSpecs = partSizes.pickParts(contentLength);
 
         // start the large file.
-        final B2FileVersion largeFileVersion = backoffRetryer.doRetry(accountAuthCache, () ->
-                webifier.startLargeFile(accountAuthCache.get(), B2StartLargeFileRequest.buildFrom(request))
+        final B2FileVersion largeFileVersion = retryer.doRetry(accountAuthCache, () ->
+                webifier.startLargeFile(accountAuthCache.get(), B2StartLargeFileRequest.buildFrom(request)),
+                new B2DefaultRetryPolicy()
         );
 
         final Map<B2PartSpec, B2Part> uploadedAlready = B2Collections.mapOf();
@@ -225,23 +226,25 @@ class B2LargeFileUploader {
         B2FinishLargeFileRequest finishRequest = B2FinishLargeFileRequest
                 .builder(largeFileVersion.getFileId(), partSha1s)
                 .build();
-        return backoffRetryer.doRetry(accountAuthCache, () -> webifier.finishLargeFile(accountAuthCache.get(), finishRequest));
+        return retryer.doRetry(accountAuthCache, () -> webifier.finishLargeFile(accountAuthCache.get(), finishRequest), new B2DefaultRetryPolicy());
     }
 
     private B2Part uploadOnePart(B2UploadPartUrlCache uploadPartUrlCache,
                                  B2UploadFileRequest request,
                                  B2PartSpec partSpec) throws B2Exception {
-        return backoffRetryer.doRetry(accountAuthCache, (isRetry) -> {
-            final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
+        return retryer.doRetry(accountAuthCache,
+                (isRetry) -> {
+                    final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
 
-            final B2UploadPartRequest partRequest = B2UploadPartRequest
-                    .builder(partSpec.partNumber,
-                            new B2PartOfContentSource(request.getContentSource(), partSpec.start, partSpec.length))
-                    .build();
+                    final B2UploadPartRequest partRequest = B2UploadPartRequest
+                            .builder(partSpec.partNumber,
+                                    new B2PartOfContentSource(request.getContentSource(), partSpec.start, partSpec.length))
+                            .build();
 
-            final B2Part part = webifier.uploadPart(uploadPartUrlResponse, partRequest);
-            uploadPartUrlCache.unget(uploadPartUrlResponse);
-            return part;
-        });
+                    final B2Part part = webifier.uploadPart(uploadPartUrlResponse, partRequest);
+                    uploadPartUrlCache.unget(uploadPartUrlResponse);
+                    return part;
+                },
+                new B2DefaultRetryPolicy());
     }
 }
