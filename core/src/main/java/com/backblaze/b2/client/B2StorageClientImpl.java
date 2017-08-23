@@ -143,7 +143,7 @@ public class B2StorageClientImpl implements B2StorageClient {
         final long contentLength = getContentLength(request.getContentSource());
         final B2PartSizes partSizes = getPartSizes();
 
-        B2LargeFileUploader uploader = new B2LargeFileUploader(retryer, webifier, accountAuthCache, executor, partSizes, request, contentLength);
+        B2LargeFileUploader uploader = new B2LargeFileUploader(retryer, webifier, accountAuthCache, retryPolicySupplier, executor, partSizes, request, contentLength);
         final List<B2Part> alreadyUploadedParts = new ArrayList<>();
         for (B2Part part : parts(fileVersion.getFileId())) {
             alreadyUploadedParts.add(part);
@@ -176,7 +176,7 @@ public class B2StorageClientImpl implements B2StorageClient {
                                               B2PartSizes partSizes,
                                               B2UploadFileRequest request,
                                               long contentLength) throws B2Exception {
-        B2LargeFileUploader uploader = new B2LargeFileUploader(retryer, webifier, accountAuthCache, executor, partSizes, request, contentLength);
+        B2LargeFileUploader uploader = new B2LargeFileUploader(retryer, webifier, accountAuthCache, retryPolicySupplier, executor, partSizes, request, contentLength);
         return uploader.uploadLargeFile();
     }
 

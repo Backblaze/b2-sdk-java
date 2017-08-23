@@ -27,11 +27,13 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 
 class B2LargeFileUploader {
     private final B2Retryer retryer;
     private final B2StorageClientWebifier webifier;
     private final B2AccountAuthorizationCache accountAuthCache;
+    private final Supplier<B2RetryPolicy> retryPolicySupplier;
     private final ExecutorService executor;
     private final B2PartSizes partSizes;
     private final B2UploadFileRequest request;
@@ -40,6 +42,7 @@ class B2LargeFileUploader {
     B2LargeFileUploader(B2Retryer retryer,
                         B2StorageClientWebifier webifier,
                         B2AccountAuthorizationCache accountAuthCache,
+                        Supplier<B2RetryPolicy> retryPolicySupplier,
                         ExecutorService executor,
                         B2PartSizes partSizes,
                         B2UploadFileRequest request,
@@ -47,6 +50,7 @@ class B2LargeFileUploader {
         this.retryer = retryer;
         this.webifier = webifier;
         this.accountAuthCache = accountAuthCache;
+        this.retryPolicySupplier = retryPolicySupplier;
         this.executor = executor;
         this.partSizes = partSizes;
 
@@ -60,7 +64,7 @@ class B2LargeFileUploader {
         // start the large file.
         final B2FileVersion largeFileVersion = retryer.doRetry(accountAuthCache, () ->
                 webifier.startLargeFile(accountAuthCache.get(), B2StartLargeFileRequest.buildFrom(request)),
-                new B2DefaultRetryPolicy()
+                retryPolicySupplier.get()
         );
 
         final Map<B2PartSpec, B2Part> uploadedAlready = B2Collections.mapOf();
