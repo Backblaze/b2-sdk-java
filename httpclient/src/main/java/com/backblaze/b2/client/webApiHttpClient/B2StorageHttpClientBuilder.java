@@ -30,16 +30,16 @@ public class B2StorageHttpClientBuilder {
     private HttpClientFactory httpClientFactory;
     private Supplier<B2RetryPolicy> retryPolicySupplier;
 
-    private static B2StorageHttpClientBuilder builder(B2ClientConfig config) {
+    @SuppressWarnings("WeakerAccess")
+    public static B2StorageHttpClientBuilder builder(B2ClientConfig config) {
         return new B2StorageHttpClientBuilder(config);
     }
 
     // We don't usually have several builder() methods, but this builder
     // is used by *everyone*, so i want to make it so that most users don't
     // need to worry about making an authorizer.
-    private static B2StorageHttpClientBuilder builder(String accountId,
-                                                      String applicationKey,
-                                                      String userAgent) {
+    @SuppressWarnings("WeakerAccess")
+    public static B2StorageHttpClientBuilder builder(String accountId, String applicationKey, String userAgent) {
         final B2AccountAuthorizer accountAuthorizer = B2AccountAuthorizerSimpleImpl
                 .builder(accountId, applicationKey)
                 .build();
