@@ -23,6 +23,7 @@ import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2ExecutorUtils;
@@ -129,9 +130,12 @@ public class B2Sample {
             final String fileName = "demo/large/superLarge.txt";
             final B2ContentSource source = B2FileContentSource.builder(largeFileOnDisk).build();
 
+            final B2UploadListener listener = progress -> writer.println("  progress(" + progress + ")");
+
             B2UploadFileRequest request = B2UploadFileRequest
                     .builder(bucketId, fileName, B2ContentTypes.APPLICATION_OCTET, source)
                     .setCustomField("color", "green")
+                    .setListener(listener)
                     .build();
             file3 = client.uploadLargeFile(request, executor);
             writer.println("uploaded " + file3);

@@ -9,9 +9,9 @@ import java.util.Objects;
 
 /**
  * A B2PartSpec represents part of a large file.
- * It has the partNumber and the offset & length of the part in the file.
+ * It has the partNumber and the offset &amp; length of the part in the file.
  */
-class B2PartSpec implements Comparable<B2PartSpec> {
+public class B2PartSpec implements Comparable<B2PartSpec> {
     private static Comparator<B2PartSpec> comparator = Comparator
             .comparingInt(B2PartSpec::getPartNumber)
             .thenComparing(Comparator.comparingLong(B2PartSpec::getStart))

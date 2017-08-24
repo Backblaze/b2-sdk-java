@@ -13,9 +13,12 @@ import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.util.B2Collections;
+import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -181,6 +184,9 @@ class B2LargeFileUploader {
         // errors and ended up resuming later, but there's a good chance the urls would be bad
         // and it's ok to not optimize for that failure case.
 
+        final B2UploadListener listener = request.getListener();
+        final int numSpecs = allPartSpecs.size();
+
         final B2UploadPartUrlCache uploadPartUrlCache = new B2UploadPartUrlCache(
                 webifier,
                 accountAuthCache,
@@ -191,17 +197,25 @@ class B2LargeFileUploader {
         try {
             // upload parts.
             for (B2PartSpec partSpec : allPartSpecs) {
+                // tell the listener that this part will be waiting to start.
+                listener.progress(B2UploadProgressUtil.forPart(partSpec, numSpecs, 1, B2UploadState.WAITING_TO_START));
+
                 final B2Part alreadyUploadedPart = uploadedAlready.get(partSpec);
                 if (alreadyUploadedPart == null) {
                     // do the upload
                     uploadedPartFutures.add(executor.submit(() -> uploadOnePart(uploadPartUrlCache, request, partSpec)));
                 } else {
+                    // tell the listener about our prior success as soon as we can.
+                    listener.progress(B2UploadProgressUtil.forSuccessfulPartUpload(partSpec, numSpecs));
+
                     // shortcut the upload by just returning the previously uploaded B2Part.
                     // i could change the code to not submit all the tasks, but this is straight-forward,
                     // so i'll start with this for now.
                     uploadedPartFutures.add(executor.submit(() -> alreadyUploadedPart));
                 }
             }
+
+            B2Preconditions.checkState(numSpecs == uploadedPartFutures.size(), "didn't we add a future for every spec?");
 
             for (Future<B2Part> future : uploadedPartFutures) {
                 try {
