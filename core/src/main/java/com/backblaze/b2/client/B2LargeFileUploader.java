@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client;
 
+import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.exceptions.B2Exception;
@@ -16,7 +17,9 @@ import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
+import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2Preconditions;
 
@@ -31,6 +34,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
+
+import static com.backblaze.b2.util.B2DateTimeUtil.ONE_SECOND_IN_MSECS;
 
 class B2LargeFileUploader {
     private final B2Retryer retryer;
@@ -185,7 +190,7 @@ class B2LargeFileUploader {
         // and it's ok to not optimize for that failure case.
 
         final B2UploadListener listener = request.getListener();
-        final int numSpecs = allPartSpecs.size();
+        final int partCount = allPartSpecs.size();
 
         final B2UploadPartUrlCache uploadPartUrlCache = new B2UploadPartUrlCache(
                 webifier,
@@ -198,15 +203,15 @@ class B2LargeFileUploader {
             // upload parts.
             for (B2PartSpec partSpec : allPartSpecs) {
                 // tell the listener that this part will be waiting to start.
-                listener.progress(B2UploadProgressUtil.forPart(partSpec, numSpecs, 1, B2UploadState.WAITING_TO_START));
+                listener.progress(B2UploadProgressUtil.forPart(partSpec, partCount, 1, B2UploadState.WAITING_TO_START));
 
                 final B2Part alreadyUploadedPart = uploadedAlready.get(partSpec);
                 if (alreadyUploadedPart == null) {
                     // do the upload
-                    uploadedPartFutures.add(executor.submit(() -> uploadOnePart(uploadPartUrlCache, request, partSpec)));
+                    uploadedPartFutures.add(executor.submit(() -> uploadOnePart(uploadPartUrlCache, request, partCount, partSpec)));
                 } else {
                     // tell the listener about our prior success as soon as we can.
-                    listener.progress(B2UploadProgressUtil.forSuccessfulPartUpload(partSpec, numSpecs));
+                    listener.progress(B2UploadProgressUtil.forSuccessfulPartUpload(partSpec, partCount));
 
                     // shortcut the upload by just returning the previously uploaded B2Part.
                     // i could change the code to not submit all the tasks, but this is straight-forward,
@@ -215,7 +220,7 @@ class B2LargeFileUploader {
                 }
             }
 
-            B2Preconditions.checkState(numSpecs == uploadedPartFutures.size(), "didn't we add a future for every spec?");
+            B2Preconditions.checkState(partCount == uploadedPartFutures.size(), "didn't we add a future for every spec?");
 
             for (Future<B2Part> future : uploadedPartFutures) {
                 try {
@@ -248,21 +253,173 @@ class B2LargeFileUploader {
         return retryer.doRetry("b2_finish_large_file", accountAuthCache, () -> webifier.finishLargeFile(accountAuthCache.get(), finishRequest), new B2DefaultRetryPolicy());
     }
 
+    /**
+     * ProgressAdapter turns byte-level updates into
+     */
+    private static class ProgressAdapter implements B2ByteProgressListener {
+        private final B2UploadListener uploadListener;
+        private final int partIndex;
+        private final int partCount;
+        private final long startByte;
+        private final long length;
+
+        private ProgressAdapter(B2UploadListener uploadListener,
+                                int partIndex,
+                                int partCount,
+                                long startByte,
+                                long length) {
+            this.uploadListener = uploadListener;
+            this.partIndex = partIndex;
+            this.partCount = partCount;
+            this.startByte = startByte;
+            this.length = length;
+        }
+
+        @Override
+        public void progress(long nBytesSoFar) {
+            final B2UploadProgress progress = new B2UploadProgress(
+                partIndex,
+                    partCount,
+                    startByte,
+                    length,
+                    nBytesSoFar,
+                    B2UploadState.UPLOADING
+            );
+            uploadListener.progress(progress);
+        }
+
+        @Override
+        public void hitException(Exception e,
+                                 long nBytesSoFar) {
+            final B2UploadProgress progress = new B2UploadProgress(
+                    partIndex,
+                    partCount,
+                    startByte,
+                    length,
+                    nBytesSoFar,
+                    B2UploadState.FAILED
+            );
+            uploadListener.progress(progress);
+
+        }
+
+        @Override
+        public void reachedEof(long nBytesSoFar) {
+            final B2UploadProgress progress = new B2UploadProgress(
+                    partIndex,
+                    partCount,
+                    startByte,
+                    nBytesSoFar,
+                    nBytesSoFar,
+                    B2UploadState.UPLOADING
+            );
+            uploadListener.progress(progress);
+        }
+    }
+
+    /**
+     * ByteProgressFilteringListener only forwards a subset of the calls to the
+     * listener it wraps to minimize the amount of work being done.
+     */
+    private static class ByteProgressFilteringListener implements B2ByteProgressListener {
+        private final B2ByteProgressListener listener;
+        private final long nBytesBetween;
+        private final long nMsecsBetween;
+
+        // at how many bytes should we send the next progress()?
+        private long nBytesThreshold;
+
+        // at what time should we send the next progress?
+        private long msecsThreshold;
+
+        /**
+         * @param listener the listener to forward notifications to.
+         * @param nBytesBetween if this many bytes have been read since previous progress() was forwarded, forward it.
+         * @param nMsecsBetween if this much time has passed since previous progress() was forwarded, forward it.
+         */
+        private ByteProgressFilteringListener(B2ByteProgressListener listener,
+                                              long nBytesBetween,
+                                              long nMsecsBetween) {
+            this.listener = listener;
+            this.nBytesBetween = nBytesBetween;
+            this.nMsecsBetween = nMsecsBetween;
+
+            // always forward the first progress() call.
+            nBytesThreshold = -1;
+        }
+
+        @Override
+        public void progress(long nBytesSoFar) {
+            boolean send = false;
+            long nowMsecs = 0; // zero until set to real value.  avoid calling currentTimeMillis multiple times.
+
+            // send if enough bytes have gone by since previous notification.
+            if (nBytesSoFar >= nBytesThreshold) {
+                send = true;
+            }
+
+            // otherwise, send if enough time has gone by.
+            if (!send) {
+                nowMsecs = System.currentTimeMillis();
+                if (nowMsecs >= msecsThreshold) {
+                    send = true;
+                }
+            }
+
+            // send if necessary.
+            if (send) {
+                listener.progress(nBytesSoFar);
+
+                // and reset thresholds for next send.
+                if (nowMsecs == 0) {
+                    nowMsecs = System.currentTimeMillis();
+                }
+                nBytesThreshold = nBytesSoFar + nBytesBetween;
+                msecsThreshold = nowMsecs + nMsecsBetween;
+            }
+        }
+
+        @Override
+        public void hitException(Exception e,
+                                 long nBytesSoFar) {
+            listener.hitException(e, nBytesSoFar);
+        }
+
+        @Override
+        public void reachedEof(long nBytesSoFar) {
+            listener.reachedEof(nBytesSoFar);
+        }
+    }
+
     private B2Part uploadOnePart(B2UploadPartUrlCache uploadPartUrlCache,
                                  B2UploadFileRequest request,
+                                 int partCount,
                                  B2PartSpec partSpec) throws B2Exception {
         return retryer.doRetry("b2_upload_part",
                 accountAuthCache,
                 (isRetry) -> {
                     final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
 
+                    B2ByteProgressListener byteProgressListener = new ProgressAdapter(request.getListener(), partSpec.getPartNumber()-1, partCount, partSpec.getStart(), partSpec.getLength());
+
+                    request.getListener().progress(B2UploadProgressUtil.forPart(partSpec, partCount, 0, B2UploadState.STARTING));
+
+                    final long nMsecsBetween = 5 * ONE_SECOND_IN_MSECS; // let progress through every few seconds.
+                    final long nBytesBetween = 50 * 1000 * 1000; // 5GB is the largest a part can be.  50 MB is 1% of that.
+
+                    byteProgressListener = new ByteProgressFilteringListener(byteProgressListener, nBytesBetween, nMsecsBetween);
+
+                    B2ContentSource source = new B2PartOfContentSource(request.getContentSource(), partSpec.start, partSpec.length);
+                    source = new B2ContentSourceWithByteProgressListener(source, byteProgressListener);
+
                     final B2UploadPartRequest partRequest = B2UploadPartRequest
-                            .builder(partSpec.partNumber,
-                                    new B2PartOfContentSource(request.getContentSource(), partSpec.start, partSpec.length))
+                            .builder(partSpec.partNumber, source)
                             .build();
 
                     final B2Part part = webifier.uploadPart(uploadPartUrlResponse, partRequest);
                     uploadPartUrlCache.unget(uploadPartUrlResponse);
+
+                    request.getListener().progress(B2UploadProgressUtil.forSuccessfulPartUpload(partSpec, partCount));
                     return part;
                 },
                 new B2DefaultRetryPolicy());

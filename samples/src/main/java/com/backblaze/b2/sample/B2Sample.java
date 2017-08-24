@@ -64,6 +64,11 @@ public class B2Sample {
                                  ExecutorService executor) throws B2Exception {
         final String bucketName = "sample-" + client.getAccountId();
 
+        final B2UploadListener uploadListener = (progress) -> {
+            final double percent = (100. * (progress.getBytesSoFar() / (double) progress.getLength()));
+            writer.println(String.format("  progress(%3.2f, %s)", percent, progress.toString()));
+        };
+
         bigHeader(writer, "cleanup existing bucket, if any");
         deleteBucketIfAny(writer, client, bucketName);
 
@@ -130,12 +135,10 @@ public class B2Sample {
             final String fileName = "demo/large/superLarge.txt";
             final B2ContentSource source = B2FileContentSource.builder(largeFileOnDisk).build();
 
-            final B2UploadListener listener = progress -> writer.println("  progress(" + progress + ")");
-
             B2UploadFileRequest request = B2UploadFileRequest
                     .builder(bucketId, fileName, B2ContentTypes.APPLICATION_OCTET, source)
                     .setCustomField("color", "green")
-                    .setListener(listener)
+                    .setListener(uploadListener)
                     .build();
             file3 = client.uploadLargeFile(request, executor);
             writer.println("uploaded " + file3);

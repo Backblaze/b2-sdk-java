@@ -36,6 +36,8 @@ public class B2DateTimeUtil {
     private static final int MIN_SECOND = 0;
     private static final int MAX_SECOND = 59; // no leap seconds in Java time
 
+    public static final long ONE_SECOND_IN_MSECS = 1000;
+
     /**
      * Formats a date in "solid" format, like "20150314"
      */
