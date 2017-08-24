@@ -5,7 +5,7 @@
 package com.backblaze.b2.client.structures;
 
 /**
- * The B2UploadProgress summarizes the status of an upload.
+ * The B2UploadProgress summarizes the state of an upload.
  * It's a structure so we can extend it later, if needed.
  *
  * NOTE: the length field may sometimes be a little longer than you expect.
@@ -42,20 +42,20 @@ public class B2UploadProgress {
     /**
      * see enum above
      */
-    private final B2UploadState status;
+    private final B2UploadState state;
 
     public B2UploadProgress(int partIndex,
                             int partCount,
                             long startByte,
                             long length,
                             long bytesSoFar,
-                            B2UploadState status) {
+                            B2UploadState state) {
         this.partIndex = partIndex;
         this.partCount = partCount;
         this.startByte = startByte;
         this.length = length;
         this.bytesSoFar = bytesSoFar;
-        this.status = status;
+        this.state = state;
     }
 
     public int getPartIndex() {
@@ -78,8 +78,8 @@ public class B2UploadProgress {
         return bytesSoFar;
     }
 
-    public B2UploadState getStatus() {
-        return status;
+    public B2UploadState getState() {
+        return state;
     }
 
     @Override
@@ -90,7 +90,7 @@ public class B2UploadProgress {
                 ", startByte=" + startByte +
                 ", length=" + length +
                 ", bytesSoFar=" + bytesSoFar +
-                ", status=" + status +
+                ", state=" + state +
                 '}';
     }
 }

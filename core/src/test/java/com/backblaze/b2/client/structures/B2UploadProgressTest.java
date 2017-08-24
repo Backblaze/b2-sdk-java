@@ -12,7 +12,7 @@ public class B2UploadProgressTest {
     private final static long START_BYTE = 3;
     private final static long LENGTH = 4;
     private final static long BYTES_SO_FAR = 5;
-    private final static B2UploadState STATUS = B2UploadState.SUCCEEDED;
+    private final static B2UploadState STATE = B2UploadState.SUCCEEDED;
 
     @Test
     public void test() {
@@ -21,15 +21,15 @@ public class B2UploadProgressTest {
                 START_BYTE,
                 LENGTH,
                 BYTES_SO_FAR,
-                STATUS);
+                STATE);
 
         assertEquals(PART_INDEX, progress.getPartIndex());
         assertEquals(PART_COUNT, progress.getPartCount());
         assertEquals(START_BYTE, progress.getStartByte());
         assertEquals(LENGTH, progress.getLength());
         assertEquals(BYTES_SO_FAR, progress.getBytesSoFar());
-        assertEquals(STATUS, progress.getStatus());
+        assertEquals(STATE, progress.getState());
 
-        assertEquals("B2UploadProgress{partIndex=1, partCount=2, startByte=3, length=4, bytesSoFar=5, status=SUCCEEDED}", progress.toString());
+        assertEquals("B2UploadProgress{partIndex=1, partCount=2, startByte=3, length=4, bytesSoFar=5, state=SUCCEEDED}", progress.toString());
     }
 }
