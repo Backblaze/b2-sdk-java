@@ -34,8 +34,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
-import static com.backblaze.b2.util.B2DateTimeUtil.ONE_SECOND_IN_MSECS;
-
 class B2LargeFileUploader {
     private final B2Retryer retryer;
     private final B2StorageClientWebifier webifier;
