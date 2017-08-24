@@ -17,32 +17,32 @@ public class B2UploadProgress {
     /**
      * the index of the part.  0 <= partIndex < partCount
      */
-    final int partIndex;
+    private final int partIndex;
 
     /**
      * how many parts are there for this upload? (always 1 for small files)
      */
-    final int partCount;
+    private final int partCount;
 
     /**
      * at what byte in the contentSource does this part begin.  (0 for small files)
      */
-    final long startByte;
+    private final long startByte;
 
     /**
      * how long is this part (always greater than or equal to the contentSource's contentLength for small files)
      */
-    final long length;
+    private final long length;
 
     /**
      * how many bytes have we sent so far?
      */
-    final long bytesSoFar;
+    private final long bytesSoFar;
 
     /**
      * see enum above
      */
-    final B2UploadState status;
+    private final B2UploadState status;
 
     public B2UploadProgress(int partIndex,
                             int partCount,
