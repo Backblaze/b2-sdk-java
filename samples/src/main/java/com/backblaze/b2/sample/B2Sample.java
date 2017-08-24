@@ -98,6 +98,7 @@ public class B2Sample {
                 B2UploadFileRequest request = B2UploadFileRequest
                         .builder(bucketId, fileName, B2ContentTypes.B2_AUTO, source)
                         .setCustomField("color", "blue")
+                        .setListener(uploadListener)
                         .build();
                 file1 = client.uploadSmallFile(request);
                 writer.println("uploaded " + file1);

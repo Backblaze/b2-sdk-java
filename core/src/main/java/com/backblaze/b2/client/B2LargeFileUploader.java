@@ -259,18 +259,22 @@ class B2LargeFileUploader {
         return retryer.doRetry("b2_upload_part",
                 accountAuthCache,
                 (isRetry) -> {
+                    final B2ByteProgressListener progressAdapter = new B2UploadProgressAdapter(request.getListener(),
+                            partSpec.getPartNumber() - 1,
+                            partCount,
+                            partSpec.getStart(),
+                            partSpec.getLength());
+                    final B2ByteProgressFilteringListener progressListener = new B2ByteProgressFilteringListener(progressAdapter);
+
                     try {
                         final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
 
-                        B2ByteProgressListener byteProgressListener = new B2UploadProgressAdapter(request.getListener(), partSpec.getPartNumber() - 1, partCount, partSpec.getStart(), partSpec.getLength());
 
                         request.getListener().progress(B2UploadProgressUtil.forPart(partSpec, partCount, 0, B2UploadState.STARTING));
 
-                        final long nMsecsBetween = 5 * ONE_SECOND_IN_MSECS; // let progress through every few seconds.
-                        byteProgressListener = new B2ByteProgressFilteringListener(byteProgressListener, nMsecsBetween);
 
                         B2ContentSource source = new B2PartOfContentSource(request.getContentSource(), partSpec.start, partSpec.length);
-                        source = new B2ContentSourceWithByteProgressListener(source, byteProgressListener);
+                        source = new B2ContentSourceWithByteProgressListener(source, progressListener);
 
                         final B2UploadPartRequest partRequest = B2UploadPartRequest
                                 .builder(partSpec.partNumber, source)
@@ -282,7 +286,7 @@ class B2LargeFileUploader {
                         request.getListener().progress(B2UploadProgressUtil.forPartSucceeded(partSpec, partCount));
                         return part;
                     } catch (Exception e) {
-                        request.getListener().progress(B2UploadProgressUtil.forPartFailed(partSpec, partCount));
+                        request.getListener().progress(B2UploadProgressUtil.forPartFailed(partSpec, partCount, progressListener.getBytesSoFar()));
                         throw e;
                     }
                 },

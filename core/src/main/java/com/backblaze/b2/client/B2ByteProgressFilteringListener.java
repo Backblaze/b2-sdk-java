@@ -6,6 +6,8 @@ package com.backblaze.b2.client;
 
 import com.backblaze.b2.util.B2ByteProgressListener;
 
+import static com.backblaze.b2.util.B2DateTimeUtil.ONE_SECOND_IN_MSECS;
+
 /**
  * B2ByteProgressFilteringListener only forwards a subset of the calls to the
  * listener it wraps to minimize the amount of work being done.
@@ -28,6 +30,9 @@ class B2ByteProgressFilteringListener implements B2ByteProgressListener {
     // at what time should we send the next progress?
     private long msecsThreshold;
 
+    // what's the most recent bytesSoFar we've seen?
+    private long bytesSoFar;
+
     /**
      * @param listener the listener to forward notifications to.
      * @param nMsecsBetween if this much time has passed since previous progress() was forwarded, forward it.
@@ -38,8 +43,17 @@ class B2ByteProgressFilteringListener implements B2ByteProgressListener {
         this.nMsecsBetween = nMsecsBetween;
     }
 
+    /**
+     * @param listener the listener to forward notifications to with a default nMsecsBetween.
+     */
+    B2ByteProgressFilteringListener(B2ByteProgressListener listener) {
+        this(listener, 5 * ONE_SECOND_IN_MSECS);
+    }
+
     @Override
     public void progress(long nBytesSoFar) {
+        this.bytesSoFar = nBytesSoFar;
+
         final long nowMsecs = System.currentTimeMillis();
 
         // only send if enough time has gone by.
@@ -54,11 +68,17 @@ class B2ByteProgressFilteringListener implements B2ByteProgressListener {
     @Override
     public void hitException(Exception e,
                              long nBytesSoFar) {
+        this.bytesSoFar = nBytesSoFar;
         listener.hitException(e, nBytesSoFar);
     }
 
     @Override
     public void reachedEof(long nBytesSoFar) {
+        this.bytesSoFar = nBytesSoFar;
         listener.reachedEof(nBytesSoFar);
+    }
+
+    public long getBytesSoFar() {
+        return bytesSoFar;
     }
 }

@@ -45,12 +45,15 @@ import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.json.B2Json;
+import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2ByteRange;
+import com.backblaze.b2.util.B2InputStreamWithByteProgressListener;
 import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.IOException;
@@ -58,6 +61,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.backblaze.b2.util.B2DateTimeUtil.ONE_SECOND_IN_MSECS;
 import static com.backblaze.b2.util.B2StringUtil.percentEncode;
 
 public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
@@ -184,8 +188,13 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     @Override
     public B2FileVersion uploadFile(B2UploadUrlResponse uploadUrlResponse,
                                     B2UploadFileRequest request) throws B2Exception {
+        final B2UploadListener uploadListener = request.getListener();
         final B2ContentSource source = request.getContentSource();
-        try (final B2ContentDetailsForUpload contentDetails = new B2ContentDetailsForUpload(source)) {
+        try (final B2ContentDetailsForUpload contentDetails = new B2ContentDetailsForUpload(request.getContentSource())) {
+            final long contentLen = contentDetails.getContentLength();
+
+            uploadListener.progress(B2UploadProgressUtil.forSmallFileWaitingToStart(contentLen));
+            uploadListener.progress(B2UploadProgressUtil.forSmallFileStarting(contentLen));
 
             // build the headers.
             final B2HeadersImpl.Builder headersBuilder = B2HeadersImpl
@@ -211,15 +220,28 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             // XXX: really percentEncode the keys?  maybe check for ok characters instead?
             request.getFileInfo().forEach((k, v) -> headersBuilder.set(B2Headers.FILE_INFO_PREFIX + percentEncode(k), percentEncode(v)));
 
+            final B2ByteProgressListener progressAdapter = new B2UploadProgressAdapter(uploadListener, 0, 1, 0, contentLen);
+            final B2ByteProgressFilteringListener progressListener = new B2ByteProgressFilteringListener(progressAdapter);
+
             try {
-                return webApiClient.postDataReturnJson(
+                final B2FileVersion version = webApiClient.postDataReturnJson(
                         uploadUrlResponse.getUploadUrl(),
                         headersBuilder.build(),
-                        contentDetails.getInputStream(),
-                        contentDetails.getContentLength(),
+                        new B2InputStreamWithByteProgressListener(contentDetails.getInputStream(), progressListener),
+                        contentLen,
                         B2FileVersion.class);
+                        //if (System.getenv("FAIL_ME") != null) {
+                        //    throw new B2LocalException("test", "failing on purpose!");
+                        //}
+
+                uploadListener.progress(B2UploadProgressUtil.forSmallFileSucceeded(contentLen));
+                return version;
             } catch (B2UnauthorizedException e) {
                 e.setRequestCategory(B2UnauthorizedException.RequestCategory.UPLOADING);
+                uploadListener.progress(B2UploadProgressUtil.forSmallFileFailed(contentLen, progressListener.getBytesSoFar()));
+                throw e;
+            } catch (B2Exception e) {
+                uploadListener.progress(B2UploadProgressUtil.forSmallFileFailed(contentLen, progressListener.getBytesSoFar()));
                 throw e;
             }
         }

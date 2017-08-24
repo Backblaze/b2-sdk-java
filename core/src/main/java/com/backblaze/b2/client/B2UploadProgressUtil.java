@@ -47,10 +47,38 @@ interface B2UploadProgressUtil {
      * @return a new B2UploadProgress that says the upload of the part completed successfully.
      */
     static B2UploadProgress forPartFailed(B2PartSpec partSpec,
-                                          int numParts) {
+                                          int numParts,
+                                          long bytesSoFar) {
         return forPart(partSpec,
                 numParts,
-                0,
+                bytesSoFar,
                 B2UploadState.FAILED);
+    }
+
+    static B2UploadProgress forSmallFile(long contentLength,
+                                         long bytesSoFar,
+                                         B2UploadState state) {
+        return new B2UploadProgress(0, // part index
+                1, // partCount
+                0, // startByte
+                contentLength,
+                bytesSoFar,
+                state);
+    }
+
+    static B2UploadProgress forSmallFileWaitingToStart(long contentLen) {
+        return forSmallFile(contentLen, 0, B2UploadState.WAITING_TO_START);
+    }
+
+    static B2UploadProgress forSmallFileStarting(long contentLen) {
+        return forSmallFile(contentLen, 0, B2UploadState.STARTING);
+    }
+
+    static B2UploadProgress forSmallFileSucceeded(long contentLen) {
+        return forSmallFile(contentLen, contentLen, B2UploadState.SUCCEEDED);
+    }
+
+    static B2UploadProgress forSmallFileFailed(long contentLength, long bytesSoFar) {
+        return forSmallFile(contentLength, bytesSoFar, B2UploadState.FAILED);
     }
 }
