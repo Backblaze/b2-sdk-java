@@ -78,7 +78,7 @@ class B2UploadProgressAdapter implements B2ByteProgressListener {
                 partIndex,
                 partCount,
                 startByte,
-                nBytesSoFar,
+                length,
                 nBytesSoFar,
                 B2UploadState.UPLOADING
         );
