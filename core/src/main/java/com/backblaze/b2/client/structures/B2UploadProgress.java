@@ -7,6 +7,11 @@ package com.backblaze.b2.client.structures;
 /**
  * The B2UploadProgress summarizes the status of an upload.
  * It's a structure so we can extend it later, if needed.
+ *
+ * NOTE: the length field may sometimes be a little longer than you expect.
+ *       For example, if we're adding a SHA1 to the thing being uploaded,
+ *       the contentLength will be at least 40 bytes longer than you expect
+ *       because we're adding an ascii-hex-encoded SHA1.
  */
 public class B2UploadProgress {
     /**
@@ -25,7 +30,7 @@ public class B2UploadProgress {
     final long startByte;
 
     /**
-     * how long is this part (always matches the contentSource's contentLength for small files)
+     * how long is this part (always greater than or equal to the contentSource's contentLength for small files)
      */
     final long length;
 
