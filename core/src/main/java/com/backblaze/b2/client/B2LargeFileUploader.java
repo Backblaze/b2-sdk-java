@@ -210,7 +210,7 @@ class B2LargeFileUploader {
                     uploadedPartFutures.add(executor.submit(() -> uploadOnePart(uploadPartUrlCache, request, partCount, partSpec)));
                 } else {
                     // tell the listener about our prior success as soon as we can.
-                    listener.progress(B2UploadProgressUtil.forSuccessfulPartUpload(partSpec, partCount));
+                    listener.progress(B2UploadProgressUtil.forPartSucceeded(partSpec, partCount));
 
                     // shortcut the upload by just returning the previously uploaded B2Part.
                     // i could change the code to not submit all the tasks, but this is straight-forward,
@@ -259,27 +259,32 @@ class B2LargeFileUploader {
         return retryer.doRetry("b2_upload_part",
                 accountAuthCache,
                 (isRetry) -> {
-                    final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
+                    try {
+                        final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
 
-                    B2ByteProgressListener byteProgressListener = new B2UploadProgressAdapter(request.getListener(), partSpec.getPartNumber()-1, partCount, partSpec.getStart(), partSpec.getLength());
+                        B2ByteProgressListener byteProgressListener = new B2UploadProgressAdapter(request.getListener(), partSpec.getPartNumber() - 1, partCount, partSpec.getStart(), partSpec.getLength());
 
-                    request.getListener().progress(B2UploadProgressUtil.forPart(partSpec, partCount, 0, B2UploadState.STARTING));
+                        request.getListener().progress(B2UploadProgressUtil.forPart(partSpec, partCount, 0, B2UploadState.STARTING));
 
-                    final long nMsecsBetween = 5 * ONE_SECOND_IN_MSECS; // let progress through every few seconds.
-                    byteProgressListener = new B2ByteProgressFilteringListener(byteProgressListener, nMsecsBetween);
+                        final long nMsecsBetween = 5 * ONE_SECOND_IN_MSECS; // let progress through every few seconds.
+                        byteProgressListener = new B2ByteProgressFilteringListener(byteProgressListener, nMsecsBetween);
 
-                    B2ContentSource source = new B2PartOfContentSource(request.getContentSource(), partSpec.start, partSpec.length);
-                    source = new B2ContentSourceWithByteProgressListener(source, byteProgressListener);
+                        B2ContentSource source = new B2PartOfContentSource(request.getContentSource(), partSpec.start, partSpec.length);
+                        source = new B2ContentSourceWithByteProgressListener(source, byteProgressListener);
 
-                    final B2UploadPartRequest partRequest = B2UploadPartRequest
-                            .builder(partSpec.partNumber, source)
-                            .build();
+                        final B2UploadPartRequest partRequest = B2UploadPartRequest
+                                .builder(partSpec.partNumber, source)
+                                .build();
 
-                    final B2Part part = webifier.uploadPart(uploadPartUrlResponse, partRequest);
-                    uploadPartUrlCache.unget(uploadPartUrlResponse);
+                        final B2Part part = webifier.uploadPart(uploadPartUrlResponse, partRequest);
+                        uploadPartUrlCache.unget(uploadPartUrlResponse);
 
-                    request.getListener().progress(B2UploadProgressUtil.forSuccessfulPartUpload(partSpec, partCount));
-                    return part;
+                        request.getListener().progress(B2UploadProgressUtil.forPartSucceeded(partSpec, partCount));
+                        return part;
+                    } catch (Exception e) {
+                        request.getListener().progress(B2UploadProgressUtil.forPartFailed(partSpec, partCount));
+                        throw e;
+                    }
                 },
                 new B2DefaultRetryPolicy());
     }

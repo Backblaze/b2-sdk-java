@@ -15,8 +15,14 @@ package com.backblaze.b2.client.structures;
  * For a large file with N parts, partIndex will range from 0 to N-1 and
  * partCount will always be N.
  *
+ * You may be called with state FAILED more than once in a row as various
+ * layers of the software notice the error.  Further, because of the way
+ * the SDK retries, you may see updates indicating progress and perhaps
+ * even failure and then you may see updates showing one or more subsequent
+ * attempts to upload the same content.
+ *
  * THREAD-SAFETY: Listeners will be called from arbitrary threads and may be
- * called from multiple threads simultaneously.  As a result, implemnentations
+ * called from multiple threads simultaneously.  As a result, implementations
  * of B2UploadListener must be thread-safe.
  *
  * PERFORMANCE: do not do anything that might block the thread for any appreciable
