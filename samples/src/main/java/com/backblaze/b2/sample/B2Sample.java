@@ -23,6 +23,7 @@ import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2ExecutorUtils;
@@ -63,6 +64,11 @@ public class B2Sample {
                                  ExecutorService executor) throws B2Exception {
         final String bucketName = "sample-" + client.getAccountId();
 
+        final B2UploadListener uploadListener = (progress) -> {
+            final double percent = (100. * (progress.getBytesSoFar() / (double) progress.getLength()));
+            writer.println(String.format("  progress(%3.2f, %s)", percent, progress.toString()));
+        };
+
         bigHeader(writer, "cleanup existing bucket, if any");
         deleteBucketIfAny(writer, client, bucketName);
 
@@ -92,6 +98,7 @@ public class B2Sample {
                 B2UploadFileRequest request = B2UploadFileRequest
                         .builder(bucketId, fileName, B2ContentTypes.B2_AUTO, source)
                         .setCustomField("color", "blue")
+                        .setListener(uploadListener)
                         .build();
                 file1 = client.uploadSmallFile(request);
                 writer.println("uploaded " + file1);
@@ -132,6 +139,7 @@ public class B2Sample {
             B2UploadFileRequest request = B2UploadFileRequest
                     .builder(bucketId, fileName, B2ContentTypes.APPLICATION_OCTET, source)
                     .setCustomField("color", "green")
+                    .setListener(uploadListener)
                     .build();
             file3 = client.uploadLargeFile(request, executor);
             writer.println("uploaded " + file3);

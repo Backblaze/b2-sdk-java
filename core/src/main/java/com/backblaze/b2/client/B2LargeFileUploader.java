@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client;
 
+import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.exceptions.B2Exception;
@@ -13,9 +14,13 @@ import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.client.structures.B2UploadState;
+import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2Collections;
+import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -181,6 +186,9 @@ class B2LargeFileUploader {
         // errors and ended up resuming later, but there's a good chance the urls would be bad
         // and it's ok to not optimize for that failure case.
 
+        final B2UploadListener listener = request.getListener();
+        final int partCount = allPartSpecs.size();
+
         final B2UploadPartUrlCache uploadPartUrlCache = new B2UploadPartUrlCache(
                 webifier,
                 accountAuthCache,
@@ -191,17 +199,25 @@ class B2LargeFileUploader {
         try {
             // upload parts.
             for (B2PartSpec partSpec : allPartSpecs) {
+                // tell the listener that this part will be waiting to start.
+                listener.progress(B2UploadProgressUtil.forPart(partSpec, partCount, 1, B2UploadState.WAITING_TO_START));
+
                 final B2Part alreadyUploadedPart = uploadedAlready.get(partSpec);
                 if (alreadyUploadedPart == null) {
                     // do the upload
-                    uploadedPartFutures.add(executor.submit(() -> uploadOnePart(uploadPartUrlCache, request, partSpec)));
+                    uploadedPartFutures.add(executor.submit(() -> uploadOnePart(uploadPartUrlCache, request, partCount, partSpec)));
                 } else {
+                    // tell the listener about our prior success as soon as we can.
+                    listener.progress(B2UploadProgressUtil.forPartSucceeded(partSpec, partCount));
+
                     // shortcut the upload by just returning the previously uploaded B2Part.
                     // i could change the code to not submit all the tasks, but this is straight-forward,
                     // so i'll start with this for now.
                     uploadedPartFutures.add(executor.submit(() -> alreadyUploadedPart));
                 }
             }
+
+            B2Preconditions.checkState(partCount == uploadedPartFutures.size(), "didn't we add a future for every spec?");
 
             for (Future<B2Part> future : uploadedPartFutures) {
                 try {
@@ -236,20 +252,41 @@ class B2LargeFileUploader {
 
     private B2Part uploadOnePart(B2UploadPartUrlCache uploadPartUrlCache,
                                  B2UploadFileRequest request,
+                                 int partCount,
                                  B2PartSpec partSpec) throws B2Exception {
         return retryer.doRetry("b2_upload_part",
                 accountAuthCache,
                 (isRetry) -> {
-                    final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
+                    final B2ByteProgressListener progressAdapter = new B2UploadProgressAdapter(request.getListener(),
+                            partSpec.getPartNumber() - 1,
+                            partCount,
+                            partSpec.getStart(),
+                            partSpec.getLength());
+                    final B2ByteProgressFilteringListener progressListener = new B2ByteProgressFilteringListener(progressAdapter);
 
-                    final B2UploadPartRequest partRequest = B2UploadPartRequest
-                            .builder(partSpec.partNumber,
-                                    new B2PartOfContentSource(request.getContentSource(), partSpec.start, partSpec.length))
-                            .build();
+                    try {
+                        final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
 
-                    final B2Part part = webifier.uploadPart(uploadPartUrlResponse, partRequest);
-                    uploadPartUrlCache.unget(uploadPartUrlResponse);
-                    return part;
+
+                        request.getListener().progress(B2UploadProgressUtil.forPart(partSpec, partCount, 0, B2UploadState.STARTING));
+
+
+                        B2ContentSource source = new B2PartOfContentSource(request.getContentSource(), partSpec.start, partSpec.length);
+                        source = new B2ContentSourceWithByteProgressListener(source, progressListener);
+
+                        final B2UploadPartRequest partRequest = B2UploadPartRequest
+                                .builder(partSpec.partNumber, source)
+                                .build();
+
+                        final B2Part part = webifier.uploadPart(uploadPartUrlResponse, partRequest);
+                        uploadPartUrlCache.unget(uploadPartUrlResponse);
+
+                        request.getListener().progress(B2UploadProgressUtil.forPartSucceeded(partSpec, partCount));
+                        return part;
+                    } catch (Exception e) {
+                        request.getListener().progress(B2UploadProgressUtil.forPartFailed(partSpec, partCount, progressListener.getBytesSoFar()));
+                        throw e;
+                    }
                 },
                 new B2DefaultRetryPolicy());
     }

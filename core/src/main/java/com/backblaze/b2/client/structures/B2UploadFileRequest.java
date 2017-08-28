@@ -15,18 +15,21 @@ public class B2UploadFileRequest {
     private final String contentType;
     private final B2ContentSource contentSource;
     private final Map<String, String> fileInfo;
+    private final B2UploadListener listener;
 
 
     private B2UploadFileRequest(String bucketId,
                                 String fileName,
                                 String contentType,
                                 Map<String, String> fileInfo,
-                                B2ContentSource contentSource) {
+                                B2ContentSource contentSource,
+                                B2UploadListener listener) {
         this.bucketId = bucketId;
         this.fileName = fileName;
         this.contentType = contentType;
         this.fileInfo = fileInfo;  // make sorted, immutable copyOf?!
         this.contentSource = contentSource;
+        this.listener = (listener != null) ? listener : B2UploadListener.noopListener();
     }
 
     public String getBucketId() {
@@ -49,6 +52,9 @@ public class B2UploadFileRequest {
         return fileInfo;
     }
 
+    public B2UploadListener getListener() {
+        return listener;
+    }
 
     public static Builder builder(String bucketId,
                                   String fileName,
@@ -63,6 +69,7 @@ public class B2UploadFileRequest {
         private String contentType;
         private B2ContentSource source;
         private Map<String, String> info;
+        private B2UploadListener listener;
 
         Builder(String bucketId,
                 String fileName,
@@ -87,12 +94,18 @@ public class B2UploadFileRequest {
             return this;
         }
 
+        public Builder setListener(B2UploadListener listener) {
+            this.listener = listener;
+            return this;
+        }
+
         public B2UploadFileRequest build() {
             return new B2UploadFileRequest(bucketId,
                     fileName,
                     contentType,
                     info,
-                    source);
+                    source,
+                    listener);
         }
     }
 }
