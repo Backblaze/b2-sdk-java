@@ -15,8 +15,9 @@ import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
 import java.util.concurrent.Callable;
 
 /**
- * Instances of this class provide helpers to do automatic backoff.
- * The backoff behavior is determined by the B2RetryPolicy that are passed in.
+ * Instances of this class provide helpers to do automatic backoff and retrying
+ * for retryable errors.  The backoff behavior is determined by the B2RetryPolicy
+ * that are passed in.
  */
 class B2Retryer {
     private final B2Sleeper sleeper;

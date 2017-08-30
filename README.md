@@ -76,7 +76,7 @@ HOW TO USE
 
   * create a B2StorageClient.
 
-    * if your code has access to the accountId and appliationKey,
+    * if your code has access to the accountId and applicationKey,
       here's the simplest way to do it:
 
       ```java
@@ -87,9 +87,9 @@ HOW TO USE
 
     * if you want to get the credentials from the environment,
       as B2Sample does, here's how to create your client:
-
+      ```
       B2StorageClient client = B2StorageHttpClientBuilder.builder(userAgent).build();
-
+      ```
 
   * There's a very straight-forward mapping from B2 API calls to
     methods on the B2StorageClient.
@@ -99,7 +99,7 @@ HOW TO USE
     flexibility and long-term source-code compatibility, we use the
     Builder pattern.  Builders take all required parameters
     when they are constructed and then you may set optional values.
-    See the javadocs for the builder classes to learn about their
+    See the [javadocs][] for the builder classes to learn about their
     defaults.
 
   * For some of the simplest calls, we provide methods that just take
@@ -151,13 +151,43 @@ HOW TO USE
     }
     ```
 
+  * To get upload progress notifications, implement the [B2UploadListener][]
+    interface and call setListener() with an instance of your listener class
+    while building your B2UploadFileRequest.
+
+    Uploads are broken into "parts" which may be uploaded in parallel for greater
+    throughput.  When uploading a "small file" (using uploadSmallFile()), there is
+    only one part.  When uploading a "large file" (using uploadLargeFile() or finishUploadingLargeFile()) there will be more than part and they may be
+    uploaded in parallel and they may be started and completed in any order.
+
+    B2UploadListener has one required method, progress(), which is passed
+    an immutable [B2UploadProgress][] object periodically.  Each B2UploadProgress
+    object says the overall state of the upload (state), how many parts the
+    upload consists of (partCount), which of those parts it represents
+    (partIndex, a zero-based index), the range of the overall upload that the
+    part represents (startByte and length), and how many bytes have been uploaded
+    so far (bytesSoFar).
+
+    For small file uploads, many of the B2UploadProgress values are constant.
+    For instance, for small files, partCount is always 1, partIndex is always 0
+    and startByte is always 0.  For large file uploads, all B2UploadProgress
+    objects will have the same partCount, but the other values will vary.
+
+    The [B2UploadState][] of each part upload is one of these: WAITING_TO_START,
+    STARTING, UPLOADING, FAILED, SUCCEEDED.  See the javadocs for more details.
+
+    The B2UploadListener just receives progress() calls for parts.  It does not
+    receive notifications about the overall success of the upload.  The upload
+    methods on B2StorageClient are synchronous.  As with other methods in the
+    API, overall success is indicated by a normal return from the method (with the
+    B2FileVersion of the uploaded file) and overall failure is indicated by
+    throwing an exception.
+
+    Take a look at the example progress listener in B2Sample.java and run it to
+    see an example of the notifications you'll get.
+
 FAQ
 ===
-
-XXX: what to put here?  let's wait and see what's actually asked.  :)
-XXX: probably some common errors people see.  
-XXX: probably yet another reminder to add the jar to the path?
-XXX: maybe "what are those @B2Json annotations?" and/or "why B2Json instead of <my favorite JSON mechanism>?"
 
   * Can I add metadata to the files I upload?  How?
 
@@ -220,6 +250,28 @@ XXX: maybe "what are those @B2Json annotations?" and/or "why B2Json instead of <
     The two existing sink classes have a few nice features related to checking the
     SHA-1 after the download which you may want to mimic in your implementation.
 
+  * What are those @B2Json annotations?
+
+    The B2 SDK uses our B2Json library to read and write JSON.  The @B2Json
+    annotations on classes provide information B2Json to tell it how to
+    construct instances of classes and how to handle members.
+
+  * Why B2Json instead of [insert your favorite Java JSON library]?
+
+    There are many, many Java packages available for working with JSON.  See
+    [[json.org]] for a list.  We've looked at many and we liked and used
+    Google's GSON.  One of the main things that we struggled with in GSON
+    was that it was hard to make members 'final'.  Similarly, it was hard
+    to do overall checking of the values in a structure after they'd all
+    been set.  Since we really like immutability and validation, we were
+    sad.  We chose to make B2Json.
+
+    B2Json requires that we make a constructor for each class that takes all
+    of the parameters, so that we can assign values for final members and validate
+    the values as needed.  Since Java reflection doesn't let us access the names
+    of the parameters to the constructors, we have to annotate constructors to
+    provide the names.  It's a price we're happy to pay for the features it
+    provides.
 
 
 STRUCTURE
@@ -259,13 +311,7 @@ Here are some things we could do someday, in no particular order:
 * implement a WebApiClient that uses java.net instead of HttpComponents and make sure
   the SDK can be used without HttpComponents.
 
-* add a progress listener to upload calls so clients can track progress. (maybe downloads too.)
-  possibly as a wrapper on the contentSource, to track the bytes being pulled.
-  that's not 100% accurate, but it should be a lot simpler than hooking into the B2WebApiClient.
-
 * any good way to exercise all the exception handling in B2WebApiClient implementations?
-
-* add parameters for sockets?
 
 * check public/default/private protection levels!
 
@@ -335,3 +381,8 @@ Potential future features
 [Calling the API]: https://www.backblaze.com/b2/docs/calling.html
 [Apache HttpClient]: https://hc.apache.org/httpcomponents-client-ga/
 [B2 Files]: https://www.backblaze.com/b2/docs/files.html
+[javadocs]: https://backblaze.github.io/b2-sdk-java/
+[B2UploadListener]: https://backblaze.github.io/b2-sdk-java/com/backblaze/b2/client/structures/B2UploadListener.html
+[B2UploadProgress]: https://backblaze.github.io/b2-sdk-java/com/backblaze/b2/client/structures/B2UploadProgress.html
+[B2UploadState]: https://backblaze.github.io/b2-sdk-java/com/backblaze/b2/client/structures/B2UploadState.html
+[json.org]: http://www.json.org/
