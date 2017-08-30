@@ -375,6 +375,13 @@ Potential future features
       finished (upload idempotency).  (this is something that ab wants for
       one of his exercisers, but he hasn't heard anyone else even ask for it.)
 
+Contributors
+============
+
+In addition to the team at Backblaze, the following people have contributed
+questions and feedback to improve the SDK:
+
+* Kyle Hughart
 
 [integration checklist]: https://www.backblaze.com/b2/docs/integration_checklist.html
 [B2 API Docs]: https://www.backblaze.com/b2/docs/
