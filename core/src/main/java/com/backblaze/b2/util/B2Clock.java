@@ -56,24 +56,16 @@ public abstract class B2Clock {
     }
 
     /**
-     * @return a monotonically increasing number of nanoseconds.  note that it has
+     * @return a monotonically increasing number of milliseconds.  note that it has
      *         no relationship to wall clock time and will differ between different
-     *         runs of the JVM.  note that it won't necessarily be as precise as
-     *         nanoseconds.  See System.nanoTime().
+     *         runs of the JVM.
      *
      *         It is monotonically increasing!
      *         AND it won't wrap during any single run of a JVM.
      *         (unless the JVM runs for hundreds of of years!
      *         (2^63 nanos) / (10^9 nanos/sec) / (86400 secs/day) / (365 days/year) ~= 292 years)
      */
-    public abstract long getMonoNanoTime();
-
-    /**
-     * @return This is just a milliseconds version of getMonoNanoTime().
-     */
-    public long getMonoMsecTime() {
-        return getMonoNanoTime() / B2DateTimeUtil.ONE_MSEC_IN_NANOS;
-    }
+    public abstract long getMonoMsecTime();
 
     /**
      * @return the number of milliseconds since the unix epoch.

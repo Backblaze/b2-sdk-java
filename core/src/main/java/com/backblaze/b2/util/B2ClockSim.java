@@ -10,20 +10,15 @@ import java.time.LocalDateTime;
 import static com.backblaze.b2.util.B2DateTimeUtil.getMillisecondsSinceEpoch;
 
 /**
- * B2ClockSim provides a simple
+ * B2ClockSim provides a simple simulation of a clock, for use in tests.
  */
 public class B2ClockSim extends B2Clock {
 
     private long nowMillis;
-    private long nanos;
+    private long monotonicMillis;
 
     B2ClockSim(LocalDateTime startTime) {
         resetBoth(startTime);
-    }
-
-    @Override
-    public long getMonoNanoTime() {
-        return nanos;
     }
 
     @Override
@@ -31,21 +26,26 @@ public class B2ClockSim extends B2Clock {
         return nowMillis;
     }
 
+    @Override
+    public long getMonoMsecTime() {
+        return monotonicMillis;
+    }
+
     /**
      * Shifts the current time by the given duration.
-     *    the nowMillisTime and monoNanoTime will go forward by the same amount (mod resolution!)
+     * The wallClock and monotonic times will go forward by the same amount.
      * @param delta the amount of time to shift both clocks by.
      *              must be non-negative to avoid making the monotonic clock go backwards!
      */
     public void advanceBoth(Duration delta) {
         B2Preconditions.checkArgument(delta.toNanos() >= 0, "delta must be non-negative");
         nowMillis += delta.toMillis();
-        nanos += delta.toNanos();
+        monotonicMillis += delta.toMillis();
     }
 
     /**
      * Shifts the current wall clock time by the given duration.
-     * Only nowMills will be adjusted.  Use this when you want to
+     * Only nowMillis will be adjusted.  Use this when you want to
      * shift time backwards, since you're not allowed to call advanceBoth()
      * with negative value.
      * @param delta the time to advance the wall clock by
@@ -62,6 +62,6 @@ public class B2ClockSim extends B2Clock {
      */
     public void resetBoth(LocalDateTime desiredNow) {
         this.nowMillis = getMillisecondsSinceEpoch(desiredNow);
-        this.nanos = 0;
+        this.monotonicMillis = 0;
     }
 }
