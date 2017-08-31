@@ -16,7 +16,7 @@ public class B2ClockImpl extends B2Clock {
      */
     private final long monoNanoBase;
 
-    B2ClockImpl() {
+    public B2ClockImpl() {
          monoNanoBase = System.nanoTime();
     }
 

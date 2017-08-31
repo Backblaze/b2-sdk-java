@@ -55,14 +55,14 @@ class B2ByteProgressFilteringListener implements B2ByteProgressListener {
     public void progress(long nBytesSoFar) {
         this.bytesSoFar = nBytesSoFar;
 
-        final long nowMsecs = B2Clock.get().getNowMsecTime();
+        final long monoMsecs = B2Clock.get().getMonoMsecTime();
 
         // only send if enough time has gone by.
-        if (nowMsecs >= msecsThreshold) {
+        if (monoMsecs >= msecsThreshold) {
             listener.progress(nBytesSoFar);
 
             // reset threshold for next send.
-            msecsThreshold = nowMsecs + nMsecsBetween;
+            msecsThreshold = monoMsecs + nMsecsBetween;
         }
     }
 

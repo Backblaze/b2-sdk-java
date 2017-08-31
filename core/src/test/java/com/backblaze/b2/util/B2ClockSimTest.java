@@ -22,7 +22,7 @@ public class B2ClockSimTest {
     @Test
     public void test() {
         // test create
-        final B2ClockSim clock = B2ClockSim.create(B2DateTimeUtil.EPOCH_TIME.plus(Duration.ofSeconds(6)));
+        final B2ClockSim clock = new B2ClockSim(B2DateTimeUtil.EPOCH_TIME.plus(Duration.ofSeconds(6)));
         assertEquals(6 * ONE_SECOND_IN_MSECS, clock.getNowMsecTime());
         assertEquals(0L, clock.getMonoNanoTime());
         assertEquals(0L, clock.getMonoMsecTime());
@@ -42,7 +42,7 @@ public class B2ClockSimTest {
 
     @Test
     public void testAdvanceWithNonPositiveDurations() {
-        final B2ClockSim clock = B2ClockSim.create(B2DateTimeUtil.EPOCH_TIME.plus(Duration.ofSeconds(6)));
+        final B2ClockSim clock = new B2ClockSim(B2DateTimeUtil.EPOCH_TIME.plus(Duration.ofSeconds(6)));
 
         // adding a zero duration should be fine.
         clock.advanceBoth(Duration.ZERO);

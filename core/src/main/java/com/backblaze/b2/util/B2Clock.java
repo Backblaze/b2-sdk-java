@@ -4,6 +4,8 @@
  */
 package com.backblaze.b2.util;
 
+import java.time.LocalDateTime;
+
 /**
  * This class provides access to two different time measurements.
  *
@@ -33,6 +35,25 @@ public abstract class B2Clock {
         B2Preconditions.checkState(theClock == null, "can't change clocks!");
         B2Preconditions.checkArgumentIsNotNull(clock, "clock");
         theClock = clock;
+    }
+
+    /**
+     * If theClock is null, this will create a B2ClockSim with the desiredNow.
+     * If theClock is a B2ClockSim, this will set it to the specified time.
+     * If theclock is not a B2ClockSim, this will throw.
+     * @param desiredNow is the wall clock time for the simulator's "now".
+     * @return theClock
+     */
+    public static B2ClockSim useSimulator(LocalDateTime desiredNow) {
+        if (theClock == null) {
+            theClock = new B2ClockSim(desiredNow);
+        }
+        B2Preconditions.checkState(theClock instanceof B2ClockSim,
+                "theClock must be a B2ClockSim, but it's a " + theClock.getClass().getSimpleName());
+
+        final B2ClockSim sim = (B2ClockSim) theClock;
+        sim.resetBoth(desiredNow);
+        return sim;
     }
 
     /**
