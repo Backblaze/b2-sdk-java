@@ -23,13 +23,13 @@ public class B2ClockImpl extends B2Clock {
     }
 
     @Override
-    public long getMonoMsecTime() {
+    public long monotonicMillis() {
         // subtraction gets the right value even if nanoTime() has wrapped past Long.MAX_VALUE.
         return (System.nanoTime() - monoNanoBase) / ONE_MILLI_IN_NANOS;
     }
 
     @Override
-    public long getNowMsecTime() {
+    public long wallClockMillis() {
         return System.currentTimeMillis();
     }
 }

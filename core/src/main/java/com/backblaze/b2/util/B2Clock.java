@@ -65,7 +65,7 @@ public abstract class B2Clock {
      *         (unless the JVM runs for hundreds of of years!
      *         (2^63 nanos) / (10^9 nanos/sec) / (86400 secs/day) / (365 days/year) ~= 292 years)
      */
-    public abstract long getMonoMsecTime();
+    public abstract long monotonicMillis();
 
     /**
      * @return the number of milliseconds since the unix epoch.
@@ -75,5 +75,5 @@ public abstract class B2Clock {
      *         is changed.  time might sometimes flow at a variable
      *         speed or even backwards if the clock is being adjusted.
      */
-    public abstract long getNowMsecTime();
+    public abstract long wallClockMillis();
 }

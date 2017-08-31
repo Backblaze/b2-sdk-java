@@ -351,7 +351,7 @@ public class B2LargeFileUploaderTest {
                 null,
                 B2Collections.mapOf(),
                 "upload",
-                B2Clock.get().getNowMsecTime());
+                B2Clock.get().wallClockMillis());
 
 
         // arrange to answer get_upload_part_url (which will be called several times, but it's ok to reuse the same value since it's all mocked!)

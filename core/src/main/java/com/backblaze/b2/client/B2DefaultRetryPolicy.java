@@ -38,7 +38,7 @@ public class B2DefaultRetryPolicy implements B2RetryPolicy {
     @Override
     public Integer gotRetryableAfterDelay(String operation,
                                           int attemptsSoFar,
-                                          long tookMsecs,
+                                          long tookMillis,
                                           B2Exception e) {
         if (attemptsSoFar < MAX_ATTEMPTS) {
             final Integer secsFromServer = e.getRetryAfterSecondsOrNull();
@@ -66,7 +66,7 @@ public class B2DefaultRetryPolicy implements B2RetryPolicy {
     @Override
     public boolean gotRetryableImmediately(String operation,
                                            int attemptsSoFar,
-                                           long tookMsecs,
+                                           long tookMillis,
                                            B2Exception e) {
         return (attemptsSoFar < MAX_ATTEMPTS);
     }

@@ -41,7 +41,7 @@ public class B2ByteProgressFilteringListenerTest {
         {
             bytesSoFar += 1;
             clockSim.advanceBoth(Duration.ofMillis(4900));
-            assertEquals(4900, clockSim.getMonoMsecTime());
+            assertEquals(4900, clockSim.monotonicMillis());
 
             checkReachedEofAndException(bytesSoFar);
             checkProgressNotCalled(bytesSoFar); // no change. too soon.
@@ -51,7 +51,7 @@ public class B2ByteProgressFilteringListenerTest {
         {
             bytesSoFar += 1;
             clockSim.advanceBoth(Duration.ofMillis(99));
-            assertEquals(4999, clockSim.getMonoMsecTime());
+            assertEquals(4999, clockSim.monotonicMillis());
 
             checkReachedEofAndException(bytesSoFar);
             checkProgressNotCalled(bytesSoFar); // no change. too soon.
@@ -67,7 +67,7 @@ public class B2ByteProgressFilteringListenerTest {
         {
             bytesSoFar += 1;
             clockSim.advanceBoth(Duration.ofMillis(1));
-            assertEquals(5000, clockSim.getMonoMsecTime());
+            assertEquals(5000, clockSim.monotonicMillis());
 
             checkReachedEofAndException(bytesSoFar);
             checkProgressCalled(bytesSoFar);
@@ -77,7 +77,7 @@ public class B2ByteProgressFilteringListenerTest {
         {
             bytesSoFar += 1;
             clockSim.advanceBoth(Duration.ofMillis(999));
-            assertEquals(5999, clockSim.getMonoMsecTime());
+            assertEquals(5999, clockSim.monotonicMillis());
 
             checkReachedEofAndException(bytesSoFar);
             checkProgressNotCalled(bytesSoFar);
@@ -87,7 +87,7 @@ public class B2ByteProgressFilteringListenerTest {
         {
             bytesSoFar += 1;
             clockSim.advanceBoth(Duration.ofMillis(4002));
-            assertEquals(10001, clockSim.getMonoMsecTime());
+            assertEquals(10001, clockSim.monotonicMillis());
 
             checkReachedEofAndException(bytesSoFar);
             checkProgressCalled(bytesSoFar);

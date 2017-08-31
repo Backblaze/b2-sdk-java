@@ -22,12 +22,12 @@ public class B2SleeperTest {
     @Test
     public void testSleeping() {
         final B2Clock clock = new B2ClockImpl();
-        final long beforeMsec = clock.getMonoMsecTime();
+        final long beforeMillis = clock.monotonicMillis();
         sleeper.sleepSeconds(1);
-        final long afterMsec = clock.getMonoMsecTime();
+        final long afterMillis = clock.monotonicMillis();
 
         // we should've slept most of a second! (and not thrown)
-        assertTrue((afterMsec - beforeMsec) > 900);
+        assertTrue((afterMillis - beforeMillis) > 900);
     }
 
     @Test

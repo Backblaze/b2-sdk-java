@@ -22,18 +22,18 @@ public class B2ClockSimTest {
     public void test() {
         // test create
         final B2ClockSim clock = new B2ClockSim(B2DateTimeUtil.EPOCH_TIME.plus(Duration.ofSeconds(6)));
-        assertEquals(6 * ONE_SECOND_IN_MILLIS, clock.getNowMsecTime());
-        assertEquals(0L, clock.getMonoMsecTime());
+        assertEquals(6 * ONE_SECOND_IN_MILLIS, clock.wallClockMillis());
+        assertEquals(0L, clock.monotonicMillis());
 
         // test advanceBoth.  it should advance both types of time.
         clock.advanceBoth(Duration.ofMinutes(1));
-        assertEquals((60 + 6) * ONE_SECOND_IN_MILLIS, clock.getNowMsecTime());
-        assertEquals(60 * ONE_SECOND_IN_MILLIS, clock.getMonoMsecTime());
+        assertEquals((60 + 6) * ONE_SECOND_IN_MILLIS, clock.wallClockMillis());
+        assertEquals(60 * ONE_SECOND_IN_MILLIS, clock.monotonicMillis());
 
         // test advanceNow.  it should only advance the wall-clock time.
         clock.advanceNow(Duration.ofHours(1));
-        assertEquals((3600 + 60 + 6) * ONE_SECOND_IN_MILLIS, clock.getNowMsecTime());
-        assertEquals(60 * ONE_SECOND_IN_MILLIS, clock.getMonoMsecTime());
+        assertEquals((3600 + 60 + 6) * ONE_SECOND_IN_MILLIS, clock.wallClockMillis());
+        assertEquals(60 * ONE_SECOND_IN_MILLIS, clock.monotonicMillis());
     }
 
     @Test
@@ -46,7 +46,7 @@ public class B2ClockSimTest {
 
         // advancing now by a negative time should be fine.
         clock.advanceNow(Duration.ofSeconds(-1));
-        assertEquals(5 * ONE_SECOND_IN_MILLIS, clock.getNowMsecTime());
+        assertEquals(5 * ONE_SECOND_IN_MILLIS, clock.wallClockMillis());
 
 
         // advancingBoth by a negative time should throw.

@@ -22,12 +22,12 @@ public class B2ClockSim extends B2Clock {
     }
 
     @Override
-    public long getNowMsecTime() {
+    public long wallClockMillis() {
         return nowMillis;
     }
 
     @Override
-    public long getMonoMsecTime() {
+    public long monotonicMillis() {
         return monotonicMillis;
     }
 

@@ -85,7 +85,7 @@ public class B2TestHelpers {
                 SAMPLE_SHA1,
                 B2Collections.mapOf(),
                 "upload",
-                B2Clock.get().getNowMsecTime());
+                B2Clock.get().wallClockMillis());
     }
 
     public static B2Part makePart(int i) {

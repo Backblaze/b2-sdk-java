@@ -14,21 +14,21 @@ public class B2ClockImplTest {
     public void test() throws InterruptedException {
         final B2ClockImpl clock = new B2ClockImpl();
 
-        final long beforeNowMsecs = clock.getNowMsecTime();
-        final long beforeMonoMsecs = clock.getMonoMsecTime();
+        final long beforeNowMillis = clock.wallClockMillis();
+        final long beforeMonoMillis = clock.monotonicMillis();
 
         Thread.sleep(1000);
 
-        final long afterNowMsecs = clock.getNowMsecTime();
-        final long afterMonoMsecs = clock.getMonoMsecTime();
+        final long afterNowMillis = clock.wallClockMillis();
+        final long afterMonoMillis = clock.monotonicMillis();
 
-        final long deltaNowMsecs = afterNowMsecs - beforeNowMsecs;
-        final long deltaMonoMsecs = afterMonoMsecs - beforeMonoMsecs;
+        final long deltaNowMillis = afterNowMillis - beforeNowMillis;
+        final long deltaMonoMillis = afterMonoMillis - beforeMonoMillis;
 
-        assertTrue("nowMsecs: after(" + afterNowMsecs + ") - before(" + beforeNowMsecs + ") = " + deltaNowMsecs + " = " + (deltaNowMsecs / 1000.) + " (seconds)",
-                (deltaNowMsecs >= 1000) && (deltaNowMsecs <= 3000));
+        assertTrue("nowMillis: after(" + afterNowMillis + ") - before(" + beforeNowMillis + ") = " + deltaNowMillis + " = " + (deltaNowMillis / 1000.) + " (seconds)",
+                (deltaNowMillis >= 1000) && (deltaNowMillis <= 3000));
 
-        assertTrue("monoMsecs: after(" + afterMonoMsecs + ") - before(" + beforeMonoMsecs + ") = " + deltaMonoMsecs + " = " + (deltaMonoMsecs / 1000.) + " (seconds)",
-                (deltaMonoMsecs >= 1000) && (deltaMonoMsecs <= 3000));
+        assertTrue("monoMillis: after(" + afterMonoMillis + ") - before(" + beforeMonoMillis + ") = " + deltaMonoMillis + " = " + (deltaMonoMillis / 1000.) + " (seconds)",
+                (deltaMonoMillis >= 1000) && (deltaMonoMillis <= 3000));
     }
 }

@@ -126,9 +126,9 @@ public class B2DateTimeUtilTest {
         checkSinceEpochDateTime(31 * B2DateTimeUtil.ONE_DAY_IN_MILLIS, "1970-02-01 00:00:00");
     }
 
-    private void checkSinceEpochDateTime(long expectedMsecs, String dateTimeStr) {
+    private void checkSinceEpochDateTime(long expectedMillis, String dateTimeStr) {
         LocalDateTime d = B2DateTimeUtil.parseDateTime(dateTimeStr);
-        assertEquals(expectedMsecs, B2DateTimeUtil.getMillisecondsSinceEpoch(d));
+        assertEquals(expectedMillis, B2DateTimeUtil.getMillisecondsSinceEpoch(d));
     }
 
 

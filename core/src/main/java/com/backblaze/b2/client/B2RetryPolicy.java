@@ -23,12 +23,12 @@ public interface B2RetryPolicy {
      *
      * @param operation the name of what is being retried.  *usually* the name of a b2 operation.
      * @param attemptsSoFar how many times have we called callable.call() so far?
-     * @param tookMsecs     how long did this attempt take?
+     * @param tookMillis     how long did this attempt take?
      */
     @SuppressWarnings("unused")
     default void succeeded(String operation,
                            int attemptsSoFar,
-                           long tookMsecs) {
+                           long tookMillis) {
     }
 
     /**
@@ -45,13 +45,13 @@ public interface B2RetryPolicy {
      *
      * @param operation the name of what is being retried.  *usually* the name of a b2 operation.
      * @param attemptsSoFar how many times have we called callable.call() so far?
-     * @param tookMsecs     how long did this attempt take?
+     * @param tookMillis     how long did this attempt take?
      * @param e             the retryable exception.
      * @return null to stop trying OR the number of seconds to sleep before trying again.
      */
     Integer gotRetryableAfterDelay(String operation,
                                    int attemptsSoFar,
-                                   long tookMsecs,
+                                   long tookMillis,
                                    B2Exception e);
 
     /**
@@ -59,13 +59,13 @@ public interface B2RetryPolicy {
      *
      * @param operation the name of what is being retried.  *usually* the name of a b2 operation.
      * @param attemptsSoFar how many times have we called callable.call() so far?
-     * @param tookMsecs     how long did this attempt take?
+     * @param tookMillis     how long did this attempt take?
      * @param e             the retryable exception.
      * @return true iff we should try again.
      */
     boolean gotRetryableImmediately(String operation,
                                     int attemptsSoFar,
-                                    long tookMsecs,
+                                    long tookMillis,
                                     B2Exception e);
 
     /**
@@ -73,13 +73,13 @@ public interface B2RetryPolicy {
      *
      * @param operation the name of what is being retried.  *usually* the name of a b2 operation.
      * @param attemptsSoFar how many times have we called callable.call() so far?
-     * @param tookMsecs     how long did this attempt take?
+     * @param tookMillis     how long did this attempt take?
      * @param e             the unretryable exception.
      */
     @SuppressWarnings("unused")
     default void gotUnretryable(String operation,
                                 int attemptsSoFar,
-                                long tookMsecs,
+                                long tookMillis,
                                 B2Exception e) {
 
     }
@@ -90,12 +90,12 @@ public interface B2RetryPolicy {
      *
      * @param operation the name of what is being retried.  *usually* the name of a b2 operation.
      * @param attemptsSoFar how many times have we called callable.call() so far?
-     * @param tookMsecs     how long did this attempt take?
+     * @param tookMillis     how long did this attempt take?
      * @param e             the unexpected, unretryable exception.
      */
     default void gotUnexpectedUnretryable(String operation,
                                           int attemptsSoFar,
-                                          long tookMsecs,
+                                          long tookMillis,
                                           Exception e) {
     }
 }

@@ -26,26 +26,26 @@ import static com.backblaze.b2.util.B2DateTimeUtil.ONE_SECOND_IN_MILLIS;
  */
 class B2ByteProgressFilteringListener implements B2ByteProgressListener {
     private final B2ByteProgressListener listener;
-    private final long nMsecsBetween;
+    private final long nMillisBetween;
 
     // at what time should we send the next progress?
-    private long msecsThreshold;
+    private long millisThreshold;
 
     // what's the most recent bytesSoFar we've seen?
     private long bytesSoFar;
 
     /**
      * @param listener the listener to forward notifications to.
-     * @param nMsecsBetween if this much time has passed since previous progress() was forwarded, forward it.
+     * @param nMillisBetween if this much time has passed since previous progress() was forwarded, forward it.
      */
     private B2ByteProgressFilteringListener(B2ByteProgressListener listener,
-                                            long nMsecsBetween) {
+                                            long nMillisBetween) {
         this.listener = listener;
-        this.nMsecsBetween = nMsecsBetween;
+        this.nMillisBetween = nMillisBetween;
     }
 
     /**
-     * @param listener the listener to forward notifications to with a default nMsecsBetween.
+     * @param listener the listener to forward notifications to with a default nMillisBetween.
      */
     B2ByteProgressFilteringListener(B2ByteProgressListener listener) {
         this(listener, 5 * ONE_SECOND_IN_MILLIS);
@@ -55,14 +55,14 @@ class B2ByteProgressFilteringListener implements B2ByteProgressListener {
     public void progress(long nBytesSoFar) {
         this.bytesSoFar = nBytesSoFar;
 
-        final long monoMsecs = B2Clock.get().getMonoMsecTime();
+        final long monoMillis = B2Clock.get().monotonicMillis();
 
         // only send if enough time has gone by.
-        if (monoMsecs >= msecsThreshold) {
+        if (monoMillis >= millisThreshold) {
             listener.progress(nBytesSoFar);
 
             // reset threshold for next send.
-            msecsThreshold = monoMsecs + nMsecsBetween;
+            millisThreshold = monoMillis + nMillisBetween;
         }
     }
 

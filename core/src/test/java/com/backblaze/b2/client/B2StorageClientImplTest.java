@@ -767,7 +767,7 @@ public class B2StorageClientImplTest {
                 null,
                 B2Collections.mapOf(),
                 "upload",
-                B2Clock.get().getNowMsecTime());
+                B2Clock.get().wallClockMillis());
 
         final String largeFileId = largeFileVersion.getFileId();
 
