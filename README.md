@@ -140,7 +140,8 @@ HOW TO USE
             .build();
     for (B2FileVersion version : client.fileVersions(request)) {
         writer.println("fileVersion: " + version);
-    }```
+    }
+    ```
 
     Similar to other methods, there is a convenience version of the
     fileVersions() which just takes a bucketId:
