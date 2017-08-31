@@ -36,8 +36,11 @@ import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.client.structures.B2UploadProgress;
+import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.util.B2ByteRange;
@@ -69,6 +72,11 @@ import static com.backblaze.b2.json.B2Json.toJsonOrThrowRuntime;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * This test verifies that the B2StorageClientWebifierImpl translates
@@ -1001,10 +1009,13 @@ public class B2StorageClientWebifierImplTest {
 
     @Test
     public void testUploadFile() throws B2Exception {
+        final B2UploadListener listener = mock(B2UploadListener.class);
+
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
                 .setCustomField("color", "blue")
                 .setCustomField("number", "six")
+                .setListener(listener)
                 .build();
         final B2UploadUrlResponse uploadUrl = uploadUrlResponse(bucketId(1), 1);
         webifier.uploadFile(uploadUrl, request);
@@ -1030,7 +1041,23 @@ public class B2StorageClientWebifierImplTest {
                 "    B2FileVersion\n"
         );
 
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(0, 1, 0, 13,  0, B2UploadState.WAITING_TO_START)));
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(0, 1, 0, 13,  0, B2UploadState.STARTING)));
+        // we get two UPLOADING events with bytesSoFar=13:
+        //   the first happens when our first read succeeds.
+        //   the second happens when we hit eof.
+        // that's fine.  (in the real world there will probably be more than one UPLOADING event and the final one might be suppressed by the B2ByteProgressFilteringListener
+        //                which is added above this code, in the B2StorageClientImpl, so it's important that send one for reachedEof.  and i don't want to complicate things
+        //                enough to filter this case out.)
+        verify(listener, times(2)).progress(eq(new B2UploadProgress(0, 1, 0, 13, 13, B2UploadState.UPLOADING)));
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(0, 1, 0, 13, 13, B2UploadState.SUCCEEDED)));
+
+        reset(listener); // to clear the counts.
+
         checkRequestCategory(UPLOADING, w -> w.uploadFile(uploadUrl, request));
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(0, 1, 0, 13,  0, B2UploadState.WAITING_TO_START)));
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(0, 1, 0, 13,  0, B2UploadState.STARTING)));
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(0, 1, 0, 13,  0, B2UploadState.FAILED)));
     }
 
     @Test

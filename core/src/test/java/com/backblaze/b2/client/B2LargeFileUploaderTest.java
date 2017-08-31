@@ -16,6 +16,7 @@ import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.util.B2Clock;
@@ -57,6 +58,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -74,6 +76,16 @@ public class B2LargeFileUploaderTest {
 
     // a content source that's barely big enough to be a large file.
     private final B2ContentSource contentSource = mock(B2ContentSource.class);
+    private final B2UploadListener listener = mock(B2UploadListener.class);
+
+    // useful in some tests.
+    private final B2UploadListener NO_LISTENER = null;
+
+    private final B2UploadListener REVISIT_THIS_ONE_LISTENER = progress -> {
+        System.out.println(progress);
+        System.out.flush();
+    };
+
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -82,6 +94,9 @@ public class B2LargeFileUploaderTest {
     public void tearDown() {
         // clear the interrupted flag.
         Thread.interrupted();
+
+        // either the test case isn't using the listener or we should've checked all notifications already.
+        verifyNoMoreInteractions(listener);
     }
 
     public B2LargeFileUploaderTest() throws IOException {
@@ -97,7 +112,7 @@ public class B2LargeFileUploaderTest {
 
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("failed to get large file's sha1 from contentSource: testing");
-        makeUploader(contentSource).uploadLargeFile();
+        makeUploader(contentSource, listener).uploadLargeFile();
     }
 
     @Test
@@ -116,7 +131,7 @@ public class B2LargeFileUploaderTest {
 
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("failed to get large file's sha1: java.io.IOException: testing");
-        makeUploader(contentSource).finishUploadingLargeFile(version, B2Collections.listOf());
+        makeUploader(contentSource, listener).finishUploadingLargeFile(version, B2Collections.listOf());
     }
 
     @Test
@@ -130,7 +145,7 @@ public class B2LargeFileUploaderTest {
 
         thrown.expect(RejectedExecutionException.class);
         thrown.expectMessage("testing");
-        makeUploader(PART_SIZES, executor, contentSource).uploadLargeFile();
+        makeUploader(PART_SIZES, executor, contentSource, REVISIT_THIS_ONE_LISTENER).uploadLargeFile();
     }
 
     @Test
@@ -144,7 +159,7 @@ public class B2LargeFileUploaderTest {
 
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("interrupted while trying to upload parts: java.lang.InterruptedException: sleep interrupted");
-        makeUploader(PART_SIZES, executor, contentSource).uploadLargeFile();
+        makeUploader(PART_SIZES, executor, contentSource, REVISIT_THIS_ONE_LISTENER).uploadLargeFile();
     }
 
     @Test
@@ -158,7 +173,7 @@ public class B2LargeFileUploaderTest {
 
         thrown.expect(B2InternalErrorException.class);
         thrown.expectMessage("testing");
-        makeUploader(PART_SIZES, executor, contentSource).uploadLargeFile();
+        makeUploader(PART_SIZES, executor, contentSource, REVISIT_THIS_ONE_LISTENER).uploadLargeFile();
     }
 
     @Test
@@ -172,7 +187,7 @@ public class B2LargeFileUploaderTest {
 
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("exception while trying to upload parts: java.io.IOException: testing");
-        makeUploader(PART_SIZES, executor, contentSource).uploadLargeFile();
+        makeUploader(PART_SIZES, executor, contentSource, REVISIT_THIS_ONE_LISTENER).uploadLargeFile();
     }
 
     // throwIfLargeFileVersionDoesntSeemToMatchRequest's "happy path" is exercised as part of other tests.
@@ -194,6 +209,7 @@ public class B2LargeFileUploaderTest {
                 1234
         );
 
+        // REVISIT_THIS_ONE_LISTENER -- how to add a listener and cause this type of exception?
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("contentSource has fileName 'files/0002', but largeFileVersion has 'files/0001'");
         B2LargeFileUploader.throwIfLargeFileVersionDoesntSeemToMatchRequest(largeFileVersion, contentSource.getContentLength(), request);
@@ -369,7 +385,7 @@ public class B2LargeFileUploaderTest {
         final B2FinishLargeFileRequest finishRequest = new B2FinishLargeFileRequest(largeFileId, B2Collections.listOf(B2TestHelpers.SAMPLE_SHA1));
         when(webifier.finishLargeFile(anyObject(), eq(finishRequest))).thenReturn(largeFileVersion);
 
-        final B2LargeFileUploader uploader = makeUploader(PART_SIZES, Executors.newSingleThreadExecutor(), contentSource);
+        final B2LargeFileUploader uploader = makeUploader(PART_SIZES, Executors.newSingleThreadExecutor(), contentSource, NO_LISTENER);
         uploader.finishUploadingLargeFile(largeFileVersion, alreadyUploadedParts);
 
         // we should be using the existing largeFile, not starting a new one.
@@ -481,16 +497,19 @@ public class B2LargeFileUploaderTest {
         }
     }
 
-    private B2LargeFileUploader makeUploader(B2ContentSource contentSource) throws IOException {
+    private B2LargeFileUploader makeUploader(B2ContentSource contentSource,
+                                             B2UploadListener listener) throws IOException {
         final ExecutorService executor = mock(ExecutorService.class);
-        return makeUploader(PART_SIZES, executor, contentSource);
+        return makeUploader(PART_SIZES, executor, contentSource, listener);
     }
 
     private B2LargeFileUploader makeUploader(B2PartSizes partSizes,
                                              ExecutorService executor,
-                                             B2ContentSource contentSource) throws IOException {
+                                             B2ContentSource contentSource,
+                                             B2UploadListener listener) throws IOException {
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(1), B2ContentTypes.APPLICATION_OCTET, contentSource)
+                .setListener(listener)
                 .build();
 
         return new B2LargeFileUploader(

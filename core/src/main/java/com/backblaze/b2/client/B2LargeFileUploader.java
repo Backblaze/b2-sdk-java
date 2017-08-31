@@ -200,7 +200,7 @@ class B2LargeFileUploader {
             // upload parts.
             for (B2PartSpec partSpec : allPartSpecs) {
                 // tell the listener that this part will be waiting to start.
-                listener.progress(B2UploadProgressUtil.forPart(partSpec, partCount, 1, B2UploadState.WAITING_TO_START));
+                listener.progress(B2UploadProgressUtil.forPart(partSpec, partCount, 0, B2UploadState.WAITING_TO_START));
 
                 final B2Part alreadyUploadedPart = uploadedAlready.get(partSpec);
                 if (alreadyUploadedPart == null) {

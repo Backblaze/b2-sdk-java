@@ -4,6 +4,8 @@
  */
 package com.backblaze.b2.client.structures;
 
+import java.util.Objects;
+
 /**
  * The B2UploadProgress summarizes the state of an upload.
  * It's a structure so we can extend it later, if needed.
@@ -92,5 +94,23 @@ public class B2UploadProgress {
                 ", bytesSoFar=" + bytesSoFar +
                 ", state=" + state +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        B2UploadProgress progress = (B2UploadProgress) o;
+        return partIndex == progress.partIndex &&
+                partCount == progress.partCount &&
+                startByte == progress.startByte &&
+                length == progress.length &&
+                bytesSoFar == progress.bytesSoFar &&
+                state == progress.state;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(partIndex, partCount, startByte, length, bytesSoFar, state);
     }
 }

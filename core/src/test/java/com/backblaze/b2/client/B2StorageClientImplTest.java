@@ -45,8 +45,10 @@ import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Clock;
@@ -73,6 +75,9 @@ import static com.backblaze.b2.client.B2TestHelpers.fileName;
 import static com.backblaze.b2.client.B2TestHelpers.makePart;
 import static com.backblaze.b2.client.B2TestHelpers.makeSha1;
 import static com.backblaze.b2.client.B2TestHelpers.makeVersion;
+import static com.backblaze.b2.client.structures.B2UploadState.STARTING;
+import static com.backblaze.b2.client.structures.B2UploadState.SUCCEEDED;
+import static com.backblaze.b2.client.structures.B2UploadState.WAITING_TO_START;
 import static com.backblaze.b2.util.B2Collections.listOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -670,13 +675,17 @@ public class B2StorageClientImplTest {
         final B2ContentSource contentSource = mock(B2ContentSource.class);
         when(contentSource.getContentLength()).thenReturn(contentLen);
 
+        final B2UploadListener listener = mock(B2UploadListener.class);
+
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(1), B2ContentTypes.TEXT_PLAIN, contentSource)
                 .setCustomField("color", "blue")
+                .setListener(listener)
                 .build();
 
         client.uploadSmallFile(request);
 
+        verifyNoMoreInteractions(listener);      // the webifier is a mock, so it doesn't do normal things
         verifyNoMoreInteractions(contentSource); // the webifier is a mock, so it doesn't do normal things
 
         verify(webifier, times(1)).uploadFile(eq(uploadUrl), eq(request));
@@ -697,8 +706,10 @@ public class B2StorageClientImplTest {
         final B2ContentSource contentSource = mock(B2ContentSource.class);
         when(contentSource.getContentLength()).thenReturn(contentLen);
 
+        final B2UploadListener listener = mock(B2UploadListener.class);
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(1), B2ContentTypes.TEXT_PLAIN, contentSource)
+                .setListener(listener)
                 .build();
 
         // arrange to answer start_large_file
@@ -724,6 +735,19 @@ public class B2StorageClientImplTest {
         verify(contentSource, times(1)).getContentLength();
         verify(contentSource, times(2)).getSha1OrNull(); // once above while making the startLargeRequest for the mock & once for real
         verifyNoMoreInteractions(contentSource); // the webifier is a mock, so it doesn't do normal things
+
+
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(0, 2, 0, 1000, 0, WAITING_TO_START)));
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(0, 2, 0, 1000, 0, STARTING)));
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(0, 2, 0, 1000, 1000, SUCCEEDED)));
+
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(1, 2, 1000, 1000, 0, WAITING_TO_START)));
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(1, 2, 1000, 1000, 0, STARTING)));
+        verify(listener, times(1)).progress(eq(new B2UploadProgress(1, 2, 1000, 1000, 1000, SUCCEEDED)));
+
+        verifyNoMoreInteractions(listener);      // the webifier is a mock, so we don't get calls for progress, just calls for overall state changes.
+
+
 
         verify(webifier, times(1)).startLargeFile(anyObject(), anyObject());
         // there's a very unlikely race condition where we might upload one part and then unget the url and upload another.  it's really unlikely, but it means there's a chance there might only be one call, not two...
