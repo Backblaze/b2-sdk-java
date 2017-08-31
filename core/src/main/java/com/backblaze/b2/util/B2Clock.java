@@ -27,17 +27,6 @@ public abstract class B2Clock {
     private static B2Clock theClock;
 
     /**
-     * This can be used in tests to set theClock to a mock or simulator clock.
-     * It must not be called after get() has been called.
-     * @param clock the clock to use.
-     */
-    public static synchronized void set(B2Clock clock) {
-        B2Preconditions.checkState(theClock == null, "can't change clocks!");
-        B2Preconditions.checkArgumentIsNotNull(clock, "clock");
-        theClock = clock;
-    }
-
-    /**
      * If theClock is null, this will create a B2ClockSim with the desiredNow.
      * If theClock is a B2ClockSim, this will set it to the specified time.
      * If theclock is not a B2ClockSim, this will throw.
@@ -74,8 +63,8 @@ public abstract class B2Clock {
      *
      *         It is monotonically increasing!
      *         AND it won't wrap during any single run of a JVM.
-     *         (unless the JVM runs for hundreds of thousands of millenia!
-     *         (2^63 nanos) / (2^9 nanos/sec) / 86400 (secs/day) / 365 (days/year) / 1000 (years/millenia) ~= 571,232 millenia)
+     *         (unless the JVM runs for hundreds of of years!
+     *         (2^63 nanos) / (10^9 nanos/sec) / (86400 secs/day) / (365 days/year) ~= 292 years)
      */
     public abstract long getMonoNanoTime();
 

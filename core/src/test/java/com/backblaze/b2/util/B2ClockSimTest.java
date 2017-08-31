@@ -30,13 +30,13 @@ public class B2ClockSimTest {
         // test advanceBoth.  it should advance both types of time.
         clock.advanceBoth(Duration.ofMinutes(1));
         assertEquals((60 + 6) * ONE_SECOND_IN_MSECS, clock.getNowMsecTime());
-        assertEquals(60L * ONE_SECOND_IN_NANOS, clock.getMonoNanoTime());
+        assertEquals(60 * ONE_SECOND_IN_NANOS, clock.getMonoNanoTime());
         assertEquals(60 * ONE_SECOND_IN_MSECS, clock.getMonoMsecTime());
 
         // test advanceNow.  it should only advance the wall-clock time.
         clock.advanceNow(Duration.ofHours(1));
         assertEquals((3600 + 60 + 6) * ONE_SECOND_IN_MSECS, clock.getNowMsecTime());
-        assertEquals(60L * ONE_SECOND_IN_NANOS, clock.getMonoNanoTime());
+        assertEquals(60 * ONE_SECOND_IN_NANOS, clock.getMonoNanoTime());
         assertEquals(60 * ONE_SECOND_IN_MSECS, clock.getMonoMsecTime());
     }
 

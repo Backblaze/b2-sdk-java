@@ -7,7 +7,7 @@ package com.backblaze.b2.util;
 import org.junit.Test;
 
 import static com.backblaze.b2.util.B2DateTimeUtil.ONE_SECOND_IN_NANOS;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 public class B2ClockImplTest {
 
@@ -36,6 +36,6 @@ public class B2ClockImplTest {
                 (deltaMonoMsecs >= 1000) && (deltaMonoMsecs <= 3000));
 
         assertTrue("nanos: after(" + afterNanos + ") - before(" + beforeNanos + ") = " + deltaNanos + " = " + (deltaNanos / 1000000000.) + " (seconds)",
-                (deltaNanos >= ONE_SECOND_IN_NANOS) && (deltaNanos <= 3L * ONE_SECOND_IN_NANOS));
+                (deltaNanos >= ONE_SECOND_IN_NANOS) && (deltaNanos <= 3 * ONE_SECOND_IN_NANOS));
     }
 }

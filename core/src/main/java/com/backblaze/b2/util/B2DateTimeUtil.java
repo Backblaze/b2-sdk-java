@@ -23,7 +23,7 @@ public class B2DateTimeUtil {
     static final long ONE_HOUR_IN_MSECS = ONE_HOUR_IN_SECONDS * ONE_SECOND_IN_MSECS;
     static final long ONE_DAY_IN_MSECS = ONE_DAY_IN_SECONDS * ONE_SECOND_IN_MSECS;
 
-    static final int ONE_SECOND_IN_NANOS = 1000000000;
+    static final long ONE_SECOND_IN_NANOS = 1000000000;
     static final long ONE_MSEC_IN_NANOS = ONE_SECOND_IN_NANOS / ONE_SECOND_IN_MSECS;
 
 
