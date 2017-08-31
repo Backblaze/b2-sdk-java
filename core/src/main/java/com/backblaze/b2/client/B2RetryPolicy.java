@@ -12,7 +12,7 @@ import com.backblaze.b2.client.exceptions.B2Exception;
  * the number of milliseconds the call took (tookMs).  For unsuccessful
  * attempts, it is also passed the exception which caused the failure.
  *
- * For each of the getRetryable*() methods, the guide is consulted to decide
+ * For each of the getRetryable*() methods, the policy is consulted to decide
  * whether (and when) to retry.
  *
  * By the way, attemptsSoFar starts at 1.

@@ -18,6 +18,7 @@ import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.After;
 import org.junit.Rule;
@@ -350,7 +351,7 @@ public class B2LargeFileUploaderTest {
                 null,
                 B2Collections.mapOf(),
                 "upload",
-                System.currentTimeMillis());
+                B2Clock.get().getNowMsecTime());
 
 
         // arrange to answer get_upload_part_url (which will be called several times, but it's ok to reuse the same value since it's all mocked!)

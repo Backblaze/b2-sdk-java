@@ -49,6 +49,7 @@ import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import com.backblaze.b2.util.B2ByteRange;
+import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2ExecutorUtils;
 import com.backblaze.b2.util.B2Preconditions;
@@ -766,7 +767,7 @@ public class B2StorageClientImplTest {
                 null,
                 B2Collections.mapOf(),
                 "upload",
-                System.currentTimeMillis());
+                B2Clock.get().getNowMsecTime());
 
         final String largeFileId = largeFileVersion.getFileId();
 
