@@ -117,6 +117,22 @@ public class B2DateTimeUtilTest {
     }
 
     @Test
+    public void testMillisecondsSinceEpoch() {
+        checkSinceEpochDateTime(0, "1970-01-01 00:00:00");
+        checkSinceEpochDateTime(B2DateTimeUtil.ONE_SECOND_IN_MSECS, "1970-01-01 00:00:01");
+        checkSinceEpochDateTime(B2DateTimeUtil.ONE_MINUTE_IN_MSECS, "1970-01-01 00:01:00");
+        checkSinceEpochDateTime(B2DateTimeUtil.ONE_HOUR_IN_MSECS, "1970-01-01 01:00:00");
+        checkSinceEpochDateTime(B2DateTimeUtil.ONE_DAY_IN_MSECS, "1970-01-02 00:00:00");
+        checkSinceEpochDateTime(31 * B2DateTimeUtil.ONE_DAY_IN_MSECS, "1970-02-01 00:00:00");
+    }
+
+    private void checkSinceEpochDateTime(long expectedMsecs, String dateTimeStr) {
+        LocalDateTime d = B2DateTimeUtil.parseDateTime(dateTimeStr);
+        assertEquals(expectedMsecs, B2DateTimeUtil.getMillisecondsSinceEpoch(d));
+    }
+
+
+    @Test
     public void test_forCoverage() {
         // grrrr....  i really don't want to have to do this.
         new B2DateTimeUtil();

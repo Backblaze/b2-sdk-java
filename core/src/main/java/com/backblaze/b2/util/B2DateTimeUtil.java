@@ -18,6 +18,15 @@ public class B2DateTimeUtil {
     static final long ONE_HOUR_IN_SECONDS = 60 * ONE_MINUTE_IN_SECONDS;
     static final long ONE_DAY_IN_SECONDS = 24 * ONE_HOUR_IN_SECONDS;
 
+    public static final long ONE_SECOND_IN_MSECS = 1000;
+    static final long ONE_MINUTE_IN_MSECS = ONE_MINUTE_IN_SECONDS * ONE_SECOND_IN_MSECS;
+    static final long ONE_HOUR_IN_MSECS = ONE_HOUR_IN_SECONDS * ONE_SECOND_IN_MSECS;
+    static final long ONE_DAY_IN_MSECS = ONE_DAY_IN_SECONDS * ONE_SECOND_IN_MSECS;
+
+    static final long ONE_SECOND_IN_NANOS = 1000000000;
+    static final long ONE_MSEC_IN_NANOS = ONE_SECOND_IN_NANOS / ONE_SECOND_IN_MSECS;
+
+
     public static final int MIN_YEAR = 1970;
     public static final int MAX_YEAR = 2999;
 
@@ -36,7 +45,10 @@ public class B2DateTimeUtil {
     private static final int MIN_SECOND = 0;
     private static final int MAX_SECOND = 59; // no leap seconds in Java time
 
-    public static final long ONE_SECOND_IN_MSECS = 1000;
+
+    //private static LocalDate EPOCH = LocalDate.of(1970, 1, 1);
+    static LocalDateTime EPOCH_TIME = LocalDateTime.of(1970, 1, 1, 0, 0);
+
 
     /**
      * Formats a date in "solid" format, like "20150314"
@@ -246,6 +258,15 @@ public class B2DateTimeUtil {
             s = "-" + s;
         }
         return s;
+    }
+
+    /**
+     * Returns the number of milliseconds since 1970-01-01 00:00:00.
+     */
+    static long getMillisecondsSinceEpoch(LocalDateTime dateTime) {
+        // we have to use EPOCH_TIME instead of EPOCH because LocalDate
+        // doesn't support ChronoUnit.SECONDS.
+        return Duration.between(EPOCH_TIME, dateTime).toMillis();
     }
 
     // this exists so it can be called for code coverage purposes in the unit test.

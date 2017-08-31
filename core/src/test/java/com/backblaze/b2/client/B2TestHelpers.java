@@ -13,6 +13,7 @@ import com.backblaze.b2.client.structures.B2LifecycleRule;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
+import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2Sha1;
 
@@ -84,7 +85,7 @@ public class B2TestHelpers {
                 SAMPLE_SHA1,
                 B2Collections.mapOf(),
                 "upload",
-                System.currentTimeMillis());
+                B2Clock.get().getNowMsecTime());
     }
 
     public static B2Part makePart(int i) {

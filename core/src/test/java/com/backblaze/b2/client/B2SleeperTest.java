@@ -4,6 +4,8 @@
  */
 package com.backblaze.b2.client;
 
+import com.backblaze.b2.util.B2Clock;
+import com.backblaze.b2.util.B2ClockImpl;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -19,9 +21,10 @@ public class B2SleeperTest {
 
     @Test
     public void testSleeping() {
-        final long beforeMsec = System.currentTimeMillis();
+        final B2Clock clock = new B2ClockImpl();
+        final long beforeMsec = clock.getMonoMsecTime();
         sleeper.sleepSeconds(1);
-        final long afterMsec = System.currentTimeMillis();
+        final long afterMsec = clock.getMonoMsecTime();
 
         // we should've slept most of a second! (and not thrown)
         assertTrue((afterMsec - beforeMsec) > 900);

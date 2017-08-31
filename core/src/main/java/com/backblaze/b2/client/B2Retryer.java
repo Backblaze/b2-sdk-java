@@ -11,6 +11,7 @@ import com.backblaze.b2.client.exceptions.B2RequestTimeoutException;
 import com.backblaze.b2.client.exceptions.B2ServiceUnavailableException;
 import com.backblaze.b2.client.exceptions.B2TooManyRequestsException;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
+import com.backblaze.b2.util.B2Clock;
 
 import java.util.concurrent.Callable;
 
@@ -64,13 +65,14 @@ class B2Retryer {
                   B2AccountAuthorizationCache accountAuthCache,
                   RetryableCallable<T> callable,
                   B2RetryPolicy retryPolicy) throws B2Exception {
+        final B2Clock clock = B2Clock.get();
 
         // keeps trying until we hit an unretryable exception or the retryPolicy says to stop.
         int attemptsSoFar = 0; // we haven't attempted it at all yet.
         while (true) {
-            final long beforeMsecs = System.currentTimeMillis(); // change to a monotonic clock?
+            final long beforeMonoMsecs = clock.getMonoMsecTime();
 
-            // i have to set this to a default value because System.currentTimeMillis()
+            // i have to set this to a default value because clock.getMonoMsecTime()
             // in the finally block below could throw and then tookMsecs wouldn't be
             // set in the catch(Exception) block way below.
             long tookMsecs = -1;
@@ -81,13 +83,13 @@ class B2Retryer {
                     attemptsSoFar++; // about to attempt again.
 
                     final T value = callable.call(isRetry);
-                    tookMsecs = System.currentTimeMillis() - beforeMsecs;
+                    tookMsecs = clock.getMonoMsecTime() - beforeMonoMsecs;
                     retryPolicy.succeeded(operation, attemptsSoFar, tookMsecs);
 
                     return value;
                 } finally {
                     // be sure to set tookMsecs for exception handling below.
-                    tookMsecs = System.currentTimeMillis() - beforeMsecs;
+                    tookMsecs = clock.getMonoMsecTime() - beforeMonoMsecs;
                 }
             } catch (B2UnauthorizedException e) {
                 switch (e.getRequestCategory()) {
