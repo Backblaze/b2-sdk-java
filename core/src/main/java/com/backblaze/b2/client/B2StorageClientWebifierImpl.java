@@ -61,7 +61,6 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.backblaze.b2.util.B2DateTimeUtil.ONE_SECOND_IN_MSECS;
 import static com.backblaze.b2.util.B2StringUtil.percentEncode;
 
 public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {

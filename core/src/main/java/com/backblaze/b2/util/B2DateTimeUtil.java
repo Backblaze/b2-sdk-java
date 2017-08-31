@@ -18,13 +18,13 @@ public class B2DateTimeUtil {
     static final long ONE_HOUR_IN_SECONDS = 60 * ONE_MINUTE_IN_SECONDS;
     static final long ONE_DAY_IN_SECONDS = 24 * ONE_HOUR_IN_SECONDS;
 
-    public static final long ONE_SECOND_IN_MSECS = 1000;
-    static final long ONE_MINUTE_IN_MSECS = ONE_MINUTE_IN_SECONDS * ONE_SECOND_IN_MSECS;
-    static final long ONE_HOUR_IN_MSECS = ONE_HOUR_IN_SECONDS * ONE_SECOND_IN_MSECS;
-    static final long ONE_DAY_IN_MSECS = ONE_DAY_IN_SECONDS * ONE_SECOND_IN_MSECS;
+    public static final long ONE_SECOND_IN_MILLIS = 1000;
+    static final long ONE_MINUTE_IN_MILLIS = ONE_MINUTE_IN_SECONDS * ONE_SECOND_IN_MILLIS;
+    static final long ONE_HOUR_IN_MILLIS = ONE_HOUR_IN_SECONDS * ONE_SECOND_IN_MILLIS;
+    static final long ONE_DAY_IN_MILLIS = ONE_DAY_IN_SECONDS * ONE_SECOND_IN_MILLIS;
 
     static final long ONE_SECOND_IN_NANOS = 1000000000;
-    static final long ONE_MSEC_IN_NANOS = ONE_SECOND_IN_NANOS / ONE_SECOND_IN_MSECS;
+    static final long ONE_MILLI_IN_NANOS = ONE_SECOND_IN_NANOS / ONE_SECOND_IN_MILLIS;
 
 
     public static final int MIN_YEAR = 1970;

@@ -7,7 +7,7 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2Clock;
 
-import static com.backblaze.b2.util.B2DateTimeUtil.ONE_SECOND_IN_MSECS;
+import static com.backblaze.b2.util.B2DateTimeUtil.ONE_SECOND_IN_MILLIS;
 
 /**
  * B2ByteProgressFilteringListener only forwards a subset of the calls to the
@@ -48,7 +48,7 @@ class B2ByteProgressFilteringListener implements B2ByteProgressListener {
      * @param listener the listener to forward notifications to with a default nMsecsBetween.
      */
     B2ByteProgressFilteringListener(B2ByteProgressListener listener) {
-        this(listener, 5 * ONE_SECOND_IN_MSECS);
+        this(listener, 5 * ONE_SECOND_IN_MILLIS);
     }
 
     @Override
