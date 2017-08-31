@@ -363,6 +363,10 @@ Here are some things we could do someday, in no particular order:
     and to not move the file until the verification is complete.  meanwhile,
     write to a .tmp file yourself and move to the real name only after success.
 
+  * perhaps take advantage of the "Java Concurrency In Practice"-type annotations.
+    So far, we haven't done this because it would add another dependency or
+    require importing the code for those annotations.
+
 Potential future features
 =========================
   * Should we have some other higher-level operations in the SDK?
