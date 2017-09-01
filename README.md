@@ -115,7 +115,7 @@ HOW TO USE
     that a reasonable number of retry attempts have already failed.
 
     When the SDK returns an Iterable, the SDK cannot throw B2Exception
-    from iterator(), becaues Iterable does not allow it.  Similarly,
+    from iterator(), because Iterable does not allow it.  Similarly,
     Iterator does not allow hasNext() or next() to throw a B2Exception.
     In these cases, instead of throwing a B2Exception, the SDK throws
     a B2RuntimeException.
@@ -128,7 +128,7 @@ HOW TO USE
 
   * Some B2 APIs allow you to list items from an unbounded list.
     Examples include b2_list_file_versions, b2_list_file_names, and
-    b2_list_unfinshed_files.  B2StorageClient provides iterators which
+    b2_list_unfinished_files.  B2StorageClient provides iterators which
     handle fetching batches of answers as they're needed.  This relieves your
     code from having to do the iteration "manually".
 
@@ -158,7 +158,8 @@ HOW TO USE
 
     Uploads are broken into "parts" which may be uploaded in parallel for greater
     throughput.  When uploading a "small file" (using uploadSmallFile()), there is
-    only one part.  When uploading a "large file" (using uploadLargeFile() or finishUploadingLargeFile()) there will be more than part and they may be
+    only one part.  When uploading a "large file" (using uploadLargeFile() or
+    finishUploadingLargeFile()) there will be more than one part and they may be
     uploaded in parallel and they may be started and completed in any order.
 
     B2UploadListener has one required method, progress(), which is passed
@@ -282,26 +283,39 @@ This section is mostly for developers who work on the SDK.
 
 To simplify implementation and testing, the B2StorageClient has three main layers and a few helpers.
 
-The top-most layer consists of the B2StorageClientImpl and the various Request and Response classes.  This layer provides the main interface for developers.  The B2StorageClientImpl is responsible for acquiring account authorizations, upload urls and upload authorizations, as needed.  It is also responsible for retrying operations that fail for retryable reasons.  The B2StorageClientImpl uses a BackoffRetrier to do the retrying.  A few operations are complicated enough that they are handled by a separate class; the most prominent example is the LargeFileUploader.
+The top-most layer consists of the B2StorageClientImpl and the various Request and Response classes.  This layer provides the main interface for developers.  The B2StorageClientImpl is responsible for acquiring account authorizations, upload urls and upload authorizations, as needed.  It is also responsible for retrying operations that fail for retryable reasons.  The B2StorageClientImpl uses a B2Retryer to do the retrying.  An implementation of the B2RetryPolicy controls the number of retries that are attempted and the amount of waiting between attempts; the B2DefaultRetryPolicy follows our recommendations and should be suitable for almost all users.  A few operations are complicated enough that they are handled by a separate class; the most prominent example is the B2LargeFileUploader.
 
-The middle layer, consists of the B2StorageClientWebifier.  The webifier's job is to translate logical B2 API calls (such as list file names, or upload a file) into the appropriate HTTP requests and to interpret the responses.  The webifier isolates the B2StorageClientImpl from doing this mapping.  We stub the webifier layer to test B2StorageClientImpl.
+The middle layer, consists of the B2StorageClientWebifier.  The webifier's job is to translate logical B2 API calls (such as "list file names", or "upload a file") into the appropriate HTTP requests and to interpret the responses.  The webifier isolates the B2StorageClientImpl from having to do this mapping.  We stub the webifier layer to test B2StorageClientImpl.
 
 The bottom layer is the B2WebApiClient.  It provides a few simple methods, such as postJsonReturnJson(), postDataReturnJson(), and getContent().  We stub B2WebApiClient to test the B2StorageClientImpl.  This layer isolates the rest of the SDK from the HTTPS implementation so that developers can provide their own web client if they want.  The b2-sdk-httpclient jar provides an implementation that uses the [Apache HttpClient][].
 
 One of the main helpers is our B2Json class.  It uses annotations on class members
-and constructors to convert between Java classes and JSON.  (We can discuss why we
-use it instead of Gson or other alternatives later, if we want.)
+and constructors to convert between Java classes and JSON.
 
 TESTING
 =======
 
-We have lots of unit tests to verify that each of the classes performs as expected.  As mentioned in the "Structure" section, we stub lower layers to test the layer above it.  (XXX: I'm not yet sure how to fully unit test the B2WebApiHttpClientImpl.  Perhaps I'll make a standalone program that either exercises that alone, or perhaps the whole API, against the production server. BrianB says that the CLI looks for a config file with the accountId/appKey and, if it's present, does tests against the live service.)
+We have lots of unit tests to verify that each of the classes performs
+as expected.  As mentioned in the "Structure" section, we stub lower
+layers to test the layer above it.  The B2WebApiClient doesn't have
+unit tests yet (volunteers?). We exercise the whole client, including
+the B2WebApiClient during development and during the official builds
+by running B2Sample against the B2 servers.
 
-I'd also like to test with InterruptedException.
+I'd also like to test more with InterruptedException.
 
-I'd like to verify that it's possible to replace the B2WebApiClient implementation in an environment that doesn't have the Apache HttpClient we use.  I want to be sure we're not inadvertently pulling in classes that won't exist in such an environment.  The first step of this was to remove the HttpClient implementation from the core jar.
+I'd like to verify that it's possible to replace the B2WebApiClient
+implementation in an environment that doesn't have the Apache
+HttpClient we use.  I want to be sure we're not inadvertently pulling
+in classes that won't exist in such an environment.  The first step of
+this was to remove the HttpClient implementation from the core jar.
+(We would be interested in an implementation that uses built-in java
+classes instead of HttpClient to reduce external dependencies.)
 
-For developers who are building on the SDK, we have a provided an initial implementation of B2StorageClient which simulates the service.  So far, it has a minimal feature set.  Let us know if you'd like to work on it.  (Actually, it's not in the repo yet.)
+For developers who are building on the SDK, we have a provided an
+initial implementation of B2StorageClient which simulates the service.
+So far, it has a minimal feature set.  Let us know if you'd like to
+work on it.  (Actually, it's not in the repo yet.)
 
 
 Eventual Development TO DOs
@@ -314,7 +328,11 @@ Here are some things we could do someday, in no particular order:
 
 * any good way to exercise all the exception handling in B2WebApiClient implementations?
 
-* check public/default/private protection levels!
+* check public/default/private protection levels! (reduce access where possible)
+
+* eliminate javadocs warnings from the build.  eliminate classes (and
+  methods?) from the javadocs which are only public to be visible to
+  other parts of the SDK.
 
 * make notes for developers about JVM's TTL for DNS?
 
