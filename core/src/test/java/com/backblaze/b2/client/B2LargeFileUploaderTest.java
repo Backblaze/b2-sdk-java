@@ -19,6 +19,7 @@ import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.After;
@@ -28,6 +29,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -43,6 +45,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static com.backblaze.b2.client.B2LargeFileUploaderTest.When.IN_GET;
+import static com.backblaze.b2.client.B2LargeFileUploaderTest.When.IN_GET_AFTER_RUNNING_IN_SUBMIT;
 import static com.backblaze.b2.client.B2LargeFileUploaderTest.When.IN_SUBMIT;
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
@@ -58,7 +61,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -76,15 +78,53 @@ public class B2LargeFileUploaderTest {
 
     // a content source that's barely big enough to be a large file.
     private final B2ContentSource contentSource = mock(B2ContentSource.class);
-    private final B2UploadListener listener = mock(B2UploadListener.class);
 
     // useful in some tests.
-    private final B2UploadListener NO_LISTENER = null;
+    private RecordingUploadListener recordingListener = new RecordingUploadListener();
 
-    private final B2UploadListener REVISIT_THIS_ONE_LISTENER = progress -> {
-        System.out.println(progress);
-        System.out.flush();
-    };
+    /**
+     * A RecordingUploadListener makes a list of strings describing the
+     * progress calls that it gets.  Before using it, call setExpected().
+     * The @After method calls checkAgainstExpected().
+     */
+    private static class RecordingUploadListener implements B2UploadListener {
+        // ordered lists are ok because we run with single-threaded executor.
+        private final List<String> expected = new ArrayList<>();
+        private final List<String> actual = new ArrayList<>();
+
+        @Override
+        public synchronized void progress(B2UploadProgress progress) {
+            actual.add(progress.toString());
+        }
+
+        synchronized void setExpected(String... v) {
+            expected.addAll(B2Collections.listOf(v));
+        }
+        synchronized void checkAgainstExpected() {
+            if (!expected.equals(actual)) {
+                String msg = "expected:\n" +
+                        join(expected) + "\n" +
+                        "actual:\n" +
+                        join(actual) + "\n";
+                System.err.println(msg);
+                fail(msg);
+            }
+        }
+
+        private static String join(List<String> lines) {
+            final String indent = "  ";
+            StringBuilder s = new StringBuilder();
+            for (String line : lines) {
+                if (s.length() == 0) {
+                    s.append(indent);
+                } else {
+                    s.append("\n").append(indent);
+                }
+                s.append(line);
+            }
+            return s.toString();
+        }
+    }
 
 
     @Rule
@@ -96,7 +136,7 @@ public class B2LargeFileUploaderTest {
         Thread.interrupted();
 
         // either the test case isn't using the listener or we should've checked all notifications already.
-        verifyNoMoreInteractions(listener);
+        recordingListener.checkAgainstExpected();
     }
 
     public B2LargeFileUploaderTest() throws IOException {
@@ -110,10 +150,45 @@ public class B2LargeFileUploaderTest {
         // arrange to throw when asked for the sha1.
         when(contentSource.getSha1OrNull()).thenThrow(new IOException("testing"));
 
+        recordingListener.setExpected(); // no progress because threw before starting uploads.
+
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("failed to get large file's sha1 from contentSource: testing");
-        makeUploader(contentSource, listener).uploadLargeFile();
+        makeUploader(contentSource, recordingListener).uploadLargeFile();
     }
+
+    @Test
+    public void testExceptionFromUploadPart_inResume() throws B2Exception, IOException {
+        // arrange to answer startLargeRequest
+        final B2FileVersion largeFileVersion = makeVersion(1, 2);
+        when(webifier.startLargeFile(anyObject(), anyObject())).thenReturn(largeFileVersion);
+
+        // arrange to answer get_upload_part_url (which will be called several times, but it's ok to reuse the same value since it's all mocked!)
+        final B2GetUploadPartUrlRequest partUrlRequest = new B2GetUploadPartUrlRequest(largeFileVersion.getFileId());
+        final B2UploadPartUrlResponse partUrl = new B2UploadPartUrlResponse(largeFileVersion.getFileId(), "uploadPartUrl", "uploadPartAuthToken");
+        when(webifier.getUploadPartUrl(anyObject(), eq(partUrlRequest))).thenReturn(partUrl);
+
+        // arrange to answer upload_part, based on the request.
+        when(webifier.uploadPart(anyObject(), anyObject())).thenAnswer(invocationOnMock -> {
+            B2UploadPartRequest request = (B2UploadPartRequest) invocationOnMock.getArguments()[1];
+            return makePart(request.getPartNumber());
+        });
+
+        // depending on thread timing we'll get one of these results:
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=2, startByte=0, length=1000, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=0, partCount=2, startByte=0, length=1000, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=0, partCount=2, startByte=0, length=1000, bytesSoFar=1000, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=1, partCount=2, startByte=1000, length=1000, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=2, startByte=1000, length=1000, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=1, partCount=2, startByte=1000, length=1000, bytesSoFar=1000, state=SUCCEEDED}"
+                );
+
+        thrown.expect(B2Exception.class);
+        thrown.expectMessage("testing");
+        makeUploader(PART_SIZES, new ThrowingExecutor(IN_GET_AFTER_RUNNING_IN_SUBMIT, ExceptionType.B2_EXCEPTION), contentSource, recordingListener).uploadLargeFile();
+    }
+
 
     @Test
     public void testExceptionFromGetSha1OrNull_inResume() throws B2Exception, IOException {
@@ -129,9 +204,11 @@ public class B2LargeFileUploaderTest {
                 "upload",
                 123L);
 
+        recordingListener.setExpected(); // no progress because threw before starting uploads.
+
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("failed to get large file's sha1: java.io.IOException: testing");
-        makeUploader(contentSource, listener).finishUploadingLargeFile(version, B2Collections.listOf());
+        makeUploader(contentSource, recordingListener).finishUploadingLargeFile(version, B2Collections.listOf());
     }
 
     @Test
@@ -143,9 +220,14 @@ public class B2LargeFileUploaderTest {
         // we have to return
         final ExecutorService executor = new ThrowingExecutor(IN_SUBMIT, ExceptionType.INTERRUPTED);
 
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=2, startByte=0, length=1000, bytesSoFar=0, state=WAITING_TO_START}"
+                // nothing else cuz it throws.
+        );
+
         thrown.expect(RejectedExecutionException.class);
         thrown.expectMessage("testing");
-        makeUploader(PART_SIZES, executor, contentSource, REVISIT_THIS_ONE_LISTENER).uploadLargeFile();
+        makeUploader(PART_SIZES, executor, contentSource, recordingListener).uploadLargeFile();
     }
 
     @Test
@@ -157,9 +239,15 @@ public class B2LargeFileUploaderTest {
         // we have to return
         final ExecutorService executor = new ThrowingExecutor(IN_GET, ExceptionType.INTERRUPTED);
 
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=2, startByte=0, length=1000, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=2, startByte=1000, length=1000, bytesSoFar=0, state=WAITING_TO_START}"
+                // nothing else cuz it throws.
+        );
+
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("interrupted while trying to upload parts: java.lang.InterruptedException: sleep interrupted");
-        makeUploader(PART_SIZES, executor, contentSource, REVISIT_THIS_ONE_LISTENER).uploadLargeFile();
+        makeUploader(PART_SIZES, executor, contentSource, recordingListener).uploadLargeFile();
     }
 
     @Test
@@ -171,9 +259,15 @@ public class B2LargeFileUploaderTest {
         // we have to return
         final ExecutorService executor = new ThrowingExecutor(IN_GET, ExceptionType.B2_EXCEPTION);
 
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=2, startByte=0, length=1000, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=2, startByte=1000, length=1000, bytesSoFar=0, state=WAITING_TO_START}"
+                // nothing else cuz it throws.
+        );
+
         thrown.expect(B2InternalErrorException.class);
         thrown.expectMessage("testing");
-        makeUploader(PART_SIZES, executor, contentSource, REVISIT_THIS_ONE_LISTENER).uploadLargeFile();
+        makeUploader(PART_SIZES, executor, contentSource, recordingListener).uploadLargeFile();
     }
 
     @Test
@@ -185,9 +279,15 @@ public class B2LargeFileUploaderTest {
         // we have to return
         final ExecutorService executor = new ThrowingExecutor(IN_GET, ExceptionType.IO_EXCEPTION);
 
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=2, startByte=0, length=1000, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=2, startByte=1000, length=1000, bytesSoFar=0, state=WAITING_TO_START}"
+                // nothing else cuz it throws.
+        );
+
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("exception while trying to upload parts: java.io.IOException: testing");
-        makeUploader(PART_SIZES, executor, contentSource, REVISIT_THIS_ONE_LISTENER).uploadLargeFile();
+        makeUploader(PART_SIZES, executor, contentSource, recordingListener).uploadLargeFile();
     }
 
     // throwIfLargeFileVersionDoesntSeemToMatchRequest's "happy path" is exercised as part of other tests.
@@ -209,7 +309,6 @@ public class B2LargeFileUploaderTest {
                 1234
         );
 
-        // REVISIT_THIS_ONE_LISTENER -- how to add a listener and cause this type of exception?
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("contentSource has fileName 'files/0002', but largeFileVersion has 'files/0001'");
         B2LargeFileUploader.throwIfLargeFileVersionDoesntSeemToMatchRequest(largeFileVersion, contentSource.getContentLength(), request);
@@ -303,6 +402,18 @@ public class B2LargeFileUploaderTest {
     public void testNoAlreadyUploadedParts() throws IOException, B2Exception {
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf();
 
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=1042, state=SUCCEEDED}"
+        );
+
         checkPartMatching(alreadyUploadedParts, 1, 2, 3);
     }
 
@@ -311,6 +422,17 @@ public class B2LargeFileUploaderTest {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
                 new B2Part(largeFileId, 1, 1041, makeSha1(1), 1111)
+        );
+
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=1042, state=SUCCEEDED}"
         );
 
         checkPartMatching(alreadyUploadedParts, 2, 3);
@@ -324,6 +446,17 @@ public class B2LargeFileUploaderTest {
                 new B2Part(largeFileId, 3, 1042, makeSha1(3), 3333)
         );
 
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=1042, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=1041, state=SUCCEEDED}"
+        );
+
         checkPartMatching(alreadyUploadedParts, 1, 2);
     }
 
@@ -334,6 +467,15 @@ public class B2LargeFileUploaderTest {
                 new B2Part(largeFileId, 3, 1042, makeSha1(3), 3333),
                 new B2Part(largeFileId, 2, 1041, makeSha1(2), 2222),
                 new B2Part(largeFileId, 1, 1041, makeSha1(1), 1111)
+        );
+
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=1042, state=SUCCEEDED}"
         );
 
         checkPartMatching(alreadyUploadedParts);
@@ -349,6 +491,17 @@ public class B2LargeFileUploaderTest {
                 new B2Part(largeFileId, 4, 1041, makeSha1(4), 1111)   // unneeded part number
         );
 
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=1042, state=SUCCEEDED}"
+                );
         checkPartMatching(alreadyUploadedParts, 1, 2, 3);
     }
 
@@ -385,7 +538,7 @@ public class B2LargeFileUploaderTest {
         final B2FinishLargeFileRequest finishRequest = new B2FinishLargeFileRequest(largeFileId, B2Collections.listOf(B2TestHelpers.SAMPLE_SHA1));
         when(webifier.finishLargeFile(anyObject(), eq(finishRequest))).thenReturn(largeFileVersion);
 
-        final B2LargeFileUploader uploader = makeUploader(PART_SIZES, Executors.newSingleThreadExecutor(), contentSource, NO_LISTENER);
+        final B2LargeFileUploader uploader = makeUploader(PART_SIZES, Executors.newSingleThreadExecutor(), contentSource, recordingListener);
         uploader.finishUploadingLargeFile(largeFileVersion, alreadyUploadedParts);
 
         // we should be using the existing largeFile, not starting a new one.
@@ -421,6 +574,7 @@ public class B2LargeFileUploaderTest {
     enum When {
         IN_SUBMIT,
         IN_GET,
+        IN_GET_AFTER_RUNNING_IN_SUBMIT // running task during submit makes it more sequential.
     }
     enum ExceptionType {
         INTERRUPTED,
@@ -492,6 +646,13 @@ public class B2LargeFileUploaderTest {
         public <T> Future<T> submit(Callable<T> task) {
             if (when == When.IN_SUBMIT) {
                 throw new RejectedExecutionException("testing");
+            }
+            if (when == When.IN_GET_AFTER_RUNNING_IN_SUBMIT) {
+                try {
+                    task.call();
+                } catch (Exception e) {
+                    throw new RuntimeException("not expecting this to happen!", e);
+                }
             }
             return new ThrowingFuture<>(exceptionType);
         }
