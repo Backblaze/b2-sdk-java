@@ -19,6 +19,7 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContexts;
 
 import javax.net.ssl.SSLContext;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is the default HttpClientFactory implementation.
@@ -34,11 +35,14 @@ import javax.net.ssl.SSLContext;
 public class HttpClientFactoryImpl implements HttpClientFactory {
     private final HttpClientConnectionManager connectionManager;
     private final RequestConfig requestConfig;
+    private final IdleConnectionMonitorThread connectionJanitor;
 
     private HttpClientFactoryImpl(HttpClientConnectionManager connectionManager,
                           RequestConfig requestConfig) {
         this.connectionManager = connectionManager;
         this.requestConfig = requestConfig;
+        connectionJanitor = new IdleConnectionMonitorThread(connectionManager);
+        connectionJanitor.start();
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -61,6 +65,13 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
     @Override
     public void close() {
         connectionManager.shutdown();
+        connectionJanitor.shutdown();
+        try {
+            connectionJanitor.join();
+        } catch (InterruptedException e) {
+            // restore the interrupt because we're not acting on it here.
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**
@@ -179,4 +190,43 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
             return mgr;
         }
     }
+
+    // from https://hc.apache.org/httpcomponents-client-ga/tutorial/html/connmgmt.html
+    private static class IdleConnectionMonitorThread extends Thread {
+
+        private final HttpClientConnectionManager connMgr;
+        private volatile boolean shutdown;
+
+        IdleConnectionMonitorThread(HttpClientConnectionManager connMgr) {
+            super();
+            this.connMgr = connMgr;
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (!shutdown) {
+                    synchronized (this) {
+                        wait(5000);
+                        // Close expired connections
+                        connMgr.closeExpiredConnections();
+                        // Optionally, close connections
+                        // that have been idle longer than 30 sec
+                        connMgr.closeIdleConnections(30, TimeUnit.SECONDS);
+                    }
+                }
+            } catch (InterruptedException ex) {
+                // terminate
+            }
+        }
+
+        public void shutdown() {
+            shutdown = true;
+            synchronized (this) {
+                notifyAll();
+            }
+        }
+
+    }
+
 }
