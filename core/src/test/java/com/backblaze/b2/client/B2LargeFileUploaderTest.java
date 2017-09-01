@@ -85,7 +85,7 @@ public class B2LargeFileUploaderTest {
     /**
      * A RecordingUploadListener makes a list of strings describing the
      * progress calls that it gets.  Before using it, call setExpected().
-     * The @After method calls checkAgainstExpected().
+     *
      */
     private static class RecordingUploadListener implements B2UploadListener {
         // ordered lists are ok because we run with single-threaded executor.
