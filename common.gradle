@@ -23,6 +23,23 @@ javadoc {
     options.addStringOption("tag", "apiNote:a:NOTE")
 }
 
+// build a javadoc jar -- from javadoc files
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+// build a sources jar
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+// add them to the artifacts collection
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
 // whenever we might compileJava, run check_code.  this runs fast
 // enough (less than a second) that i'm not going to try to avoid
 // running it.
@@ -30,4 +47,6 @@ task checkCode(type: Exec) {
     commandLine "python", "../check_code"
 }
 classes.dependsOn checkCode
+
+
 
