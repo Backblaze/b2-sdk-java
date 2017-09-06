@@ -1,5 +1,6 @@
 .gradle
 .idea
+build
 core/build/
 httpclient/build/
 samples/build/
