@@ -12,8 +12,9 @@ jdk:
   - oraclejdk8
 
 env:
-  - OUTPUT_DIR=build/mavenRepo
-  - OUTPUT_ZIP=b2-sdk-build-${TRAVIS_BUILD_NUMBER}.zip
+  global:
+    - OUTPUT_DIR=build/mavenRepo
+    - OUTPUT_ZIP=b2-sdk-build-${TRAVIS_BUILD_NUMBER}.zip
 
 before_install:
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
