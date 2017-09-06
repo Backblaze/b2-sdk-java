@@ -43,7 +43,7 @@ script:
 
   # zip up the outputs
   - echo OUTPUT_ZIP=$OUTPUT_ZIP
-  - (cd $OUTPUT_DIR; zip $TRAVIS_BUILD_DIR/build/$OUTPUT_ZIP *)
+  - (cd $OUTPUT_DIR; zip -r $TRAVIS_BUILD_DIR/build/$OUTPUT_ZIP *)
 
   #
   # upload to b2
