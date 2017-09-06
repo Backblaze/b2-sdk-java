@@ -12,6 +12,7 @@ jdk:
   - oraclejdk8
 
 env:
+  - OUTPUT_DIR=build/mavenRepo
   - OUTPUT_ZIP=b2-sdk-build-${TRAVIS_BUILD_NUMBER}.zip
 
 before_install:
@@ -23,7 +24,7 @@ script:
   # actually build
   #
 
-  - ./gradlew build javadoc
+  - ./gradlew build javadoc uploadArchives
 
   #
   # Prepare the outputs
@@ -38,20 +39,10 @@ script:
   # find the jar's version.
   - VERSION=`egrep 'version.=' common.gradle | awk "-F'" '{print $2}'`
   - echo VERSION=$VERSION
-  - echo VERSION=${VERSION}
-
-  # make the 'sources' zip
-  - zip -r build/outputs/b2-sdk-core-${VERSION}-sources.zip core/src
-  - zip -r build/outputs/b2-sdk-httpclient-${VERSION}-sources.zip httpclient/src
-  - zip -r build/outputs/b2-sdk-samples-${VERSION}-sources.zip samples/src
-
-  # make the javadocs zip
-  - (cd core/build/docs; zip -r $TRAVIS_BUILD_DIR/build/outputs/b2-sdk-core-${VERSION}-javadocs.zip javadoc)
-  - (cd httpclient/build/docs; zip -r $TRAVIS_BUILD_DIR/build/outputs/b2-sdk-httpclient-${VERSION}-javadocs.zip javadoc)
 
   # zip up the outputs
   - echo OUTPUT_ZIP=$OUTPUT_ZIP
-  - (cd build/outputs; zip $TRAVIS_BUILD_DIR/build/$OUTPUT_ZIP *)
+  - (cd $OUTPUT_DIR; zip $TRAVIS_BUILD_DIR/build/$OUTPUT_ZIP *)
 
   #
   # upload to b2

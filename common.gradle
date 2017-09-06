@@ -1,7 +1,16 @@
 // Copyright 2017, Backblaze Inc. All Rights Reserved.
 // License https://www.backblaze.com/using_b2_code.html
 
+//
+// Before applying this file, you must set the following variables:
+//   project.ext {
+//     pomName = 'the name to use in the pom file'
+//     pomDescription = 'the description to use in the pom file'
+//   }
+//
+
 apply plugin: 'java'
+apply plugin: 'maven'
 
 dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.11+'
@@ -48,5 +57,43 @@ task checkCode(type: Exec) {
 }
 classes.dependsOn checkCode
 
+// we generate our archives to a local build directory.
+// travis zips them up and sends them to b2.
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "file:${rootDir}/build/mavenRepo/")
+
+            pom.project {
+                groupId 'com.backblaze.b2'
+                name project.ext.pomName
+                description project.ext.pomDescription
+                url 'https://github.com/Backblaze/b2-sdk-java'
+
+                licenses {
+                    license {
+                        name 'MIT'
+                        url 'https://www.backblaze.com/using_b2_code.html'
+                    }
+                }
+
+                developers {
+                    developer {
+                        name 'Maven At Backblaze'
+                        email 'maven@backblaze.com'
+                        organization 'Backblaze, Inc.'
+                        organizationUrl 'https://www.backblaze.com'
+                    }
+                }
+
+                scm {
+                    connection 'scm:https://github.com/Backblaze/b2-sdk-java.git'
+                    developerConnection 'scm:https://github.com/Backblaze/b2-sdk-java.git'
+                    url 'https://github.com/Backblaze/b2-sdk-java'
+                }
+            }
+        }
+    }
+}
 
 

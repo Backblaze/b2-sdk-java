@@ -1,6 +1,11 @@
 // Copyright 2017, Backblaze Inc. All Rights Reserved.
 // License https://www.backblaze.com/using_b2_code.html
 
+project.ext {
+    pomName = 'B2 SDK for Java samples'
+    pomDescription = 'Samples for B2 SDK for Java.'
+}
+
 apply from: '../common.gradle'
 
 // this implementation is built on httpclient, which needs commons-logging.
