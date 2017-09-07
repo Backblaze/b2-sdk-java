@@ -88,7 +88,7 @@ task writeNewPom {
                     developer {
                         name 'Maven At Backblaze'
                         email 'maven@backblaze.com'
-                        organization 'Backblaze, Inc.'
+                        organization = 'Backblaze, Inc.'  // see https://goo.gl/QHibvb for why there's an '=' here.
                         organizationUrl 'https://www.backblaze.com'
                     }
                 }
