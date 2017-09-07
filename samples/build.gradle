@@ -2,6 +2,7 @@
 // License https://www.backblaze.com/using_b2_code.html
 
 project.ext {
+    pomArtifactId = 'b2-sdk-samples'
     pomName = 'B2 SDK for Java samples'
     pomDescription = 'Samples for B2 SDK for Java.'
 }

@@ -59,13 +59,12 @@ classes.dependsOn checkCode
 
 // we generate our archives to a local build directory.
 // travis zips them up and sends them to b2.
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: "file:${rootDir}/build/mavenRepo/")
-
-            pom.project {
+task writeNewPom {
+    doLast {
+        pom {
+            project {
                 groupId 'com.backblaze.b2'
+                artifactId project.ext.pomArtifactId
                 name project.ext.pomName
                 description project.ext.pomDescription
                 url 'https://github.com/Backblaze/b2-sdk-java'
@@ -92,7 +91,7 @@ uploadArchives {
                     url 'https://github.com/Backblaze/b2-sdk-java'
                 }
             }
-        }
+        }.writeTo("${buildDir}/libs/${project.ext.pomArtifactId}-${version}.pom")
     }
 }
 
