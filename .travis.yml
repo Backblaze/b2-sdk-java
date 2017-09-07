@@ -34,8 +34,8 @@ script:
   # make the directory
   - mkdir -p build/outputs
   
-  # copy the generated jar files
-  - cp -v */build/libs/b2-sdk-*.jar build/outputs
+  # copy the generated jar files & pom files
+  - cp -v */build/libs/b2-sdk-*.{jar,pom} build/outputs
 
   # find the jar's version.
   - VERSION=`egrep 'version.=' common.gradle | awk "-F'" '{print $2}'`
