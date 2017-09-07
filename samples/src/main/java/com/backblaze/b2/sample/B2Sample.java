@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.sample;
 
+import com.backblaze.b2.client.B2Sdk;
 import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.contentHandlers.B2ContentFileWriter;
 import com.backblaze.b2.client.contentHandlers.B2ContentMemoryWriter;
@@ -62,6 +63,8 @@ public class B2Sample {
     private static void mainGuts(PrintWriter writer,
                                  B2StorageClient client,
                                  ExecutorService executor) throws B2Exception {
+        writer.println("Running with " + B2Sdk.getName() + " version " + B2Sdk.getVersion());
+
         final String bucketName = "sample-" + client.getAccountId();
 
         final B2UploadListener uploadListener = (progress) -> {

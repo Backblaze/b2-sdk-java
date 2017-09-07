@@ -101,8 +101,9 @@ def shouldSkip(path):
         # the license *is* the license.  :)
         path.endswith("/LICENSE") or
 
-        # special case this.  no license?
+        # special case these.  no license?
         path.endswith("/README.md") or
+        path.endswith("/resources/b2-sdk-core/version.txt") or
 
         # don't look at class files. they're generated binary!
         path.endswith(".class")
