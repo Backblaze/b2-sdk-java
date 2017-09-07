@@ -23,10 +23,19 @@ repositories {
     mavenCentral()
 }
 
-sourceCompatibility = 1.8
-version = '0.0.6'
-project.archivesBaseName = project.ext.pomArtifactId
+ext.readVersion = { ->
+    BufferedReader reader = new BufferedReader(new FileReader("core/src/main/resources/b2-sdk-core/version.txt"));
+    String version = reader.readLine().trim()
+    if (version.isEmpty()) {
+        throw new RuntimeException("version is empty!?")
+    }
+    return version
+}
 
+sourceCompatibility = 1.8
+version = readVersion()
+
+project.archivesBaseName = project.ext.pomArtifactId
 jar {
     manifest {
         attributes 'Implementation-Title': project.ext.pomArtifactId,
