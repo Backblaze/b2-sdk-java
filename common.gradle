@@ -28,7 +28,6 @@ version = '0.0.6'
 project.archivesBaseName = project.ext.pomArtifactId
 
 jar {
-    baseName project.ext.pomArtifactId
     manifest {
         attributes 'Implementation-Title': project.ext.pomArtifactId,
                 'Implementation-Version': version
