@@ -25,7 +25,7 @@ script:
   # actually build
   #
 
-  - ./gradlew build javadoc uploadArchives
+  - ./gradlew build javadoc writeNewPom
 
   #
   # Prepare the outputs
