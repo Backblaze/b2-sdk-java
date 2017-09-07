@@ -8,13 +8,3 @@ project.ext {
 }
 
 apply from: '../common.gradle'
-
-String jarName = 'b2-sdk-core'
-
-jar {
-    baseName jarName
-    manifest {
-        attributes 'Implementation-Title': jarName,
-                   'Implementation-Version': version
-    }
-}

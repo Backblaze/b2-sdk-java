@@ -20,16 +20,3 @@ dependencies {
     // apache commons logging  (https://mvnrepository.com/artifact/commons-logging/commons-logging/1.2)
     implementation group: 'commons-logging', name: 'commons-logging', version: '1.2'
 }
-
-
-String jarName = 'b2-sdk-httpclient'
-
-jar {
-    baseName jarName
-    manifest {
-        attributes 'Implementation-Title': jarName,
-                   'Implementation-Version': version
-    }
-}
-
-

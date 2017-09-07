@@ -14,15 +14,3 @@ dependencies {
     // we need the core of the project!
     compile project(':httpclient')
 }
-
-String jarName = 'b2-sdk-samples'
-
-jar {
-    baseName jarName
-    manifest {
-        attributes 'Implementation-Title': jarName,
-                   'Implementation-Version': version
-    }
-}
-
-
