@@ -12,6 +12,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class B2SdkTest {
+    // our versions are three integers separated by periods, with an
+    // optional "-prereleaseName" at the end.  see semver.org
+    private static final Pattern VERSION_PATTERN = Pattern.compile("^\\d+[.]\\d+[.]\\d+(-[a-zA-Z0-9]+)?$");
+
     @Test
     public void testName() {
         // this should be quite stable!
@@ -19,10 +23,25 @@ public class B2SdkTest {
     }
 
     @Test
+    public void testIsValidVersionHelper() {
+        assertTrue(isValidVersion("0.0.6"));
+        assertTrue(isValidVersion("1.11.22"));
+        assertTrue(isValidVersion("1.11.22-rc"));
+
+        assertTrue(!isValidVersion(""));
+        assertTrue(!isValidVersion("1"));
+        assertTrue(!isValidVersion("1.11"));
+        assertTrue(!isValidVersion("1.11.22-"));
+        assertTrue(!isValidVersion("1.11.22-!"));
+    }
+
+    @Test
     public void testVersion() {
-        // our versions are three integers separated by periods.
-        final Pattern pattern = Pattern.compile("^\\d+[.]\\d+[.]\\d+$");
         final String version = B2Sdk.getVersion();
-        assertTrue("version is '" + version + "'", pattern.matcher(version).matches());
+        assertTrue("version is '" + version + "'", isValidVersion(version));
+    }
+
+    private static boolean isValidVersion(String version) {
+        return VERSION_PATTERN.matcher(version).matches();
     }
 }
