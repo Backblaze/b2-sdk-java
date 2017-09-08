@@ -6,7 +6,10 @@ package com.backblaze.b2.client;
 
 import org.junit.Test;
 
+import java.util.regex.Pattern;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class B2SdkTest {
     @Test
@@ -17,7 +20,9 @@ public class B2SdkTest {
 
     @Test
     public void testVersion() {
-        // we'll have to update this for each release.  :)
-        assertEquals("0.0.6", B2Sdk.getVersion());
+        // our versions are three integers separated by periods.
+        final Pattern pattern = Pattern.compile("^\\d+[.]\\d+[.]\\d+$");
+        final String version = B2Sdk.getVersion();
+        assertTrue("version is '" + version + "'", pattern.matcher(version).matches());
     }
 }
