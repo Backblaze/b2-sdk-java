@@ -33,6 +33,7 @@ ext.readVersion = { ->
 }
 
 sourceCompatibility = 1.8
+group = "com.backblaze.b2"
 version = readVersion()
 
 project.archivesBaseName = project.ext.pomArtifactId
@@ -80,7 +81,6 @@ task writeNewPom {
     doLast {
         pom {
             project {
-                groupId 'com.backblaze.b2'
                 artifactId project.ext.pomArtifactId
                 name project.ext.pomName
                 description project.ext.pomDescription
