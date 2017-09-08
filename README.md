@@ -63,15 +63,35 @@ SAMPLE
     here's a sample command line to run (after replacing 'N.N.N' with the version
     of the sdk you're using):
 
-    java -cp b2-sdk-samples-N.N.N.jar:b2-sdk-httpclient-N.N.N.jar:b2-sdk-core-0.0.1.jar:httpclient-4.5.3.jar:httpcore-4.4.4.jar:commons-logging-1.2.jar  com.backblaze.b2.sample.B2Sample
+    java -cp b2-sdk-samples-N.N.N.jar:b2-sdk-httpclient-N.N.N.jar:b2-sdk-core-0.0.1.jar:httpclient-4.5.3.jar:httpcore-4.4.4.jar:commons-logging-1.2.jar com.backblaze.b2.sample.B2Sample
 
 
 
 HOW TO USE
 ==========
 
-  * Add the jars to your class path (XXX: provide snippets for
-    maven and other build systems)
+  * Add the jars to your build.  In the following examples, replace N.N.N
+    with the version of the sdk you're using:
+    * If you're using gradle, here are the dependency lines to use the sdk:
+    ```gradle
+    compile 'com.backblaze.b2:b2-sdk-core:N.N.N'
+    compile 'com.backblaze.b2:b2-sdk-httpclient:N.N.N'
+    ```
+    * If you're using maven, here are the dependency tags to use the sdk:
+    ```xml
+      <dependency>
+        <groupId>com.backblaze.b2</groupId>
+        <artifactId>b2-sdk-core</artifactId>
+        <version>N.N.N</version>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.backblaze.b2</groupId>
+        <artifactId>b2-sdk-httpclient</artifactId>
+        <version>N.N.N</version>
+        <scope>compile</scope>
+      </dependency>
+    ```
 
   * create a B2StorageClient.
 
