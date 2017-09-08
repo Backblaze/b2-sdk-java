@@ -14,14 +14,12 @@ context.
 STATUS
 ======
 
-As a whole, b2-sdk-java is currently **ALPHA** software.
+The SDK is being used in production at Backblaze.  All new internal b2 client
+code is being written with it.  We are in the process of slowly transitioning
+our existing code to the library.
 
-The core library is being used internally at Backblaze for new Java B2
-client code.  For production code, we use a different implementation
-of B2WebApiClient to match the rest of our system.  We are in the
-process of slowly transitioning our existing code to the library.
-
-We don't currently expect to make very many incompatible changes to the API or behavior.
+We don't expect to make many incompatible changes to the API or
+behavior in the near future.
 
 FEATURES
 ========
