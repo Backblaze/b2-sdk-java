@@ -257,7 +257,13 @@ FAQ
     Yes.  If the request structure you provide specifies a maxCount (or similar
     field), the SDK will use that in its requests to B2.  If you do not specify
     a maxCount, the SDK will default to requesting the maximum number that counts
-    as "one transaction" for billing purposes.
+    as "one transaction" for billing purposes.  The iterable will continue to
+    iterate as long as there are answer, but each fetched page will be limited
+    by the maxCount you provide.  (This gives you some control over the fetched
+    page size so if you only plan to look at a few results, you can ask for
+    fewer than the default.  Similarly, if you're in non-interactive application,
+    and you want to visit all items in the list, you may want to use 10,000 to
+    minimize roundtrips to the server.)
 
   * Is there a way to access the payload of reads as a memory-friendly InputStream?
 
