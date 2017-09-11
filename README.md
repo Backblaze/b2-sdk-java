@@ -251,6 +251,15 @@ FAQ
         .build();
     ```
 
+  * Why do I get more answers from fileVersions() and fileNames() than I expect?
+
+      Those two methods return Iterables that will return answers from the server
+      as long as there are more answers to return.  There are a few reasons developers
+      have been surprised by this:
+
+      (1) Calling setMaxFileCount() on the request sets the maximum number of answers the server will return each time the SDK asks for answers. It does NOT control the number of answers the iterable will yield because the iterables always keep going until there are no more answers. (This is a confusing thing in the API naming.  I apologize.)
+
+      (2) Calling setStart() or setStartFileName() determines the position in the list where the response starts.  Sometimes developers are confused and think that they'll only get results that start with those values. See setPrefix() for that behavior.
 
   * Can I control how many answers are fetched at once for the iterables?
 
