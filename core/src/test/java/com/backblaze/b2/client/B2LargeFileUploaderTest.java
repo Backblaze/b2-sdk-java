@@ -20,6 +20,7 @@ import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
+import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.After;
@@ -29,9 +30,11 @@ import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -54,6 +57,7 @@ import static com.backblaze.b2.client.B2TestHelpers.makePart;
 import static com.backblaze.b2.client.B2TestHelpers.makeSha1;
 import static com.backblaze.b2.client.B2TestHelpers.makeVersion;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
@@ -86,15 +90,29 @@ public class B2LargeFileUploaderTest {
      * A RecordingUploadListener makes a list of strings describing the
      * progress calls that it gets.  Before using it, call setExpected().
      *
+     * Because the WAITING_TO_START progress updates come from the "main" thread
+     * and the others come from within the executor, the updates may occur
+     * in different orders during different runs (and on different machines).
+     * We use Sets to let our comparisons work even with the reordering.
+     *
+     * It checks that the state for each partIndex always moves forward, to
+     * verify that the messages for one partIndex are reasonably ordered.
      */
     private static class RecordingUploadListener implements B2UploadListener {
-        // ordered lists are ok because we run with single-threaded executor.
-        private final List<String> expected = new ArrayList<>();
-        private final List<String> actual = new ArrayList<>();
+        private final Set<String> expected = new TreeSet<>();
+        private final Set<String> actual = new TreeSet<>();
+        private final Map<Integer, B2UploadState> mostRecentStatePerPartIndex = new TreeMap<>();
 
         @Override
         public synchronized void progress(B2UploadProgress progress) {
             actual.add(progress.toString());
+
+            final B2UploadState prevState = mostRecentStatePerPartIndex.get(progress.getPartIndex());
+            if (prevState != null) {
+                assertTrue("prevState (" + prevState + ") must be less than (" + progress.getState() + ")",
+                        prevState.compareTo(progress.getState()) < 0);
+            }
+            mostRecentStatePerPartIndex.put(progress.getPartIndex(), progress.getState());
         }
 
         synchronized void setExpected(String... v) {
@@ -111,7 +129,7 @@ public class B2LargeFileUploaderTest {
             }
         }
 
-        private static String join(List<String> lines) {
+        private static String join(Set<String> lines) {
             final String indent = "  ";
             StringBuilder s = new StringBuilder();
             for (String line : lines) {
