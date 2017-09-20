@@ -9,12 +9,15 @@ import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.Test;
 
+import java.util.HashMap;
+
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 public class B2FileVersionTest {
+
     @Test
     public void test() {
         final B2FileVersion one = make(1);
@@ -29,6 +32,33 @@ public class B2FileVersionTest {
         // just for code coverage.
         //noinspection ResultOfMethodCallIgnored
         one.hashCode();
+    }
+
+    @Test
+    public void testActions() {
+        checkAction(B2FileVersion.UPLOAD_ACTION, true, false, false, false);
+        checkAction(B2FileVersion.HIDE_ACTION, false, true, false, false);
+        checkAction(B2FileVersion.START_ACTION, false, false, true, false);
+        checkAction(B2FileVersion.FOLDER_ACTION, false, false, false, true);
+        checkAction(null, false, false, false, false);
+    }
+
+    private void checkAction(String action, boolean expectUpload, boolean expectHide, boolean expectStart, boolean expectFolder) {
+        B2FileVersion fileVersion =
+                new B2FileVersion(
+                        "fileId",
+                        "fileName",
+                        0L,
+                        "contentType",
+                        "contentSha1",
+                        new HashMap<>(),
+                        action,
+                        0L
+                );
+        assertEquals(expectUpload, fileVersion.isUpload());
+        assertEquals(expectHide, fileVersion.isHide());
+        assertEquals(expectStart, fileVersion.isStart());
+        assertEquals(expectFolder, fileVersion.isFolder());
     }
 
     private B2FileVersion make(int i) {
