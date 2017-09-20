@@ -4,5 +4,4 @@ build
 core/build/
 httpclient/build/
 samples/build/
-
-
+b2-sdk-java.iml
