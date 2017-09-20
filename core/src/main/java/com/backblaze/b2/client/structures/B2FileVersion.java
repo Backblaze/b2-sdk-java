@@ -11,6 +11,12 @@ import java.util.Map;
 import java.util.Objects;
 
 public class B2FileVersion {
+
+    public static final String UPLOAD_ACTION = "upload";
+    public static final String HIDE_ACTION = "hide";
+    public static final String START_ACTION = "start";
+    public static final String FOLDER_ACTION = "folder";
+
     @B2Json.optional // for example, "folder"s don't have fileIds
     private final String fileId;
     @B2Json.required
@@ -82,6 +88,22 @@ public class B2FileVersion {
 
     public long getUploadTimestamp() {
         return uploadTimestamp;
+    }
+
+    public boolean isUpload() {
+        return UPLOAD_ACTION.equals(action);
+    }
+
+    public boolean isHide() {
+        return HIDE_ACTION.equals(action);
+    }
+
+    public boolean isStart() {
+        return START_ACTION.equals(action);
+    }
+
+    public boolean isFolder() {
+        return FOLDER_ACTION.equals(action);
     }
 
     @Override
