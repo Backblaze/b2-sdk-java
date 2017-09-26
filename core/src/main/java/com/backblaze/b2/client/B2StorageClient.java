@@ -33,6 +33,8 @@ import java.util.concurrent.ExecutorService;
 
 /*****
  * B2StorageClient is the interface for performing B2 operations.
+ * Be sure to close() any instance you create when you are done with it.
+ * Try-with-resources can be very useful for that.
  *
  * Here are some design principles:
  *
