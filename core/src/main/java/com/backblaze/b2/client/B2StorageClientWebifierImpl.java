@@ -355,6 +355,12 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     @Override
+    public String getDownloadByIdUrl(B2AccountAuthorization accountAuth,
+                              B2DownloadByIdRequest request) throws B2Exception {
+        return makeDownloadByIdUrl(accountAuth, request.getFileId(), request.getB2ContentDisposition());
+    }
+
+    @Override
     public void downloadByName(B2AccountAuthorization accountAuth,
                                B2DownloadByNameRequest request,
                                B2ContentSink handler) throws B2Exception {
@@ -362,6 +368,12 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request.getB2ContentDisposition()),
                 request.getRange(),
                 handler);
+    }
+
+    @Override
+    public String getDownloadByNameUrl(B2AccountAuthorization accountAuth,
+                                B2DownloadByNameRequest request) throws B2Exception {
+        return makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request.getB2ContentDisposition());
     }
 
     private void downloadGuts(B2AccountAuthorization accountAuth,

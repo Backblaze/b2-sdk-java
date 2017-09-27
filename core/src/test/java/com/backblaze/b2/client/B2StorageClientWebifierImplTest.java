@@ -871,6 +871,7 @@ public class B2StorageClientWebifierImplTest {
 
     @Test
     public void testDownloadById() throws B2Exception {
+        final String expectedUrl = "downloadUrl1/b2api/v1/b2_download_file_by_id?fileId=4_zBlah_0000001";
         final B2DownloadByIdRequest request = B2DownloadByIdRequest
                 .builder(fileId(1))
                 .build();
@@ -878,12 +879,14 @@ public class B2StorageClientWebifierImplTest {
 
         webApiClient.check("getContent.\n" +
                 "url:\n" +
-                "    downloadUrl1/b2api/v1/b2_download_file_by_id?fileId=4_zBlah_0000001\n" +
+                "    " + expectedUrl + "\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
+
+        assertEquals(expectedUrl, webifier.getDownloadByIdUrl(ACCOUNT_AUTH, request));
 
         checkRequestCategory(OTHER, w -> w.downloadById(ACCOUNT_AUTH, request, noopContentHandler));
     }
@@ -930,6 +933,7 @@ public class B2StorageClientWebifierImplTest {
 
     @Test
     public void testDownloadByName() throws B2Exception {
+        final String expectedUrl = "downloadUrl1/file/bucketName1/files/0001";
         final B2DownloadByNameRequest request = B2DownloadByNameRequest
                 .builder(bucketName(1), fileName(1))
                 .build();
@@ -937,12 +941,13 @@ public class B2StorageClientWebifierImplTest {
 
         webApiClient.check("getContent.\n" +
                 "url:\n" +
-                "    downloadUrl1/file/bucketName1/files/0001\n" +
+                "    " + expectedUrl + "\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
+        assertEquals(expectedUrl, webifier.getDownloadByNameUrl(ACCOUNT_AUTH, request));
 
         checkRequestCategory(OTHER, w -> w.downloadByName(ACCOUNT_AUTH, request, noopContentHandler));
     }
