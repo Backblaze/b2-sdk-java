@@ -22,4 +22,16 @@ public class B2DownloadAuthorization {
         this.fileNamePrefix = fileNamePrefix;
         this.authorizationToken = authorizationToken;
     }
+
+    public String getBucketId() {
+        return bucketId;
+    }
+
+    public String getFileNamePrefix() {
+        return fileNamePrefix;
+    }
+
+    public String getAuthorizationToken() {
+        return authorizationToken;
+    }
 }

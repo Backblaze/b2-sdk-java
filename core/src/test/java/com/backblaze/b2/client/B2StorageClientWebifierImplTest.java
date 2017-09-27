@@ -740,6 +740,7 @@ public class B2StorageClientWebifierImplTest {
     public void testGetDownloadAuthorization() throws B2Exception {
         final B2GetDownloadAuthorizationRequest request = B2GetDownloadAuthorizationRequest
                 .builder(bucketId(1), fileName(1), 123)
+                .setB2ContentDisposition("attachment; filename=\"example file name.txt\"")
                 .build();
         webifier.getDownloadAuthorization(ACCOUNT_AUTH, request);
 
@@ -752,6 +753,7 @@ public class B2StorageClientWebifierImplTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "request:\n" +
                 "    {\n" +
+                "      \"b2ContentDisposition\": \"attachment; filename=\\\"example file name.txt\\\"\",\n" +
                 "      \"bucketId\": \"bucket1\",\n" +
                 "      \"fileNamePrefix\": \"files/0001\",\n" +
                 "      \"validDurationInSeconds\": 123\n" +
