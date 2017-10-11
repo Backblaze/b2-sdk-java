@@ -955,6 +955,25 @@ public class B2StorageClientWebifierImplTest {
     }
 
     @Test
+    public void testDownloadByNamePercentEncoded() throws B2Exception {
+        final B2DownloadByNameRequest request = B2DownloadByNameRequest
+                .builder(bucketName(1), "\u81ea\u7531")
+                .build();
+        webifier.downloadByName(ACCOUNT_AUTH, request, noopContentHandler);
+
+        webApiClient.check("getContent.\n" +
+                "url:\n" +
+                "    downloadUrl1/file/bucketName1/%E8%87%AA%E7%94%B1\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.downloadByName(ACCOUNT_AUTH, request, noopContentHandler));
+    }
+
+    @Test
     public void testDownloadByNameWithRange() throws B2Exception {
         final B2DownloadByNameRequest request = B2DownloadByNameRequest
                 .builder(bucketName(1), fileName(1))
@@ -1074,7 +1093,7 @@ public class B2StorageClientWebifierImplTest {
                 "    Content-Type: b2/x-auto\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
-                "    X-Bz-File-Name: files%2F0001\n" +
+                "    X-Bz-File-Name: files/0001\n" +
                 "    X-Bz-Info-color: blue\n" +
                 "    X-Bz-Info-number: six\n" +
                 "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
@@ -1124,7 +1143,7 @@ public class B2StorageClientWebifierImplTest {
                 "    Content-Type: b2/x-auto\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: hex_digits_at_end\n" +
-                "    X-Bz-File-Name: files%2F0001\n" +
+                "    X-Bz-File-Name: files/0001\n" +
                 "    X-Bz-Info-color: blue\n" +
                 "    X-Bz-Info-number: six\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +

@@ -515,7 +515,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         if (!url.endsWith("/")) {
             url += "/";
         }
-        url += "file/" + bucketName + "/" + fileName;
+        url += "file/" + bucketName + "/" + percentEncode(fileName);
         url += maybeB2ContentDisposition('?', b2ContentDisposition);
         return url;
     }
