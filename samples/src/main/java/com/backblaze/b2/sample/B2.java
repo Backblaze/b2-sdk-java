@@ -57,6 +57,8 @@ public class B2 implements AutoCloseable {
                     "    b2 download_file_by_id [--noProgress] <fileId> <localFileName>\n" +
                     "    b2 download_file_by_name [--noProgress] <bucketName> <fileName> <localFileName>\n" +
                     "    b2 finish_uploading_large_file [--noProgress] [--threads N] <bucketName> <largeFileId> <localFileName>\n" +
+                    "    b2 get_download_file_by_id_url [--noProgress] <fileId>\n" +
+                    "    b2 get_download_file_by_name_url [--noProgress] <bucketName> <fileName>\n" +
                     "    b2 get_file_info <fileId>\n" +
                     //"    b2 help [commandName]\n" +
                     "    b2 hide_file <bucketName> <fileName>\n" +
@@ -148,6 +150,10 @@ public class B2 implements AutoCloseable {
                 b2.download_file_by_name(remainingArgs);
             } else if ("finish_uploading_large_file".equals(command)) {
                 b2.finish_uploading_large_file(remainingArgs);
+            } else if ("get_download_file_by_id_url".equals(command)) {
+                b2.get_download_file_by_id_url(remainingArgs);
+            } else if ("get_download_file_by_name_url".equals(command)) {
+                b2.get_download_file_by_name_url(remainingArgs);
             } else if ("get_file_info".equals(command)) {
                 b2.get_file_info(remainingArgs);
             } else if ("hide_file".equals(command)) {
@@ -452,6 +458,17 @@ public class B2 implements AutoCloseable {
         client.downloadById(fileId, sink);
     }
 
+    private void get_download_file_by_id_url(String[] args) throws B2Exception {
+        // [--noProgress] <fileId>
+        checkArgCount(args, 1, 2);
+        final int iLastArg = args.length - 1;
+        final String fileId = args[iLastArg];
+
+        handleCommonArgsOrDie(args, 0, iLastArg-1);
+
+        out.println("  url:  " + client.getDownloadByIdUrl(fileId));
+    }
+
     private void download_file_by_name(String[] args) throws B2Exception {
         // [--noProgress] <bucketName> <fileName> <localFileName>
         checkArgCount(args, 3, 4);
@@ -468,6 +485,19 @@ public class B2 implements AutoCloseable {
                 .setVerifySha1ByRereadingFromDestination(true)
                 .build();
         client.downloadByName(bucketName, b2Path, sink);
+    }
+
+    private void get_download_file_by_name_url(String[] args) throws B2Exception {
+        // [--noProgress] <bucketName> <fileName>
+        checkArgCount(args, 2, 3);
+
+        final int iLastArg = args.length - 1;
+        final String bucketName = args[iLastArg-1];
+        final String b2Path = args[iLastArg];
+
+        handleCommonArgsOrDie(args, 0, iLastArg-2);
+
+        out.println("  url:  " + client.getDownloadByNameUrl(bucketName, b2Path));
     }
 
     private void finish_uploading_large_file(String[] args) throws B2Exception, IOException {

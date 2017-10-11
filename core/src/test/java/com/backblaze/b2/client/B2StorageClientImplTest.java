@@ -604,6 +604,20 @@ public class B2StorageClientImplTest {
     }
 
     @Test
+    public void testGetDownloadByIdUrl() throws B2Exception {
+        final String expectedUrl = "http://example.com/blah";
+        B2DownloadByIdRequest request = B2DownloadByIdRequest
+                .builder(LARGE_FILE_ID)
+                .build();
+        when(webifier.getDownloadByIdUrl(ACCOUNT_AUTH, request)).thenReturn(expectedUrl);
+
+        assertEquals(expectedUrl, client.getDownloadByIdUrl(request));
+
+        // check the "convenience" form that takes a fileId instead of a request.
+        assertEquals(expectedUrl, client.getDownloadByIdUrl(LARGE_FILE_ID));
+    }
+
+    @Test
     public void testDownloadByName() throws B2Exception {
         final B2ContentSink handler = (responseHeaders, in) -> {};
         B2DownloadByNameRequest request = B2DownloadByNameRequest
@@ -629,6 +643,21 @@ public class B2StorageClientImplTest {
                         .builder(bucketName(1), fileName(1))
                         .setRange(B2ByteRange.startAt(17))
                         .build());
+    }
+
+    @Test
+    public void testGetDownloadByNameUrl() throws B2Exception {
+        final String expectedUrl = "http://example.com/blah";
+
+        B2DownloadByNameRequest request = B2DownloadByNameRequest
+                .builder(bucketName(1), fileName(1))
+                .build();
+        when(webifier.getDownloadByNameUrl(ACCOUNT_AUTH, request)).thenReturn(expectedUrl);
+
+        assertEquals(expectedUrl, client.getDownloadByNameUrl(request));
+
+        // check the "convenience" form that takes a bucketName & fileName instead of a request.
+        assertEquals(expectedUrl, client.getDownloadByNameUrl(bucketName(1), fileName(1)));
     }
 
 //    @Test
