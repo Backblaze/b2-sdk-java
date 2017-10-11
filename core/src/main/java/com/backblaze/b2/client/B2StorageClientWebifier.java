@@ -133,6 +133,11 @@ public interface B2StorageClientWebifier extends AutoCloseable {
     B2ListPartsResponse listParts(B2AccountAuthorization b2AccountAuthorization,
                                   B2ListPartsRequest request) throws B2Exception;
 
+    String getDownloadByIdUrl(B2AccountAuthorization accountAuth,
+                              B2DownloadByIdRequest request) throws B2Exception;
+
+    String getDownloadByNameUrl(B2AccountAuthorization accountAuth,
+                                B2DownloadByNameRequest request) throws B2Exception;
 
     /**
      * Closes this object and its underlying resources.

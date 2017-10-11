@@ -349,9 +349,15 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                              B2DownloadByIdRequest request,
                              B2ContentSink handler) throws B2Exception {
         downloadGuts(accountAuth,
-                makeDownloadByIdUrl(accountAuth, request.getFileId()),
+                makeDownloadByIdUrl(accountAuth, request.getFileId(), request.getB2ContentDisposition()),
                 request.getRange(),
                 handler);
+    }
+
+    @Override
+    public String getDownloadByIdUrl(B2AccountAuthorization accountAuth,
+                              B2DownloadByIdRequest request) throws B2Exception {
+        return makeDownloadByIdUrl(accountAuth, request.getFileId(), request.getB2ContentDisposition());
     }
 
     @Override
@@ -359,9 +365,15 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                                B2DownloadByNameRequest request,
                                B2ContentSink handler) throws B2Exception {
         downloadGuts(accountAuth,
-                makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName()),
+                makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request.getB2ContentDisposition()),
                 request.getRange(),
                 handler);
+    }
+
+    @Override
+    public String getDownloadByNameUrl(B2AccountAuthorization accountAuth,
+                                B2DownloadByNameRequest request) throws B2Exception {
+        return makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request.getB2ContentDisposition());
     }
 
     private void downloadGuts(B2AccountAuthorization accountAuth,
@@ -483,21 +495,42 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         return url;
     }
 
-    private String makeDownloadByIdUrl(B2AccountAuthorization accountAuth, String fguid) {
+    private String makeDownloadByIdUrl(B2AccountAuthorization accountAuth,
+                                       String fguid,
+                                       String b2ContentDisposition) {
         String url = accountAuth.getDownloadUrl();
         if (!url.endsWith("/")) {
             url += "/";
         }
         url += API_VERSION_PATH + "b2_download_file_by_id?fileId=" + fguid;
+        url += maybeB2ContentDisposition('&', b2ContentDisposition);
         return url;
     }
 
-    private String makeDownloadByNameUrl(B2AccountAuthorization accountAuth, String bucketName, String fileName) {
+    private String makeDownloadByNameUrl(B2AccountAuthorization accountAuth,
+                                         String bucketName,
+                                         String fileName,
+                                         String b2ContentDisposition) {
         String url = accountAuth.getDownloadUrl();
         if (!url.endsWith("/")) {
             url += "/";
         }
         url += "file/" + bucketName + "/" + percentEncode(fileName);
+        url += maybeB2ContentDisposition('?', b2ContentDisposition);
         return url;
+    }
+
+    /**
+     * if b2ContentDisposition isn't null, this will return it in a url query
+     * parameter format prefixed with the given separator.  otherwise, it will
+     * return an empty string.
+     */
+    private String maybeB2ContentDisposition(char separator,
+                                             String b2ContentDisposition) {
+        if (b2ContentDisposition == null) {
+            return "";
+        } else {
+            return separator + "b2ContentDisposition=" + percentEncode(b2ContentDisposition);
+        }
     }
 }

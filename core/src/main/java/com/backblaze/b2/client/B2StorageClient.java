@@ -33,6 +33,8 @@ import java.util.concurrent.ExecutorService;
 
 /*****
  * B2StorageClient is the interface for performing B2 operations.
+ * Be sure to close() any instance you create when you are done with it.
+ * Try-with-resources can be very useful for that.
  *
  * Here are some design principles:
  *
@@ -68,7 +70,7 @@ public interface B2StorageClient extends Closeable {
 
     /**
      * @return an object for answering policy questions, such as
-     *         whether to upload a file as a small or large file.
+     * whether to upload a file as a small or large file.
      */
     B2FilePolicy getFilePolicy() throws B2Exception;
 
@@ -90,7 +92,8 @@ public interface B2StorageClient extends Closeable {
      * @return the newly created bucket
      * @throws B2Exception if there's any trouble
      */
-    default B2Bucket createBucket(String bucketName, String bucketType) throws B2Exception {
+    default B2Bucket createBucket(String bucketName,
+                                  String bucketType) throws B2Exception {
         return createBucket(B2CreateBucketRequest.builder(bucketName, bucketType).build());
     }
 
@@ -110,7 +113,7 @@ public interface B2StorageClient extends Closeable {
 
     /**
      * @return this account's bucket with the given name,
-     *         or null if this account doesn't have a bucket with the given name.
+     * or null if this account doesn't have a bucket with the given name.
      * @throws B2Exception if there's any trouble.
      */
     default B2Bucket getBucketOrNullByName(String name) throws B2Exception {
@@ -135,7 +138,7 @@ public interface B2StorageClient extends Closeable {
     /**
      * Uploads the specified content as separate parts to form a B2 large file.
      *
-     * @param request describes the content to upload and extra metadata about it.
+     * @param request  describes the content to upload and extra metadata about it.
      * @param executor the executor to use for uploading parts in parallel.
      *                 the caller retains ownership of the executor and is
      *                 responsible for shutting it down.
@@ -158,10 +161,10 @@ public interface B2StorageClient extends Closeable {
      * your own!)
      *
      * @param fileVersion describes the unfinished large file we want to finish.
-     * @param request describes the content we want to use to finish the large file
-     * @param executor the executor to use for uploading parts in parallel.
-     *                 the caller retains ownership of the executor and is
-     *                 responsible for shutting it down.
+     * @param request     describes the content we want to use to finish the large file
+     * @param executor    the executor to use for uploading parts in parallel.
+     *                    the caller retains ownership of the executor and is
+     *                    responsible for shutting it down.
      * @return the B2FileVersion that represents the finished large file.
      * @throws B2Exception if there's any trouble.
      */
@@ -309,7 +312,7 @@ public interface B2StorageClient extends Closeable {
      * Just like downloadById(request), but you only have to specify the fileId
      * instead of a request object.
      *
-     * @param fileId the id of the file you want to download.
+     * @param fileId  the id of the file you want to download.
      * @param handler the handler to process the data as its downloaded.
      * @throws B2Exception if there's any trouble.
      */
@@ -339,8 +342,8 @@ public interface B2StorageClient extends Closeable {
      * bucketName and the fileName instead of a request object.
      *
      * @param bucketName the name of the bucket you want to download from.
-     * @param fileName the name of the file you want to download.
-     * @param handler the handler to process the data as its downloaded.
+     * @param fileName   the name of the file you want to download.
+     * @param handler    the handler to process the data as its downloaded.
      * @throws B2Exception if there's any trouble.
      */
     default void downloadByName(String bucketName,
@@ -374,10 +377,11 @@ public interface B2StorageClient extends Closeable {
      * the specified fileName and fileId.
      *
      * @param fileName the name of the file to delete.
-     * @param fileId the id of the file to delete.
+     * @param fileId   the id of the file to delete.
      * @throws B2Exception if there's any trouble.
      */
-    default void deleteFileVersion(String fileName, String fileId) throws B2Exception {
+    default void deleteFileVersion(String fileName,
+                                   String fileId) throws B2Exception {
         deleteFileVersion(B2DeleteFileVersionRequest.builder(fileName, fileId).build());
     }
 
@@ -425,7 +429,8 @@ public interface B2StorageClient extends Closeable {
      * @return the fileVersion that's hiding the specified path
      * @throws B2Exception if there's any trouble.
      */
-    default B2FileVersion hideFile(String bucketId, String fileName) throws B2Exception {
+    default B2FileVersion hideFile(String bucketId,
+                                   String fileName) throws B2Exception {
         return hideFile(B2HideFileRequest.builder(bucketId, fileName).build());
     }
 
@@ -459,6 +464,63 @@ public interface B2StorageClient extends Closeable {
      */
     default B2Bucket deleteBucket(String bucketId) throws B2Exception {
         return deleteBucket(B2DeleteBucketRequest.builder(bucketId).build());
+    }
+
+    /**
+     * Returns the URL for downloading the file specified by the request.
+     * Note that note all of the request will be represented in the URL.
+     * For instance, the url will not contain authorization or range information
+     * since we normally send those in the request headers.
+     * <p>
+     * This is useful for generating public URLs and as part of generating
+     * signed download URLs.
+     *
+     * @param request specifies what to download.
+     * @return a URL for fetching the file.
+     * @throws B2Exception if there's any trouble.
+     */
+    String getDownloadByIdUrl(B2DownloadByIdRequest request) throws B2Exception;
+
+    /**
+     * Just like getDownloadByIdUrl(request) except that the request is created
+     * from the given fileId.
+     *
+     * @param fileId the file whose download url we're interested in.
+     * @return the URL
+     * @throws B2Exception if there's any trouble.
+     */
+    default String getDownloadByIdUrl(String fileId) throws B2Exception {
+        return getDownloadByIdUrl(B2DownloadByIdRequest.builder(fileId).build());
+    }
+
+
+    /**
+     * Returns the URL for downloading the file specified by the request.
+     * Note that note all of the request will be represented in the URL.
+     * For instance, the url will not contain authorization or range information
+     * since we normally send those in the request headers.
+     * <p>
+     * This is useful for generating public URLs and as part of generating
+     * signed download URLs.
+     *
+     * @param request specifies what to download.
+     * @return a URL for fetching the file.
+     * @throws B2Exception if there's any trouble.
+     */
+    String getDownloadByNameUrl(B2DownloadByNameRequest request) throws B2Exception;
+
+    /**
+     * Just like getDownloadByIdUrl(request) except that the request is created
+     * from the given bucketName and fileName.
+     *
+     * @param bucketName the name of the bucket that contains the desired file.
+     * @param fileName   the name of the file whose download URL we want.
+     * @return the URL
+     * @throws B2Exception if there's any trouble.
+     */
+    default String getDownloadByNameUrl(String bucketName,
+                                     String fileName) throws B2Exception {
+        return getDownloadByNameUrl(B2DownloadByNameRequest.builder(bucketName, fileName).build());
     }
 
     /**
