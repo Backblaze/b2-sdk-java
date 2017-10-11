@@ -36,7 +36,7 @@ public class B2StringUtil {
      */
     public static String percentEncode(String s) {
         try {
-            return URLEncoder.encode(s, UTF8);
+            return URLEncoder.encode(s, UTF8).replace("%2F", "/");
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("UTF8 isn't supported? " + e.getMessage(), e);
         }
