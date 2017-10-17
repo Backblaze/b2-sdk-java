@@ -247,7 +247,7 @@ class B2LargeFileUploader {
         B2FinishLargeFileRequest finishRequest = B2FinishLargeFileRequest
                 .builder(largeFileVersion.getFileId(), partSha1s)
                 .build();
-        return retryer.doRetry("b2_finish_large_file", accountAuthCache, () -> webifier.finishLargeFile(accountAuthCache.get(), finishRequest), new B2DefaultRetryPolicy());
+        return retryer.doRetry("b2_finish_large_file", accountAuthCache, () -> webifier.finishLargeFile(accountAuthCache.get(), finishRequest), retryPolicySupplier.get());
     }
 
     private B2Part uploadOnePart(B2UploadPartUrlCache uploadPartUrlCache,
@@ -288,6 +288,6 @@ class B2LargeFileUploader {
                         throw e;
                     }
                 },
-                new B2DefaultRetryPolicy());
+                retryPolicySupplier.get());
     }
 }
