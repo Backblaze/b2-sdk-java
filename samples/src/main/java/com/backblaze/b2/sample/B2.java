@@ -12,6 +12,7 @@ import com.backblaze.b2.client.contentSources.B2FileContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2FileVersion;
+import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2Part;
@@ -20,6 +21,8 @@ import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
 import com.backblaze.b2.client.webApiHttpClient.HttpClientFactory;
 import com.backblaze.b2.client.webApiHttpClient.HttpClientFactoryImpl;
+import com.backblaze.b2.json.B2Json;
+import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.util.B2ExecutorUtils;
 import com.backblaze.b2.util.B2IoUtils;
 
@@ -57,6 +60,7 @@ public class B2 implements AutoCloseable {
                     "    b2 download_file_by_id [--noProgress] <fileId> <localFileName>\n" +
                     "    b2 download_file_by_name [--noProgress] <bucketName> <fileName> <localFileName>\n" +
                     "    b2 finish_uploading_large_file [--noProgress] [--threads N] <bucketName> <largeFileId> <localFileName>\n" +
+                    "    b2 get_download_authorization [--noProgress] <bucketName> <fileName>\n" +
                     "    b2 get_download_file_by_id_url [--noProgress] <fileId>\n" +
                     "    b2 get_download_file_by_name_url [--noProgress] <bucketName> <fileName>\n" +
                     "    b2 get_file_info <fileId>\n" +
@@ -124,7 +128,7 @@ public class B2 implements AutoCloseable {
         System.exit(1);
     }
 
-    public static void main(String[] args) throws B2Exception, IOException {
+    public static void main(String[] args) throws B2Exception, IOException, B2JsonException {
         //out.println("args = [" + String.join(",", args) + "]");
 
         if (args.length == 0) {
@@ -150,6 +154,8 @@ public class B2 implements AutoCloseable {
                 b2.download_file_by_name(remainingArgs);
             } else if ("finish_uploading_large_file".equals(command)) {
                 b2.finish_uploading_large_file(remainingArgs);
+            } else if ("get_download_authorization".equals(command)) {
+                b2.get_download_authorization(remainingArgs);
             } else if ("get_download_file_by_id_url".equals(command)) {
                 b2.get_download_file_by_id_url(remainingArgs);
             } else if ("get_download_file_by_name_url".equals(command)) {
@@ -456,6 +462,24 @@ public class B2 implements AutoCloseable {
                 .setVerifySha1ByRereadingFromDestination(true)
                 .build();
         client.downloadById(fileId, sink);
+    }
+
+    private void get_download_authorization(String[] args) throws B2Exception, B2JsonException {
+        // [--noProgress] <bucketId> <fileNamePrefix> <validDurationSecs>
+        checkArgCount(args, 3, 4);
+        final int iLastArg = args.length - 1;
+        final String bucketId = args[iLastArg-2];
+        final String fileNamePrefix = args[iLastArg-1];
+        final int validDurationSecs = getPositiveIntArgOrDie(args, "validDurationSecs", iLastArg, iLastArg);
+
+
+        //handleCommonArgsOrDie(args, 0, iLastArg-1);
+
+        B2GetDownloadAuthorizationRequest request = B2GetDownloadAuthorizationRequest
+                .builder(bucketId, fileNamePrefix, validDurationSecs)
+                .setB2ContentDisposition("attachment; filename=\"helloHagi.txt\"")
+                .build();
+        out.println("  downloadAuth:  " + B2Json.get().toJson(client.getDownloadAuthorization(request)));
     }
 
     private void get_download_file_by_id_url(String[] args) throws B2Exception {
