@@ -15,14 +15,18 @@ public class B2GetDownloadAuthorizationRequest {
     private final String fileNamePrefix;
     @B2Json.optional
     private final int validDurationInSeconds;
+    @B2Json.optional
+    private final String b2ContentDisposition;
 
-    @B2Json.constructor(params = "bucketId,fileNamePrefix,validDurationInSeconds")
+    @B2Json.constructor(params = "bucketId,fileNamePrefix,validDurationInSeconds,b2ContentDisposition")
     private B2GetDownloadAuthorizationRequest(String bucketId,
                                               String fileNamePrefix,
-                                              int validDurationInSeconds) {
+                                              int validDurationInSeconds,
+                                              String b2ContentDisposition) {
         this.bucketId = bucketId;
         this.fileNamePrefix = fileNamePrefix;
         this.validDurationInSeconds = validDurationInSeconds;
+        this.b2ContentDisposition = b2ContentDisposition;
     }
 
     public String getBucketId() {
@@ -37,19 +41,24 @@ public class B2GetDownloadAuthorizationRequest {
         return validDurationInSeconds;
     }
 
+    public String getB2ContentDisposition() {
+        return b2ContentDisposition;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         B2GetDownloadAuthorizationRequest that = (B2GetDownloadAuthorizationRequest) o;
-        return getValidDurationInSeconds() == that.getValidDurationInSeconds() &&
-                Objects.equals(getBucketId(), that.getBucketId()) &&
-                Objects.equals(getFileNamePrefix(), that.getFileNamePrefix());
+        return validDurationInSeconds == that.validDurationInSeconds &&
+                Objects.equals(bucketId, that.bucketId) &&
+                Objects.equals(fileNamePrefix, that.fileNamePrefix) &&
+                Objects.equals(b2ContentDisposition, that.b2ContentDisposition);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getBucketId(), getFileNamePrefix(), getValidDurationInSeconds());
+        return Objects.hash(bucketId, fileNamePrefix, validDurationInSeconds, b2ContentDisposition);
     }
 
     public static Builder builder(String bucketId,
@@ -65,6 +74,7 @@ public class B2GetDownloadAuthorizationRequest {
         private final String bucketId;
         private final String fileNamePrefix;
         private final int validDurationInSeconds;
+        private String b2ContentDisposition;
 
 
         public Builder(String bucketId,
@@ -79,7 +89,13 @@ public class B2GetDownloadAuthorizationRequest {
             return new B2GetDownloadAuthorizationRequest(
                     bucketId,
                     fileNamePrefix,
-                    validDurationInSeconds);
+                    validDurationInSeconds,
+                    b2ContentDisposition);
+        }
+
+        public Builder setB2ContentDisposition(String b2ContentDisposition) {
+            this.b2ContentDisposition = b2ContentDisposition;
+            return this;
         }
     }
 }

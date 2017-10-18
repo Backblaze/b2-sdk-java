@@ -12,16 +12,19 @@ public class B2DownloadByNameRequest {
     private final String bucketName;
     private final String fileName;
     private final B2ByteRange range;
+    private final String b2ContentDisposition;
 
 
     public B2DownloadByNameRequest(String bucketName,
                                    String fileName,
-                                   B2ByteRange range) {
+                                   B2ByteRange range,
+                                   String b2ContentDisposition) {
         // B2Preconditions.checkArg(bucketName != null);
         // B2Preconditions.checkArg(fileName != null);
         this.bucketName = bucketName;
         this.fileName = fileName;
         this.range = range;
+        this.b2ContentDisposition = b2ContentDisposition;
     }
 
     public String getBucketName() {
@@ -36,19 +39,24 @@ public class B2DownloadByNameRequest {
         return range;
     }
 
+    public String getB2ContentDisposition() {
+        return b2ContentDisposition;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         B2DownloadByNameRequest that = (B2DownloadByNameRequest) o;
-        return Objects.equals(getBucketName(), that.getBucketName()) &&
-                Objects.equals(getFileName(), that.getFileName()) &&
-                Objects.equals(getRange(), that.getRange());
+        return Objects.equals(bucketName, that.bucketName) &&
+                Objects.equals(fileName, that.fileName) &&
+                Objects.equals(range, that.range) &&
+                Objects.equals(b2ContentDisposition, that.b2ContentDisposition);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getBucketName(), getFileName(), getRange());
+        return Objects.hash(bucketName, fileName, range, b2ContentDisposition);
     }
 
     public static Builder builder(String bucketName,
@@ -60,6 +68,7 @@ public class B2DownloadByNameRequest {
         private final String bucketName;
         private final String fileName;
         private B2ByteRange range;
+        private String b2ContentDisposition;
 
         private Builder(String bucketName,
                        String fileName) {
@@ -72,11 +81,18 @@ public class B2DownloadByNameRequest {
             return this;
         }
 
+        @SuppressWarnings("unused")
+        public Builder setB2ContentDisposition(String b2ContentDisposition) {
+            this.b2ContentDisposition = b2ContentDisposition;
+            return this;
+        }
+
+
         public B2DownloadByNameRequest build() {
             return new B2DownloadByNameRequest(
                     bucketName,
                     fileName,
-                    range);
+                    range, b2ContentDisposition);
         }
     }
 }

@@ -34,7 +34,7 @@ public class B2StringUtilTest {
     @Test
     public void testPercentEncode() {
         assertEquals("", percentEncode(""));
-        assertEquals("a--%2F--b--%2B--%3A--%7C", percentEncode("a--/--b--+--:--|"));
+        assertEquals("a--/--b--%2B--%3A--%7C--+--", percentEncode("a--/--b--+--:--|-- --"));
     }
 
     @Test

@@ -741,6 +741,7 @@ public class B2StorageClientWebifierImplTest {
     public void testGetDownloadAuthorization() throws B2Exception {
         final B2GetDownloadAuthorizationRequest request = B2GetDownloadAuthorizationRequest
                 .builder(bucketId(1), fileName(1), 123)
+                .setB2ContentDisposition("attachment; filename=\"example file name.txt\"")
                 .build();
         webifier.getDownloadAuthorization(ACCOUNT_AUTH, request);
 
@@ -753,6 +754,7 @@ public class B2StorageClientWebifierImplTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "request:\n" +
                 "    {\n" +
+                "      \"b2ContentDisposition\": \"attachment; filename=\\\"example file name.txt\\\"\",\n" +
                 "      \"bucketId\": \"bucket1\",\n" +
                 "      \"fileNamePrefix\": \"files/0001\",\n" +
                 "      \"validDurationInSeconds\": 123\n" +
@@ -872,6 +874,7 @@ public class B2StorageClientWebifierImplTest {
 
     @Test
     public void testDownloadById() throws B2Exception {
+        final String expectedUrl = "downloadUrl1/b2api/v1/b2_download_file_by_id?fileId=4_zBlah_0000001";
         final B2DownloadByIdRequest request = B2DownloadByIdRequest
                 .builder(fileId(1))
                 .build();
@@ -879,12 +882,14 @@ public class B2StorageClientWebifierImplTest {
 
         webApiClient.check("getContent.\n" +
                 "url:\n" +
-                "    downloadUrl1/b2api/v1/b2_download_file_by_id?fileId=4_zBlah_0000001\n" +
+                "    " + expectedUrl + "\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
+
+        assertEquals(expectedUrl, webifier.getDownloadByIdUrl(ACCOUNT_AUTH, request));
 
         checkRequestCategory(OTHER, w -> w.downloadById(ACCOUNT_AUTH, request, noopContentHandler));
     }
@@ -909,9 +914,29 @@ public class B2StorageClientWebifierImplTest {
 
         checkRequestCategory(OTHER, w -> w.downloadById(ACCOUNT_AUTH, request, noopContentHandler));
     }
+    @Test
+    public void testDownloadByIdWithB2ContentDisposition() throws B2Exception {
+        final B2DownloadByIdRequest request = B2DownloadByIdRequest
+                .builder(fileId(1))
+                .setB2ContentDisposition("attachment; filename=\"surprise.txt\"")
+                .build();
+        webifier.downloadById(ACCOUNT_AUTH, request, noopContentHandler);
+
+        webApiClient.check("getContent.\n" +
+                "url:\n" +
+                "    downloadUrl1/b2api/v1/b2_download_file_by_id?fileId=4_zBlah_0000001&b2ContentDisposition=attachment%3B+filename%3D%22surprise.txt%22\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.downloadById(ACCOUNT_AUTH, request, noopContentHandler));
+    }
 
     @Test
     public void testDownloadByName() throws B2Exception {
+        final String expectedUrl = "downloadUrl1/file/bucketName1/files/0001";
         final B2DownloadByNameRequest request = B2DownloadByNameRequest
                 .builder(bucketName(1), fileName(1))
                 .build();
@@ -919,7 +944,27 @@ public class B2StorageClientWebifierImplTest {
 
         webApiClient.check("getContent.\n" +
                 "url:\n" +
-                "    downloadUrl1/file/bucketName1/files/0001\n" +
+                "    " + expectedUrl + "\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n"
+        );
+        assertEquals(expectedUrl, webifier.getDownloadByNameUrl(ACCOUNT_AUTH, request));
+
+        checkRequestCategory(OTHER, w -> w.downloadByName(ACCOUNT_AUTH, request, noopContentHandler));
+    }
+
+    @Test
+    public void testDownloadByNamePercentEncoded() throws B2Exception {
+        final B2DownloadByNameRequest request = B2DownloadByNameRequest
+                .builder(bucketName(1), "\u81ea\u7531")
+                .build();
+        webifier.downloadByName(ACCOUNT_AUTH, request, noopContentHandler);
+
+        webApiClient.check("getContent.\n" +
+                "url:\n" +
+                "    downloadUrl1/file/bucketName1/%E8%87%AA%E7%94%B1\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -943,6 +988,26 @@ public class B2StorageClientWebifierImplTest {
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    Range: bytes=200-\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.downloadByName(ACCOUNT_AUTH, request, noopContentHandler));
+    }
+
+    @Test
+    public void testDownloadByNameWithB2ContentDisposition() throws B2Exception {
+        final B2DownloadByNameRequest request = B2DownloadByNameRequest
+                .builder(bucketName(1), fileName(1))
+                .setB2ContentDisposition("attachment; filename=\"with space.txt\"")
+                .build();
+        webifier.downloadByName(ACCOUNT_AUTH, request, noopContentHandler);
+
+        webApiClient.check("getContent.\n" +
+                "url:\n" +
+                "    downloadUrl1/file/bucketName1/files/0001?b2ContentDisposition=attachment%3B+filename%3D%22with+space.txt%22\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
@@ -1029,7 +1094,7 @@ public class B2StorageClientWebifierImplTest {
                 "    Content-Type: b2/x-auto\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
-                "    X-Bz-File-Name: files%2F0001\n" +
+                "    X-Bz-File-Name: files/0001\n" +
                 "    X-Bz-Info-color: blue\n" +
                 "    X-Bz-Info-number: six\n" +
                 "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
@@ -1079,7 +1144,7 @@ public class B2StorageClientWebifierImplTest {
                 "    Content-Type: b2/x-auto\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: hex_digits_at_end\n" +
-                "    X-Bz-File-Name: files%2F0001\n" +
+                "    X-Bz-File-Name: files/0001\n" +
                 "    X-Bz-Info-color: blue\n" +
                 "    X-Bz-Info-number: six\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +

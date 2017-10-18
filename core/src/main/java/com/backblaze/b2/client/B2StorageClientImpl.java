@@ -262,6 +262,29 @@ public class B2StorageClientImpl implements B2StorageClient {
     }
 
     @Override
+    public String getDownloadByIdUrl(B2DownloadByIdRequest request) throws B2Exception {
+        return retryer.doRetry("getDownloadByIdUrl",
+                accountAuthCache,
+                () -> {
+                    B2AccountAuthorization accountAuth = accountAuthCache.get();
+                    return webifier.getDownloadByIdUrl(accountAuth, request);
+                },
+                retryPolicySupplier.get());
+    }
+
+    @Override
+    public String getDownloadByNameUrl(B2DownloadByNameRequest request) throws B2Exception {
+        return retryer.doRetry("getDownloadByNameUrl",
+                accountAuthCache,
+                () -> {
+                    B2AccountAuthorization accountAuth = accountAuthCache.get();
+                    return webifier.getDownloadByNameUrl(accountAuth, request);
+                },
+                retryPolicySupplier.get());
+    }
+
+
+    @Override
     public void downloadByName(B2DownloadByNameRequest request,
                                B2ContentSink handler) throws B2Exception {
         retryer.doRetry("b2_download_file_by_name",
