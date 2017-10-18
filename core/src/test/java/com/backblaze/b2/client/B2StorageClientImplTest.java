@@ -62,6 +62,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -271,7 +272,7 @@ public class B2StorageClientImplTest {
     public void testListBucketsWithFiltering() throws B2Exception {
         final B2ListBucketsRequest expectedRequest = B2ListBucketsRequest
                 .builder(ACCOUNT_ID)
-                .setBucketTypes(B2Collections.unmodifiableSet(new String[] {"allPublic"}))
+                .setBucketTypes(Collections.singleton("allPublic"))
                 .build();
         final B2ListBucketsResponse response = new B2ListBucketsResponse(
                 listOf(bucket(1))
