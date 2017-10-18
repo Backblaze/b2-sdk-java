@@ -19,6 +19,7 @@ import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2HideFileRequest;
+import com.backblaze.b2.client.structures.B2ListBucketsRequest;
 import com.backblaze.b2.client.structures.B2ListBucketsResponse;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
@@ -101,7 +102,13 @@ public interface B2StorageClient extends Closeable {
     B2ListBucketsResponse listBuckets() throws B2Exception;
 
     /**
-     * @return a new list with all of the account's buckets.
+     * @return the response from B2 with the listed buckets using a listBucketsRequest object.
+     * @throws B2Exception if there's any trouble.
+     */
+    B2ListBucketsResponse listBuckets(B2ListBucketsRequest listBucketsRequest) throws B2Exception;
+
+    /**
+     * @return a new list with all of the account's buckets for the b2 default buckets.
      * @throws B2Exception if there's any trouble.
      */
     default List<B2Bucket> buckets() throws B2Exception {

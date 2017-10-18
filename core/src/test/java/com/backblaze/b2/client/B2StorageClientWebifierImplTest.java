@@ -417,7 +417,8 @@ public class B2StorageClientWebifierImplTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "request:\n" +
                 "    {\n" +
-                "      \"accountId\": \"1\"\n" +
+                "      \"accountId\": \"1\",\n" +
+                "      \"bucketTypes\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2ListBucketsResponse\n"
@@ -1142,7 +1143,8 @@ public class B2StorageClientWebifierImplTest {
                         "") +
                 "request:\n" +
                 "    {\n" +
-                "      \"accountId\": \"1\"\n" +
+                "      \"accountId\": \"1\",\n" +
+                "      \"bucketTypes\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2ListBucketsResponse\n"

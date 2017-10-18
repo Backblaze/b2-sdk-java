@@ -268,6 +268,27 @@ public class B2StorageClientImplTest {
     }
 
     @Test
+    public void testListBucketsWithFiltering() throws B2Exception {
+        final B2ListBucketsRequest expectedRequest = B2ListBucketsRequest
+                .builder(ACCOUNT_ID)
+                .setBucketTypes(B2Collections.unmodifiableSet(new String[] {"allPublic"}))
+                .build();
+        final B2ListBucketsResponse response = new B2ListBucketsResponse(
+                listOf(bucket(1))
+        );
+        when(webifier.listBuckets(ACCOUNT_AUTH, expectedRequest)).thenReturn(response);
+
+        assertEquals(response, client.listBuckets(expectedRequest));
+
+        // for coverage
+        //noinspection ResultOfMethodCallIgnored
+        expectedRequest.hashCode();
+        //noinspection ResultOfMethodCallIgnored
+        response.hashCode();
+        assertEquals(response, new B2ListBucketsResponse(listOf(bucket(1))));
+    }
+
+    @Test
     public void testGetBucketByName() throws B2Exception {
         final B2ListBucketsRequest expectedRequest = B2ListBucketsRequest
                 .builder(ACCOUNT_ID)
