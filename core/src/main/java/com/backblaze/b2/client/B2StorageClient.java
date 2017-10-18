@@ -102,7 +102,9 @@ public interface B2StorageClient extends Closeable {
      * @return the response from B2 with the listed buckets.
      * @throws B2Exception if there's any trouble.
      */
-    B2ListBucketsResponse listBuckets() throws B2Exception;
+    default B2ListBucketsResponse listBuckets() throws B2Exception {
+        return listBuckets(B2ListBucketsRequest.builder(getAccountId()).build());
+    }
 
     /**
      * @return the response from B2 with the listed buckets using a listBucketsRequest object.
