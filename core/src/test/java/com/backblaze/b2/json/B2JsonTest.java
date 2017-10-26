@@ -564,6 +564,10 @@ public class B2JsonTest {
         byte [] bytes = getUtf8Bytes(json);
         T obj2 = bzJson.fromJson(bytes, clazz);
         assertArrayEquals(bytes, bzJson.toJsonUtf8Bytes(obj2));
+
+        T obj3 = bzJson.fromJson(bytes, clazz);
+        byte [] bytesWithNewline = getUtf8Bytes(json + "\n");
+        assertArrayEquals(bytesWithNewline, bzJson.toJsonUtf8BytesWithNewline(obj3));
     }
 
     private <T> void checkDeserializeSerialize(String json, Class<T> clazz, String expectedJson) throws IOException, B2JsonException {

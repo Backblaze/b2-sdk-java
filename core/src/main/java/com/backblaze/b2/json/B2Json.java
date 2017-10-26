@@ -62,6 +62,7 @@ public class B2Json {
      * relying on the shape of a class for which you don't own the
      * source code?
      */
+    private static String UTF8 = "UTF-8";
 
     /**
      * A simple instance that can be shared.
@@ -99,9 +100,7 @@ public class B2Json {
      */
     public byte[] toJsonUtf8Bytes(Object obj) throws B2JsonException {
         try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            toJson(obj, out);
-            return out.toByteArray();
+            return toJson(obj).getBytes(UTF8);
         } catch (IOException e) {
             throw new RuntimeException("error writing to byte array: " + e.getMessage());
         }
@@ -113,10 +112,8 @@ public class B2Json {
      */
     public byte[] toJsonUtf8BytesWithNewline(Object obj) throws B2JsonException {
         try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            toJson(obj, out);
-            out.write('\n');
-            return out.toByteArray();
+            final String jsonWithNewline = toJson(obj) + "\n";
+            return jsonWithNewline.getBytes(UTF8);
         } catch (IOException e) {
             throw new RuntimeException("error writing to byte array: " + e.getMessage());
         }
