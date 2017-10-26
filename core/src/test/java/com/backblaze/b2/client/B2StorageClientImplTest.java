@@ -62,6 +62,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -258,6 +259,27 @@ public class B2StorageClientImplTest {
 
         assertEquals(response, client.listBuckets());
         assertEquals(response.getBuckets(), client.buckets());
+
+        // for coverage
+        //noinspection ResultOfMethodCallIgnored
+        expectedRequest.hashCode();
+        //noinspection ResultOfMethodCallIgnored
+        response.hashCode();
+        assertEquals(response, new B2ListBucketsResponse(listOf(bucket(1))));
+    }
+
+    @Test
+    public void testListBucketsWithFiltering() throws B2Exception {
+        final B2ListBucketsRequest expectedRequest = B2ListBucketsRequest
+                .builder(ACCOUNT_ID)
+                .setBucketTypes(Collections.singleton("allPublic"))
+                .build();
+        final B2ListBucketsResponse response = new B2ListBucketsResponse(
+                listOf(bucket(1))
+        );
+        when(webifier.listBuckets(ACCOUNT_AUTH, expectedRequest)).thenReturn(response);
+
+        assertEquals(response, client.listBuckets(expectedRequest));
 
         // for coverage
         //noinspection ResultOfMethodCallIgnored

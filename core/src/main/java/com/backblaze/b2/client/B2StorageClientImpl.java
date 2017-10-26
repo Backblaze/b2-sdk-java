@@ -136,8 +136,8 @@ public class B2StorageClientImpl implements B2StorageClient {
     }
 
     @Override
-    public B2ListBucketsResponse listBuckets() throws B2Exception {
-        return retryer.doRetry("b2_list_buckets", accountAuthCache, () -> webifier.listBuckets(accountAuthCache.get(), B2ListBucketsRequest.builder(accountId).build()), retryPolicySupplier.get());
+    public B2ListBucketsResponse listBuckets(B2ListBucketsRequest listBucketsRequest) throws B2Exception {
+        return retryer.doRetry("b2_list_buckets", accountAuthCache, () -> webifier.listBuckets(accountAuthCache.get(), listBucketsRequest), retryPolicySupplier.get());
     }
 
     @Override
