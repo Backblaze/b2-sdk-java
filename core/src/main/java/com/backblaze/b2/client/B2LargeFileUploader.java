@@ -32,6 +32,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Supplier;
 
 class B2LargeFileUploader {
@@ -234,6 +235,10 @@ class B2LargeFileUploader {
                     }
                 }
             }
+        } catch (RejectedExecutionException e) {
+            // the executor doesn't to accept a task we're trying to submit.
+            // turn this into a B2Exception and let the finally clean up what it can.
+            throw new B2LocalException("bad_state", "The executor rejected an upload task. Does it have a hard limit? Did you call shutdown() on it? (" + e + ")", e);
         } finally {
             // we've either called get() on all of the futures, or we've hit an exception and
             // we aren't going to wait for the others.  let's call cancel on all of them.
