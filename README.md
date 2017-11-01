@@ -16,8 +16,7 @@ STATUS
 
 The SDK is being used in production at Backblaze.  All new internal b2 client
 code is being written with it.  We are in the process of slowly transitioning
-our existing code to the library.  (None of our production code uses the large
-file functionality yet, as those features haven't been rewritten, yet.)
+our existing code to the library.
 
 We don't expect to make many incompatible changes to the API or
 behavior in the near future.
