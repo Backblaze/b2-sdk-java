@@ -13,7 +13,7 @@ import java.net.URLEncoder;
 public class B2StringUtil {
     public static final String UTF8 = "UTF-8";
 
-    private static final char [] LOWER_HEX_DIGITS = new char [] {
+    static final char [] LOWER_HEX_DIGITS = new char [] {
             '0', '1', '2', '3', '4', '5', '6', '7',
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
