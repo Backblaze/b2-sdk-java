@@ -23,10 +23,6 @@ public class B2JsonWriter {
         this.out = out;
     }
 
-    public void close() throws IOException {
-        out.close();
-    }
-
     public void writeText(String text) throws IOException {
         B2Utf8Util.write(text, out);
         objectOrArrayEmpty = false;

@@ -755,9 +755,10 @@ public class B2JsonTest {
         assertEquals(json, bzJson.toJson(str));
 
         // Check serializing to bytes
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        bzJson.toJson(str, out);
-        assertArrayEquals(utf8Json, out.toByteArray());
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            bzJson.toJson(str, out);
+            assertArrayEquals(utf8Json, out.toByteArray());
+        }
     }
 
 
