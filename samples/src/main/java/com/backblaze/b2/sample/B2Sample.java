@@ -13,6 +13,7 @@ import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2FileContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
+import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
@@ -289,6 +290,25 @@ public class B2Sample {
 
         // delete the bucket
         client.deleteBucket(bucketId);
+
+
+        // exercise account authorization.
+        bigHeader(writer, "exercise getAccountAuthorization() & invalidateAccountAuthorization().");
+        {
+            // do an explicit getAccountAuthorization.
+            // you should rarely need to do this.
+            // we're just doing it here to exercise it.
+            final B2AccountAuthorization auth = client.getAccountAuthorization();
+            final B2AccountAuthorization auth2 = client.getAccountAuthorization();
+            client.invalidateAccountAuthorization();
+            final B2AccountAuthorization auth3 = client.getAccountAuthorization();
+
+            writer.println("auth = " + auth);
+            writer.println("auth3 = " + auth3);
+
+            B2Preconditions.checkState(auth == auth2, "same object because it's cached.");
+            B2Preconditions.checkState(auth != auth3, "different object because we cleared the cache.");
+        }
     }
 
     private static void deleteBucketIfAny(PrintWriter writer,
