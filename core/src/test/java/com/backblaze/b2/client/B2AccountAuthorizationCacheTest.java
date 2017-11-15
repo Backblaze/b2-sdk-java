@@ -84,6 +84,8 @@ public class B2AccountAuthorizationCacheTest {
         assertEquals(a, b);
         //noinspection ResultOfMethodCallIgnored
         a.hashCode();
+
+        assertEquals("B2AccountAuthorization{accountId='1', authorizationToken='accountToken1', apiUrl='apiUrl1', downloadUrl='downloadUrl1', recommendedPartSize=1000, absoluteMinimumPartSize=100}", a.toString());
     }
 
 }

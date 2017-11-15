@@ -81,6 +81,7 @@ import static com.backblaze.b2.client.structures.B2UploadState.SUCCEEDED;
 import static com.backblaze.b2.client.structures.B2UploadState.WAITING_TO_START;
 import static com.backblaze.b2.util.B2Collections.listOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
@@ -230,6 +231,21 @@ public class B2StorageClientImplTest {
         //noinspection ResultOfMethodCallIgnored
         bucket.hashCode();
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,1 lifecycleRules,v1)", bucket.toString());
+    }
+
+    @Test
+    public void testGetAndIvalidateAccountAuthorization() throws B2Exception {
+        assertNotNull(client.getAccountAuthorization());
+        assertNotNull(client.getAccountAuthorization());
+        verify(webifier, times(1)).authorizeAccount(anyObject());
+        retryer.assertCallCountIs(4); // 2*auth + 2*authorizeAccount.
+
+        // invalidate the cache.
+        client.invalidateAccountAuthorization();
+
+        assertNotNull(client.getAccountAuthorization());
+        verify(webifier, times(2)).authorizeAccount(anyObject());
+        retryer.assertCallCountIs(6); // added another call to auth * authorizeAccount.
     }
 
     // test that the retryer is caching account authorizations.

@@ -77,6 +77,18 @@ public class B2AccountAuthorization {
     }
 
     @Override
+    public String toString() {
+        return "B2AccountAuthorization{" +
+                "accountId='" + accountId + '\'' +
+                ", authorizationToken='" + authorizationToken + '\'' +
+                ", apiUrl='" + apiUrl + '\'' +
+                ", downloadUrl='" + downloadUrl + '\'' +
+                ", recommendedPartSize=" + recommendedPartSize +
+                ", absoluteMinimumPartSize=" + absoluteMinimumPartSize +
+                '}';
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(getAccountId(), getAuthorizationToken(), getApiUrl(), getDownloadUrl(), getRecommendedPartSize(), getAbsoluteMinimumPartSize());
     }
