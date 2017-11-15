@@ -122,6 +122,9 @@ public class B2Json {
     /**
      * Turn an object into JSON, writing the results to given
      * output stream.
+     *
+     * Note that the output stream is NOT closed as a side-effect of calling this.
+     * It was a bug that it was being closed in version 1.1.1 and earlier.
      */
     public void toJson(Object obj, OutputStream out) throws IOException, B2JsonException {
         if (obj == null) {
@@ -132,7 +135,6 @@ public class B2Json {
         B2JsonWriter jsonWriter = new B2JsonWriter(out);
         //noinspection unchecked
         handler.serialize(obj, jsonWriter);
-        jsonWriter.close();
     }
 
     /**
@@ -143,13 +145,11 @@ public class B2Json {
             throw new B2JsonException("top level object must not be null");
         }
         Class<?> clazz = obj.getClass();
-        try {
-            final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
-            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
+        try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
             handler.serialize(obj, jsonWriter);
-            jsonWriter.close();
             return out.toString();
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
@@ -177,15 +177,13 @@ public class B2Json {
         if (map == null) {
             throw new B2JsonException("map must not be null");
         }
-        try {
-            final B2JsonTypeHandler keyHandler = handlerMap.getHandler(keyClass);
-            final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
-            final B2JsonTypeHandler handler = new B2JsonMapHandler(keyHandler, valueHandler);
-            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final B2JsonTypeHandler keyHandler = handlerMap.getHandler(keyClass);
+        final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
+        final B2JsonTypeHandler handler = new B2JsonMapHandler(keyHandler, valueHandler);
+        try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
             handler.serialize(map, jsonWriter);
-            jsonWriter.close();
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
@@ -209,14 +207,12 @@ public class B2Json {
         if (list == null) {
             throw new B2JsonException("list must not be null");
         }
-        try {
-            final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
-            final B2JsonTypeHandler handler = new B2JsonListHandler(valueHandler);
-            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
+        final B2JsonTypeHandler handler = new B2JsonListHandler(valueHandler);
+        try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
             handler.serialize(list, jsonWriter);
-            jsonWriter.close();
             return out.toString();
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
