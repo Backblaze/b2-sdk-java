@@ -112,8 +112,10 @@ public class B2Json {
      */
     public byte[] toJsonUtf8BytesWithNewline(Object obj) throws B2JsonException {
         try {
-            final String jsonWithNewline = toJson(obj) + "\n";
-            return jsonWithNewline.getBytes(UTF8);
+            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+            toJson(obj, out);
+            out.write('\n');
+            return out.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException("error writing to byte array: " + e.getMessage());
         }
