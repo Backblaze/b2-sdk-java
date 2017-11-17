@@ -11,6 +11,7 @@ import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2FileContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Bucket;
+import com.backblaze.b2.client.structures.B2CorsRule;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
@@ -26,10 +27,13 @@ import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.util.B2ExecutorUtils;
 import com.backblaze.b2.util.B2IoUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
@@ -73,6 +77,7 @@ public class B2 implements AutoCloseable {
                     "    b2 list_unfinished_large_files <bucketName>\n" +
                     //"    b2 make_url <fileId>\n" +
                     "    b2 update_bucket <bucketName> [allPublic | allPrivate]\n" +
+                    "    b2 update_bucket_cors_rules <bucketName> [rules | @rules.json]\n" +
                     "    b2 upload_file [--sha1 <sha1sum>] [--contentType <contentType>] [--info <key>=<value>]* \\\n" +
                     "        [--noProgress] [--threads N] <bucketName> <localFilePath> <b2FileName>\n" +
                     "    b2 upload_large_file [--sha1 <sha1sum>] [--contentType <contentType>] [--info <key>=<value>]* \\\n" +
@@ -176,6 +181,8 @@ public class B2 implements AutoCloseable {
                 b2.list_unfinished_large_files(remainingArgs);
             } else if ("update_bucket".equals(command)) {
                 b2.update_bucket(remainingArgs);
+            } else if ("update_bucket_cors_rules".equals(command)) {
+                b2.update_bucket_cors_rules(remainingArgs);
             } else if ("upload_file".equals(command)) {
                 b2.upload_file(remainingArgs, false);
             } else if ("upload_large_file".equals(command)) {
@@ -432,6 +439,43 @@ public class B2 implements AutoCloseable {
                 .setBucketType(bucketType)
                 .build();
         client.updateBucket(request);
+    }
+
+    private void update_bucket_cors_rules(String[] args) throws B2Exception, B2JsonException {
+        // <bucketName> [rules | @rules.json]
+        checkArgCount(args, 2);
+        final String bucketName = args[0];
+        final String rulesString = args[1];
+        final List<B2CorsRule> corsRules = parseRules(rulesString);
+        final B2Bucket bucket = getBucketByNameOrDie(bucketName);
+        final B2UpdateBucketRequest request = B2UpdateBucketRequest
+                .builder(bucket)
+                .setCorsRules(corsRules)
+                .build();
+        client.updateBucket(request);
+    }
+
+    private List<B2CorsRule> parseRules(String rulesString) throws B2JsonException {
+        final B2Json b2Json = B2Json.get();
+        final String rulesJson;
+
+        if (rulesString.startsWith("@")) {
+            rulesJson = readFile(rulesString.substring(1));
+        } else {
+            rulesJson = rulesString;
+        }
+
+        return b2Json.listFromJson(rulesJson, B2CorsRule.class);
+    }
+
+    private String readFile(String fileName) {
+        try (FileInputStream in = new FileInputStream(fileName);
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            B2IoUtils.copy(in, out);
+            return out.toString();
+        } catch (IOException e) {
+            throw new RuntimeException("trouble reading from " + fileName + ": " + e.getMessage(), e);
+        }
     }
 
     private void delete_bucket(String[] args) throws B2Exception {
