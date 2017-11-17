@@ -27,6 +27,9 @@ public class B2Bucket {
     private final Map<String,String> bucketInfo;
 
     @B2Json.optional
+    private final List<B2CorsRule> corsRules;
+
+    @B2Json.optional
     private final List<B2LifecycleRule> lifecycleRules;
 
     @B2Json.required
@@ -34,12 +37,13 @@ public class B2Bucket {
 
 
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
-            "bucketInfo,lifecycleRules,revision")
+            "bucketInfo,corsRules,lifecycleRules,revision")
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
                     String bucketType,
                     Map<String, String> bucketInfo,
+                    List<B2CorsRule> corsRules,
                     List<B2LifecycleRule> lifecycleRules,
                     int revision) {
         this.accountId = accountId;
@@ -47,6 +51,7 @@ public class B2Bucket {
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
+        this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
         this.revision = revision;
     }
@@ -71,6 +76,10 @@ public class B2Bucket {
         return bucketInfo;
     }
 
+    public List<B2CorsRule> getCorsRules() {
+        return corsRules;
+    }
+
     public List<B2LifecycleRule> getLifecycleRules() {
         return lifecycleRules;
     }
@@ -86,6 +95,7 @@ public class B2Bucket {
                 bucketType + "," +
                 bucketId + "," +
                 (bucketInfo == null ? 0 : bucketInfo.size()) + " infos," +
+                (corsRules == null ? 0 : corsRules.size()) + " corsRules," +
                 (lifecycleRules == null ? 0 : lifecycleRules.size()) + " lifecycleRules," +
                 "v" + revision +
                 ')';
@@ -102,11 +112,20 @@ public class B2Bucket {
                 Objects.equals(getBucketName(), b2Bucket.getBucketName()) &&
                 Objects.equals(getBucketType(), b2Bucket.getBucketType()) &&
                 Objects.equals(getBucketInfo(), b2Bucket.getBucketInfo()) &&
+                Objects.equals(getCorsRules(), b2Bucket.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getAccountId(), getBucketId(), getBucketName(), getBucketType(), getBucketInfo(), getLifecycleRules(), getRevision());
+        return Objects.hash(
+                getAccountId(),
+                getBucketId(),
+                getBucketName(),
+                getBucketType(),
+                getBucketInfo(),
+                getCorsRules(),
+                getLifecycleRules(),
+                getRevision());
     }
 }

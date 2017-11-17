@@ -8,6 +8,7 @@ import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketTypes;
+import com.backblaze.b2.client.structures.B2CorsRule;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2LifecycleRule;
 import com.backblaze.b2.client.structures.B2Part;
@@ -16,6 +17,10 @@ import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2Sha1;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 
 public class B2TestHelpers {
     public static final String SAMPLE_SHA1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
@@ -125,6 +130,7 @@ public class B2TestHelpers {
                 bucketName(i),
                 B2BucketTypes.ALL_PUBLIC,
                 B2Collections.mapOf("color", "blue"),
+                B2Collections.listOf(makeCorsRule()),
                 B2Collections.listOf(makeLifecycleRule(i)),
                 i);
     }
@@ -134,6 +140,12 @@ public class B2TestHelpers {
                 .builder("/prefix" + i + "/")
                 .setDaysFromUploadingToHiding(i)
                 .setDaysFromHidingToDeleting(2 * i)
+                .build();
+    }
+
+    public static B2CorsRule makeCorsRule() {
+        return B2CorsRule
+                .builder(Collections.singletonList("https://something.com"), Collections.singleton("b2_download_file_by_id"), 0)
                 .build();
     }
 

@@ -15,6 +15,7 @@ import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
+import com.backblaze.b2.client.structures.B2CorsRule;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
@@ -56,6 +57,7 @@ import org.junit.rules.ExpectedException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
@@ -375,6 +377,7 @@ public class B2StorageClientWebifierImplTest {
     public void testCreateBucket() throws B2Exception {
         final B2CreateBucketRequest request = B2CreateBucketRequest
                 .builder(bucketName(1), B2BucketTypes.ALL_PUBLIC)
+                .setCorsRules(Collections.singletonList(B2TestHelpers.makeCorsRule()))
                 .build();
         final B2CreateBucketRequestReal requestReal = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
         webifier.createBucket(ACCOUNT_AUTH, requestReal);
@@ -392,6 +395,19 @@ public class B2StorageClientWebifierImplTest {
                 "      \"bucketInfo\": null,\n" +
                 "      \"bucketName\": \"bucketName1\",\n" +
                 "      \"bucketType\": \"allPublic\",\n" +
+                "      \"corsRules\": [\n" +
+                "        {\n" +
+                "          \"allowedHeaders\": null,\n" +
+                "          \"allowedOperations\": [\n" +
+                "            \"b2_download_file_by_id\"\n" +
+                "          ],\n" +
+                "          \"allowedOrigins\": [\n" +
+                "            \"https://something.com\"\n" +
+                "          ],\n" +
+                "          \"exposeHeaders\": null,\n" +
+                "          \"maxAgeSeconds\": 0\n" +
+                "        }\n" +
+                "      ],\n" +
                 "      \"lifecycleRules\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
@@ -821,6 +837,7 @@ public class B2StorageClientWebifierImplTest {
     public void testUpdateBucket() throws B2Exception {
         final B2UpdateBucketRequest request = B2UpdateBucketRequest
                 .builder(makeBucket(1))
+                .setCorsRules(Collections.singletonList(B2TestHelpers.makeCorsRule()))
                 .build();
         webifier.updateBucket(ACCOUNT_AUTH, request);
 
@@ -837,6 +854,19 @@ public class B2StorageClientWebifierImplTest {
                 "      \"bucketId\": \"bucket1\",\n" +
                 "      \"bucketInfo\": null,\n" +
                 "      \"bucketType\": null,\n" +
+                "      \"corsRules\": [\n" +
+                "        {\n" +
+                "          \"allowedHeaders\": null,\n" +
+                "          \"allowedOperations\": [\n" +
+                "            \"b2_download_file_by_id\"\n" +
+                "          ],\n" +
+                "          \"allowedOrigins\": [\n" +
+                "            \"https://something.com\"\n" +
+                "          ],\n" +
+                "          \"exposeHeaders\": null,\n" +
+                "          \"maxAgeSeconds\": 0\n" +
+                "        }\n" +
+                "      ],\n" +
                 "      \"ifRevisionIs\": 1,\n" +
                 "      \"lifecycleRules\": null\n" +
                 "    }\n" +

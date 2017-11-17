@@ -24,19 +24,24 @@ public class B2CreateBucketRequestReal {
     private final Map<String, String> bucketInfo;
 
     @B2Json.optional
+    private final List<B2CorsRule> corsRules;
+
+    @B2Json.optional
     private final List<B2LifecycleRule> lifecycleRules;
 
 
-    @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,lifecycleRules")
+    @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules")
     private B2CreateBucketRequestReal(String accountId,
                                       String bucketName,
                                       String bucketType,
                                       Map<String, String> bucketInfo,
+                                      List<B2CorsRule> corsRules,
                                       List<B2LifecycleRule> lifecycleRules) {
         this.accountId = accountId;
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
+        this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
     }
 
@@ -46,6 +51,7 @@ public class B2CreateBucketRequestReal {
                 mostOfRequest.getBucketName(),
                 mostOfRequest.getBucketType(),
                 mostOfRequest.getBucketInfo(),
+                mostOfRequest.getCorsRules(),
                 mostOfRequest.getLifecycleRules());
     }
 
@@ -58,11 +64,12 @@ public class B2CreateBucketRequestReal {
                 Objects.equals(bucketName, that.bucketName) &&
                 Objects.equals(bucketType, that.bucketType) &&
                 Objects.equals(bucketInfo, that.bucketInfo) &&
+                Objects.equals(corsRules, that.corsRules) &&
                 Objects.equals(lifecycleRules, that.lifecycleRules);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(accountId, bucketName, bucketType, bucketInfo, lifecycleRules);
+        return Objects.hash(accountId, bucketName, bucketType, bucketInfo, corsRules, lifecycleRules);
     }
 }

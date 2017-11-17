@@ -62,6 +62,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -170,6 +171,7 @@ public class B2StorageClientImplTest {
                 BUCKET_TYPE,
                 null,
                 null,
+                null,
                 1);
         when(webifier.createBucket(anyObject(), anyObject())).thenReturn(bucket);
 
@@ -181,6 +183,7 @@ public class B2StorageClientImplTest {
                 new B2CreateBucketRequest(
                         BUCKET_NAME,
                         BUCKET_TYPE,
+                        null,
                         null,
                         null
                 )
@@ -209,6 +212,7 @@ public class B2StorageClientImplTest {
                 BUCKET_NAME,
                 BUCKET_TYPE,
                 bucketInfo,
+                new ArrayList<>(),
                 lifecycleRules,
                 1);
         B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
@@ -230,7 +234,7 @@ public class B2StorageClientImplTest {
         assertEquals(bucket(1), bucket(1));
         //noinspection ResultOfMethodCallIgnored
         bucket.hashCode();
-        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,1 lifecycleRules,v1)", bucket.toString());
+        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,v1)", bucket.toString());
     }
 
     @Test
@@ -326,6 +330,7 @@ public class B2StorageClientImplTest {
                 bucketId(i),
                 BUCKET_NAME,
                 BUCKET_TYPE,
+                null,
                 null,
                 null,
                 2);

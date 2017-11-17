@@ -11,15 +11,18 @@ public class B2CreateBucketRequest {
     private final String bucketName;
     private final String bucketType;
     private final Map<String,String> bucketInfo;
+    private final List<B2CorsRule> corsRules;
     private final List<B2LifecycleRule> lifecycleRules;
 
     public B2CreateBucketRequest(String bucketName,
                                  String bucketType,
                                  Map<String, String> bucketInfo,
+                                 List<B2CorsRule> corsRules,
                                  List<B2LifecycleRule> lifecycleRules) {
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
+        this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
     }
 
@@ -35,6 +38,10 @@ public class B2CreateBucketRequest {
         return bucketInfo;
     }
 
+    public List<B2CorsRule> getCorsRules() {
+        return corsRules;
+    }
+
     public List<B2LifecycleRule> getLifecycleRules() {
         return lifecycleRules;
     }
@@ -48,6 +55,7 @@ public class B2CreateBucketRequest {
         private final String bucketType;
 
         private Map<String, String> bucketInfo;
+        private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
 
         Builder(String bucketName,
@@ -61,13 +69,18 @@ public class B2CreateBucketRequest {
             return this;
         }
 
+        public Builder setCorsRules(List<B2CorsRule> corsRules){
+            this.corsRules = corsRules;
+            return this;
+        }
+
         public Builder setLifecycleRules(List<B2LifecycleRule> lifecycleRules) {
             this.lifecycleRules = lifecycleRules;
             return this;
         }
 
         public B2CreateBucketRequest build() {
-            return new B2CreateBucketRequest(bucketName, bucketType, bucketInfo, lifecycleRules);
+            return new B2CreateBucketRequest(bucketName, bucketType, bucketInfo, corsRules, lifecycleRules);
         }
     }
 }

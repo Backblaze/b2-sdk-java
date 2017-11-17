@@ -24,22 +24,27 @@ public class B2UpdateBucketRequest {
     private final Map<String, String> bucketInfo;
 
     @B2Json.optional
+    private final List<B2CorsRule> corsRules;
+
+    @B2Json.optional
     private final List<B2LifecycleRule> lifecycleRules;
 
     @B2Json.optional
     private final Integer ifRevisionIs;
 
-    @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,lifecycleRules,ifRevisionIs")
+    @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,corsRules,lifecycleRules,ifRevisionIs")
     private B2UpdateBucketRequest(String accountId,
                                   String bucketId,
                                   String bucketType,
                                   Map<String, String> bucketInfo,
+                                  List<B2CorsRule> corsRules,
                                   List<B2LifecycleRule> lifecycleRules,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
         this.bucketId = bucketId;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
+        this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
         this.ifRevisionIs = ifRevisionIs;
     }
@@ -60,6 +65,10 @@ public class B2UpdateBucketRequest {
         return bucketInfo;
     }
 
+    public List<B2CorsRule> getCorsRules() {
+        return corsRules;
+    }
+
     public List<B2LifecycleRule> getLifecycleRules() {
         return lifecycleRules;
     }
@@ -77,13 +86,21 @@ public class B2UpdateBucketRequest {
                 Objects.equals(getBucketId(), that.getBucketId()) &&
                 Objects.equals(getBucketType(), that.getBucketType()) &&
                 Objects.equals(getBucketInfo(), that.getBucketInfo()) &&
+                Objects.equals(getCorsRules(), that.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), that.getLifecycleRules()) &&
                 Objects.equals(getIfRevisionIs(), that.getIfRevisionIs());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getAccountId(), getBucketId(), getBucketType(), getBucketInfo(), getLifecycleRules(), getIfRevisionIs());
+        return Objects.hash(
+                getAccountId(),
+                getBucketId(),
+                getBucketType(),
+                getBucketInfo(),
+                getCorsRules(),
+                getLifecycleRules(),
+                getIfRevisionIs());
     }
 
     public static Builder builder(B2Bucket bucket) {
@@ -100,6 +117,7 @@ public class B2UpdateBucketRequest {
         // these are null unless they're set, since null means don't change.
         private String bucketType;
         private Map<String, String> bucketInfo;
+        private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
 
 
@@ -119,6 +137,11 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
+        public Builder setCorsRules(List<B2CorsRule> corsRules) {
+            this.corsRules = corsRules;
+            return this;
+        }
+
         public Builder setLifecycleRules(List<B2LifecycleRule> lifecycleRules) {
             this.lifecycleRules = lifecycleRules;
             return this;
@@ -131,6 +154,7 @@ public class B2UpdateBucketRequest {
                     bucketId,
                     bucketType,
                     bucketInfo,
+                    corsRules,
                     lifecycleRules,
                     ifRevisionIs);
         }
