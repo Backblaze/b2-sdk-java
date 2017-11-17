@@ -5,30 +5,26 @@
 
 package com.backblaze.b2.json;
 
+import com.backblaze.b2.util.B2Utf8Util;
+
 import java.io.IOException;
-import java.io.Writer;
+import java.io.OutputStream;
 
 /**
  * Writes out JSON tokens, formatting them nicely.
  */
 public class B2JsonWriter {
-
-    private final Writer out;
+    private final OutputStream out;
     private int indentLevel = 0;
     private boolean objectOrArrayEmpty = true;
     private boolean allowNewlines = true;
 
-
-    public B2JsonWriter(Writer out) {
+    public B2JsonWriter(OutputStream out) {
         this.out = out;
     }
 
-    public void close() throws IOException {
-        out.close();
-    }
-
     public void writeText(String text) throws IOException {
-        out.write(text);
+        B2Utf8Util.write(text, out);
         objectOrArrayEmpty = false;
     }
 
@@ -37,7 +33,7 @@ public class B2JsonWriter {
     }
 
     public void startObject() throws IOException {
-        out.write("{");
+        out.write('{');
         indentLevel += 1;
         objectOrArrayEmpty = true;
     }
@@ -45,12 +41,13 @@ public class B2JsonWriter {
     public void writeObjectFieldNameAndColon(String name) throws IOException {
         startObjectFieldName();
         writeString(name);
-        out.write(": ");
+        out.write(':');
+        out.write(' ');
     }
 
     public void startObjectFieldName() throws IOException {
         if (!objectOrArrayEmpty) {
-            out.write(",");
+            out.write(',');
         }
         newlineAndIndent();
     }
@@ -60,12 +57,12 @@ public class B2JsonWriter {
         if (!objectOrArrayEmpty) {
             newlineAndIndent();
         }
-        out.write("}");
+        out.write('}');
         objectOrArrayEmpty = false;
     }
 
     public void startArray() throws IOException {
-        out.write("[");
+        out.write('[');
         indentLevel += 1;
         objectOrArrayEmpty = true;
     }
@@ -79,40 +76,24 @@ public class B2JsonWriter {
         if (!objectOrArrayEmpty) {
             newlineAndIndent();
         }
-        out.write("]");
+        out.write(']');
         objectOrArrayEmpty = false;
     }
 
     public void writeString(String value) throws IOException {
-        int len = value.length();
-        out.write('"');
-        for (int i = 0; i < len; i++) {
-            char c = value.charAt(i);
-            if (c < 32) {
-                out.write(String.format("\\u%04x", (int) c));
-            }
-            else if (c == '"') {
-                out.write("\\\"");
-            }
-            else if (c == '\\') {
-                out.write("\\\\");
-            }
-            else {
-                out.write(c);
-            }
-        }
-        out.write('"');
+        B2Utf8Util.writeJsonString(value, out);
         objectOrArrayEmpty = false;
     }
 
     private void newlineAndIndent() throws IOException {
         if (allowNewlines) {
-            out.write("\n");
+            out.write('\n');
             for (int i = 0; i < indentLevel; i++) {
-                out.write("  ");
+                out.write(' ');
+                out.write(' ');
             }
         } else {
-            out.write(" ");
+            out.write(' ');
         }
     }
 

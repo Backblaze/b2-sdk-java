@@ -243,8 +243,8 @@ public class B2LargeFileUploaderTest {
                 // nothing else cuz it throws.
         );
 
-        thrown.expect(RejectedExecutionException.class);
-        thrown.expectMessage("testing");
+        thrown.expect(B2LocalException.class);
+        thrown.expectMessage("The executor rejected an upload task. Does it have a hard limit? Did you call shutdown() on it? (java.util.concurrent.RejectedExecutionException: testing)");
         makeUploader(PART_SIZES, executor, contentSource, recordingListener).uploadLargeFile();
     }
 

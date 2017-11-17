@@ -128,7 +128,6 @@ public class B2StorageClientImpl implements B2StorageClient {
         return webifier;
     }
 
-
     @Override
     public B2Bucket createBucket(B2CreateBucketRequest request) throws B2Exception {
         B2CreateBucketRequestReal realRequest = new B2CreateBucketRequestReal(accountId, request);
@@ -327,6 +326,19 @@ public class B2StorageClientImpl implements B2StorageClient {
     public B2Bucket deleteBucket(B2DeleteBucketRequest request) throws B2Exception {
         B2DeleteBucketRequestReal realRequest = new B2DeleteBucketRequestReal(accountId, request.getBucketId());
         return retryer.doRetry("b2_delete_bucket", accountAuthCache, () -> webifier.deleteBucket(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
+    }
+
+    @Override
+    public B2AccountAuthorization getAccountAuthorization() throws B2Exception {
+        return retryer.doRetry("b2_authorize_account",
+                accountAuthCache,
+                accountAuthCache::get,
+                retryPolicySupplier.get());
+    }
+
+    @Override
+    public void invalidateAccountAuthorization() {
+        accountAuthCache.clear();
     }
 
     //

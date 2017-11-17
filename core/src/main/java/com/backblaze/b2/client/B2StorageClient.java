@@ -7,6 +7,7 @@ package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.exceptions.B2Exception;
+import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
@@ -531,6 +532,48 @@ public interface B2StorageClient extends Closeable {
                                      String fileName) throws B2Exception {
         return getDownloadByNameUrl(B2DownloadByNameRequest.builder(bucketName, fileName).build());
     }
+
+    /**
+     * This method provides access to an account authorization structure.
+     * The returned structure may have been cached.
+     *
+     * When possible, you should use other objects and helpers instead of
+     * using the account authorization directly, so that the B2StorageClient
+     * can properly invalidate the cached authorization, if any, in response
+     * to interactions with the server.
+     *
+     * For instance, for downloading:
+     *
+     *   * to download files, use downloadByName() or downloadById().
+     *
+     *   * if you don't want to download directly, but need to give a download
+     *     url to some other code, use getDownloadByIdUrl() or getDownloadByNameUrl().
+     *
+     *   * if neither of those will work for you because you need some other
+     *     code to be able to form the download urls itself, you may need to
+     *     getAccountAuthorization() and get the downloadUrl from it.
+     *
+     * For instance, when deciding whether to use uploadSmallFile() or uploadLargeFile(),
+     * call getFilePolicy() and use the helper methods on the result.
+     *
+     * @return the account authorization, possibly from a cache.
+     * @throws B2Exception if there's trouble getting the authorization.
+     */
+    B2AccountAuthorization getAccountAuthorization() throws B2Exception;
+
+    /**
+     * If there's a cached account authorization, this will flush the cache
+     * so that the authorization will need to be reacquired the next time
+     * it is needed.  (Keep in mind that another thread may need it and
+     * reacquire it before this method even returns.)
+     *
+     * You should never need to call this unless you have called getAccountAuthorization()
+     * and have gotten some kind of authorization exception when using the contents of
+     * that authorization.  It's really a lot simpler for you if you never do that
+     * and instead always do your work through B2StorageClient's APIs!
+     */
+    void invalidateAccountAuthorization();
+
 
     /**
      * Closes this instance, releasing resources.
