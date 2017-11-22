@@ -18,9 +18,7 @@ import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2Sha1;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 
 public class B2TestHelpers {
     public static final String SAMPLE_SHA1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
@@ -145,7 +143,11 @@ public class B2TestHelpers {
 
     public static B2CorsRule makeCorsRule() {
         return B2CorsRule
-                .builder(Collections.singletonList("https://something.com"), Collections.singleton("b2_download_file_by_id"), 0)
+                .builder(
+                        "rule-name",
+                        Collections.singletonList("https://something.com"),
+                        Collections.singleton("b2_download_file_by_id"),
+                        0)
                 .build();
     }
 

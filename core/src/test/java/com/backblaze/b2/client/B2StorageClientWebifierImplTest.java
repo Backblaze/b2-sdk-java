@@ -404,6 +404,7 @@ public class B2StorageClientWebifierImplTest {
                 "          \"allowedOrigins\": [\n" +
                 "            \"https://something.com\"\n" +
                 "          ],\n" +
+                "          \"corsRuleName\": \"rule-name\",\n" +
                 "          \"exposeHeaders\": null,\n" +
                 "          \"maxAgeSeconds\": 0\n" +
                 "        }\n" +
@@ -863,6 +864,7 @@ public class B2StorageClientWebifierImplTest {
                 "          \"allowedOrigins\": [\n" +
                 "            \"https://something.com\"\n" +
                 "          ],\n" +
+                "          \"corsRuleName\": \"rule-name\",\n" +
                 "          \"exposeHeaders\": null,\n" +
                 "          \"maxAgeSeconds\": 0\n" +
                 "        }\n" +
