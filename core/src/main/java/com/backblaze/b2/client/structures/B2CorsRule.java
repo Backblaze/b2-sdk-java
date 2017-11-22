@@ -12,6 +12,8 @@ import java.util.Set;
 
 public class B2CorsRule {
     @B2Json.required
+    private final String corsRuleName;
+    @B2Json.required
     private final List<String> allowedOrigins;
     @B2Json.required
     private final Set<String> allowedOperations;
@@ -22,20 +24,23 @@ public class B2CorsRule {
     @B2Json.required
     private final int maxAgeSeconds;
 
-    @B2Json.constructor(params = "allowedOrigins,allowedOperations,allowedHeaders,exposeHeaders,maxAgeSeconds")
-    private B2CorsRule(List<String> allowedOrigins,
-                    Set<String> allowedOperations,
-                    List<String> allowedHeaders,
-                    List<String> exposeHeaders,
-                    int maxAgeSeconds) {
+    @B2Json.constructor(params = "corsRuleName,allowedOrigins,allowedOperations,allowedHeaders,exposeHeaders,maxAgeSeconds")
+    private B2CorsRule(String corsRuleName,
+            List<String> allowedOrigins,
+            Set<String> allowedOperations,
+            List<String> allowedHeaders,
+            List<String> exposeHeaders,
+            int maxAgeSeconds) {
 
-
+        this.corsRuleName = corsRuleName;
         this.allowedOrigins = allowedOrigins;
         this.allowedOperations = allowedOperations;
         this.allowedHeaders = allowedHeaders;
         this.exposeHeaders = exposeHeaders;
         this.maxAgeSeconds = maxAgeSeconds;
     }
+
+    public String getCorsRuleName() { return corsRuleName; }
 
     public List<String> getAllowedOrigins() {
         return allowedOrigins;
@@ -57,8 +62,8 @@ public class B2CorsRule {
         return maxAgeSeconds;
     }
 
-    public static Builder builder(List<String> allowedOrigins, Set<String> allowedOperations, int maxAgeSeconds) {
-        return new Builder(allowedOrigins, allowedOperations, maxAgeSeconds);
+    public static Builder builder(String corsRuleName, List<String> allowedOrigins, Set<String> allowedOperations, int maxAgeSeconds) {
+        return new Builder(corsRuleName, allowedOrigins, allowedOperations, maxAgeSeconds);
     }
 
     @Override
@@ -66,7 +71,8 @@ public class B2CorsRule {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         B2CorsRule corsRule = (B2CorsRule) o;
-        return maxAgeSeconds == corsRule.maxAgeSeconds &&
+        return corsRuleName.equals(corsRule.corsRuleName) &&
+                maxAgeSeconds == corsRule.maxAgeSeconds &&
                 Objects.equals(allowedOrigins, corsRule.allowedOrigins) &&
                 Objects.equals(allowedOperations, corsRule.allowedOperations) &&
                 Objects.equals(getAllowedHeaders(), corsRule.getAllowedHeaders()) &&
@@ -75,13 +81,14 @@ public class B2CorsRule {
 
     @Override
     public int hashCode() {
-        return Objects.hash(allowedOrigins, allowedOperations, allowedHeaders, exposeHeaders, maxAgeSeconds);
+        return Objects.hash(corsRuleName, allowedOrigins, allowedOperations, allowedHeaders, exposeHeaders, maxAgeSeconds);
     }
 
     @Override
     public String toString() {
         return "CorsRule{" +
-                "allowedOrigin=" + allowedOrigins +
+                "corsRuleName=" + corsRuleName +
+                ", allowedOrigin=" + allowedOrigins +
                 ", allowedOperations=" + allowedOperations +
                 ", allowedHeaders=" + allowedHeaders +
                 ", exposeHeaders=" + exposeHeaders +
@@ -90,13 +97,15 @@ public class B2CorsRule {
     }
 
     public static class Builder {
+        private String corsRuleName;
         private List<String> allowedOrigins;
         private Set<String> allowedOperations;
         private List<String> allowedHeaders;
         private List<String> exposeHeaders;
         private int maxAgeSeconds;
 
-        Builder(List<String> allowedOrigins, Set<String> allowedOperations, int maxAgeSeconds) {
+        Builder(String corsRuleName, List<String> allowedOrigins, Set<String> allowedOperations, int maxAgeSeconds) {
+            this.corsRuleName = corsRuleName;
             this.allowedOrigins = allowedOrigins;
             this.allowedOperations = allowedOperations;
             this.allowedHeaders = null;
@@ -115,7 +124,7 @@ public class B2CorsRule {
         }
 
         public B2CorsRule build() {
-            return new B2CorsRule(allowedOrigins, allowedOperations, allowedHeaders, exposeHeaders, maxAgeSeconds);
+            return new B2CorsRule(corsRuleName, allowedOrigins, allowedOperations, allowedHeaders, exposeHeaders, maxAgeSeconds);
         }
     }
 }

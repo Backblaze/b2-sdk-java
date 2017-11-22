@@ -10,6 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * NOTE:
+ * B2CreateBucketRequestReal has the attributes needed by the B2 API.  That's why it's name ends with 'Real'.
+ * Code that calls B2StorageClient uses B2CreateBucketRequest (with no 'Real' at the end) instead.
+ * The B2StorageClient creates a 'Real' request by adding the accountId to the non-real version before
+ * sending it to the webifier.
+ */
+
 public class B2CreateBucketRequestReal {
     @B2Json.required
     private final String accountId;
