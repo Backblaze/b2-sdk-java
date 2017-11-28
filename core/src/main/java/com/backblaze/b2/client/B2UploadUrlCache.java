@@ -83,7 +83,7 @@ class B2UploadUrlCache {
         }
 
         // we don't have an answer yet, so ask the server for one and return it.
-        final B2GetUploadUrlRequest request = new B2GetUploadUrlRequest(bucketId);
+        final B2GetUploadUrlRequest request = B2GetUploadUrlRequest.builder(bucketId).build();
         return webifier.getUploadUrl(accountAuthCache.get(), request);
     }
 

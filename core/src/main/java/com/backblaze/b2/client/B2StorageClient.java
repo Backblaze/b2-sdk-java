@@ -19,6 +19,8 @@ import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
+import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
+import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
 import com.backblaze.b2.client.structures.B2HideFileRequest;
 import com.backblaze.b2.client.structures.B2ListBucketsRequest;
 import com.backblaze.b2.client.structures.B2ListBucketsResponse;
@@ -28,6 +30,8 @@ import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 
 import java.io.Closeable;
 import java.util.List;
@@ -574,6 +578,52 @@ public interface B2StorageClient extends Closeable {
      */
     void invalidateAccountAuthorization();
 
+
+    /**
+     * This method allows the caller to get an upload url and authorization
+     * token directly.
+     *
+     * Note that the SDK has lots of logic to upload files and getting upload URLs
+     * and using them outside the SDK means that you need to handle lots of details
+     * of uploading by yourself including:
+     *   * retrying based on the types of errors you get, with proper backoff.
+     *   * refreshing your account authorization when it expires.
+     *   * reusing upload urls when possible
+     *   * etc.
+     *
+     * When possible you should seriously consider using uploadSmallFile() and
+     * uploadLargeFile() instead of reimplementing that logic.  If there's a
+     * reason you can't use those methods, let us know.  Perhaps we can improve
+     * things together to meet your needs.
+     *
+     * @param request specifies details about the desired upload url and credentials.
+     * @return the response from the server.
+     * @throws B2Exception if there's any trouble.
+     */
+    B2UploadUrlResponse getUploadUrl(B2GetUploadUrlRequest request) throws B2Exception;
+
+    /**
+     * This method allows the caller to get an upload url and authorization
+     * token directly for uploading a large file part.
+     *
+     * Note that the SDK has lots of logic to upload files and getting upload URLs
+     * and using them outside the SDK means that you need to handle lots of details
+     * of uploading by yourself including:
+     *   * retrying based on the types of errors you get, with proper backoff.
+     *   * refreshing your account authorization when it expires.
+     *   * reusing upload urls when possible
+     *   * etc.
+     *
+     * When possible you should seriously consider using uploadSmallFile() and
+     * uploadLargeFile() instead of reimplementing that logic.  If there's a
+     * reason you can't use those methods, let us know.  Perhaps we can improve
+     * things together to meet your needs.
+
+     * @param request specifies details about the desired upload url and credentials.
+     * @return the response from the server.
+     * @throws B2Exception if there's any trouble.
+     */
+    B2UploadPartUrlResponse getUploadPartUrl(B2GetUploadPartUrlRequest request) throws B2Exception;
 
     /**
      * Closes this instance, releasing resources.

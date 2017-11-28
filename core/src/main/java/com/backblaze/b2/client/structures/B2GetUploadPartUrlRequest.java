@@ -13,7 +13,7 @@ public class B2GetUploadPartUrlRequest {
     private final String fileId;
 
     @B2Json.constructor(params = "fileId")
-    public B2GetUploadPartUrlRequest(String fileId) {
+    private B2GetUploadPartUrlRequest(String fileId) {
         this.fileId = fileId;
     }
 
@@ -33,4 +33,21 @@ public class B2GetUploadPartUrlRequest {
     public int hashCode() {
         return Objects.hash(getFileId());
     }
+
+    public static Builder builder(String bucketId) {
+        return new Builder(bucketId);
+    }
+
+    public static class Builder {
+        private final String fileId;
+
+        public Builder(String fileId) {
+            this.fileId = fileId;
+        }
+
+        public B2GetUploadPartUrlRequest build() {
+            return new B2GetUploadPartUrlRequest(fileId);
+        }
+    }
+
 }

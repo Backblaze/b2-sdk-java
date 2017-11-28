@@ -84,6 +84,7 @@ import static com.backblaze.b2.util.B2Collections.listOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -738,7 +739,7 @@ public class B2StorageClientImplTest {
     @Test
     public void testSmallFileUpload() throws B2Exception, IOException {
         // arrange for an uploadUrl
-        final B2GetUploadUrlRequest uploadUrlRequest = new B2GetUploadUrlRequest(bucketId(1));
+        final B2GetUploadUrlRequest uploadUrlRequest = B2GetUploadUrlRequest.builder(bucketId(1)).build();
         final B2UploadUrlResponse uploadUrl = new B2UploadUrlResponse(bucketId(1), "uploadUrl", "uploadAuthToken");
         when(webifier.getUploadUrl(anyObject(), eq(uploadUrlRequest))).thenReturn(uploadUrl);
 
@@ -790,7 +791,7 @@ public class B2StorageClientImplTest {
         when(webifier.startLargeFile(anyObject(), eq(startLargeRequest))).thenReturn(largeFileVersion);
 
         // arrange to answer get_upload_part_url (which will be called several times, but it's ok to reuse the same value since it's all mocked!)
-        final B2GetUploadPartUrlRequest partUrlRequest = new B2GetUploadPartUrlRequest(largeFileVersion.getFileId());
+        final B2GetUploadPartUrlRequest partUrlRequest = B2GetUploadPartUrlRequest.builder(largeFileVersion.getFileId()).build();
         final B2UploadPartUrlResponse partUrl = new B2UploadPartUrlResponse(largeFileVersion.getFileId(), "uploadPartUrl", "uploadPartAuthToken");
         when(webifier.getUploadPartUrl(anyObject(), eq(partUrlRequest))).thenReturn(partUrl);
 
@@ -876,7 +877,7 @@ public class B2StorageClientImplTest {
         when(webifier.listParts(anyObject(), anyObject())).thenReturn(listPartsResponse);
 
         // arrange to answer get_upload_part_url (which will be called several times, but it's ok to reuse the same value since it's all mocked!)
-        final B2GetUploadPartUrlRequest partUrlRequest = new B2GetUploadPartUrlRequest(largeFileId);
+        final B2GetUploadPartUrlRequest partUrlRequest = B2GetUploadPartUrlRequest.builder(largeFileId).build();
         final B2UploadPartUrlResponse partUrl = new B2UploadPartUrlResponse(largeFileId, "uploadPartUrl", "uploadPartAuthToken");
         when(webifier.getUploadPartUrl(anyObject(), eq(partUrlRequest))).thenReturn(partUrl);
 
@@ -901,6 +902,30 @@ public class B2StorageClientImplTest {
         verify(webifier, times(1)).getUploadPartUrl(anyObject(), anyObject());
         verify(webifier, times(1)).uploadPart(anyObject(), anyObject());
         verify(webifier, times(1)).finishLargeFile(anyObject(), anyObject());
+    }
+
+    @Test
+    public void testGetUploadUrl() throws B2Exception {
+        final B2GetUploadUrlRequest request = B2GetUploadUrlRequest.builder(bucketId(1)).build();
+        final B2UploadUrlResponse response = new B2UploadUrlResponse(bucketId(1), "uploadUrl", "uploadAuthToken");
+        when(webifier.getUploadUrl(anyObject(), eq(request))).thenReturn(response);
+
+        assertTrue(response == client.getUploadUrl(request));
+
+        verify(webifier, times(1)).authorizeAccount(anyObject());
+        verify(webifier, times(1)).getUploadUrl(anyObject(), anyObject());
+    }
+
+    @Test
+    public void testGetUploadPartUrl() throws B2Exception {
+        final B2GetUploadPartUrlRequest request = B2GetUploadPartUrlRequest.builder(bucketId(1)).build();
+        final B2UploadPartUrlResponse response = new B2UploadPartUrlResponse(bucketId(1), "uploadUrl", "uploadAuthToken");
+        when(webifier.getUploadPartUrl(anyObject(), eq(request))).thenReturn(response);
+
+        assertTrue(response == client.getUploadPartUrl(request));
+
+        verify(webifier, times(1)).authorizeAccount(anyObject());
+        verify(webifier, times(1)).getUploadPartUrl(anyObject(), anyObject());
     }
 
     @Test
