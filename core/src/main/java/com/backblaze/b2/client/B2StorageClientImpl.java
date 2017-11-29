@@ -22,6 +22,8 @@ import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
+import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
+import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
 import com.backblaze.b2.client.structures.B2HideFileRequest;
 import com.backblaze.b2.client.structures.B2ListBucketsRequest;
 import com.backblaze.b2.client.structures.B2ListBucketsResponse;
@@ -36,6 +38,7 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 
 import java.io.IOException;
@@ -339,6 +342,23 @@ public class B2StorageClientImpl implements B2StorageClient {
     @Override
     public void invalidateAccountAuthorization() {
         accountAuthCache.clear();
+    }
+
+
+    @Override
+    public B2UploadUrlResponse getUploadUrl(B2GetUploadUrlRequest request) throws B2Exception {
+        return retryer.doRetry("b2_get_upload_url",
+                accountAuthCache,
+                () -> webifier.getUploadUrl(accountAuthCache.get(), request),
+                retryPolicySupplier.get());
+    }
+
+    @Override
+    public B2UploadPartUrlResponse getUploadPartUrl(B2GetUploadPartUrlRequest request) throws B2Exception {
+        return retryer.doRetry("b2_get_upload_part_url",
+                accountAuthCache,
+                () -> webifier.getUploadPartUrl(accountAuthCache.get(), request),
+                retryPolicySupplier.get());
     }
 
     //

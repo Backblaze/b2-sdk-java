@@ -15,7 +15,6 @@ import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
-import com.backblaze.b2.client.structures.B2CorsRule;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
@@ -446,7 +445,7 @@ public class B2StorageClientWebifierImplTest {
 
     @Test
     public void testGetUploadUrl() throws B2Exception {
-        final B2GetUploadUrlRequest request = new B2GetUploadUrlRequest(bucketId(1));
+        final B2GetUploadUrlRequest request = B2GetUploadUrlRequest.builder(bucketId(1)).build();
         webifier.getUploadUrl(ACCOUNT_AUTH, request);
 
         webApiClient.check("postJsonReturnJson.\n" +
@@ -469,7 +468,7 @@ public class B2StorageClientWebifierImplTest {
 
     @Test
     public void testGetUploadPartUrl() throws B2Exception {
-        final B2GetUploadPartUrlRequest request = new B2GetUploadPartUrlRequest(fileId(1));
+        final B2GetUploadPartUrlRequest request = B2GetUploadPartUrlRequest.builder(fileId(1)).build();
         webifier.getUploadPartUrl(ACCOUNT_AUTH, request);
 
         webApiClient.check("postJsonReturnJson.\n" +

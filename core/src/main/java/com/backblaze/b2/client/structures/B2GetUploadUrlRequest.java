@@ -13,7 +13,7 @@ public class B2GetUploadUrlRequest {
     private final String bucketId;
 
     @B2Json.constructor(params = "bucketId")
-    public B2GetUploadUrlRequest(String bucketId) {
+    private B2GetUploadUrlRequest(String bucketId) {
         this.bucketId = bucketId;
     }
 
@@ -32,5 +32,21 @@ public class B2GetUploadUrlRequest {
     @Override
     public int hashCode() {
         return Objects.hash(getBucketId());
+    }
+
+    public static Builder builder(String bucketId) {
+        return new Builder(bucketId);
+    }
+
+    public static class Builder {
+        private final String bucketId;
+
+        public Builder(String bucketId) {
+            this.bucketId = bucketId;
+        }
+
+        public B2GetUploadUrlRequest build() {
+            return new B2GetUploadUrlRequest(bucketId);
+        }
     }
 }

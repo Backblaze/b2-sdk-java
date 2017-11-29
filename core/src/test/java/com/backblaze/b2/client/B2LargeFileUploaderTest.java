@@ -182,7 +182,7 @@ public class B2LargeFileUploaderTest {
         when(webifier.startLargeFile(anyObject(), anyObject())).thenReturn(largeFileVersion);
 
         // arrange to answer get_upload_part_url (which will be called several times, but it's ok to reuse the same value since it's all mocked!)
-        final B2GetUploadPartUrlRequest partUrlRequest = new B2GetUploadPartUrlRequest(largeFileVersion.getFileId());
+        final B2GetUploadPartUrlRequest partUrlRequest = B2GetUploadPartUrlRequest.builder(largeFileVersion.getFileId()).build();
         final B2UploadPartUrlResponse partUrl = new B2UploadPartUrlResponse(largeFileVersion.getFileId(), "uploadPartUrl", "uploadPartAuthToken");
         when(webifier.getUploadPartUrl(anyObject(), eq(partUrlRequest))).thenReturn(partUrl);
 
@@ -542,7 +542,7 @@ public class B2LargeFileUploaderTest {
 
 
         // arrange to answer get_upload_part_url (which will be called several times, but it's ok to reuse the same value since it's all mocked!)
-        final B2GetUploadPartUrlRequest partUrlRequest = new B2GetUploadPartUrlRequest(largeFileId);
+        final B2GetUploadPartUrlRequest partUrlRequest = B2GetUploadPartUrlRequest.builder(largeFileId).build();
         final B2UploadPartUrlResponse partUrl = new B2UploadPartUrlResponse(largeFileId, "uploadPartUrl", "uploadPartAuthToken");
         when(webifier.getUploadPartUrl(anyObject(), eq(partUrlRequest))).thenReturn(partUrl);
 

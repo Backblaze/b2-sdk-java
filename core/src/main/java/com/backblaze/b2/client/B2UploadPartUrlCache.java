@@ -64,7 +64,7 @@ class B2UploadPartUrlCache {
         }
 
         // we don't have an answer yet, so ask the server for one and return it.
-        final B2GetUploadPartUrlRequest request = new B2GetUploadPartUrlRequest(largeFileId);
+        final B2GetUploadPartUrlRequest request = B2GetUploadPartUrlRequest.builder(largeFileId).build();
         return webifier.getUploadPartUrl(accountAuthCache.get(), request);
     }
 
