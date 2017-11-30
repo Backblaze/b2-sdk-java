@@ -371,6 +371,13 @@ public class B2Json {
      *
      * You must provide an "params" parameter that lists the order of
      * the parameters to the constructor.
+     *
+     * If present, the "discards" parameter is a comma-separated list of
+     * field names which are allowed to be present in the parsed json,
+     * but whose values will be discarded.  The names may be for fields
+     * that don't exist or for fields marked @ignored.  This is useful
+     * for accepting deprecated fields without having to use
+     * ALLOW_EXTRA_FIELDS, which would accept ALL unknown fields.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.CONSTRUCTOR)
