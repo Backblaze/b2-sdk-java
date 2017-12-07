@@ -133,11 +133,13 @@ public class B2StartLargeFileRequest {
         }
 
         public Builder setCustomField(String name, String value) {
+            B2Preconditions.checkArgumentIsNotNull(value, "value");
             fileInfo.put(name, value);
             return this;
         }
 
         public Builder setCustomFields(Map<String,String> newFileInfo) {
+            B2Preconditions.checkArgumentIsNotNull(newFileInfo, "newFileInfo");
             newFileInfo.forEach(this::setCustomField);
             return this;
         }
