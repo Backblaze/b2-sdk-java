@@ -34,8 +34,8 @@ public class B2GetUploadPartUrlRequest {
         return Objects.hash(getFileId());
     }
 
-    public static Builder builder(String bucketId) {
-        return new Builder(bucketId);
+    public static Builder builder(String fileId) {
+        return new Builder(fileId);
     }
 
     public static class Builder {

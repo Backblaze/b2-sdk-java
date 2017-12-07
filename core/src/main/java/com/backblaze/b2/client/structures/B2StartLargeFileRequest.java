@@ -70,16 +70,20 @@ public class B2StartLargeFileRequest {
         return Objects.hash(getBucketId(), getFileName(), getContentType(), getFileInfo());
     }
 
+    /**
+     * This is only public so it is available from other sdk packages.
+     * Consider it internal.
+     */
     public static B2StartLargeFileRequest buildFrom(B2UploadFileRequest orig) throws B2Exception {
         try {
-            final Map<String,String> fileInfo;
+            final Builder builder = new Builder(orig.getBucketId(), orig.getFileName(), orig.getContentType());
+
+            // we always start with the original fileInfo.
+            builder.setCustomFields(orig.getFileInfo());
 
             final String largeFileSha1 = orig.getContentSource().getSha1OrNull();
-            if (largeFileSha1 == null) {
-                // no largeFileSha1, so just use the original fileInfo
-                fileInfo = orig.getFileInfo();
-            } else {
-                // there's a largeFileSha1, so use it.
+            if (largeFileSha1 != null) {
+                // there's a largeFileSha1 in the contentSource, so use it.
 
                 // if there already was one in the request, make sure it matches.
                 final String origLargeFileSha1 = orig.getFileInfo().get(LARGE_FILE_SHA1_INFO_NAME);
@@ -88,63 +92,63 @@ public class B2StartLargeFileRequest {
                                 Objects.equals(largeFileSha1, origLargeFileSha1),
                         "already have largeFileSha1 and it doesn't match?");
 
-                fileInfo = new TreeMap<>();
-                fileInfo.putAll(orig.getFileInfo());
-                fileInfo.put(LARGE_FILE_SHA1_INFO_NAME, largeFileSha1);
+                builder.setCustomField(LARGE_FILE_SHA1_INFO_NAME, largeFileSha1);
             }
 
-            return new B2StartLargeFileRequest(
-                    orig.getBucketId(),
-                    orig.getFileName(),
-                    orig.getContentType(),
-                    fileInfo
-            );
+            return builder.build();
         } catch (IOException e) {
             throw new B2LocalException("local", "failed to get large file's sha1 from contentSource: " + e.getMessage(), e);
         }
     }
 
 
-//    public static Builder builder(String bucketId,
-//                                  String fileName,
-//                                  String contentType) {
-//        return new Builder(bucketId, fileName, contentType);
-//    }
-//
-//    public static class Builder {
-//        private String bucketId;
-//        private String fileName;
-//        private String contentType;
-//        private Map<String, String> fileInfo;
-//
-//        Builder(String bucketId,
-//                String fileName,
-//                String contentType) {
-//            this.bucketId = bucketId;
-//            this.fileName = fileName;
-//            this.contentType = contentType;
-//            this.fileInfo = new TreeMap<>();
-//        }
-//
-//        /**
-//         * Sets one of your custom fields to be this well-known field.
-//         * @param lastModifiedMillis the time the "source" of this file was last modified.
-//         */
-//        public Builder setSrcLastModifiedMillisOrNull(long lastModifiedMillis) {
-//            setCustomField("src_last_modified_millis", Long.toString(lastModifiedMillis));
-//            return this;
-//        }
-//
-//        public Builder setCustomField(String name, String value) {
-//            fileInfo.put(name, value);
-//            return this;
-//        }
-//
-//        public B2StartLargeFileRequest build() {
-//            return new B2StartLargeFileRequest(bucketId,
-//                    fileName,
-//                    contentType,
-//                    fileInfo);
-//        }
-//    }
+    public static Builder builder(String bucketId,
+                                  String fileName,
+                                  String contentType) {
+        return new Builder(bucketId, fileName, contentType);
+    }
+
+    public static class Builder {
+        private String bucketId;
+        private String fileName;
+        private String contentType;
+        private Map<String, String> fileInfo;
+
+        Builder(String bucketId,
+                String fileName,
+                String contentType) {
+            this.bucketId = bucketId;
+            this.fileName = fileName;
+            this.contentType = contentType;
+            this.fileInfo = new TreeMap<>();
+        }
+
+        /**
+         * Sets one of your custom fields to be this well-known field.
+         * @param lastModifiedMillis the time the "source" of this file was last modified.
+         */
+        public Builder setSrcLastModifiedMillisOrNull(long lastModifiedMillis) {
+            setCustomField("src_last_modified_millis", Long.toString(lastModifiedMillis));
+            return this;
+        }
+
+        public Builder setCustomField(String name, String value) {
+            B2Preconditions.checkArgumentIsNotNull(value, "value");
+            fileInfo.put(name, value);
+            return this;
+        }
+
+        public Builder setCustomFields(Map<String,String> newFileInfo) {
+            B2Preconditions.checkArgumentIsNotNull(newFileInfo, "newFileInfo");
+            newFileInfo.forEach(this::setCustomField);
+            return this;
+        }
+
+        public B2StartLargeFileRequest build() {
+            return new B2StartLargeFileRequest(bucketId,
+                    fileName,
+                    contentType,
+                    fileInfo);
+        }
+    }
 }
