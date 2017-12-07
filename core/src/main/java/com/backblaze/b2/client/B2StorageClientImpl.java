@@ -20,6 +20,7 @@ import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
+import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
@@ -36,6 +37,7 @@ import com.backblaze.b2.client.structures.B2ListPartsResponse;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
@@ -358,6 +360,22 @@ public class B2StorageClientImpl implements B2StorageClient {
         return retryer.doRetry("b2_get_upload_part_url",
                 accountAuthCache,
                 () -> webifier.getUploadPartUrl(accountAuthCache.get(), request),
+                retryPolicySupplier.get());
+    }
+
+    @Override
+    public B2FileVersion startLargeFile(B2StartLargeFileRequest request) throws B2Exception {
+        return retryer.doRetry("b2_start_large_file",
+                accountAuthCache, () ->
+                        webifier.startLargeFile(accountAuthCache.get(), request),
+                retryPolicySupplier.get()
+        );
+    }
+
+    @Override
+    public B2FileVersion finishLargeFile(B2FinishLargeFileRequest request) throws B2Exception {
+        return retryer.doRetry("b2_finish_large_file", accountAuthCache,
+                () -> webifier.finishLargeFile(accountAuthCache.get(), request),
                 retryPolicySupplier.get());
     }
 

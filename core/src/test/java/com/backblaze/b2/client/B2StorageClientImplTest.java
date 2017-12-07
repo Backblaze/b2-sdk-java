@@ -929,6 +929,34 @@ public class B2StorageClientImplTest {
     }
 
     @Test
+    public void testStartLargeFile() throws B2Exception {
+        final B2StartLargeFileRequest request = B2StartLargeFileRequest
+                .builder(bucketId(1), fileName(2), B2ContentTypes.APPLICATION_OCTET)
+                .build();
+        final B2FileVersion fileVersion = makeVersion(1, 2);
+        when(webifier.startLargeFile(anyObject(), eq(request))).thenReturn(fileVersion);
+
+        assertTrue(fileVersion == client.startLargeFile(request));
+
+        verify(webifier, times(1)).authorizeAccount(anyObject());
+        verify(webifier, times(1)).startLargeFile(anyObject(), anyObject());
+    }
+
+    @Test
+    public void testFinishLargeFile() throws B2Exception {
+        final B2FinishLargeFileRequest request = B2FinishLargeFileRequest
+                .builder(fileId(1), new ArrayList<>())
+                .build();
+        final B2FileVersion fileVersion = makeVersion(1, 2);
+        when(webifier.finishLargeFile(anyObject(), eq(request))).thenReturn(fileVersion);
+
+        assertTrue(fileVersion == client.finishLargeFile(request));
+
+        verify(webifier, times(1)).authorizeAccount(anyObject());
+        verify(webifier, times(1)).finishLargeFile(anyObject(), anyObject());
+    }
+
+    @Test
     public void testClose() {
         final B2AccountAuthorizer authorizer = mock(B2AccountAuthorizer.class);
         final B2ClientConfig config = mock(B2ClientConfig.class);
