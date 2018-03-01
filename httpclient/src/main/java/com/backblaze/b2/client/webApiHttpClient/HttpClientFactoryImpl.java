@@ -14,9 +14,11 @@ import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContexts;
+import org.apache.http.util.VersionInfo;
 
 import javax.net.ssl.SSLContext;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +38,20 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
     private final HttpClientConnectionManager connectionManager;
     private final RequestConfig requestConfig;
     private final IdleConnectionMonitorThread connectionJanitor;
+
+    /**
+     * This is the user-agent we should use on Apache HttpClient instances.
+     * If we do not set it, HttpClientBuilder will compute this every time
+     * it creates an HttpClient (and we do that A LOT).  That wouldn't
+     * be so bad, except that internally it gets its own version by opening
+     * a resource stream which involves opening a jar and using a ZipFile
+     * instance, etc, so it's a non-obvious amount of work.  (at least as
+     * of httpcomponents-client-4.5.2).  So, we do the work once and
+     * manually set the userAgent from the resulting constant.
+     */
+    private static final String APACHE_HTTP_CLIENT_USER_AGENT = VersionInfo.getUserAgent("Apache-HttpClient",
+            "org.apache.http.client", HttpClientBuilder.class);
+
 
     private HttpClientFactoryImpl(HttpClientConnectionManager connectionManager,
                           RequestConfig requestConfig) {
@@ -57,6 +73,7 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
     @Override
     public CloseableHttpClient create() throws B2Exception {
         return HttpClients.custom()
+                .setUserAgent(APACHE_HTTP_CLIENT_USER_AGENT)
                 .setConnectionManager(connectionManager)
                 .setDefaultRequestConfig(requestConfig)
                 .build();
