@@ -10,16 +10,16 @@ import com.backblaze.b2.json.B2Json;
 import java.util.Objects;
 import java.util.TreeSet;
 
-/**
- * Response from b2_create_key and b2_delete_key.  Included in response from b2_list_keys.
- */
-public class B2ApplicationKey {
+public class B2CreatedApplicationKey {
 
     @B2Json.required
     private final String accountId;
 
     @B2Json.required
     private final String applicationKeyId;
+
+    @B2Json.required
+    private final String applicationKey;
 
     @B2Json.required
     private final String keyName;
@@ -41,22 +41,25 @@ public class B2ApplicationKey {
             params =
                     "accountId, " +
                     "applicationKeyId, " +
+                    "applicationKey, " +
                     "keyName, " +
                     "capabilities, " +
                     "bucketId, " +
                     "namePrefix, " +
                     "expirationTimestamp"
     )
-    public B2ApplicationKey(String accountId,
-                            String applicationKeyId,
-                            String keyName,
-                            TreeSet<B2Capability> capabilities,
-                            String bucketId,
-                            String namePrefix,
-                            Long expirationTimestamp) {
-        
+    public B2CreatedApplicationKey(String accountId,
+                                   String applicationKeyId,
+                                   String applicationKey,
+                                   String keyName,
+                                   TreeSet<B2Capability> capabilities,
+                                   String bucketId,
+                                   String namePrefix,
+                                   Long expirationTimestamp) {
+
         this.accountId = accountId;
         this.applicationKeyId = applicationKeyId;
+        this.applicationKey = applicationKey;
         this.keyName = keyName;
         this.capabilities = capabilities;
         this.bucketId = bucketId;
@@ -71,6 +74,11 @@ public class B2ApplicationKey {
     @SuppressWarnings("unused")
     public String getApplicationKeyId() {
         return applicationKeyId;
+    }
+
+    @SuppressWarnings("unused")
+    public String getApplicationKey() {
+        return applicationKey;
     }
 
     @SuppressWarnings("unused")
@@ -98,6 +106,22 @@ public class B2ApplicationKey {
         return expirationTimestamp;
     }
 
+    /**
+     * Converts to the B2ApplicationKey structure, as returned from b2_list_keys,
+     * which does not contain the secret key.
+     */
+    public B2ApplicationKey toApplicationKey() {
+        return new B2ApplicationKey(
+                accountId,
+                applicationKeyId,
+                keyName,
+                capabilities,
+                bucketId,
+                namePrefix,
+                expirationTimestamp
+        );
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -106,9 +130,10 @@ public class B2ApplicationKey {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        B2ApplicationKey that = (B2ApplicationKey) o;
+        B2CreatedApplicationKey that = (B2CreatedApplicationKey) o;
         return Objects.equals(accountId, that.accountId) &&
                 Objects.equals(applicationKeyId, that.applicationKeyId) &&
+                Objects.equals(applicationKey, that.applicationKey) &&
                 Objects.equals(keyName, that.keyName) &&
                 Objects.equals(capabilities, that.capabilities) &&
                 Objects.equals(bucketId, that.bucketId) &&
@@ -119,6 +144,6 @@ public class B2ApplicationKey {
     @Override
     public int hashCode() {
 
-        return Objects.hash(accountId, applicationKeyId, keyName, capabilities, bucketId, namePrefix, expirationTimestamp);
+        return Objects.hash(accountId, applicationKeyId, applicationKey, keyName, capabilities, bucketId, namePrefix, expirationTimestamp);
     }
 }
