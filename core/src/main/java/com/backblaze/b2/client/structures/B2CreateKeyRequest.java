@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2018, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -12,27 +12,18 @@ import java.util.Set;
 
 public class B2CreateKeyRequest {
 
-    @B2Json.required
-    private final String accountId;
-
-    @B2Json.required
     private final Set<B2Capability> capabilies;
-
-    @B2Json.required
     private final String keyName;
-
-    @B2Json.optional
     private final Long validDurationSeconds;
-
-    @B2Json.optional
     private final String bucketId;
-
-    @B2Json.optional
     private final String namePrefix;
 
-    @B2Json.constructor(params = "accountId, capabilities, keyName, validDurationSeconds, bucketId, namePrefix")
-    public B2CreateKeyRequest(String accountId, Set<B2Capability> capabilies, String keyName, Long validDurationSeconds, String bucketId, String namePrefix) {
-        this.accountId = accountId;
+    private B2CreateKeyRequest(Set<B2Capability> capabilies,
+                               String keyName,
+                               Long validDurationSeconds,
+                               String bucketId,
+                               String namePrefix) {
+
         this.capabilies = capabilies;
         this.keyName = keyName;
         this.validDurationSeconds = validDurationSeconds;
@@ -40,13 +31,8 @@ public class B2CreateKeyRequest {
         this.namePrefix = namePrefix;
     }
 
-    public static Builder builder(String accountId, Set<B2Capability> capabilities, String keyName) {
-        return new Builder(accountId, capabilities, keyName);
-    }
-
-    @SuppressWarnings("unused")
-    public String getAccountId() {
-        return accountId;
+    public static Builder builder(Set<B2Capability> capabilities, String keyName) {
+        return new Builder(capabilities, keyName);
     }
 
     @SuppressWarnings("unused")
@@ -83,8 +69,7 @@ public class B2CreateKeyRequest {
             return false;
         }
         B2CreateKeyRequest that = (B2CreateKeyRequest) o;
-        return Objects.equals(accountId, that.accountId) &&
-                Objects.equals(capabilies, that.capabilies) &&
+        return Objects.equals(capabilies, that.capabilies) &&
                 Objects.equals(keyName, that.keyName) &&
                 Objects.equals(validDurationSeconds, that.validDurationSeconds) &&
                 Objects.equals(bucketId, that.bucketId) &&
@@ -93,21 +78,18 @@ public class B2CreateKeyRequest {
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(accountId, capabilies, keyName, validDurationSeconds, bucketId, namePrefix);
+        return Objects.hash(capabilies, keyName, validDurationSeconds, bucketId, namePrefix);
     }
 
     private static class Builder {
 
-        private final String accountId;
         private final Set<B2Capability> capabilities;
         private final String keyName;
         private Long validDurationSeconds = null;
         private String bucketId = null;
         private String namePrefix = null;
 
-        private Builder(String accountId, Set<B2Capability> capabilities, String keyName) {
-            this.accountId = accountId;
+        private Builder(Set<B2Capability> capabilities, String keyName) {
             this.capabilities = capabilities;
             this.keyName = keyName;
         }
@@ -131,7 +113,7 @@ public class B2CreateKeyRequest {
         }
 
         public B2CreateKeyRequest build() {
-            return new B2CreateKeyRequest(accountId, capabilities, keyName, validDurationSeconds, bucketId, namePrefix);
+            return new B2CreateKeyRequest(capabilities, keyName, validDurationSeconds, bucketId, namePrefix);
         }
     }
 }
