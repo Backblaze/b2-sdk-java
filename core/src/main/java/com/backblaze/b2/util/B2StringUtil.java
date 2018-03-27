@@ -156,9 +156,43 @@ public class B2StringUtil {
         return sb.toString();
     }
 
+    /**
+     * This returns a new string with the first letter title-cased, and
+     * first character after each "_" title-cased, and all underscores removed.
+     * For example, "foo" becomes "Foo" and "foo_bar_baz" becomes "FooBarBaz".
+     * @param orig an input string with "_"s separating words.
+     * @param capitalizeFirstLetter should the first letter be capitalized?
+     * @return new, camel-cased version of orig
+     */
+    public static String underscoresToCamelCase(String orig, boolean capitalizeFirstLetter) {
+        final int origLen = orig.length();
+        final StringBuilder builder = new StringBuilder(origLen);
+
+        boolean capitalize = capitalizeFirstLetter;
+        for (int i=0; i < origLen; i++) {
+            char c = orig.charAt(i);
+            if (c == '_') {
+                capitalize = true;
+                continue;
+            }
+            if (capitalize) {
+                c = Character.toTitleCase(c);
+                capitalize = false;
+            }
+            else {
+                c = Character.toLowerCase(c);
+            }
+            builder.append(c);
+        }
+
+        return builder.toString();
+    }
+
 
     // this exists so it can be called for code coverage purposes in the unit test.
     // it is package-private so that no one else can call it.
     B2StringUtil() {
     }
+
+
 }
