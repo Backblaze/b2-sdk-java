@@ -22,7 +22,7 @@ public class B2CreateKeyRequestReal {
     private final String accountId;
 
     @B2Json.required
-    private final Set<B2Capability> capabilies;
+    private final Set<B2Capability> capabilities;
 
     @B2Json.required
     private final String keyName;
@@ -38,14 +38,14 @@ public class B2CreateKeyRequestReal {
 
     @B2Json.constructor(params = "accountId, capabilities, keyName, validDurationSeconds, bucketId, namePrefix")
     private B2CreateKeyRequestReal(String accountId,
-                                   Set<B2Capability> capabilies,
+                                   Set<B2Capability> capabilities,
                                    String keyName,
                                    Long validDurationSeconds,
                                    String bucketId,
                                    String namePrefix) {
 
         this.accountId = accountId;
-        this.capabilies = capabilies;
+        this.capabilities = capabilities;
         this.keyName = keyName;
         this.validDurationSeconds = validDurationSeconds;
         this.bucketId = bucketId;
@@ -69,8 +69,8 @@ public class B2CreateKeyRequestReal {
     }
 
     @SuppressWarnings("unused")
-    public Set<B2Capability> getCapabilies() {
-        return capabilies;
+    public Set<B2Capability> getCapabilities() {
+        return capabilities;
     }
 
     @SuppressWarnings("unused")
@@ -103,7 +103,7 @@ public class B2CreateKeyRequestReal {
         }
         B2CreateKeyRequestReal that = (B2CreateKeyRequestReal) o;
         return Objects.equals(accountId, that.accountId) &&
-                Objects.equals(capabilies, that.capabilies) &&
+                Objects.equals(capabilities, that.capabilities) &&
                 Objects.equals(keyName, that.keyName) &&
                 Objects.equals(validDurationSeconds, that.validDurationSeconds) &&
                 Objects.equals(bucketId, that.bucketId) &&
@@ -113,6 +113,6 @@ public class B2CreateKeyRequestReal {
     @Override
     public int hashCode() {
 
-        return Objects.hash(accountId, capabilies, keyName, validDurationSeconds, bucketId, namePrefix);
+        return Objects.hash(accountId, capabilities, keyName, validDurationSeconds, bucketId, namePrefix);
     }
 }

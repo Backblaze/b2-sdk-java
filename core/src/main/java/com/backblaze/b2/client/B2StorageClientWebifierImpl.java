@@ -17,6 +17,9 @@ import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
+import com.backblaze.b2.client.structures.B2CreateKeyRequest;
+import com.backblaze.b2.client.structures.B2CreateKeyRequestReal;
+import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionResponse;
@@ -152,6 +155,15 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 B2Bucket.class);
     }
 
+    @Override
+    public B2CreatedApplicationKey createKey(B2AccountAuthorization accountAuth, B2CreateKeyRequestReal request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeUrl(accountAuth, "b2_create_key"),
+                makeHeaders(accountAuth),
+                request,
+                B2CreatedApplicationKey.class
+        );
+    }
 
     @Override
     public B2ListBucketsResponse listBuckets(B2AccountAuthorization accountAuth,

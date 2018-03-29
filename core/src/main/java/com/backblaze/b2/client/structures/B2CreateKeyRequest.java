@@ -81,7 +81,7 @@ public class B2CreateKeyRequest {
         return Objects.hash(capabilies, keyName, validDurationSeconds, bucketId, namePrefix);
     }
 
-    private static class Builder {
+    public static class Builder {
 
         private final Set<B2Capability> capabilities;
         private final String keyName;

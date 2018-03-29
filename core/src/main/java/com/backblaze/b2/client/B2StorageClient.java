@@ -11,6 +11,8 @@ import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
+import com.backblaze.b2.client.structures.B2CreateKeyRequest;
+import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequest;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
@@ -104,6 +106,15 @@ public interface B2StorageClient extends Closeable {
                                   String bucketType) throws B2Exception {
         return createBucket(B2CreateBucketRequest.builder(bucketName, bucketType).build());
     }
+
+    /**
+     * Creates a new application key.
+     *
+     * @param request the request to create the key.
+     * @return the newly created key
+     * @throws B2Exception if there's any trouble.
+     */
+    B2CreatedApplicationKey createKey(B2CreateKeyRequest request) throws B2Exception;
 
     /**
      * @return the response from B2 with the listed buckets.

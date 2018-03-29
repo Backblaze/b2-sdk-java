@@ -13,6 +13,9 @@ import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
+import com.backblaze.b2.client.structures.B2CreateKeyRequest;
+import com.backblaze.b2.client.structures.B2CreateKeyRequestReal;
+import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequest;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
@@ -137,6 +140,16 @@ public class B2StorageClientImpl implements B2StorageClient {
     public B2Bucket createBucket(B2CreateBucketRequest request) throws B2Exception {
         B2CreateBucketRequestReal realRequest = new B2CreateBucketRequestReal(accountId, request);
         return retryer.doRetry("b2_create_bucket", accountAuthCache, () -> webifier.createBucket(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
+    }
+
+    @Override
+    public B2CreatedApplicationKey createKey(B2CreateKeyRequest request) throws B2Exception {
+        final B2CreateKeyRequestReal realRequest = new B2CreateKeyRequestReal(accountId, request);
+        return retryer.doRetry(
+                "b2_create_key",
+                accountAuthCache,
+                () -> webifier.createKey(accountAuthCache.get(), realRequest), retryPolicySupplier.get()
+        );
     }
 
     @Override
