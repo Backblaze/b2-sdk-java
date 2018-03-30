@@ -11,7 +11,7 @@ import com.backblaze.b2.client.structures.B2ListKeysRequest;
 import java.util.Iterator;
 
 /**
- * This interface collects the APIs we provide on our B2FileVersion iterables.
+ * This interface collects the APIs we provide on our B2ApplicationKey iterables.
  * For now, it's just the Iterable-ness.  Someday, I expect it, or some interfaces
  * to provide some kind of "get resume point" functionality.
  */
