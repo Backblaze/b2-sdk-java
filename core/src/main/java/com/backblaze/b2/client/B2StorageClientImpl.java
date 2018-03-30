@@ -9,6 +9,7 @@ import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
@@ -19,6 +20,7 @@ import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequest;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
+import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
@@ -151,13 +153,24 @@ public class B2StorageClientImpl implements B2StorageClient {
         return retryer.doRetry(
                 "b2_create_key",
                 accountAuthCache,
-                () -> webifier.createKey(accountAuthCache.get(), realRequest), retryPolicySupplier.get()
+                () -> webifier.createKey(accountAuthCache.get(), realRequest),
+                retryPolicySupplier.get()
         );
     }
 
     @Override
     public B2ListKeysIterable applicationKeys(B2ListKeysRequest request) throws B2Exception {
         return new B2ListKeysIterable(this, request);
+    }
+
+    @Override
+    public B2ApplicationKey deleteKey(B2DeleteKeyRequest request) throws B2Exception {
+        return retryer.doRetry(
+                "b2_delete_key",
+                accountAuthCache,
+                () -> webifier.deleteKey(accountAuthCache.get(), request),
+                retryPolicySupplier.get()
+        );
     }
 
     @Override

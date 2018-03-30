@@ -20,6 +20,7 @@ import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2Capability;
 import com.backblaze.b2.client.structures.B2CreateKeyRequest;
 import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
+import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
@@ -80,6 +81,7 @@ public class B2Sample {
         };
 
         bigHeader(writer, "create application key");
+        final String applicationKeyId;
         {
             final Set<B2Capability> capabilities = new HashSet<>();
             capabilities.add(B2Capability.LIST_BUCKETS);
@@ -89,12 +91,18 @@ public class B2Sample {
                     client.createKey(
                             B2CreateKeyRequest.builder(capabilities, "testKey").build()
                     );
+            applicationKeyId = applicationKey.getApplicationKeyId();
             writer.println("key id: " + applicationKey.getApplicationKeyId() + "   key: " + applicationKey.getApplicationKey());
         }
 
         bigHeader(writer, "list application keys");
         for (B2ApplicationKey key : client.applicationKeys()) {
             writer.println("key id: " + key.getApplicationKeyId() + "   capabilities: " + key.getCapabilities());
+        }
+
+        bigHeader(writer, "delete application key");
+        {
+            client.deleteKey(B2DeleteKeyRequest.builder(applicationKeyId).build());
         }
 
         bigHeader(writer, "cleanup existing bucket, if any");

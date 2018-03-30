@@ -12,6 +12,7 @@ import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
@@ -22,6 +23,7 @@ import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionResponse;
+import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
@@ -173,6 +175,16 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 makeHeaders(accountAuth),
                 request,
                 B2ListKeysResponse.class
+        );
+    }
+
+    @Override
+    public B2ApplicationKey deleteKey(B2AccountAuthorization accountAuth, B2DeleteKeyRequest request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeUrl(accountAuth, "b2_delete_key"),
+                makeHeaders(accountAuth),
+                request,
+                B2ApplicationKey.class
         );
     }
 

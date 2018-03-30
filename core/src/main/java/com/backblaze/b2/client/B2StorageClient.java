@@ -8,6 +8,7 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
@@ -15,6 +16,7 @@ import com.backblaze.b2.client.structures.B2CreateKeyRequest;
 import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequest;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
+import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
@@ -117,8 +119,6 @@ public interface B2StorageClient extends Closeable {
      */
     B2CreatedApplicationKey createKey(B2CreateKeyRequest request) throws B2Exception;
 
-
-
     /**
      * Returns an iterable whose iterator yields the application keys that
      * match the given request.
@@ -132,6 +132,15 @@ public interface B2StorageClient extends Closeable {
      * @throws B2Exception if there's any trouble
      */
     B2ListKeysIterable applicationKeys(B2ListKeysRequest request) throws B2Exception;
+
+    /**
+     * Deletes the specified application key.
+     *
+     * @param request specifies the key to delete.
+     * @return the deleted key
+     * @throws B2Exception if there's any trouble.
+     */
+    B2ApplicationKey deleteKey(B2DeleteKeyRequest request) throws B2Exception;
 
     /**
      * Just like applicationKeys(request), except that it makes a request for all
