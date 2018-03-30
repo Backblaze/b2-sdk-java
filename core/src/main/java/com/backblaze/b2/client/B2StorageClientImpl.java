@@ -35,6 +35,9 @@ import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileNamesResponse;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsResponse;
+import com.backblaze.b2.client.structures.B2ListKeysRequest;
+import com.backblaze.b2.client.structures.B2ListKeysRequestReal;
+import com.backblaze.b2.client.structures.B2ListKeysResponse;
 import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListPartsResponse;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
@@ -150,6 +153,11 @@ public class B2StorageClientImpl implements B2StorageClient {
                 accountAuthCache,
                 () -> webifier.createKey(accountAuthCache.get(), realRequest), retryPolicySupplier.get()
         );
+    }
+
+    @Override
+    public B2ListKeysIterable applicationKeys(B2ListKeysRequest request) throws B2Exception {
+        return new B2ListKeysIterable(this, request);
     }
 
     @Override
@@ -401,6 +409,15 @@ public class B2StorageClientImpl implements B2StorageClient {
     }
     B2ListFileNamesResponse listFileNames(B2ListFileNamesRequest request) throws B2Exception {
         return retryer.doRetry("b2_list_file_names", accountAuthCache, () -> webifier.listFileNames(accountAuthCache.get(), request), retryPolicySupplier.get());
+    }
+    B2ListKeysResponse listKeys(B2ListKeysRequest request) throws B2Exception {
+        final B2ListKeysRequestReal realRequest =
+                new B2ListKeysRequestReal(
+                        accountId,
+                        request.getMaxKeyCount(),
+                        request.getStartApplicationKeyId()
+                );
+        return retryer.doRetry("b2_list_keys", accountAuthCache, () -> webifier.listKeys(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
     }
     B2ListUnfinishedLargeFilesResponse listUnfinishedLargeFiles(B2ListUnfinishedLargeFilesRequest request) throws B2Exception {
         return retryer.doRetry("b2_list_unfinished_large_files", accountAuthCache, () -> webifier.listUnfinishedLargeFiles(accountAuthCache.get(), request), retryPolicySupplier.get());

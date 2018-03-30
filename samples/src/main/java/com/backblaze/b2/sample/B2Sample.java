@@ -4,9 +4,6 @@
  */
 package com.backblaze.b2.sample;
 
-import com.backblaze.b2.client.B2AccountAuthorizer;
-import com.backblaze.b2.client.B2AccountAuthorizerSimpleImpl;
-import com.backblaze.b2.client.B2ClientConfig;
 import com.backblaze.b2.client.B2Sdk;
 import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.contentHandlers.B2ContentFileWriter;
@@ -15,11 +12,9 @@ import com.backblaze.b2.client.contentSources.B2ByteArrayContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2FileContentSource;
-import com.backblaze.b2.client.credentialsSources.B2Credentials;
-import com.backblaze.b2.client.credentialsSources.B2CredentialsFromEnvironmentSource;
-import com.backblaze.b2.client.credentialsSources.B2CredentialsImpl;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2Capability;
@@ -95,6 +90,11 @@ public class B2Sample {
                             B2CreateKeyRequest.builder(capabilities, "testKey").build()
                     );
             writer.println("key id: " + applicationKey.getApplicationKeyId() + "   key: " + applicationKey.getApplicationKey());
+        }
+
+        bigHeader(writer, "list application keys");
+        for (B2ApplicationKey key : client.applicationKeys()) {
+            writer.println("key id: " + key.getApplicationKeyId() + "   capabilities: " + key.getCapabilities());
         }
 
         bigHeader(writer, "cleanup existing bucket, if any");

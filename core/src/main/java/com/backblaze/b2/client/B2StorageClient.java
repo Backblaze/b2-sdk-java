@@ -29,6 +29,7 @@ import com.backblaze.b2.client.structures.B2ListBucketsRequest;
 import com.backblaze.b2.client.structures.B2ListBucketsResponse;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
+import com.backblaze.b2.client.structures.B2ListKeysRequest;
 import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
@@ -115,6 +116,33 @@ public interface B2StorageClient extends Closeable {
      * @throws B2Exception if there's any trouble.
      */
     B2CreatedApplicationKey createKey(B2CreateKeyRequest request) throws B2Exception;
+
+
+
+    /**
+     * Returns an iterable whose iterator yields the application keys that
+     * match the given request.
+     *
+     * It will automatically call B2 to get batches of answers as needed.  If there's
+     * any trouble during hasNext() or next(), it will throw a B2RuntimeException
+     * since Iterable&lt;&gt; doesn't allow checked exceptions to be thrown.
+     *
+     * @param request specifies which application keys to list.
+     * @return a new iterable to iterate over fileVersions that match the given request.
+     * @throws B2Exception if there's any trouble
+     */
+    B2ListKeysIterable applicationKeys(B2ListKeysRequest request) throws B2Exception;
+
+    /**
+     * Just like applicationKeys(request), except that it makes a request for all
+     * application keys for the account.
+     *
+     * @return a new iterable to iterate over all of the keys in the specified account
+     * @throws B2Exception if there's any trouble
+     */
+    default B2ListKeysIterable applicationKeys() throws B2Exception {
+        return applicationKeys(B2ListKeysRequest.builder().build());
+    }
 
     /**
      * @return the response from B2 with the listed buckets.
