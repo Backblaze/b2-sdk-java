@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.TreeSet;
 
 /**
- * Response from b2_create_key and b2_delete_key.  Included in response from b2_list_keys.
+ * Response from b2_delete_key, and included in response from b2_list_keys.
  */
 public class B2ApplicationKey {
 
@@ -25,7 +25,7 @@ public class B2ApplicationKey {
     private final String keyName;
 
     @B2Json.required
-    private final TreeSet<B2Capability> capabilities;
+    private final TreeSet<String> capabilities;
 
     @B2Json.optional
     private final String bucketId;
@@ -50,7 +50,7 @@ public class B2ApplicationKey {
     public B2ApplicationKey(String accountId,
                             String applicationKeyId,
                             String keyName,
-                            TreeSet<B2Capability> capabilities,
+                            TreeSet<String> capabilities,
                             String bucketId,
                             String namePrefix,
                             Long expirationTimestamp) {
@@ -79,7 +79,7 @@ public class B2ApplicationKey {
     }
 
     @SuppressWarnings("unused")
-    public TreeSet<B2Capability> getCapabilities() {
+    public TreeSet<String> getCapabilities() {
         return capabilities;
     }
 

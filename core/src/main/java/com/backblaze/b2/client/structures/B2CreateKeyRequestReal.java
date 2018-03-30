@@ -22,7 +22,7 @@ public class B2CreateKeyRequestReal {
     private final String accountId;
 
     @B2Json.required
-    private final Set<B2Capability> capabilities;
+    private final Set<String> capabilities;
 
     @B2Json.required
     private final String keyName;
@@ -38,7 +38,7 @@ public class B2CreateKeyRequestReal {
 
     @B2Json.constructor(params = "accountId, capabilities, keyName, validDurationSeconds, bucketId, namePrefix")
     private B2CreateKeyRequestReal(String accountId,
-                                   Set<B2Capability> capabilities,
+                                   Set<String> capabilities,
                                    String keyName,
                                    Long validDurationSeconds,
                                    String bucketId,
@@ -55,7 +55,7 @@ public class B2CreateKeyRequestReal {
     public B2CreateKeyRequestReal(String accountId, B2CreateKeyRequest mostOfRequest) {
         this(
                 accountId,
-                mostOfRequest.getCapabilies(),
+                mostOfRequest.getCapabilities(),
                 mostOfRequest.getKeyName(),
                 mostOfRequest.getValidDurationSeconds(),
                 mostOfRequest.getBucketId(),
@@ -69,7 +69,7 @@ public class B2CreateKeyRequestReal {
     }
 
     @SuppressWarnings("unused")
-    public Set<B2Capability> getCapabilities() {
+    public Set<String> getCapabilities() {
         return capabilities;
     }
 

@@ -10,6 +10,13 @@ import com.backblaze.b2.json.B2Json;
 import java.util.Objects;
 import java.util.TreeSet;
 
+/**
+ * Information returned from b2_create_key.
+ *
+ * This is like B2ApplicationKey, with the addition of the secret applicationKey,
+ * which is returned when a key is created, but not returned by b2_list_keys,
+ * or b2_delete_key.
+ */
 public class B2CreatedApplicationKey {
 
     @B2Json.required
@@ -25,7 +32,7 @@ public class B2CreatedApplicationKey {
     private final String keyName;
 
     @B2Json.required
-    private final TreeSet<B2Capability> capabilities;
+    private final TreeSet<String> capabilities;
 
     @B2Json.optional
     private final String bucketId;
@@ -52,7 +59,7 @@ public class B2CreatedApplicationKey {
                                    String applicationKeyId,
                                    String applicationKey,
                                    String keyName,
-                                   TreeSet<B2Capability> capabilities,
+                                   TreeSet<String> capabilities,
                                    String bucketId,
                                    String namePrefix,
                                    Long expirationTimestamp) {
@@ -87,7 +94,7 @@ public class B2CreatedApplicationKey {
     }
 
     @SuppressWarnings("unused")
-    public TreeSet<B2Capability> getCapabilities() {
+    public TreeSet<String> getCapabilities() {
         return capabilities;
     }
 

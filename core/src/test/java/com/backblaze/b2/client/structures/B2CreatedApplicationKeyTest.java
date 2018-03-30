@@ -15,8 +15,8 @@ public class B2CreatedApplicationKeyTest {
 
     @Test
     public void testToApplicationKey() {
-        final TreeSet<B2Capability> capabilities = new TreeSet<>();
-        capabilities.add(B2Capability.WRITE_FILES);
+        final TreeSet<String> capabilities = new TreeSet<>();
+        capabilities.add(B2Capabilities.WRITE_FILES);
 
         assertEquals(
                 new B2ApplicationKey(

@@ -5,39 +5,37 @@
 
 package com.backblaze.b2.client.structures;
 
-import com.backblaze.b2.json.B2Json;
-
 import java.util.Objects;
 import java.util.Set;
 
 public class B2CreateKeyRequest {
 
-    private final Set<B2Capability> capabilies;
+    private final Set<String> capabilities;
     private final String keyName;
     private final Long validDurationSeconds;
     private final String bucketId;
     private final String namePrefix;
 
-    private B2CreateKeyRequest(Set<B2Capability> capabilies,
+    private B2CreateKeyRequest(Set<String> capabilities,
                                String keyName,
                                Long validDurationSeconds,
                                String bucketId,
                                String namePrefix) {
 
-        this.capabilies = capabilies;
+        this.capabilities = capabilities;
         this.keyName = keyName;
         this.validDurationSeconds = validDurationSeconds;
         this.bucketId = bucketId;
         this.namePrefix = namePrefix;
     }
 
-    public static Builder builder(Set<B2Capability> capabilities, String keyName) {
+    public static Builder builder(Set<String> capabilities, String keyName) {
         return new Builder(capabilities, keyName);
     }
 
     @SuppressWarnings("unused")
-    public Set<B2Capability> getCapabilies() {
-        return capabilies;
+    public Set<String> getCapabilities() {
+        return capabilities;
     }
 
     @SuppressWarnings("unused")
@@ -69,7 +67,7 @@ public class B2CreateKeyRequest {
             return false;
         }
         B2CreateKeyRequest that = (B2CreateKeyRequest) o;
-        return Objects.equals(capabilies, that.capabilies) &&
+        return Objects.equals(capabilities, that.capabilities) &&
                 Objects.equals(keyName, that.keyName) &&
                 Objects.equals(validDurationSeconds, that.validDurationSeconds) &&
                 Objects.equals(bucketId, that.bucketId) &&
@@ -78,18 +76,18 @@ public class B2CreateKeyRequest {
 
     @Override
     public int hashCode() {
-        return Objects.hash(capabilies, keyName, validDurationSeconds, bucketId, namePrefix);
+        return Objects.hash(capabilities, keyName, validDurationSeconds, bucketId, namePrefix);
     }
 
     public static class Builder {
 
-        private final Set<B2Capability> capabilities;
+        private final Set<String> capabilities;
         private final String keyName;
         private Long validDurationSeconds = null;
         private String bucketId = null;
         private String namePrefix = null;
 
-        private Builder(Set<B2Capability> capabilities, String keyName) {
+        private Builder(Set<String> capabilities, String keyName) {
             this.capabilities = capabilities;
             this.keyName = keyName;
         }

@@ -17,7 +17,7 @@ import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketTypes;
-import com.backblaze.b2.client.structures.B2Capability;
+import com.backblaze.b2.client.structures.B2Capabilities;
 import com.backblaze.b2.client.structures.B2CreateKeyRequest;
 import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
 import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
@@ -83,9 +83,9 @@ public class B2Sample {
         bigHeader(writer, "create application key");
         final String applicationKeyId;
         {
-            final Set<B2Capability> capabilities = new HashSet<>();
-            capabilities.add(B2Capability.LIST_BUCKETS);
-            capabilities.add(B2Capability.READ_FILES);
+            final Set<String> capabilities = new HashSet<>();
+            capabilities.add(B2Capabilities.LIST_BUCKETS);
+            capabilities.add(B2Capabilities.READ_FILES);
 
             final B2CreatedApplicationKey applicationKey =
                     client.createKey(
