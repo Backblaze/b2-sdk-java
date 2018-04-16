@@ -403,6 +403,18 @@ public interface B2StorageClient extends Closeable {
     }
 
     /**
+     * Delete all files in bucket.
+     *
+     * @param bucketId
+     * @throws B2Exception
+     */
+    default void deleteAllFilesInBucket(String bucketId) throws B2Exception {
+        for (B2FileVersion fileVersion: fileNames(bucketId)) {
+           deleteFileVersion(fileVersion);
+        }
+    }
+
+    /**
      * @param request specifies what the download authorization should allow.
      * @return a download authorization
      * @throws B2Exception if there's any trouble.
@@ -501,6 +513,7 @@ public interface B2StorageClient extends Closeable {
     default B2Bucket deleteBucket(String bucketId) throws B2Exception {
         return deleteBucket(B2DeleteBucketRequest.builder(bucketId).build());
     }
+
 
     /**
      * Returns the URL for downloading the file specified by the request.
