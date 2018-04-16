@@ -19,6 +19,7 @@ import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
+import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
@@ -425,6 +426,25 @@ public interface B2StorageClient extends Closeable {
      */
     default B2FileVersion getFileInfo(String fileId) throws B2Exception {
         return getFileInfo(B2GetFileInfoRequest.builder(fileId).build());
+    }
+
+    /**
+     * @param request specifies the file whose info to fetch.
+     * @return a B2FileVersion object
+     * @throws B2Exception if there's any trouble.
+     */
+    B2FileVersion getFileInfoByName(B2GetFileInfoByNameRequest request) throws B2Exception;
+
+    /**
+     * Just like getFileInfoByName(request), but you only have to specify the
+     * bucketName and the fileName instead of a request object.
+     *
+     * @param bucketName the name of the bucket you want to download from.
+     * @param fileName   the name of the file you want to download.
+     * @throws B2Exception if there's any trouble.
+     */
+    default B2FileVersion getFileInfoByName(String bucketName, String fileName) throws B2Exception {
+        return getFileInfoByName(B2GetFileInfoByNameRequest.builder(bucketName, fileName).build());
     }
 
     /**

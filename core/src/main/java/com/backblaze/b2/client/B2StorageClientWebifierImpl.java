@@ -26,6 +26,7 @@ import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
+import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
@@ -421,6 +422,15 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     @Override
+    public B2FileVersion getFileInfo(B2AccountAuthorization accountAuth, B2GetFileInfoByNameRequest request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(), request.getFileName()),
+                makeHeaders(accountAuth),
+                request,
+                B2FileVersion.class);
+    }
+
+    @Override
     public B2FileVersion hideFile(B2AccountAuthorization accountAuth,
                                   B2HideFileRequest request) throws B2Exception {
         return webApiClient.postJsonReturnJson(
@@ -504,6 +514,18 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         }
         url += API_VERSION_PATH + "b2_download_file_by_id?fileId=" + fguid;
         url += maybeB2ContentDisposition('&', b2ContentDisposition);
+        return url;
+    }
+
+    private String makeGetFileInfoByNameUrl(B2AccountAuthorization accountAuth,
+                                         String bucketName,
+                                         String fileName) {
+
+        String url = makeUrl(accountAuth, "b2_get_file_info");
+        if (!url.endsWith("/")) {
+            url += "/";
+        }
+        url += "file/" + bucketName + "/" + percentEncode(fileName);
         return url;
     }
 
