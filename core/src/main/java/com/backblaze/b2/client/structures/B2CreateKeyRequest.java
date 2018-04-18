@@ -12,19 +12,19 @@ public class B2CreateKeyRequest {
 
     private final Set<String> capabilities;
     private final String keyName;
-    private final Long validDurationSeconds;
+    private final Long validDurationInSeconds;
     private final String bucketId;
     private final String namePrefix;
 
     private B2CreateKeyRequest(Set<String> capabilities,
                                String keyName,
-                               Long validDurationSeconds,
+                               Long validDurationInSeconds,
                                String bucketId,
                                String namePrefix) {
 
         this.capabilities = capabilities;
         this.keyName = keyName;
-        this.validDurationSeconds = validDurationSeconds;
+        this.validDurationInSeconds = validDurationInSeconds;
         this.bucketId = bucketId;
         this.namePrefix = namePrefix;
     }
@@ -44,8 +44,8 @@ public class B2CreateKeyRequest {
     }
 
     @SuppressWarnings("unused")
-    public Long getValidDurationSeconds() {
-        return validDurationSeconds;
+    public Long getValidDurationInSeconds() {
+        return validDurationInSeconds;
     }
 
     @SuppressWarnings("unused")
@@ -69,21 +69,21 @@ public class B2CreateKeyRequest {
         B2CreateKeyRequest that = (B2CreateKeyRequest) o;
         return Objects.equals(capabilities, that.capabilities) &&
                 Objects.equals(keyName, that.keyName) &&
-                Objects.equals(validDurationSeconds, that.validDurationSeconds) &&
+                Objects.equals(validDurationInSeconds, that.validDurationInSeconds) &&
                 Objects.equals(bucketId, that.bucketId) &&
                 Objects.equals(namePrefix, that.namePrefix);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(capabilities, keyName, validDurationSeconds, bucketId, namePrefix);
+        return Objects.hash(capabilities, keyName, validDurationInSeconds, bucketId, namePrefix);
     }
 
     public static class Builder {
 
         private final Set<String> capabilities;
         private final String keyName;
-        private Long validDurationSeconds = null;
+        private Long validDurationInSeconds = null;
         private String bucketId = null;
         private String namePrefix = null;
 
@@ -93,8 +93,8 @@ public class B2CreateKeyRequest {
         }
 
         @SuppressWarnings("unused")
-        public Builder setValidDurationSeconds(Long validDurationSeconds) {
-            this.validDurationSeconds = validDurationSeconds;
+        public Builder setValidDurationInSeconds(Long validDurationInSeconds) {
+            this.validDurationInSeconds = validDurationInSeconds;
             return this;
         }
 
@@ -111,7 +111,7 @@ public class B2CreateKeyRequest {
         }
 
         public B2CreateKeyRequest build() {
-            return new B2CreateKeyRequest(capabilities, keyName, validDurationSeconds, bucketId, namePrefix);
+            return new B2CreateKeyRequest(capabilities, keyName, validDurationInSeconds, bucketId, namePrefix);
         }
     }
 }

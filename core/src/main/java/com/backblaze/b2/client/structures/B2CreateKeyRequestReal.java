@@ -28,7 +28,7 @@ public class B2CreateKeyRequestReal {
     private final String keyName;
 
     @B2Json.optional
-    private final Long validDurationSeconds;
+    private final Long validDurationInSeconds;
 
     @B2Json.optional
     private final String bucketId;
@@ -36,18 +36,18 @@ public class B2CreateKeyRequestReal {
     @B2Json.optional
     private final String namePrefix;
 
-    @B2Json.constructor(params = "accountId, capabilities, keyName, validDurationSeconds, bucketId, namePrefix")
+    @B2Json.constructor(params = "accountId, capabilities, keyName, validDurationInSeconds, bucketId, namePrefix")
     private B2CreateKeyRequestReal(String accountId,
                                    Set<String> capabilities,
                                    String keyName,
-                                   Long validDurationSeconds,
+                                   Long validDurationInSeconds,
                                    String bucketId,
                                    String namePrefix) {
 
         this.accountId = accountId;
         this.capabilities = capabilities;
         this.keyName = keyName;
-        this.validDurationSeconds = validDurationSeconds;
+        this.validDurationInSeconds = validDurationInSeconds;
         this.bucketId = bucketId;
         this.namePrefix = namePrefix;
     }
@@ -57,7 +57,7 @@ public class B2CreateKeyRequestReal {
                 accountId,
                 mostOfRequest.getCapabilities(),
                 mostOfRequest.getKeyName(),
-                mostOfRequest.getValidDurationSeconds(),
+                mostOfRequest.getValidDurationInSeconds(),
                 mostOfRequest.getBucketId(),
                 mostOfRequest.getNamePrefix()
         );
@@ -79,8 +79,8 @@ public class B2CreateKeyRequestReal {
     }
 
     @SuppressWarnings("unused")
-    public Long getValidDurationSeconds() {
-        return validDurationSeconds;
+    public Long getValidDurationInSeconds() {
+        return validDurationInSeconds;
     }
 
     @SuppressWarnings("unused")
@@ -105,7 +105,7 @@ public class B2CreateKeyRequestReal {
         return Objects.equals(accountId, that.accountId) &&
                 Objects.equals(capabilities, that.capabilities) &&
                 Objects.equals(keyName, that.keyName) &&
-                Objects.equals(validDurationSeconds, that.validDurationSeconds) &&
+                Objects.equals(validDurationInSeconds, that.validDurationInSeconds) &&
                 Objects.equals(bucketId, that.bucketId) &&
                 Objects.equals(namePrefix, that.namePrefix);
     }
@@ -113,6 +113,6 @@ public class B2CreateKeyRequestReal {
     @Override
     public int hashCode() {
 
-        return Objects.hash(accountId, capabilities, keyName, validDurationSeconds, bucketId, namePrefix);
+        return Objects.hash(accountId, capabilities, keyName, validDurationInSeconds, bucketId, namePrefix);
     }
 }
