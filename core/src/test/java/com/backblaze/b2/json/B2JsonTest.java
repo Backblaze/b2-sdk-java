@@ -1411,4 +1411,217 @@ public class B2JsonTest {
             return new Letter.JsonHandler();
         }
     }
+
+    @Test
+    public void testDeserializeUnion() throws B2JsonException {
+        final String json = "{ \"a\" : 5, \"type\" : \"a\" }";
+        final UnionAB obj = B2Json.get().fromJson(json, UnionAB.class);
+        assertTrue(obj instanceof SubclassA);
+        assertEquals(5, ((SubclassA)obj).a);
+    }
+
+    @Test
+    public void testSerializeUnion() throws B2JsonException {
+        thrown.expectMessage("is a union base class, and cannot be serialized");
+        B2Json.get().toJson(new UnionAB());
+    }
+
+    @Test
+    public void testFieldFromWrongTypeInUnion() throws B2JsonException {
+        final String json = "{ \"b\" : \"hello\", \"type\" : \"a\" }";
+        thrown.expectMessage("unknown field in com.backblaze.b2.json.B2JsonTest$SubclassA: b");
+        B2Json.get().fromJson(json, UnionAB.class);
+    }
+
+    @Test
+    public void testMissingTypeInUnion() throws B2JsonException {
+        final String json = "{ \"a\" : 5 }";
+        thrown.expectMessage("missing 'type' in UnionAB");
+        B2Json.get().fromJson(json, UnionAB.class);
+    }
+
+    @Test
+    public void testUnknownTypeInUnion() throws B2JsonException {
+        final String json = "{ \"type\" : \"bad\" }";
+        thrown.expectMessage("unknown 'type' in UnionAB: 'bad'");
+        B2Json.get().fromJson(json, UnionAB.class);
+    }
+
+    @Test
+    public void testUnknownFieldInUnion() throws B2JsonException {
+        final String json = "{ \"badField\" : 5 }";
+        thrown.expectMessage("unknown field 'badField' in union type UnionAB");
+        B2Json.get().fromJson(json, UnionAB.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionAB {
+        public static Map<String, Class<?>> getUnionTypeMap() {
+            Map<String, Class<?>> result = new HashMap<>();
+            result.put("a", SubclassA.class);
+            result.put("b", SubclassB.class);
+            return result;
+        }
+    }
+
+    private static class SubclassA extends UnionAB {
+        @B2Json.required
+        public final int a;
+
+        @B2Json.constructor(params = "a")
+        private SubclassA(int a) {
+            this.a = a;
+        }
+    }
+
+    private static class SubclassB extends UnionAB {
+        @B2Json.required
+        public final String b;
+
+        @B2Json.constructor(params = "b")
+        private SubclassB(String b) {
+            this.b = b;
+        }
+    }
+
+    @Test
+    public void testUnionWithFieldAnnotation() throws B2JsonException {
+        thrown.expectMessage("field annotations not allowed in union class");
+        B2Json.get().fromJson("{}", BadUnionWithFieldAnnotation.class);
+    }
+
+    @B2Json.union(typeField = "foo")
+    private static class BadUnionWithFieldAnnotation {
+        @B2Json.required
+        public int x;
+    }
+
+    @Test
+    public void testUnionWithConstructorAnnotation() throws B2JsonException {
+        thrown.expectMessage("constructor annotations not allowed in union class");
+        B2Json.get().fromJson("{}", BadUnionWithConstructorAnnotation.class);
+    }
+
+    @B2Json.union(typeField = "foo")
+    private static class BadUnionWithConstructorAnnotation {
+        @B2Json.constructor(params = "")
+        public BadUnionWithConstructorAnnotation() {}
+    }
+
+    @Test
+    public void testUnionWithoutGetMap() throws B2JsonException {
+        thrown.expectMessage("does not have a method getUnionTypeMap");
+        B2Json.get().fromJson("{}", UnionWithoutGetMap.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionWithoutGetMap {}
+
+    @Test
+    public void testUnionTypeMapNotAMap() throws B2JsonException {
+        thrown.expectMessage("UnionWithNonMap.getUnionTypeMap() did not return a Map");
+        B2Json.get().fromJson("{}", UnionWithNonMap.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionWithNonMap {
+        public static String getUnionTypeMap() {
+            return "foo";
+        }
+    }
+
+    @Test
+    public void testBadKeyTypeInUnionTypeMap() throws B2JsonException {
+        thrown.expectMessage("returned a map containing a class java.lang.Integer as a key");
+        B2Json.get().fromJson("{}", UnionWithBadKeyInMap.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionWithBadKeyInMap {
+        public static Map<Integer, Class<?>> getUnionTypeMap() {
+            Map<Integer, Class<?>> result = new HashMap<>();
+            result.put(Integer.valueOf(5), SubclassA.class);
+            return result;
+        }
+    }
+
+    @Test
+    public void testBadValueTypeInUnionTypeMap() throws B2JsonException {
+        thrown.expectMessage("returned a map containing a class java.lang.Integer as a value");
+        B2Json.get().fromJson("{}", UnionWithBadValueInMap.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionWithBadValueInMap {
+        public static Map<String, Integer> getUnionTypeMap() {
+            Map<String, Integer> result = new HashMap<>();
+            result.put("a", Integer.valueOf(5));
+            return result;
+        }
+    }
+
+    @Test
+    public void testUnionInheritsFromUnion() throws B2JsonException {
+        thrown.expectMessage("inherits from another class with a B2Json annotation");
+        B2Json.get().fromJson("{}", UnionThatInheritsFromUnion.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionThatInheritsFromUnion extends UnionAB {}
+
+    @Test
+    public void testUnionMemberIsNotSubclass() throws B2JsonException {
+        thrown.expectMessage("is not a subclass of");
+        B2Json.get().fromJson("{}", UnionWithMemberThatIsNotSubclass.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionWithMemberThatIsNotSubclass {
+        public static Map<String, Class<?>> getUnionTypeMap() {
+            Map<String, Class<?>> result = new HashMap<>();
+            result.put("doesNotInherit", SubclassDoesNotInherit.class);
+            return result;
+        }
+    }
+
+    private static class SubclassDoesNotInherit {
+        @B2Json.constructor(params = "")
+        private SubclassDoesNotInherit(int a) { }
+    }
+
+    @Test
+    public void testUnionFieldHasDifferentTypes() throws B2JsonException {
+        thrown.expectMessage("field sameName has two different types");
+        B2Json.get().fromJson("{}", UnionXY.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionXY {
+        public static Map<String, Class<?>> getUnionTypeMap() {
+            Map<String, Class<?>> result = new HashMap<>();
+            result.put("x", SubclassX.class);
+            result.put("y", SubclassY.class);
+            return result;
+        }
+    }
+
+    private static class SubclassX extends UnionXY {
+        @B2Json.required
+        public final int sameName;
+
+        @B2Json.constructor(params = "sameName")
+        private SubclassX(int sameName) {
+            this.sameName = sameName;
+        }
+    }
+
+    private static class SubclassY extends UnionXY {
+        @B2Json.required
+        public final String sameName;
+
+        @B2Json.constructor(params = "sameName")
+        private SubclassY(String sameName) {
+            this.sameName = sameName;
+        }
+    }
 }

@@ -5,6 +5,9 @@
 
 package com.backblaze.b2.json;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -99,6 +102,9 @@ public class B2JsonHandlerMap {
                 //noinspection unchecked
                 result = (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
                 rememberHandler(clazz, result);
+            } else if (isUnionBase(clazz)) {
+                result = (B2JsonTypeHandler<T>) new B2JsonUnionBaseHandler(clazz, this);
+                rememberHandler(clazz, result);
             } else {
                 //noinspection unchecked
                 result = (B2JsonTypeHandler<T>) new B2JsonObjectHandler(clazz, this);
@@ -108,6 +114,19 @@ public class B2JsonHandlerMap {
 
         return result;
     }
+
+    /**
+     * Is this class the base class for a union type?
+     *
+     * Union bases have the @union annotation.
+     *
+     * @throws B2JsonException if the class has the union annotation but
+     * breaks one of the rules.
+     */
+    private static <T> boolean isUnionBase(Class<T> clazz) {
+        return clazz.getAnnotation(B2Json.union.class) != null;
+    }
+
 
     private <T> B2JsonTypeHandler<T> findCustomHandler(Class<T> clazz) throws B2JsonException {
         // this does NOT need to be synchronized because it doesn't touch the map.

@@ -37,6 +37,10 @@ public final class FieldInfo implements Comparable<FieldInfo> {
         return field.getName();
     }
 
+    public B2JsonTypeHandler getHandler() {
+        return handler;
+    }
+
     public int compareTo(@SuppressWarnings("NullableProblems") FieldInfo o) {
         return field.getName().compareTo(o.field.getName());
     }
