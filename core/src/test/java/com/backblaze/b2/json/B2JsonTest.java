@@ -1472,7 +1472,7 @@ public class B2JsonTest {
 
     @B2Json.union(typeField = "type")
     private static class UnionAZ {
-        public static B2JsonUnionTypeMap getUnionTypeMap() {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
             return B2JsonUnionTypeMap
                     .builder()
                     .put("a", SubclassA.class)
@@ -1564,7 +1564,7 @@ public class B2JsonTest {
 
     @B2Json.union(typeField = "type")
     private static class UnionWithMemberThatIsNotSubclass {
-        public static B2JsonUnionTypeMap getUnionTypeMap() {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
             return B2JsonUnionTypeMap
                     .builder()
                     .put("doesNotInherit", SubclassDoesNotInherit.class)
@@ -1585,7 +1585,7 @@ public class B2JsonTest {
 
     @B2Json.union(typeField = "type")
     private static class UnionXY {
-        public static B2JsonUnionTypeMap getUnionTypeMap() {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
             return B2JsonUnionTypeMap
                     .builder()
                     .put("x", SubclassX.class)
@@ -1628,5 +1628,48 @@ public class B2JsonTest {
     }
 
     private static class SubclassM extends UnionM {
+    }
+
+    @Test
+    public void testUnionMapHasDuplicateName() throws B2JsonException {
+        thrown.expectMessage("duplicate type name in union type map: 'd'");
+        B2Json.get().toJson(new SubclassD1());
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionD {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("d", SubclassD1.class)
+                    .put("d", SubclassD2.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassD1 extends UnionD {
+    }
+
+    private static class SubclassD2 extends UnionD {
+    }
+
+    @Test
+    public void testUnionMapHasDuplicateClass() throws B2JsonException {
+        thrown.expectMessage("duplicate class in union type map: class com.backblaze.b2.json.B2JsonTest$SubclassF");
+        B2Json.get().toJson(new SubclassF());
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionF {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("f1", SubclassF.class)
+                    .put("f2", SubclassF.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassF extends UnionF {
     }
 }

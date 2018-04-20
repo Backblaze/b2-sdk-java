@@ -44,20 +44,16 @@ public class B2JsonUnionTypeMap {
         /**
          * Adds a new type to the map being built.
          *
-         * This can't throw a B2JsonException, because these builders are used in
-         * static initializers, where it would be really awkward.  The B2Json code
-         * that calls the getUnionTypeMap() method will translate the RuntimeException
-         * thrown into a B2JsonException.
-         *
          * @param typeName The name used for this type in JSON.
          * @param typeClass The class used in Java.
+         * @throws B2JsonException When adding duplicate names or classes to the map.
          */
-        public Builder put(String typeName, Class<?> typeClass) {
+        public Builder put(String typeName, Class<?> typeClass) throws B2JsonException {
             if (typeNameToClass.containsKey(typeName)) {
-                throw new RuntimeException("duplicate type name in union type map: '" + typeName + "'");
+                throw new B2JsonException("duplicate type name in union type map: '" + typeName + "'");
             }
             if (classToTypeName.containsKey(typeClass)) {
-                throw new RuntimeException("duplicate class in union type map: " + typeClass);
+                throw new B2JsonException("duplicate class in union type map: " + typeClass);
             }
             typeNameToClass.put(typeName, typeClass);
             classToTypeName.put(typeClass, typeName);

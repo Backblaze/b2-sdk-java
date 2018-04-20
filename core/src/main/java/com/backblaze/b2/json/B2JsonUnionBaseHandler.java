@@ -182,6 +182,9 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         } catch (NoSuchMethodException e) {
             throw new B2JsonException("union base class " + clazz + " does not have a method getUnionTypeMap");
         } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof B2JsonException) {
+                throw (B2JsonException) e.getCause();
+            }
             throw new B2JsonException("failed to invoke " + method + ": " + e.getMessage(), e);
         } catch (IllegalAccessException e) {
             throw new B2JsonException("illegal access to " + method + ": " + e.getMessage(), e);
