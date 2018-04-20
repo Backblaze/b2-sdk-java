@@ -1,12 +1,12 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2018, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
 package com.backblaze.b2.json;
 
+import com.backblaze.b2.json.FieldInfo.FieldRequirement;
 import com.backblaze.b2.util.B2Collections;
-import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -34,44 +34,20 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
-    private enum FieldRequirement { REQUIRED, OPTIONAL, IGNORED }
-
-    private static final class FieldInfo implements Comparable<FieldInfo> {
-        public final Field field;
-        public final B2JsonTypeHandler handler;
-        public final FieldRequirement requirement;
-        public final Object defaultValueOrNull;
-        public int constructorArgIndex;
-        public long bit;
-
-        public FieldInfo(Field field, B2JsonTypeHandler<?> handler, FieldRequirement requirement, Object defaultValueOrNull) {
-            this.field = field;
-            this.handler =  handler;
-            this.requirement = requirement;
-            this.defaultValueOrNull = defaultValueOrNull;
-
-            this.field.setAccessible(true);
-        }
-
-        public String getName() {
-            return field.getName();
-        }
-
-        public int compareTo(@SuppressWarnings("NullableProblems") FieldInfo o) {
-            return field.getName().compareTo(o.field.getName());
-        }
-
-        public void setConstructorArgIndex(int index) {
-            B2Preconditions.checkArgument(index < 64);
-            constructorArgIndex = index;
-            bit = 1L << index;
-        }
-    }
-
-   /**
+    /**
      * The class of object we handle.
      */
     private final Class<T> clazz;
+
+    /**
+     * Non-null iff this class is the member of a union type.
+     */
+    private final String unionTypeFieldName;
+
+    /**
+     * Non-null iff this class is the member of a union type.
+     */
+    private final String unionTypeFieldValue;
 
     /**
      * All of the non-static fields of the class, in alphabetical order.
@@ -99,14 +75,30 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     private final Set<String> fieldsToDiscard;
 
     /**
-     * Bit mask of fields that are required in JSON.
-     */
-
-    /**
      * Sets up a new handler for this class based on reflection for the class.
      */
-    public B2JsonObjectHandler(Class<T> clazz, B2JsonHandlerMap handlerMap) throws B2JsonException {
+    /*package*/ B2JsonObjectHandler(Class<T> clazz, B2JsonHandlerMap handlerMap) throws B2JsonException {
+
         this.clazz = clazz;
+
+        // Is this a member of a union type?
+        {
+            String fieldName = null;
+            String fieldValue = null;
+            for (Class<?> parent = clazz.getSuperclass(); parent != null; parent = parent.getSuperclass()) {
+                if (B2JsonHandlerMap.isUnionBase(parent)) {
+                    fieldValue = B2JsonUnionBaseHandler.getUnionTypeMap(parent).getTypeNameOrNullForClass(clazz);
+                    if (fieldValue == null) {
+                        throw new B2JsonException("class " + clazz + " inherits from " + parent + ", but is not in the type map");
+                    }
+                    fieldName = parent.getAnnotation(B2Json.union.class).typeField();
+                    break;
+                }
+            }
+            this.unionTypeFieldName = fieldName;
+            this.unionTypeFieldValue = fieldValue;
+
+        }
 
         // Add the B2JsonObjectHandler for this class into to the handlerMap before descending into the class's
         // fields, so that if it's encountered recursively (such as in a tree structure), then it's used to
@@ -192,6 +184,13 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         }
     }
 
+    /**
+     * Returns the information about all fields in the object.
+     */
+    /*package*/  Map<String, FieldInfo> getFieldMap() {
+        return fieldMap;
+    }
+
     private Object getDefaultValueOrNull(Field field, B2JsonTypeHandler<?> handler) throws B2JsonException {
         B2Json.optionalWithDefault optional = field.getAnnotation(B2Json.optionalWithDefault.class);
         if (optional == null) {
@@ -255,6 +254,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         }
         if (fieldType instanceof Class) {
             final Class fieldClass = (Class) fieldType;
+            //noinspection unchecked
             return handlerMap.getHandler(fieldClass);
         }
         throw new B2JsonException("Do not know how to handle: " + fieldType);
@@ -297,11 +297,24 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         return clazz;
     }
 
+    /**
+     * Serializes the object, adding all fields to the JSON.
+     *
+     * Optional fields are always present, and set to null/0 when not present.
+     *
+     * The type name field for a member of a union type is added alphabetically in sequence, if needed.
+     */
     public void serialize(T obj, B2JsonWriter out) throws IOException, B2JsonException {
         try {
+            boolean typeFieldDone = false;  // whether the type field for a member of a union type has been emitted
             out.startObject();
             if (fields != null) {
                 for (FieldInfo fieldInfo : fields) {
+                    if (unionTypeFieldName != null && !typeFieldDone && unionTypeFieldName.compareTo(fieldInfo.getName()) < 0) {
+                        out.writeObjectFieldNameAndColon(unionTypeFieldName);
+                        out.writeString(unionTypeFieldValue);
+                        typeFieldDone = true;
+                    }
                     out.writeObjectFieldNameAndColon(fieldInfo.getName());
                     final Object value = fieldInfo.field.get(obj);
                     if (fieldInfo.requirement == FieldRequirement.REQUIRED && value == null) {
@@ -310,6 +323,10 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                     //noinspection unchecked
                     B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out);
                 }
+            }
+            if (unionTypeFieldName != null && !typeFieldDone) {
+                out.writeObjectFieldNameAndColon(unionTypeFieldName);
+                out.writeString(unionTypeFieldValue);
             }
             out.finishObject();
         }
@@ -346,6 +363,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                     if ((foundFieldBits & fieldInfo.bit) != 0) {
                         throw new B2JsonException("duplicate field: " + fieldInfo.getName());
                     }
+                    @SuppressWarnings("unchecked")
                     final Object value = B2JsonUtil.deserializeMaybeNull(fieldInfo.handler, in, options);
                     if (fieldInfo.requirement == FieldRequirement.REQUIRED && value == null) {
                         throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
@@ -360,10 +378,40 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         return deserializeFromConstructorArgs(constructorArgs, foundFieldBits);
     }
 
+    public T deserializeFromFieldNameToValueMap(Map<String, Object> fieldNameToValue, int options) throws B2JsonException {
+        Object [] constructorArgs = new Object [fields.length];
+
+        // Read the values that are present in the map.
+        long foundFieldBits = 0;
+        if (fieldNameToValue == null) {
+            throw new B2JsonException("B2JsonObjectHandler.deserializeFromFieldNameToValueMap called with null fieldNameToValue");
+
+        }
+        for (Map.Entry<String, Object> entry : fieldNameToValue.entrySet()) {
+            String fieldName = entry.getKey();
+            FieldInfo fieldInfo = fieldMap.get(fieldName);
+            if (fieldInfo == null) {
+                if (((options & B2Json.ALLOW_EXTRA_FIELDS) == 0) &&
+                        (fieldsToDiscard == null || !fieldsToDiscard.contains(fieldName))) {
+                    throw new B2JsonException("unknown field in " + clazz.getName() + ": " + fieldName);
+                }
+            }
+            else {
+                Object value = entry.getValue();
+                if (fieldInfo.requirement == FieldRequirement.REQUIRED && value == null) {
+                    throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                }
+                constructorArgs[fieldInfo.constructorArgIndex] = value;
+                foundFieldBits |= fieldInfo.bit;
+            }
+        }
+        return deserializeFromConstructorArgs(constructorArgs, foundFieldBits);
+    }
+
     public T deserializeFromUrlParameterMap(Map<String, String> parameterMap, int options) throws B2JsonException {
         Object [] constructorArgs = new Object [fields.length];
 
-        // Read the values that are present in the JSON.
+        // Read the values that are present in the parameter map.
         long foundFieldBits = 0;
         if (parameterMap == null) {
             throw new B2JsonException("B2JsonObjectHandler.deserializeFromUrlParameterMape called with null parameterMap");

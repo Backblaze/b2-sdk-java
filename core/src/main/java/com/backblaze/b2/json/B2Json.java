@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -25,33 +26,41 @@ import java.util.Map;
 
 /**
  * <p>JSON (de)serialization of Java objects.</p>
+ *
  * <p>This class knows how to take a Java object and turn it
  * into JSON, and then reverse the process and take JSON and create
  * a Java object.</p>
+ *
  * <p>A number of classes are built in to B2Json.  In addition to all
  * of the primitive types (byte, char, int, etc.) these classes are
  * all handled: Byte, Character, Integer, Long, Float, Double, Boolean,
  * String, LocalDate, LocalDateTime, and BigDecimal.</p>
+ *
  * <p>For other classes to be used, you can either add a static getJsonTypeHandler()
  * method to it or add annotations to the class to say how it should go to JSON.
  * For classes without a getJsonTypeHandler() method, there must be a "required",
  * "optional", or "ignored" annotation on every field.  And there must be exactly
  * one constructor with the "constructor" annotation.</p>
+ *
  * <p>The selected constructor must take as arguments all of the non-ignored
  * fields in the object.  If any validation of values needs to happen
  * during deserialization, it should happen in the constructor.</p>
+ *
  * <p>During deserialization, an exception will be thrown if any required
  * fields are missing or null.  Optional fields are set to 0/false/null
  * if they are not present in the JSON.  If unexpected fields are present
  * in the JSON, they will cause an exception unless ALLOW_EXTRA_FIELDS
  * is selected.</p>
+ *
  * <p>java.util.Map objects turn into JSON objects when serialized, and
  * java.util.List and java.util.Set objects turn into JSON arrays.  On
  * deserialization, the values for Map fields are created as TreeMaps,
  * the values for List fields are created as ArrayLists, and the values for
  * Set fields are created as HashSets.</p>
+ *
  * <p>The JSON produced is always "pretty", with newlines and indentation.
  * Field names are always sorted alphabetically.</p>
+ * 
  * <p>B2Json objects are THREAD SAFE.</p>
  */
 public class B2Json {
@@ -329,6 +338,24 @@ public class B2Json {
     }
 
     /**
+     * <p>Class annotation that says a class is the base class for a union type.</p>
+     *
+     * <p>The class must not extend any other classes, but may implement interfaces.
+     * It must have no B2Json field or constructor annotations</p>
+     *
+     * <p>Direct instances of this class cannot be (de)serialized.  Instances of
+     * subclasses can be.</p>
+     *
+     * <p>For now, the implementation of deserialization is INEFFICIENT, so union
+     * types should be used only for small objects.</p>
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface union {
+        String typeField();
+    }
+
+    /**
      * Field annotation that says a field is required to be present.
      */
     @Retention(RetentionPolicy.RUNTIME)
@@ -396,4 +423,20 @@ public class B2Json {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     public @interface defaultForInvalidEnumValue {}
+
+    /**
+     * All of the B2Json annotations.
+     */
+    @SuppressWarnings("unchecked")
+    /*package*/ static final Class<? extends Annotation>[] ALL_ANNOTATIONS =
+            new Class[] {
+                    union.class,
+                    required.class,
+                    optional.class,
+                    optionalWithDefault.class,
+                    ignored.class,
+                    constructor.class,
+                    defaultForInvalidEnumValue.class
+            };
+
 }

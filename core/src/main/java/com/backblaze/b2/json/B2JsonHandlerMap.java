@@ -30,8 +30,7 @@ public class B2JsonHandlerMap {
     // we think it's safe to overwrite the entry for a given class because
     // we assume all handlers are stateless and any two instances of
     // a handler for a class are equivalent.
-    private final Map<Class<?>, B2JsonTypeHandler<?>> map =
-            new HashMap<Class<?>, B2JsonTypeHandler<?>>();
+    private final Map<Class<?>, B2JsonTypeHandler<?>> map = new HashMap<>();
 
     public B2JsonHandlerMap() {
         this(null);
@@ -91,13 +90,16 @@ public class B2JsonHandlerMap {
 
         if (result == null) {
             if (clazz.isEnum()) {
-                result = new B2JsonEnumHandler<T>(clazz);
+                result = new B2JsonEnumHandler<>(clazz);
                 rememberHandler(clazz, result);
             } else if (clazz.isArray()) {
                 final Class eltClazz = clazz.getComponentType();
                 B2JsonTypeHandler eltClazzHandler = getHandler(eltClazz);
                 //noinspection unchecked
                 result = (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
+                rememberHandler(clazz, result);
+            } else if (isUnionBase(clazz)) {
+                result = (B2JsonTypeHandler<T>) new B2JsonUnionBaseHandler(clazz, this);
                 rememberHandler(clazz, result);
             } else {
                 //noinspection unchecked
@@ -107,6 +109,15 @@ public class B2JsonHandlerMap {
         }
 
         return result;
+    }
+
+    /**
+     * Is this class the base class for a union type?
+     *
+     * Union bases have the @union annotation.
+     */
+    /*package*/ static <T> boolean isUnionBase(Class<T> clazz) {
+        return clazz.getAnnotation(B2Json.union.class) != null;
     }
 
     private <T> B2JsonTypeHandler<T> findCustomHandler(Class<T> clazz) throws B2JsonException {
