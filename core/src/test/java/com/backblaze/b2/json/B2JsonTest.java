@@ -37,6 +37,10 @@ import static org.junit.Assert.fail;
 /**
  * Unit tests for B2Json.
  */
+@SuppressWarnings({
+        "unused",  // A lot of the test classes have things that aren't used, but we don't care.
+        "WeakerAccess"  // A lot of the test classes could have weaker access, but we don't care.
+})
 public class B2JsonTest {
 
     @Rule
@@ -51,7 +55,7 @@ public class B2JsonTest {
         public final String b;
 
         @B2Json.ignored
-        public int c = 0;
+        public int c;
 
         @B2Json.constructor(params = "a, b")
         public Container(int a, String b) {
@@ -132,7 +136,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testObject() throws IOException, B2JsonException {
+    public void testObject() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -144,7 +148,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testComment() throws IOException, B2JsonException {
+    public void testComment() throws B2JsonException {
         String json =
                 "{ // this is a comment\n" +
                 "  \"a\": 41,\n" +
@@ -161,7 +165,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testNoCommentInString() throws IOException, B2JsonException {
+    public void testNoCommentInString() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -173,7 +177,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testBadComment() throws IOException, B2JsonException {
+    public void testBadComment() throws B2JsonException {
         String json =
                 "{ / \n" +
                 "  \"a\": 41,\n" +
@@ -185,7 +189,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testMissingComma() throws IOException, B2JsonException {
+    public void testMissingComma() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41\n" +
@@ -197,7 +201,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testExtraComma() throws IOException, B2JsonException {
+    public void testExtraComma() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -209,7 +213,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDuplicateField() throws IOException, B2JsonException {
+    public void testDuplicateField() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -223,7 +227,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDisallowIgnored() throws IOException, B2JsonException {
+    public void testDisallowIgnored() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -237,7 +241,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDisallowUnknown() throws IOException, B2JsonException {
+    public void testDisallowUnknown() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -294,7 +298,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testAllowUnknown() throws IOException, B2JsonException {
+    public void testAllowUnknown() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -313,7 +317,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testAllowButSkipDiscarded() throws IOException, B2JsonException {
+    public void testAllowButSkipDiscarded() throws B2JsonException {
         final String jsonWithExtra = "{\n" +
                 "  \"a\": 41,\n" +
                 "  \"b\": \"hello\",\n" +
@@ -332,7 +336,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDiscardingIgnoredFieldIsOk() throws IOException, B2JsonException {
+    public void testDiscardingIgnoredFieldIsOk() throws B2JsonException {
         final String jsonWithExtra = "{\n" +
                 "  \"a\": 41,\n" +
                 "  \"b\": \"hello\",\n" +
@@ -341,7 +345,7 @@ public class B2JsonTest {
 
         final DiscardingIgnoredFieldIsOk discarder = bzJson.fromJson(jsonWithExtra, DiscardingIgnoredFieldIsOk.class);
         assertEquals(41, discarder.a);
-        assertEquals(42, discarder.c); // 'cuz ignored from json and set by ctor.
+        assertEquals(42, discarder.c); // 'cuz ignored from json and set by constructor.
 
         final String expectedJson = "{\n" +
                 "  \"a\": 41\n" +
@@ -350,7 +354,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDiscardingNonIgnoredFieldIsIllegal() throws IOException, B2JsonException {
+    public void testDiscardingNonIgnoredFieldIsIllegal() throws B2JsonException {
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("DiscardingNonIgnoredFieldIsIllegal's field 'c' cannot be discarded: it's REQUIRED.  only non-existent or IGNORED fields can be discarded.");
         final String jsonWithExtra = "{\n" +
@@ -364,7 +368,7 @@ public class B2JsonTest {
 
 
     @Test
-    public void testMissingRequired() throws IOException, B2JsonException {
+    public void testMissingRequired() throws B2JsonException {
         String json = "{ \"b\" : \"hello\" }";
 
         thrown.expect(B2JsonException.class);
@@ -485,7 +489,7 @@ public class B2JsonTest {
 
 
     @Test
-    public void testOptionalNull()throws IOException, B2JsonException {
+    public void testOptionalNull()throws B2JsonException {
         String json =
                 "{" +
                 "  \"v_string\" : null,\n" +
@@ -522,7 +526,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDeserializeNullRequired() throws B2JsonException, IOException {
+    public void testDeserializeNullRequired() throws B2JsonException {
         String json = "{ \"a\" : null }";
 
         thrown.expect(B2JsonException.class);
@@ -745,10 +749,10 @@ public class B2JsonTest {
                 (byte) 0x22
         };
 
-        // Check deserializing from string
+        // Check de-serializing from string
         assertEquals(str, bzJson.fromJson(json, String.class));
 
-        // Check deserializing from bytes
+        // Check de-serializing from bytes
         assertEquals(str, bzJson.fromJson(new ByteArrayInputStream(utf8Json), String.class));
 
         // Check serializing to string
@@ -879,7 +883,7 @@ public class B2JsonTest {
 
 
     @Test
-    public void testUnknownEnum_usesDefaultInvalidEnumValue() throws IOException, B2JsonException {
+    public void testUnknownEnum_usesDefaultInvalidEnumValue() throws B2JsonException {
         String json =
                 "{\n" +
                         "  \"flavor\": \"CHARTREUSE\"\n" +
@@ -1076,7 +1080,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testNullInPrimitiveArray() throws B2JsonException, IOException {
+    public void testNullInPrimitiveArray() throws IOException {
         checkNullInArray("boolean");
         checkNullInArray("byte");
         checkNullInArray("char");
@@ -1174,7 +1178,7 @@ public class B2JsonTest {
                 return GoodCustomHandler.class;
             }
 
-            public void serialize(GoodCustomHandler obj, B2JsonWriter out) throws IOException, B2JsonException {
+            public void serialize(GoodCustomHandler obj, B2JsonWriter out) throws IOException {
                 out.writeString("GoodCustomHandler");
             }
 
@@ -1217,7 +1221,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void customHandlerWrongType() throws IOException, B2JsonException {
+    public void customHandlerWrongType() throws IOException {
         try {
             checkDeserializeSerialize("{}", WrongTypeHandler.class);
             fail("should've thrown!");
@@ -1235,7 +1239,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void customHandlerNull() throws IOException, B2JsonException {
+    public void customHandlerNull() throws IOException {
         try {
             checkDeserializeSerialize("{}", NullHandler.class);
             fail("should've thrown!");
@@ -1380,7 +1384,7 @@ public class B2JsonTest {
             }
 
             @Override
-            public void serialize(Letter obj, B2JsonWriter out) throws IOException, B2JsonException {
+            public void serialize(Letter obj, B2JsonWriter out) throws IOException {
                 out.writeString("b");
             }
 
@@ -1390,7 +1394,7 @@ public class B2JsonTest {
             }
 
             @Override
-            public Letter deserializeUrlParam(String urlValue) throws B2JsonException {
+            public Letter deserializeUrlParam(String urlValue) {
                 B2Preconditions.checkArgument(urlValue.equals("b"));
                 return BEE;
             }
@@ -1540,7 +1544,7 @@ public class B2JsonTest {
     private static class UnionWithBadKeyInMap {
         public static Map<Integer, Class<?>> getUnionTypeMap() {
             Map<Integer, Class<?>> result = new HashMap<>();
-            result.put(Integer.valueOf(5), SubclassA.class);
+            result.put(5, SubclassA.class);
             return result;
         }
     }
@@ -1555,7 +1559,7 @@ public class B2JsonTest {
     private static class UnionWithBadValueInMap {
         public static Map<String, Integer> getUnionTypeMap() {
             Map<String, Integer> result = new HashMap<>();
-            result.put("a", Integer.valueOf(5));
+            result.put("a", 5);
             return result;
         }
     }
