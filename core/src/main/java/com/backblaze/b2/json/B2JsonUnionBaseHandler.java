@@ -165,7 +165,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      *
      * Gets the map by calling the static method getUnionTypeMap on the base class.
      */
-    private static Map<String, Class<?>> getUnionTypeMap(Class<?> clazz) throws B2JsonException {
+    /*package*/ static Map<String, Class<?>> getUnionTypeMap(Class<?> clazz) throws B2JsonException {
         // This uses getDeclaredMethod instead of just getMethod so that classes
         // can't inherit the type handler from their superclass.  that seems like
         // a safer starting point.

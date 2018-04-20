@@ -123,10 +123,9 @@ public class B2JsonHandlerMap {
      * @throws B2JsonException if the class has the union annotation but
      * breaks one of the rules.
      */
-    private static <T> boolean isUnionBase(Class<T> clazz) {
+    /*package*/ static <T> boolean isUnionBase(Class<T> clazz) {
         return clazz.getAnnotation(B2Json.union.class) != null;
     }
-
 
     private <T> B2JsonTypeHandler<T> findCustomHandler(Class<T> clazz) throws B2JsonException {
         // this does NOT need to be synchronized because it doesn't touch the map.

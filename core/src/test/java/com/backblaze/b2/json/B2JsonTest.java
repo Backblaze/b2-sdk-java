@@ -148,6 +148,26 @@ public class B2JsonTest {
     }
 
     @Test
+    public void testUnionWithTypeFieldLast() throws IOException, B2JsonException {
+        final String json =
+                "{\n" +
+                        "  \"a\": 5,\n" +
+                        "  \"type\": \"a\"\n" +
+                        "}";
+        checkDeserializeSerialize(json, UnionAZ.class);
+    }
+
+    @Test
+    public void testUnionWithTypeFieldNotLast() throws IOException, B2JsonException {
+        final String json =
+                "{\n" +
+                "  \"type\": \"z\",\n" +
+                "  \"z\": \"hello\"\n" +
+                "}";
+        checkDeserializeSerialize(json, UnionAZ.class);
+    }
+
+    @Test
     public void testComment() throws B2JsonException {
         String json =
                 "{ // this is a comment\n" +
@@ -1417,58 +1437,50 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDeserializeUnion() throws B2JsonException {
-        final String json = "{ \"a\" : 5, \"type\" : \"a\" }";
-        final UnionAB obj = B2Json.get().fromJson(json, UnionAB.class);
-        assertTrue(obj instanceof SubclassA);
-        assertEquals(5, ((SubclassA)obj).a);
-    }
-
-    @Test
     public void testSerializeUnion() throws B2JsonException {
         thrown.expectMessage("is a union base class, and cannot be serialized");
-        B2Json.get().toJson(new UnionAB());
+        B2Json.get().toJson(new UnionAZ());
     }
 
     @Test
     public void testFieldFromWrongTypeInUnion() throws B2JsonException {
-        final String json = "{ \"b\" : \"hello\", \"type\" : \"a\" }";
-        thrown.expectMessage("unknown field in com.backblaze.b2.json.B2JsonTest$SubclassA: b");
-        B2Json.get().fromJson(json, UnionAB.class);
+        final String json = "{ \"z\" : \"hello\", \"type\" : \"a\" }";
+        thrown.expectMessage("unknown field in com.backblaze.b2.json.B2JsonTest$SubclassA: z");
+        B2Json.get().fromJson(json, UnionAZ.class);
     }
 
     @Test
     public void testMissingTypeInUnion() throws B2JsonException {
         final String json = "{ \"a\" : 5 }";
-        thrown.expectMessage("missing 'type' in UnionAB");
-        B2Json.get().fromJson(json, UnionAB.class);
+        thrown.expectMessage("missing 'type' in UnionAZ");
+        B2Json.get().fromJson(json, UnionAZ.class);
     }
 
     @Test
     public void testUnknownTypeInUnion() throws B2JsonException {
         final String json = "{ \"type\" : \"bad\" }";
-        thrown.expectMessage("unknown 'type' in UnionAB: 'bad'");
-        B2Json.get().fromJson(json, UnionAB.class);
+        thrown.expectMessage("unknown 'type' in UnionAZ: 'bad'");
+        B2Json.get().fromJson(json, UnionAZ.class);
     }
 
     @Test
     public void testUnknownFieldInUnion() throws B2JsonException {
         final String json = "{ \"badField\" : 5 }";
-        thrown.expectMessage("unknown field 'badField' in union type UnionAB");
-        B2Json.get().fromJson(json, UnionAB.class);
+        thrown.expectMessage("unknown field 'badField' in union type UnionAZ");
+        B2Json.get().fromJson(json, UnionAZ.class);
     }
 
     @B2Json.union(typeField = "type")
-    private static class UnionAB {
+    private static class UnionAZ {
         public static Map<String, Class<?>> getUnionTypeMap() {
             Map<String, Class<?>> result = new HashMap<>();
             result.put("a", SubclassA.class);
-            result.put("b", SubclassB.class);
+            result.put("z", SubclassZ.class);
             return result;
         }
     }
 
-    private static class SubclassA extends UnionAB {
+    private static class SubclassA extends UnionAZ {
         @B2Json.required
         public final int a;
 
@@ -1478,13 +1490,13 @@ public class B2JsonTest {
         }
     }
 
-    private static class SubclassB extends UnionAB {
+    private static class SubclassZ extends UnionAZ {
         @B2Json.required
-        public final String b;
+        public final String z;
 
-        @B2Json.constructor(params = "b")
-        private SubclassB(String b) {
-            this.b = b;
+        @B2Json.constructor(params = "z")
+        private SubclassZ(String z) {
+            this.z = z;
         }
     }
 
@@ -1571,7 +1583,7 @@ public class B2JsonTest {
     }
 
     @B2Json.union(typeField = "type")
-    private static class UnionThatInheritsFromUnion extends UnionAB {}
+    private static class UnionThatInheritsFromUnion extends UnionAZ {}
 
     @Test
     public void testUnionMemberIsNotSubclass() throws B2JsonException {
@@ -1627,5 +1639,22 @@ public class B2JsonTest {
         private SubclassY(String sameName) {
             this.sameName = sameName;
         }
+    }
+
+    @Test
+    public void testUnionSubclassNotInTypeMap() throws B2JsonException {
+        thrown.expectMessage("is not in the type map");
+        B2Json.get().toJson(new SubclassM());
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionM {
+        public static Map<String, Class<?>> getUnionTypeMap() {
+            Map<String, Class<?>> result = new HashMap<>();
+            return result;
+        }
+    }
+
+    private static class SubclassM extends UnionM {
     }
 }

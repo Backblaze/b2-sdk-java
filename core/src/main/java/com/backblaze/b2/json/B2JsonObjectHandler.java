@@ -40,6 +40,16 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     private final Class<T> clazz;
 
     /**
+     * Non-null iff this class is the member of a union type.
+     */
+    private final String unionTypeFieldName;
+
+    /**
+     * Non-null iff this class is the member of a union type.
+     */
+    private final String unionTypeFieldValue;
+
+    /**
      * All of the non-static fields of the class, in alphabetical order.
      */
     private final FieldInfo [] fields;
@@ -68,7 +78,33 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      * Sets up a new handler for this class based on reflection for the class.
      */
     /*package*/ B2JsonObjectHandler(Class<T> clazz, B2JsonHandlerMap handlerMap) throws B2JsonException {
+
         this.clazz = clazz;
+
+        // Is this a member of a union type?
+        {
+            String fieldName = null;
+            String fieldValue = null;
+            for (Class<?> parent = clazz.getSuperclass(); parent != null; parent = parent.getSuperclass()) {
+                if (B2JsonHandlerMap.isUnionBase(parent)) {
+                    // We found a parent class that is a union base.  Figure out what the
+                    // type name field is, and what value to use for this class.
+                    for (Map.Entry<String, Class<?>> entry : B2JsonUnionBaseHandler.getUnionTypeMap(parent).entrySet()) {
+                        if (entry.getValue() == clazz) {
+                            fieldName = parent.getAnnotation(B2Json.union.class).typeField();
+                            fieldValue = entry.getKey();
+                        }
+                    }
+                    if (fieldName == null) {
+                        throw new B2JsonException("class " + clazz + " inherits from " + parent + ", but is not in the type map");
+                    }
+                    break;
+                }
+            }
+            this.unionTypeFieldName = fieldName;
+            this.unionTypeFieldValue = fieldValue;
+
+        }
 
         // Add the B2JsonObjectHandler for this class into to the handlerMap before descending into the class's
         // fields, so that if it's encountered recursively (such as in a tree structure), then it's used to
@@ -267,11 +303,24 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         return clazz;
     }
 
+    /**
+     * Serializes the object, adding all fields to the JSON.
+     *
+     * Optional fields are always present, and set to null/0 when not present.
+     *
+     * The type name field for a member of a union type is added alphabetically in sequence, if needed.
+     */
     public void serialize(T obj, B2JsonWriter out) throws IOException, B2JsonException {
         try {
+            boolean typeFieldDone = false;  // whether the type field for a member of a union type has been emitted
             out.startObject();
             if (fields != null) {
                 for (FieldInfo fieldInfo : fields) {
+                    if (unionTypeFieldName != null && !typeFieldDone && unionTypeFieldName.compareTo(fieldInfo.getName()) < 0) {
+                        out.writeObjectFieldNameAndColon(unionTypeFieldName);
+                        out.writeString(unionTypeFieldValue);
+                        typeFieldDone = true;
+                    }
                     out.writeObjectFieldNameAndColon(fieldInfo.getName());
                     final Object value = fieldInfo.field.get(obj);
                     if (fieldInfo.requirement == FieldRequirement.REQUIRED && value == null) {
@@ -280,6 +329,10 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                     //noinspection unchecked
                     B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out);
                 }
+            }
+            if (unionTypeFieldName != null && !typeFieldDone) {
+                out.writeObjectFieldNameAndColon(unionTypeFieldName);
+                out.writeString(unionTypeFieldValue);
             }
             out.finishObject();
         }
