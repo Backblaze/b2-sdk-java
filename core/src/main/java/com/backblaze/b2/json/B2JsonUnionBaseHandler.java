@@ -76,7 +76,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         this.typeNameField = union.typeField();
 
         // Get the map of type name to class of all the members of the union.
-        final Map<String, Class<?>> typeNameToClass = getUnionTypeMap(clazz);
+        final Map<String, Class<?>> typeNameToClass = getUnionTypeMap(clazz).getTypeNameToClass();
 
         // Build the map from type name to handler.
         typeNameToHandler = new HashMap<>();
@@ -165,7 +165,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      *
      * Gets the map by calling the static method getUnionTypeMap on the base class.
      */
-    /*package*/ static Map<String, Class<?>> getUnionTypeMap(Class<?> clazz) throws B2JsonException {
+    /*package*/ static B2JsonUnionTypeMap getUnionTypeMap(Class<?> clazz) throws B2JsonException {
         // This uses getDeclaredMethod instead of just getMethod so that classes
         // can't inherit the type handler from their superclass.  that seems like
         // a safer starting point.
@@ -174,24 +174,10 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             method = clazz.getDeclaredMethod("getUnionTypeMap");
             method.setAccessible(true);
             final Object obj = method.invoke(null);
-            if (!(obj instanceof Map)) {
-                throw new B2JsonException(clazz.getSimpleName() + "." + method.getName() + "() did not return a Map.  It returned a " + obj.getClass());
+            if (!(obj instanceof B2JsonUnionTypeMap)) {
+                throw new B2JsonException(clazz.getSimpleName() + "." + method.getName() + "() did not return a B2JsonUnionTypeMap.  It returned a " + obj.getClass());
             }
-            Map result = (Map) obj;
-            // Sanity check that the keys and values are the correct types.
-            for (Object entryObj : result.entrySet()) {
-                Map.Entry entry = (Map.Entry) entryObj;
-                if (!(entry.getKey() instanceof String)) {
-                    throw new B2JsonException(clazz.getSimpleName() + "." + method.getName() +
-                            "() returned a map containing a " + entry.getKey().getClass() + " as a key");
-                }
-                if (!(entry.getValue() instanceof Class)) {
-                    throw new B2JsonException(clazz.getSimpleName() + "." + method.getName() +
-                            "() returned a map containing a " + entry.getValue().getClass() + " as a value");
-                }
-            }
-            //noinspection unchecked
-            return (Map<String, Class<?>>) result;
+            return (B2JsonUnionTypeMap) obj;
         } catch (NoSuchMethodException e) {
             throw new B2JsonException("union base class " + clazz + " does not have a method getUnionTypeMap");
         } catch (InvocationTargetException e) {

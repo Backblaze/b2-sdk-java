@@ -1472,11 +1472,12 @@ public class B2JsonTest {
 
     @B2Json.union(typeField = "type")
     private static class UnionAZ {
-        public static Map<String, Class<?>> getUnionTypeMap() {
-            Map<String, Class<?>> result = new HashMap<>();
-            result.put("a", SubclassA.class);
-            result.put("z", SubclassZ.class);
-            return result;
+        public static B2JsonUnionTypeMap getUnionTypeMap() {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("a", SubclassA.class)
+                    .put("z", SubclassZ.class)
+                    .build();
         }
     }
 
@@ -1535,7 +1536,7 @@ public class B2JsonTest {
 
     @Test
     public void testUnionTypeMapNotAMap() throws B2JsonException {
-        thrown.expectMessage("UnionWithNonMap.getUnionTypeMap() did not return a Map");
+        thrown.expectMessage("UnionWithNonMap.getUnionTypeMap() did not return a B2JsonUnionTypeMap");
         B2Json.get().fromJson("{}", UnionWithNonMap.class);
     }
 
@@ -1543,36 +1544,6 @@ public class B2JsonTest {
     private static class UnionWithNonMap {
         public static String getUnionTypeMap() {
             return "foo";
-        }
-    }
-
-    @Test
-    public void testBadKeyTypeInUnionTypeMap() throws B2JsonException {
-        thrown.expectMessage("returned a map containing a class java.lang.Integer as a key");
-        B2Json.get().fromJson("{}", UnionWithBadKeyInMap.class);
-    }
-
-    @B2Json.union(typeField = "type")
-    private static class UnionWithBadKeyInMap {
-        public static Map<Integer, Class<?>> getUnionTypeMap() {
-            Map<Integer, Class<?>> result = new HashMap<>();
-            result.put(5, SubclassA.class);
-            return result;
-        }
-    }
-
-    @Test
-    public void testBadValueTypeInUnionTypeMap() throws B2JsonException {
-        thrown.expectMessage("returned a map containing a class java.lang.Integer as a value");
-        B2Json.get().fromJson("{}", UnionWithBadValueInMap.class);
-    }
-
-    @B2Json.union(typeField = "type")
-    private static class UnionWithBadValueInMap {
-        public static Map<String, Integer> getUnionTypeMap() {
-            Map<String, Integer> result = new HashMap<>();
-            result.put("a", 5);
-            return result;
         }
     }
 
@@ -1593,10 +1564,11 @@ public class B2JsonTest {
 
     @B2Json.union(typeField = "type")
     private static class UnionWithMemberThatIsNotSubclass {
-        public static Map<String, Class<?>> getUnionTypeMap() {
-            Map<String, Class<?>> result = new HashMap<>();
-            result.put("doesNotInherit", SubclassDoesNotInherit.class);
-            return result;
+        public static B2JsonUnionTypeMap getUnionTypeMap() {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("doesNotInherit", SubclassDoesNotInherit.class)
+                    .build();
         }
     }
 
@@ -1613,11 +1585,12 @@ public class B2JsonTest {
 
     @B2Json.union(typeField = "type")
     private static class UnionXY {
-        public static Map<String, Class<?>> getUnionTypeMap() {
-            Map<String, Class<?>> result = new HashMap<>();
-            result.put("x", SubclassX.class);
-            result.put("y", SubclassY.class);
-            return result;
+        public static B2JsonUnionTypeMap getUnionTypeMap() {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("x", SubclassX.class)
+                    .put("y", SubclassY.class)
+                    .build();
         }
     }
 
@@ -1649,9 +1622,8 @@ public class B2JsonTest {
 
     @B2Json.union(typeField = "type")
     private static class UnionM {
-        public static Map<String, Class<?>> getUnionTypeMap() {
-            Map<String, Class<?>> result = new HashMap<>();
-            return result;
+        public static B2JsonUnionTypeMap getUnionTypeMap() {
+            return B2JsonUnionTypeMap.builder().build();
         }
     }
 

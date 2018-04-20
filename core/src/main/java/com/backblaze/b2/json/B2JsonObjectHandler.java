@@ -87,17 +87,11 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             String fieldValue = null;
             for (Class<?> parent = clazz.getSuperclass(); parent != null; parent = parent.getSuperclass()) {
                 if (B2JsonHandlerMap.isUnionBase(parent)) {
-                    // We found a parent class that is a union base.  Figure out what the
-                    // type name field is, and what value to use for this class.
-                    for (Map.Entry<String, Class<?>> entry : B2JsonUnionBaseHandler.getUnionTypeMap(parent).entrySet()) {
-                        if (entry.getValue() == clazz) {
-                            fieldName = parent.getAnnotation(B2Json.union.class).typeField();
-                            fieldValue = entry.getKey();
-                        }
-                    }
-                    if (fieldName == null) {
+                    fieldValue = B2JsonUnionBaseHandler.getUnionTypeMap(parent).getTypeNameOrNullForClass(clazz);
+                    if (fieldValue == null) {
                         throw new B2JsonException("class " + clazz + " inherits from " + parent + ", but is not in the type map");
                     }
+                    fieldName = parent.getAnnotation(B2Json.union.class).typeField();
                     break;
                 }
             }
