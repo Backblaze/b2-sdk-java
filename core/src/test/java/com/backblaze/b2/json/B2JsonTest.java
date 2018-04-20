@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2018, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -37,6 +37,10 @@ import static org.junit.Assert.fail;
 /**
  * Unit tests for B2Json.
  */
+@SuppressWarnings({
+        "unused",  // A lot of the test classes have things that aren't used, but we don't care.
+        "WeakerAccess"  // A lot of the test classes could have weaker access, but we don't care.
+})
 public class B2JsonTest {
 
     @Rule
@@ -51,7 +55,7 @@ public class B2JsonTest {
         public final String b;
 
         @B2Json.ignored
-        public int c = 0;
+        public int c;
 
         @B2Json.constructor(params = "a, b")
         public Container(int a, String b) {
@@ -132,7 +136,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testObject() throws IOException, B2JsonException {
+    public void testObject() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -144,7 +148,27 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testComment() throws IOException, B2JsonException {
+    public void testUnionWithTypeFieldLast() throws IOException, B2JsonException {
+        final String json =
+                "{\n" +
+                        "  \"a\": 5,\n" +
+                        "  \"type\": \"a\"\n" +
+                        "}";
+        checkDeserializeSerialize(json, UnionAZ.class);
+    }
+
+    @Test
+    public void testUnionWithTypeFieldNotLast() throws IOException, B2JsonException {
+        final String json =
+                "{\n" +
+                "  \"type\": \"z\",\n" +
+                "  \"z\": \"hello\"\n" +
+                "}";
+        checkDeserializeSerialize(json, UnionAZ.class);
+    }
+
+    @Test
+    public void testComment() throws B2JsonException {
         String json =
                 "{ // this is a comment\n" +
                 "  \"a\": 41,\n" +
@@ -161,7 +185,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testNoCommentInString() throws IOException, B2JsonException {
+    public void testNoCommentInString() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -173,7 +197,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testBadComment() throws IOException, B2JsonException {
+    public void testBadComment() throws B2JsonException {
         String json =
                 "{ / \n" +
                 "  \"a\": 41,\n" +
@@ -185,7 +209,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testMissingComma() throws IOException, B2JsonException {
+    public void testMissingComma() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41\n" +
@@ -197,7 +221,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testExtraComma() throws IOException, B2JsonException {
+    public void testExtraComma() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -209,7 +233,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDuplicateField() throws IOException, B2JsonException {
+    public void testDuplicateField() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -223,7 +247,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDisallowIgnored() throws IOException, B2JsonException {
+    public void testDisallowIgnored() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -237,7 +261,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDisallowUnknown() throws IOException, B2JsonException {
+    public void testDisallowUnknown() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -294,7 +318,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testAllowUnknown() throws IOException, B2JsonException {
+    public void testAllowUnknown() throws B2JsonException {
         String json =
                 "{\n" +
                 "  \"a\": 41,\n" +
@@ -313,7 +337,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testAllowButSkipDiscarded() throws IOException, B2JsonException {
+    public void testAllowButSkipDiscarded() throws B2JsonException {
         final String jsonWithExtra = "{\n" +
                 "  \"a\": 41,\n" +
                 "  \"b\": \"hello\",\n" +
@@ -332,7 +356,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDiscardingIgnoredFieldIsOk() throws IOException, B2JsonException {
+    public void testDiscardingIgnoredFieldIsOk() throws B2JsonException {
         final String jsonWithExtra = "{\n" +
                 "  \"a\": 41,\n" +
                 "  \"b\": \"hello\",\n" +
@@ -341,7 +365,7 @@ public class B2JsonTest {
 
         final DiscardingIgnoredFieldIsOk discarder = bzJson.fromJson(jsonWithExtra, DiscardingIgnoredFieldIsOk.class);
         assertEquals(41, discarder.a);
-        assertEquals(42, discarder.c); // 'cuz ignored from json and set by ctor.
+        assertEquals(42, discarder.c); // 'cuz ignored from json and set by constructor.
 
         final String expectedJson = "{\n" +
                 "  \"a\": 41\n" +
@@ -350,7 +374,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDiscardingNonIgnoredFieldIsIllegal() throws IOException, B2JsonException {
+    public void testDiscardingNonIgnoredFieldIsIllegal() throws B2JsonException {
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("DiscardingNonIgnoredFieldIsIllegal's field 'c' cannot be discarded: it's REQUIRED.  only non-existent or IGNORED fields can be discarded.");
         final String jsonWithExtra = "{\n" +
@@ -364,7 +388,7 @@ public class B2JsonTest {
 
 
     @Test
-    public void testMissingRequired() throws IOException, B2JsonException {
+    public void testMissingRequired() throws B2JsonException {
         String json = "{ \"b\" : \"hello\" }";
 
         thrown.expect(B2JsonException.class);
@@ -485,7 +509,7 @@ public class B2JsonTest {
 
 
     @Test
-    public void testOptionalNull()throws IOException, B2JsonException {
+    public void testOptionalNull()throws B2JsonException {
         String json =
                 "{" +
                 "  \"v_string\" : null,\n" +
@@ -522,7 +546,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testDeserializeNullRequired() throws B2JsonException, IOException {
+    public void testDeserializeNullRequired() throws B2JsonException {
         String json = "{ \"a\" : null }";
 
         thrown.expect(B2JsonException.class);
@@ -745,10 +769,10 @@ public class B2JsonTest {
                 (byte) 0x22
         };
 
-        // Check deserializing from string
+        // Check de-serializing from string
         assertEquals(str, bzJson.fromJson(json, String.class));
 
-        // Check deserializing from bytes
+        // Check de-serializing from bytes
         assertEquals(str, bzJson.fromJson(new ByteArrayInputStream(utf8Json), String.class));
 
         // Check serializing to string
@@ -879,7 +903,7 @@ public class B2JsonTest {
 
 
     @Test
-    public void testUnknownEnum_usesDefaultInvalidEnumValue() throws IOException, B2JsonException {
+    public void testUnknownEnum_usesDefaultInvalidEnumValue() throws B2JsonException {
         String json =
                 "{\n" +
                         "  \"flavor\": \"CHARTREUSE\"\n" +
@@ -1076,7 +1100,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void testNullInPrimitiveArray() throws B2JsonException, IOException {
+    public void testNullInPrimitiveArray() throws IOException {
         checkNullInArray("boolean");
         checkNullInArray("byte");
         checkNullInArray("char");
@@ -1174,7 +1198,7 @@ public class B2JsonTest {
                 return GoodCustomHandler.class;
             }
 
-            public void serialize(GoodCustomHandler obj, B2JsonWriter out) throws IOException, B2JsonException {
+            public void serialize(GoodCustomHandler obj, B2JsonWriter out) throws IOException {
                 out.writeString("GoodCustomHandler");
             }
 
@@ -1217,7 +1241,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void customHandlerWrongType() throws IOException, B2JsonException {
+    public void customHandlerWrongType() throws IOException {
         try {
             checkDeserializeSerialize("{}", WrongTypeHandler.class);
             fail("should've thrown!");
@@ -1235,7 +1259,7 @@ public class B2JsonTest {
     }
 
     @Test
-    public void customHandlerNull() throws IOException, B2JsonException {
+    public void customHandlerNull() throws IOException {
         try {
             checkDeserializeSerialize("{}", NullHandler.class);
             fail("should've thrown!");
@@ -1380,7 +1404,7 @@ public class B2JsonTest {
             }
 
             @Override
-            public void serialize(Letter obj, B2JsonWriter out) throws IOException, B2JsonException {
+            public void serialize(Letter obj, B2JsonWriter out) throws IOException {
                 out.writeString("b");
             }
 
@@ -1390,7 +1414,7 @@ public class B2JsonTest {
             }
 
             @Override
-            public Letter deserializeUrlParam(String urlValue) throws B2JsonException {
+            public Letter deserializeUrlParam(String urlValue) {
                 B2Preconditions.checkArgument(urlValue.equals("b"));
                 return BEE;
             }
@@ -1410,5 +1434,242 @@ public class B2JsonTest {
         private static B2JsonTypeHandler<Letter> getJsonTypeHandler() {
             return new Letter.JsonHandler();
         }
+    }
+
+    @Test
+    public void testSerializeUnion() throws B2JsonException {
+        thrown.expectMessage("is a union base class, and cannot be serialized");
+        B2Json.get().toJson(new UnionAZ());
+    }
+
+    @Test
+    public void testFieldFromWrongTypeInUnion() throws B2JsonException {
+        final String json = "{ \"z\" : \"hello\", \"type\" : \"a\" }";
+        thrown.expectMessage("unknown field in com.backblaze.b2.json.B2JsonTest$SubclassA: z");
+        B2Json.get().fromJson(json, UnionAZ.class);
+    }
+
+    @Test
+    public void testMissingTypeInUnion() throws B2JsonException {
+        final String json = "{ \"a\" : 5 }";
+        thrown.expectMessage("missing 'type' in UnionAZ");
+        B2Json.get().fromJson(json, UnionAZ.class);
+    }
+
+    @Test
+    public void testUnknownTypeInUnion() throws B2JsonException {
+        final String json = "{ \"type\" : \"bad\" }";
+        thrown.expectMessage("unknown 'type' in UnionAZ: 'bad'");
+        B2Json.get().fromJson(json, UnionAZ.class);
+    }
+
+    @Test
+    public void testUnknownFieldInUnion() throws B2JsonException {
+        final String json = "{ \"badField\" : 5 }";
+        thrown.expectMessage("unknown field 'badField' in union type UnionAZ");
+        B2Json.get().fromJson(json, UnionAZ.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionAZ {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("a", SubclassA.class)
+                    .put("z", SubclassZ.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassA extends UnionAZ {
+        @B2Json.required
+        public final int a;
+
+        @B2Json.constructor(params = "a")
+        private SubclassA(int a) {
+            this.a = a;
+        }
+    }
+
+    private static class SubclassZ extends UnionAZ {
+        @B2Json.required
+        public final String z;
+
+        @B2Json.constructor(params = "z")
+        private SubclassZ(String z) {
+            this.z = z;
+        }
+    }
+
+    @Test
+    public void testUnionWithFieldAnnotation() throws B2JsonException {
+        thrown.expectMessage("field annotations not allowed in union class");
+        B2Json.get().fromJson("{}", BadUnionWithFieldAnnotation.class);
+    }
+
+    @B2Json.union(typeField = "foo")
+    private static class BadUnionWithFieldAnnotation {
+        @B2Json.required
+        public int x;
+    }
+
+    @Test
+    public void testUnionWithConstructorAnnotation() throws B2JsonException {
+        thrown.expectMessage("constructor annotations not allowed in union class");
+        B2Json.get().fromJson("{}", BadUnionWithConstructorAnnotation.class);
+    }
+
+    @B2Json.union(typeField = "foo")
+    private static class BadUnionWithConstructorAnnotation {
+        @B2Json.constructor(params = "")
+        public BadUnionWithConstructorAnnotation() {}
+    }
+
+    @Test
+    public void testUnionWithoutGetMap() throws B2JsonException {
+        thrown.expectMessage("does not have a method getUnionTypeMap");
+        B2Json.get().fromJson("{}", UnionWithoutGetMap.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionWithoutGetMap {}
+
+    @Test
+    public void testUnionTypeMapNotAMap() throws B2JsonException {
+        thrown.expectMessage("UnionWithNonMap.getUnionTypeMap() did not return a B2JsonUnionTypeMap");
+        B2Json.get().fromJson("{}", UnionWithNonMap.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionWithNonMap {
+        public static String getUnionTypeMap() {
+            return "foo";
+        }
+    }
+
+    @Test
+    public void testUnionInheritsFromUnion() throws B2JsonException {
+        thrown.expectMessage("inherits from another class with a B2Json annotation");
+        B2Json.get().fromJson("{}", UnionThatInheritsFromUnion.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionThatInheritsFromUnion extends UnionAZ {}
+
+    @Test
+    public void testUnionMemberIsNotSubclass() throws B2JsonException {
+        thrown.expectMessage("is not a subclass of");
+        B2Json.get().fromJson("{}", UnionWithMemberThatIsNotSubclass.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionWithMemberThatIsNotSubclass {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("doesNotInherit", SubclassDoesNotInherit.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassDoesNotInherit {
+        @B2Json.constructor(params = "")
+        private SubclassDoesNotInherit(int a) { }
+    }
+
+    @Test
+    public void testUnionFieldHasDifferentTypes() throws B2JsonException {
+        thrown.expectMessage("field sameName has two different types");
+        B2Json.get().fromJson("{}", UnionXY.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionXY {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("x", SubclassX.class)
+                    .put("y", SubclassY.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassX extends UnionXY {
+        @B2Json.required
+        public final int sameName;
+
+        @B2Json.constructor(params = "sameName")
+        private SubclassX(int sameName) {
+            this.sameName = sameName;
+        }
+    }
+
+    private static class SubclassY extends UnionXY {
+        @B2Json.required
+        public final String sameName;
+
+        @B2Json.constructor(params = "sameName")
+        private SubclassY(String sameName) {
+            this.sameName = sameName;
+        }
+    }
+
+    @Test
+    public void testUnionSubclassNotInTypeMap() throws B2JsonException {
+        thrown.expectMessage("is not in the type map");
+        B2Json.get().toJson(new SubclassM());
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionM {
+        public static B2JsonUnionTypeMap getUnionTypeMap() {
+            return B2JsonUnionTypeMap.builder().build();
+        }
+    }
+
+    private static class SubclassM extends UnionM {
+    }
+
+    @Test
+    public void testUnionMapHasDuplicateName() throws B2JsonException {
+        thrown.expectMessage("duplicate type name in union type map: 'd'");
+        B2Json.get().toJson(new SubclassD1());
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionD {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("d", SubclassD1.class)
+                    .put("d", SubclassD2.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassD1 extends UnionD {
+    }
+
+    private static class SubclassD2 extends UnionD {
+    }
+
+    @Test
+    public void testUnionMapHasDuplicateClass() throws B2JsonException {
+        thrown.expectMessage("duplicate class in union type map: class com.backblaze.b2.json.B2JsonTest$SubclassF");
+        B2Json.get().toJson(new SubclassF());
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionF {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("f1", SubclassF.class)
+                    .put("f2", SubclassF.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassF extends UnionF {
     }
 }
