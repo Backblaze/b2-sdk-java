@@ -5,9 +5,6 @@
 
 package com.backblaze.b2.json;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -33,8 +30,7 @@ public class B2JsonHandlerMap {
     // we think it's safe to overwrite the entry for a given class because
     // we assume all handlers are stateless and any two instances of
     // a handler for a class are equivalent.
-    private final Map<Class<?>, B2JsonTypeHandler<?>> map =
-            new HashMap<Class<?>, B2JsonTypeHandler<?>>();
+    private final Map<Class<?>, B2JsonTypeHandler<?>> map = new HashMap<>();
 
     public B2JsonHandlerMap() {
         this(null);
@@ -94,7 +90,7 @@ public class B2JsonHandlerMap {
 
         if (result == null) {
             if (clazz.isEnum()) {
-                result = new B2JsonEnumHandler<T>(clazz);
+                result = new B2JsonEnumHandler<>(clazz);
                 rememberHandler(clazz, result);
             } else if (clazz.isArray()) {
                 final Class eltClazz = clazz.getComponentType();
@@ -119,9 +115,6 @@ public class B2JsonHandlerMap {
      * Is this class the base class for a union type?
      *
      * Union bases have the @union annotation.
-     *
-     * @throws B2JsonException if the class has the union annotation but
-     * breaks one of the rules.
      */
     /*package*/ static <T> boolean isUnionBase(Class<T> clazz) {
         return clazz.getAnnotation(B2Json.union.class) != null;
