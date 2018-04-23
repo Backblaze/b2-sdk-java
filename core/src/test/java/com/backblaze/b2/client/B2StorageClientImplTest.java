@@ -399,13 +399,13 @@ public class B2StorageClientImplTest {
     public void testGetFileInfo() throws B2Exception {
         final B2FileVersion fileVersion = makeVersion(1, 2);
         final B2GetFileInfoRequest request = B2GetFileInfoRequest.builder(fileId(1)).build();
-        when(webifier.getFileInfo(anyObject(), eq(request))).thenReturn(fileVersion);
+        when(webifier.getFileInfoByName(anyObject(), eq(request))).thenReturn(fileVersion);
 
         assertEquals(fileVersion, client.getFileInfo(request));
-        verify(webifier, times(1)).getFileInfo(anyObject(), eq(request));
+        verify(webifier, times(1)).getFileInfoByName(anyObject(), eq(request));
 
         assertEquals(fileVersion, client.getFileInfo(fileId(1)));
-        verify(webifier, times(2)).getFileInfo(anyObject(), eq(request));
+        verify(webifier, times(2)).getFileInfoByName(anyObject(), eq(request));
 
         // for coverage
         //noinspection ResultOfMethodCallIgnored

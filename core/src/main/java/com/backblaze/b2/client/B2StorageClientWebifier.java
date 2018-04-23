@@ -119,11 +119,11 @@ public interface B2StorageClientWebifier extends AutoCloseable {
     B2DownloadAuthorization getDownloadAuthorization(B2AccountAuthorization accountAuth,
                                                      B2GetDownloadAuthorizationRequest request) throws B2Exception;
 
-    B2FileVersion getFileInfo(B2AccountAuthorization accountAuth,
-                              B2GetFileInfoRequest request) throws B2Exception;
+    B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth,
+                                    B2GetFileInfoRequest request) throws B2Exception;
 
-    B2FileVersion getFileInfo(B2AccountAuthorization accountAuth,
-                              B2GetFileInfoByNameRequest request) throws B2Exception;
+    B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth,
+                                    B2GetFileInfoByNameRequest request) throws B2Exception;
 
     B2FileVersion hideFile(B2AccountAuthorization accountAuth,
                            B2HideFileRequest request) throws B2Exception;

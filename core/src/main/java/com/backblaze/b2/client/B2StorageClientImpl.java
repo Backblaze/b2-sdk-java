@@ -315,12 +315,12 @@ public class B2StorageClientImpl implements B2StorageClient {
 
     @Override
     public B2FileVersion getFileInfo(B2GetFileInfoRequest request) throws B2Exception {
-        return retryer.doRetry("b2_get_file_info", accountAuthCache, () -> webifier.getFileInfo(accountAuthCache.get(), request), retryPolicySupplier.get());
+        return retryer.doRetry("b2_get_file_info", accountAuthCache, () -> webifier.getFileInfoByName(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
 
     @Override
     public B2FileVersion getFileInfoByName(B2GetFileInfoByNameRequest request) throws B2Exception {
-        return retryer.doRetry("b2_get_file_info", accountAuthCache, () -> webifier.getFileInfo(accountAuthCache.get(), request), retryPolicySupplier.get());
+        return retryer.doRetry("get_file_info_by_name", accountAuthCache, () -> webifier.getFileInfoByName(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
 
     @Override

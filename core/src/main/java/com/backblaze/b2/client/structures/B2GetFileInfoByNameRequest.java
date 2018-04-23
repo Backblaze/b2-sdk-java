@@ -4,6 +4,8 @@
  */
 package com.backblaze.b2.client.structures;
 
+import com.backblaze.b2.util.B2Preconditions;
+
 import java.util.Objects;
 
 public class B2GetFileInfoByNameRequest {
@@ -12,8 +14,8 @@ public class B2GetFileInfoByNameRequest {
 
     public B2GetFileInfoByNameRequest(String bucketName,
                                       String fileName) {
-        // B2Preconditions.checkArg(bucketName != null);
-        // B2Preconditions.checkArg(fileName != null);
+        B2Preconditions.checkArgument(bucketName != null);
+        B2Preconditions.checkArgument(fileName != null);
         this.bucketName = bucketName;
         this.fileName = fileName;
     }
@@ -50,7 +52,7 @@ public class B2GetFileInfoByNameRequest {
         private final String fileName;
 
         private Builder(String bucketName,
-                       String fileName) {
+                        String fileName) {
             this.bucketName = bucketName;
             this.fileName = fileName;
         }

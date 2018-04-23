@@ -412,8 +412,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     @Override
-    public B2FileVersion getFileInfo(B2AccountAuthorization accountAuth,
-                                     B2GetFileInfoRequest request) throws B2Exception {
+    public B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth,
+                                           B2GetFileInfoRequest request) throws B2Exception {
         return webApiClient.postJsonReturnJson(
                 makeUrl(accountAuth, "b2_get_file_info"),
                 makeHeaders(accountAuth),
@@ -422,7 +422,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     @Override
-    public B2FileVersion getFileInfo(B2AccountAuthorization accountAuth, B2GetFileInfoByNameRequest request) throws B2Exception {
+    public B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth, B2GetFileInfoByNameRequest request) throws B2Exception {
         return webApiClient.postJsonReturnJson(
                 makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(), request.getFileName()),
                 makeHeaders(accountAuth),

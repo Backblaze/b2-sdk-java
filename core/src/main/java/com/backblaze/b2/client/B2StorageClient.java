@@ -405,8 +405,9 @@ public interface B2StorageClient extends Closeable {
     /**
      * Delete all files in bucket.
      *
-     * @param bucketId
-     * @throws B2Exception
+     * @param bucketId the bucket whose file versions should be deleted
+     * @throws B2Exception if there's any trouble. if there's trouble, it's undefined which
+     * file versions have been deleted (if any) and which haven't (if any).
      */
     default void deleteAllFilesInBucket(String bucketId) throws B2Exception {
         for (B2FileVersion fileVersion: fileNames(bucketId)) {
@@ -448,11 +449,11 @@ public interface B2StorageClient extends Closeable {
     B2FileVersion getFileInfoByName(B2GetFileInfoByNameRequest request) throws B2Exception;
 
     /**
-     * Just like getFileInfoByName(request), but you only have to specify the
-     * bucketName and the fileName instead of a request object.
+     * Just like getFileInfoByName(request), but for the most recent version of file
+     * with the specified fileName in the specified bucket.
      *
-     * @param bucketName the name of the bucket you want to download from.
-     * @param fileName   the name of the file you want to download.
+     * @param bucketName bucketName the name of the bucket containing the file you want info about.
+     * @param fileName   fileName the name of the file whose info you're interested in.
      * @throws B2Exception if there's any trouble.
      */
     default B2FileVersion getFileInfoByName(String bucketName, String fileName) throws B2Exception {
