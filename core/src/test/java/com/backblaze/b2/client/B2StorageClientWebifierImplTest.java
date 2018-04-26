@@ -23,6 +23,7 @@ import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
+import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
@@ -805,6 +806,32 @@ public class B2StorageClientWebifierImplTest {
         );
 
         checkRequestCategory(OTHER, w -> w.getFileInfo(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testGetFileInfoByName() throws B2Exception {
+        final B2GetFileInfoByNameRequest request = B2GetFileInfoByNameRequest
+                .builder(bucketName(1), fileName(1))
+                .build();
+
+        webifier.getFileInfoByName(ACCOUNT_AUTH, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v1/b2_get_file_info\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"fileId\": \"4_zBlah_0000001\"\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.getFileInfoByName(ACCOUNT_AUTH, request));
     }
 
     @Test
