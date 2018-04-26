@@ -787,7 +787,7 @@ public class B2StorageClientWebifierImplTest {
         final B2GetFileInfoRequest request = B2GetFileInfoRequest
                 .builder(fileId(1))
                 .build();
-        webifier.getFileInfoByName(ACCOUNT_AUTH, request);
+        webifier.getFileInfo(ACCOUNT_AUTH, request);
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
@@ -804,7 +804,7 @@ public class B2StorageClientWebifierImplTest {
                 "    B2FileVersion\n"
         );
 
-        checkRequestCategory(OTHER, w -> w.getFileInfoByName(ACCOUNT_AUTH, request));
+        checkRequestCategory(OTHER, w -> w.getFileInfo(ACCOUNT_AUTH, request));
     }
 
     @Test
