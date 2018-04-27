@@ -5,11 +5,11 @@
 package com.backblaze.b2.client.exceptions;
 
 public class B2InternalErrorException extends B2Exception {
-    public static final String CODE = "internal_error";
+    public static final String DEFAULT_CODE = "internal_error";
     public static final int STATUS = 500;
 
     public B2InternalErrorException(String message) {
-        this(CODE, message);
+        this(DEFAULT_CODE, message);
     }
     public B2InternalErrorException(String code,
                                     String message) {
@@ -26,6 +26,6 @@ public class B2InternalErrorException extends B2Exception {
                                     Integer retryAfterSecondsOrNull,
                                     String message,
                                     Throwable cause) {
-        super(code, STATUS, retryAfterSecondsOrNull, message, cause);
+        super(orIfNull(code, DEFAULT_CODE), STATUS, retryAfterSecondsOrNull, message, cause);
     }
 }
