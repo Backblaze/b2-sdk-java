@@ -14,7 +14,7 @@ import java.time.Duration;
 import static com.backblaze.b2.util.B2DateTimeUtil.ONE_SECOND_IN_MILLIS;
 import static org.junit.Assert.assertEquals;
 
-public class B2ClockSimTest {
+public class B2ClockSimTest extends B2BaseTest{
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 

@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import java.util.regex.Pattern;
@@ -11,7 +12,7 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class B2SdkTest {
+public class B2SdkTest extends B2BaseTest {
     // our versions are three integers separated by periods, with an
     // optional "-prereleaseName" at the end.  see semver.org
     private static final Pattern VERSION_PATTERN = Pattern.compile("^\\d+[.]\\d+[.]\\d+(-[a-zA-Z0-9]+)?$");

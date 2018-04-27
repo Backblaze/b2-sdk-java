@@ -17,7 +17,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class B2Utf8UtilTest {
+public class B2Utf8UtilTest extends B2BaseTest {
 
 
     //////////////////////////////////////////////////////////////////////////////

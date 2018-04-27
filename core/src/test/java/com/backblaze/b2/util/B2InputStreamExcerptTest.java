@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class B2InputStreamExcerptTest {
+public class B2InputStreamExcerptTest extends B2BaseTest {
     private static final String DIGITS_STR = "0123456789";
     private static final byte[] DIGITS_BYTES = DIGITS_STR.getBytes();
     private static final int EOF = -1;

@@ -7,6 +7,7 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2InternalErrorException;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class B2UploadUrlCacheTest {
+public class B2UploadUrlCacheTest extends B2BaseTest {
     private final B2StorageClientWebifier webifier = mock(B2StorageClientWebifier.class);
     private final B2AccountAuthorizationCache authCache = mock(B2AccountAuthorizationCache.class);
 

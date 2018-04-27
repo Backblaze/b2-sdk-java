@@ -43,6 +43,7 @@ import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2IoUtils;
@@ -83,7 +84,7 @@ import static org.mockito.Mockito.verify;
  * This test verifies that the B2StorageClientWebifierImpl translates
  * calls to it into the proper web api calls.
  */
-public class B2StorageClientWebifierImplTest {
+public class B2StorageClientWebifierImplTest extends B2BaseTest {
     private static final String USER_AGENT = "SecretAgentMan/3.19.28";
     private static final String MASTER_URL = "https://api.testb2.com";
 

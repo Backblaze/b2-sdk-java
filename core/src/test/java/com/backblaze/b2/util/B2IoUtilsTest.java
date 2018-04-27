@@ -17,7 +17,7 @@ import static com.backblaze.b2.client.B2TestHelpers.makeBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-public class B2IoUtilsTest {
+public class B2IoUtilsTest extends B2BaseTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 

@@ -5,6 +5,7 @@
 
 package com.backblaze.b2.json;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ import static org.junit.Assert.fail;
 /**
  * Unit tests for JsonReader
  */
-public class B2JsonReaderTest {
+public class B2JsonReaderTest extends B2BaseTest {
 
     @Test
     public void testReadNumberAsString() throws IOException, B2JsonException {

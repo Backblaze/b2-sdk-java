@@ -5,6 +5,7 @@
 
 package com.backblaze.b2.json;
 
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Preconditions;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,7 +42,7 @@ import static org.junit.Assert.fail;
         "unused",  // A lot of the test classes have things that aren't used, but we don't care.
         "WeakerAccess"  // A lot of the test classes could have weaker access, but we don't care.
 })
-public class B2JsonTest {
+public class B2JsonTest extends B2BaseTest {
 
     @Rule
     public ExpectedException thrown  = ExpectedException.none();

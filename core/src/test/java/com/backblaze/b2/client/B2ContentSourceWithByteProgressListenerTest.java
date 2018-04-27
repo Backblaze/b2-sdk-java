@@ -3,6 +3,7 @@ package com.backblaze.b2.client;/*
  */
 
 import com.backblaze.b2.client.contentSources.B2ContentSource;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2InputStreamWithByteProgressListener;
 import org.junit.After;
@@ -18,7 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-public class B2ContentSourceWithByteProgressListenerTest {
+public class B2ContentSourceWithByteProgressListenerTest extends B2BaseTest {
     private static final int EOF = -1;
 
     private final B2ContentSource wrappedSource = mock(B2ContentSource.class);

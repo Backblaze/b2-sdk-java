@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.structures;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
@@ -11,7 +12,7 @@ import static com.backblaze.b2.client.B2TestHelpers.makePart;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-public class B2PartTest {
+public class B2PartTest extends B2BaseTest {
     @Test
     public void test() {
         B2Part one = makePart(1);

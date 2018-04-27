@@ -50,6 +50,7 @@ import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
@@ -97,7 +98,7 @@ import static org.mockito.Mockito.when;
 /**
  */
 @SuppressWarnings("unchecked")
-public class B2StorageClientImplTest {
+public class B2StorageClientImplTest extends B2BaseTest {
     private static final B2AccountAuthorization ACCOUNT_AUTH = B2TestHelpers.makeAuth(1);
     private static final String ACCOUNT_ID = ACCOUNT_AUTH.getAccountId();
     private static final String APPLICATION_KEY = "applicationKey";

@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.contentSources;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -16,7 +17,7 @@ import static com.backblaze.b2.client.B2TestHelpers.SAMPLE_SHA1;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class B2FileContentSourceTest {
+public class B2FileContentSourceTest extends B2BaseTest {
     // rather than make a file on disk (and making the unit test depend on the filesystem)
     // i'm just going to try to use a non-existent file and check that i get reasonable
     // exceptions.

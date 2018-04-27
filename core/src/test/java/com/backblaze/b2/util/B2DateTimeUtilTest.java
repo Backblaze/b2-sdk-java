@@ -17,7 +17,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-public class B2DateTimeUtilTest {
+public class B2DateTimeUtilTest extends B2BaseTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
