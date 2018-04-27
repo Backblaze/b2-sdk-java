@@ -9,6 +9,7 @@ import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.exceptions.B2Exception;
 
 import java.io.InputStream;
+import java.util.Map;
 
 public interface B2WebApiClient extends AutoCloseable {
     /**
@@ -58,6 +59,16 @@ public interface B2WebApiClient extends AutoCloseable {
     void getContent(String url,
                     B2Headers headersOrNull,
                     B2ContentSink handler) throws B2Exception;
+
+    /**
+     * HEADSs to a web service that returns content, and returns the headers.
+     *
+     * @param url the url to head to
+     * @param headersOrNull the headers, if any.
+     * @return the headers of the response.
+     * @throws B2Exception if there's any trouble
+     */
+    Map<String, String> head(String url, B2Headers headersOrNull) throws B2Exception;
 
     /**
      * Closes this object and its underlying resources.

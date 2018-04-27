@@ -24,6 +24,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
@@ -39,6 +40,9 @@ import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.backblaze.b2.util.B2IoUtils.closeQuietly;
 
@@ -88,6 +92,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         }
     }
 
+
     @Override
     public void getContent(String url,
                            B2Headers headersOrNull,
@@ -121,6 +126,46 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
             }
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
+        }
+    }
+
+    /**
+     * HEADSs to a web service that returns content, and returns the headers.
+     *
+     * @param url the url to head to
+     * @param headersOrNull the headers, if any.
+     * @return the headers of the response.
+     * @throws B2Exception if there's any trouble
+     */
+    @Override
+    public Map<String, String> head(String url, B2Headers headersOrNull)
+            throws B2Exception {
+
+        CloseableHttpResponse response = null;
+        try {
+            HttpHead head = new HttpHead(url);
+            if (headersOrNull != null) {
+                head.setHeaders(makeHeaders(headersOrNull));
+            }
+
+            response = clientFactory.create().execute(head);
+
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode == HttpStatus.SC_OK) {
+                return Arrays.stream(response.getAllHeaders())
+                        .collect(Collectors.toMap(Header::getName, Header::getValue));
+            } else {
+                if (statusCode == HttpStatus.SC_NOT_FOUND) {
+                    throw B2Exception.create("file not found", statusCode, null, "file not found");
+                } else {
+                    throw B2Exception.create("unknown", statusCode, null, "");
+                }
+            }
+        } catch (IOException e) {
+            throw translateToB2Exception(e, url);
+        }
+        finally {
+            closeQuietly(response);
         }
     }
 
