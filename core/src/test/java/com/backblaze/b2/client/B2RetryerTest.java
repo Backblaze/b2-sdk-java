@@ -16,6 +16,7 @@ import com.backblaze.b2.client.exceptions.B2ServiceUnavailableException;
 import com.backblaze.b2.client.exceptions.B2TooManyRequestsException;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Preconditions;
 import org.junit.Test;
 
@@ -37,7 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-public class B2RetryerTest {
+public class B2RetryerTest extends B2BaseTest {
     private static final String OP = "operation";
 
     // we need to mock this so we don't really sleep.

@@ -4,6 +4,7 @@ package com.backblaze.b2.client;/*
 
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadProgress;
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -15,7 +16,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-public class B2UploadProgressAdapterTest {
+public class B2UploadProgressAdapterTest extends B2BaseTest {
     private final B2UploadListener listener = mock(B2UploadListener.class);
     private final B2UploadProgressAdapter adapter = new B2UploadProgressAdapter(listener, 1, 2, 3, 4);
 

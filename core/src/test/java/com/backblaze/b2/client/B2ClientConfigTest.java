@@ -7,6 +7,7 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -18,7 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class B2ClientConfigTest {
+public class B2ClientConfigTest extends B2BaseTest {
     private static final String USER_AGENT = "B2ClientConfigTest/0.0.1";
     private final B2AccountAuthorizer AUTHORIZER = new B2AccountAuthorizer() {
         @Override

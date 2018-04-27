@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-public class B2ByteRangeTest {
+public class B2ByteRangeTest extends B2BaseTest {
 
     @Test
     public void testStartAt() {

@@ -7,13 +7,14 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2InternalErrorException;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class B2DefaultRetryPolicyTest {
+public class B2DefaultRetryPolicyTest extends B2BaseTest {
     private static final String OP = "operation";
     private final B2RetryPolicy policy = new B2DefaultRetryPolicy();
 

@@ -10,6 +10,7 @@ import com.backblaze.b2.client.exceptions.B2RuntimeException;
 import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListPartsResponse;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,7 +26,7 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class B2ListPartsIterableImplTest {
+public class B2ListPartsIterableImplTest extends B2BaseTest {
     private final String LARGE_FILE_ID = fileId(1);
     private final B2StorageClientImpl client = mock(B2StorageClientImpl.class);
 

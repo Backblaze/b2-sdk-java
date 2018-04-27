@@ -4,11 +4,12 @@
  */
 package com.backblaze.b2.client.exceptions;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class B2ExceptionTest {
+public class B2ExceptionTest extends B2BaseTest {
     private static final String CODE = "test";
     private static final Integer RETRY_AFTER_SECS = 123;
     private static final String MSG = "test message";

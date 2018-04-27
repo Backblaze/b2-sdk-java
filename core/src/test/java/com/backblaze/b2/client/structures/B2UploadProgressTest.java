@@ -2,11 +2,12 @@ package com.backblaze.b2.client.structures;/*
  * Copyright 2017, Backblaze, Inc. All rights reserved. 
  */
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class B2UploadProgressTest {
+public class B2UploadProgressTest extends B2BaseTest {
     private final static int PART_INDEX = 1;
     private final static int PART_COUNT = 2;
     private final static long START_BYTE = 3;

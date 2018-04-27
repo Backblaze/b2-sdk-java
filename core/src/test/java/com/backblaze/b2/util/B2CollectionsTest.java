@@ -15,7 +15,7 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class B2CollectionsTest {
+public class B2CollectionsTest extends B2BaseTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 

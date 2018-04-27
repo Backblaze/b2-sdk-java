@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.contentSources;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -17,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class B2HeadersImplTest {
+public class B2HeadersImplTest extends B2BaseTest {
     private static final String SAMPLE_SHA1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
     private static final Long   SAMPLE_LAST_MODIFIED_LONG = 1495210502000L;
     private static final String SAMPLE_LAST_MODIFIED = Long.toString(SAMPLE_LAST_MODIFIED_LONG);

@@ -18,7 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-public class B2InputStreamWithByteProgressListenerTest {
+public class B2InputStreamWithByteProgressListenerTest extends B2BaseTest {
     private static final int EOF = -1;
 
     private final InputStream wrappedStream = mock(InputStream.class);

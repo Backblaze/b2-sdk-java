@@ -5,6 +5,7 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class B2PartSizesTest {
+public class B2PartSizesTest extends B2BaseTest {
     private final long GB = 1000 * 1000 * 1000;
     private final B2AccountAuthorization accountAuth = B2TestHelpers.makeAuth(1);
     private final B2PartSizes partSizes = B2PartSizes.from(accountAuth);
