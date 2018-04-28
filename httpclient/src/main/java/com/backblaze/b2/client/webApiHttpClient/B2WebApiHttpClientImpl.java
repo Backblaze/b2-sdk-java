@@ -157,7 +157,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                 if (statusCode == HttpStatus.SC_NOT_FOUND) {
                     throw B2Exception.create("file not found", statusCode, null, "file not found");
                 } else {
-                    throw B2Exception.create("unknown", statusCode, null, "");
+                    throw B2Exception.create(null, statusCode, null, "unknown");
                 }
             }
         } catch (IOException e) {
