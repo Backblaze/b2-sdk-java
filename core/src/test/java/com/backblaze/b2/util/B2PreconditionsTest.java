@@ -9,7 +9,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class B2PreconditionsTest {
+public class B2PreconditionsTest extends B2BaseTest {
     @Test
     public void test() {
         checkThrows(IllegalArgumentException.class, null, () -> B2Preconditions.checkArgument(false));

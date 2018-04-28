@@ -5,6 +5,7 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentSources.B2ContentSource;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2InputStreamExcerpt;
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class B2PartOfContentSourceTest {
+public class B2PartOfContentSourceTest extends B2BaseTest {
     final B2ContentSource source = mock(B2ContentSource.class);
     final B2PartOfContentSource partOf = new B2PartOfContentSource(source, 26, 100);
 

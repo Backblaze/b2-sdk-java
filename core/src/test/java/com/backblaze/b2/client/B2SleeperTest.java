@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client;
 
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2ClockImpl;
 import org.junit.Rule;
@@ -12,7 +13,7 @@ import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertTrue;
 
-public class B2SleeperTest {
+public class B2SleeperTest extends B2BaseTest {
     private final B2Sleeper sleeper = new B2Sleeper();
 
     @Rule

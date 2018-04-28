@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
-public class B2ClockImplTest {
+public class B2ClockImplTest extends B2BaseTest {
 
     @Test
     public void test() throws InterruptedException {

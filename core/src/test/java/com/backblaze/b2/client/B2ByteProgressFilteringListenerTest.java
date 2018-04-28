@@ -2,6 +2,7 @@ package com.backblaze.b2.client;/*
  * Copyright 2017, Backblaze, Inc. All rights reserved. 
  */
 
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2ClockSim;
@@ -18,7 +19,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-public class B2ByteProgressFilteringListenerTest {
+public class B2ByteProgressFilteringListenerTest extends B2BaseTest {
     private final B2ClockSim clockSim = B2Clock.useSimulator(parseDateTime("2017-08-31 00:00:00"));
     private final B2ByteProgressListener wrapped = mock(B2ByteProgressListener.class);
     private final B2ByteProgressListener filtering = new B2ByteProgressFilteringListener(wrapped);

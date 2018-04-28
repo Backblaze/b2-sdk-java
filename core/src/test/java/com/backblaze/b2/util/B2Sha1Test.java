@@ -13,7 +13,7 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class B2Sha1Test {
+public class B2Sha1Test extends B2BaseTest {
 
     @Test
     public void testSha1() throws IOException {

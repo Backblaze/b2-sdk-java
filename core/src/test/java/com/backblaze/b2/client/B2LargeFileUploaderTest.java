@@ -21,6 +21,7 @@ import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.After;
@@ -71,7 +72,7 @@ import static org.mockito.Mockito.when;
  * The normal, easy successful use of B2LargeFileUploader is covered in B2StorageClientImplTest.
  * This test class covers exception paths.
  */
-public class B2LargeFileUploaderTest {
+public class B2LargeFileUploaderTest extends B2BaseTest {
     private final B2Sleeper sleeper = mock(B2Sleeper.class);
     private final B2Retryer retryer = new B2Retryer(sleeper);
     private final B2StorageClientWebifier webifier = mock(B2StorageClientWebifier.class);

@@ -5,6 +5,7 @@
 package com.backblaze.b2.client.exceptions;
 
 public class B2UnauthorizedException extends B2Exception {
+    public static final String DEFAULT_CODE = "unauthorized";
     public static final int STATUS = 401;
 
     // XXX: ideally this would be "jar private" so far so that only
@@ -31,7 +32,7 @@ public class B2UnauthorizedException extends B2Exception {
                                    Integer retryAfterSecondsOrNull,
                                    String message,
                                    Throwable cause) {
-        super(code, STATUS, retryAfterSecondsOrNull, message, cause);
+        super(orIfNull(code, DEFAULT_CODE), STATUS, retryAfterSecondsOrNull, message, cause);
     }
 
     public RequestCategory getRequestCategory() {

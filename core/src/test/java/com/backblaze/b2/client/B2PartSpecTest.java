@@ -4,13 +4,14 @@
  */
 package com.backblaze.b2.client;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
-public class B2PartSpecTest {
+public class B2PartSpecTest extends B2BaseTest {
     @Test
     public void test() {
         final B2PartSpec a = new B2PartSpec(1, 0, 100);

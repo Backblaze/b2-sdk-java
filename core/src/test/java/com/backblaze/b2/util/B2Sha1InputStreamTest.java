@@ -12,7 +12,7 @@ import java.io.IOException;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-public class B2Sha1InputStreamTest {
+public class B2Sha1InputStreamTest extends B2BaseTest {
 
     @Test
     public void testAllReadMethods() throws IOException {

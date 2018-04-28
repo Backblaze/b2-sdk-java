@@ -8,6 +8,7 @@ import com.backblaze.b2.client.B2TestHelpers;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.contentSources.B2HeadersImpl;
 import com.backblaze.b2.client.exceptions.B2Exception;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Sha1;
 import org.junit.Rule;
@@ -32,7 +33,7 @@ import static org.junit.Assert.assertTrue;
  * actually writing to disk, it doesn't really write to disk.  Bummer, huh?
  * Hopefully there's more exercising of it elsewhere.
  */
-public class B2ContentWriterTest {
+public class B2ContentWriterTest extends B2BaseTest {
     private static final int LEN = 6123;
 
     private final byte[] bytes = makeBytes(LEN);

@@ -6,6 +6,7 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.client.B2TestHelpers;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.Test;
 
@@ -16,7 +17,7 @@ import static com.backblaze.b2.client.B2TestHelpers.fileName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-public class B2FileVersionTest {
+public class B2FileVersionTest extends B2BaseTest {
 
     @Test
     public void test() {

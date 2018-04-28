@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.contentHandlers;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import java.io.File;
@@ -16,7 +17,7 @@ import static org.junit.Assert.assertTrue;
  * actually writing to disk, it doesn't really write to disk.  Bummer, huh?
  * Hopefully there's more exercising of it elsewhere.
  */
-public class B2ContentFileWriterTest {
+public class B2ContentFileWriterTest extends B2BaseTest {
     private File FILE = new File("/tmp/outputFile");
 
     @Test

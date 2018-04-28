@@ -7,6 +7,7 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2InternalErrorException;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class B2UploadPartUrlCacheTest {
+public class B2UploadPartUrlCacheTest extends B2BaseTest {
     private static final String LARGE_FILE_ID_1 = "4_zb330e285948b7a6d4b1b0712_f2000000000000001_d20150314_m111111_c001_v1234567_t6789";
     //private static final String LARGE_FILE_ID_2 = "4_zb330e285948b7a6d4b1b0712_f2000000000000002_d20150314_m222222_c001_v1234567_t6789";
 

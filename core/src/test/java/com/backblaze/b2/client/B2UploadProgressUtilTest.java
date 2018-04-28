@@ -3,11 +3,12 @@ package com.backblaze.b2.client;/*
  */
 
 import com.backblaze.b2.client.structures.B2UploadState;
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class B2UploadProgressUtilTest {
+public class B2UploadProgressUtilTest extends B2BaseTest {
     private static final int PART_COUNT = 10;
     private static final long LENGTH = 100;
     private static final B2PartSpec PART_SPEC = new B2PartSpec(2, 123, LENGTH);
