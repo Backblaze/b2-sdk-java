@@ -9,6 +9,7 @@ import com.backblaze.b2.client.contentSources.B2ByteArrayContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2Headers;
+import com.backblaze.b2.client.contentSources.B2HeadersImpl;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
@@ -21,6 +22,7 @@ import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
@@ -63,16 +65,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.client.B2TestHelpers.bucketName;
+import static com.backblaze.b2.client.B2TestHelpers.fileHeadersId;
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
 import static com.backblaze.b2.client.B2TestHelpers.makeBucket;
 import static com.backblaze.b2.client.B2TestHelpers.uploadPartUrlResponse;
 import static com.backblaze.b2.client.B2TestHelpers.uploadUrlResponse;
+import static com.backblaze.b2.client.contentSources.B2Headers.CONTENT_LENGTH;
+import static com.backblaze.b2.client.contentSources.B2Headers.FILE_ID;
+import static com.backblaze.b2.client.contentSources.B2Headers.FILE_NAME;
+import static com.backblaze.b2.client.contentSources.B2Headers.UPLOAD_TIMESTAMP;
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.ACCOUNT_AUTHORIZATION;
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.OTHER;
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.UPLOADING;
 import static com.backblaze.b2.json.B2Json.toJsonOrThrowRuntime;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
@@ -273,7 +281,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                     indent(url) + "\n" +
                     "headers:\n" +
                     indent(toString(headersOrNull)) + "\n" );
-            return null;
+            return fileHeadersId(1);
         }
 
         @Override
@@ -830,23 +838,20 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 .builder(bucketName(1), fileName(1))
                 .build();
 
-        webifier.getFileInfoByName(ACCOUNT_AUTH, request);
+        B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
 
-        webApiClient.check("postJsonReturnJson.\n" +
+        assertEquals(fileId(1), version.getFileId());
+        assertEquals(fileName(1), version.getFileName());
+        assertEquals(1L, version.getContentLength());
+        assertEquals(1L, version.getUploadTimestamp());
+
+        webApiClient.check("head.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_get_file_info\n" +
+                "    downloadUrl1/file/bucketName1/files/0001\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
-                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
-                "request:\n" +
-                "    {\n" +
-                "      \"fileId\": \"4_zBlah_0000001\"\n" +
-                "    }\n" +
-                "responseClass:\n" +
-                "    B2FileVersion\n"
-        );
-
+                "    X-Bz-Test-Mode: force_cap_exceeded\n");
         checkRequestCategory(OTHER, w -> w.getFileInfoByName(ACCOUNT_AUTH, request));
     }
 

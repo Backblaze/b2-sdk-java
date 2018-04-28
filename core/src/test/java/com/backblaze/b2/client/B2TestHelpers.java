@@ -5,6 +5,8 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
+import com.backblaze.b2.client.contentSources.B2Headers;
+import com.backblaze.b2.client.contentSources.B2HeadersImpl;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketTypes;
@@ -19,6 +21,11 @@ import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2Sha1;
 
 import java.util.Collections;
+
+import static com.backblaze.b2.client.contentSources.B2Headers.CONTENT_LENGTH;
+import static com.backblaze.b2.client.contentSources.B2Headers.FILE_ID;
+import static com.backblaze.b2.client.contentSources.B2Headers.FILE_NAME;
+import static com.backblaze.b2.client.contentSources.B2Headers.UPLOAD_TIMESTAMP;
 
 public class B2TestHelpers {
     public static final String SAMPLE_SHA1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
@@ -148,6 +155,15 @@ public class B2TestHelpers {
                         Collections.singletonList("https://something.com"),
                         Collections.singleton("b2_download_file_by_id"),
                         0)
+                .build();
+    }
+
+    public static B2Headers fileHeadersId(int i) {
+        return B2HeadersImpl.builder()
+                .set(FILE_ID, fileId(i))
+                .set(FILE_NAME, fileName(i))
+                .set(CONTENT_LENGTH, Integer.toString(i))
+                .set(UPLOAD_TIMESTAMP, Integer.toString(i))
                 .build();
     }
 

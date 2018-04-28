@@ -430,6 +430,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         B2Headers headers = webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(),
                 request.getFileName()), makeHeaders(accountAuth));
 
+
         return new B2FileVersion(headers.getValueOrNull(FILE_ID), headers.getValueOrNull(FILE_NAME),
                 headers.getContentLength(), headers.getContentType(), headers.getContentSha1OrNull(),
                 headers.getB2FileInfo(), null, Long.parseLong(headers.getValueOrNull(UPLOAD_TIMESTAMP)));
