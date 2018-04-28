@@ -68,7 +68,7 @@ public interface B2WebApiClient extends AutoCloseable {
      * @return the headers of the response.
      * @throws B2Exception if there's any trouble
      */
-    Map<String, String> head(String url, B2Headers headersOrNull) throws B2Exception;
+    B2Headers head(String url, B2Headers headersOrNull) throws B2Exception;
 
     /**
      * Closes this object and its underlying resources.

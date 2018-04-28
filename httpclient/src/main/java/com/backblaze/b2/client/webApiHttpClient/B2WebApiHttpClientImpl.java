@@ -41,8 +41,6 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.backblaze.b2.util.B2IoUtils.closeQuietly;
 
@@ -138,7 +136,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
      * @throws B2Exception if there's any trouble
      */
     @Override
-    public Map<String, String> head(String url, B2Headers headersOrNull)
+    public B2Headers head(String url, B2Headers headersOrNull)
             throws B2Exception {
 
         CloseableHttpResponse response = null;
@@ -152,8 +150,9 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
 
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode == HttpStatus.SC_OK) {
-                return Arrays.stream(response.getAllHeaders())
-                        .collect(Collectors.toMap(Header::getName, Header::getValue));
+                B2HeadersImpl.Builder builder = B2HeadersImpl.builder();
+                Arrays.stream(response.getAllHeaders()).forEach(header -> builder.set(header.getName(), header.getValue()));
+                return builder.build();
             } else {
                 if (statusCode == HttpStatus.SC_NOT_FOUND) {
                     throw B2Exception.create("file not found", statusCode, null, "file not found");

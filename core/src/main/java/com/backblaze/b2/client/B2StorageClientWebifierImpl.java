@@ -425,12 +425,10 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     @Override
-    public B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth, B2GetFileInfoByNameRequest request) throws B2Exception {
-        B2HeadersImpl.Builder builder = B2HeadersImpl.builder();
-        webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(), request.getFileName()),
-                makeHeaders(accountAuth)).forEach((key, value) -> builder.set(key, value));
-
-        B2Headers headers = builder.build();
+    public B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth,
+                                           B2GetFileInfoByNameRequest request) throws B2Exception {
+        B2Headers headers = webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(),
+                request.getFileName()), makeHeaders(accountAuth));
 
         return new B2FileVersion(headers.getValueOrNull(FILE_ID), headers.getValueOrNull(FILE_NAME),
                 headers.getContentLength(), headers.getContentType(), headers.getContentSha1OrNull(),

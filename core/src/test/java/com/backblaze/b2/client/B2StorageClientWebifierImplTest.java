@@ -58,7 +58,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
@@ -167,7 +166,7 @@ public class B2StorageClientWebifierImplTest {
         }
 
         @Override
-        public Map<String, String> head(String url, B2Headers headersOrNull) throws B2Exception {
+        public B2Headers head(String url, B2Headers headersOrNull) throws B2Exception {
             throw new B2UnauthorizedException("unauthorized", null, "unauthorized msg");
         }
 
@@ -267,7 +266,7 @@ public class B2StorageClientWebifierImplTest {
         }
 
         @Override
-        public Map<String, String> head(String url, B2Headers headersOrNull) throws B2Exception {
+        public B2Headers head(String url, B2Headers headersOrNull) throws B2Exception {
             callDescription = ("head.\n" +
                     "url:\n" +
                     indent(url) + "\n" +
