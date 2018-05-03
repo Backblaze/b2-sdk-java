@@ -250,7 +250,13 @@ public class B2Sample {
         // get file info by name.
         B2FileVersion file2ByName = client.getFileInfoByName(bucket.getBucketName(), file2.getFileName());
         writer.println("file2ByName: " + file2ByName);
-        if (!file2again.equals(file2ByName)) {
+
+        if (!file2again.getFileId().equals(file2ByName.getFileId()) ||
+            file2again.getContentLength() != file2ByName.getContentLength() ||
+            !file2again.getContentType().equals(file2ByName.getContentType()) ||
+            !file2again.getContentSha1().equals(file2ByName.getContentSha1()) ||
+            file2again.getUploadTimestamp() != file2ByName.getUploadTimestamp() ||
+            !file2again.getFileName().equals(file2ByName.getFileName())) {
             throw new RuntimeException("file!");
         }
 

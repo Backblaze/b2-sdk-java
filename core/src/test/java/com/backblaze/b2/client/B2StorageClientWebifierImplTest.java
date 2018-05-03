@@ -9,7 +9,6 @@ import com.backblaze.b2.client.contentSources.B2ByteArrayContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2Headers;
-import com.backblaze.b2.client.contentSources.B2HeadersImpl;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
@@ -65,16 +64,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.client.B2TestHelpers.bucketName;
-import static com.backblaze.b2.client.B2TestHelpers.fileHeadersId;
+import static com.backblaze.b2.client.B2TestHelpers.makeFileHeaders;
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
 import static com.backblaze.b2.client.B2TestHelpers.makeBucket;
 import static com.backblaze.b2.client.B2TestHelpers.uploadPartUrlResponse;
 import static com.backblaze.b2.client.B2TestHelpers.uploadUrlResponse;
-import static com.backblaze.b2.client.contentSources.B2Headers.CONTENT_LENGTH;
-import static com.backblaze.b2.client.contentSources.B2Headers.FILE_ID;
-import static com.backblaze.b2.client.contentSources.B2Headers.FILE_NAME;
-import static com.backblaze.b2.client.contentSources.B2Headers.UPLOAD_TIMESTAMP;
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.ACCOUNT_AUTHORIZATION;
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.OTHER;
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.UPLOADING;
@@ -281,7 +276,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                     indent(url) + "\n" +
                     "headers:\n" +
                     indent(toString(headersOrNull)) + "\n" );
-            return fileHeadersId(1);
+            return makeFileHeaders(1);
         }
 
         @Override

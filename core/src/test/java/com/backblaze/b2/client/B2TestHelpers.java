@@ -158,7 +158,7 @@ public class B2TestHelpers {
                 .build();
     }
 
-    public static B2Headers fileHeadersId(int i) {
+    public static B2Headers makeFileHeaders(int i) {
         return B2HeadersImpl.builder()
                 .set(FILE_ID, fileId(i))
                 .set(FILE_NAME, fileName(i))

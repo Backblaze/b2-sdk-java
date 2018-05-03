@@ -433,7 +433,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
         return new B2FileVersion(headers.getValueOrNull(FILE_ID), headers.getValueOrNull(FILE_NAME),
                 headers.getContentLength(), headers.getContentType(), headers.getContentSha1OrNull(),
-                headers.getB2FileInfo(), null, Long.parseLong(headers.getValueOrNull(UPLOAD_TIMESTAMP)));
+                headers.getB2FileInfo(), "upload", Long.parseLong(headers.getValueOrNull(UPLOAD_TIMESTAMP)));
     }
 
     @Override

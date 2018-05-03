@@ -154,11 +154,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                 Arrays.stream(response.getAllHeaders()).forEach(header -> builder.set(header.getName(), header.getValue()));
                 return builder.build();
             } else {
-                if (statusCode == HttpStatus.SC_NOT_FOUND) {
-                    throw B2Exception.create("file not found", statusCode, null, "file not found");
-                } else {
-                    throw B2Exception.create(null, statusCode, null, "unknown");
-                }
+                throw B2Exception.create(null, statusCode, null, "");
             }
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
