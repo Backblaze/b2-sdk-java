@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.backblaze.b2.util.B2StringUtil.startsWithIgnoreCase;
+
 /**
  * B2Headers represents the HTTP headers that come with a response from the server.
  */
@@ -129,7 +131,7 @@ public interface B2Headers {
     default Map<String,String> getB2FileInfo() {
         final Map<String,String> info = new TreeMap<>();
         for (String name : getNames()) {
-            if (name.startsWith(FILE_INFO_PREFIX)) {
+            if (startsWithIgnoreCase(name, FILE_INFO_PREFIX)) {
                 final String shortName = name.substring(FILE_INFO_PREFIX.length());
                 info.put(shortName, getValueOrNull(name));
             }

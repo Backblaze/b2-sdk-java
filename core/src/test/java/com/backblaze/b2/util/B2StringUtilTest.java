@@ -15,9 +15,11 @@ import static com.backblaze.b2.util.B2StringUtil.getUtf8Bytes;
 import static com.backblaze.b2.util.B2StringUtil.isEmpty;
 import static com.backblaze.b2.util.B2StringUtil.join;
 import static com.backblaze.b2.util.B2StringUtil.percentEncode;
+import static com.backblaze.b2.util.B2StringUtil.startsWithIgnoreCase;
 import static com.backblaze.b2.util.B2StringUtil.toHexString;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class B2StringUtilTest extends B2BaseTest {
@@ -93,6 +95,29 @@ public class B2StringUtilTest extends B2BaseTest {
         assertEquals("", toHexString(null));
         assertEquals("", toHexString(new byte[0]));
         assertEquals("abf0", toHexString(new byte[] {(byte) 0xab, (byte) 0xf0}));
+    }
+
+    @Test
+    public void testStartsWithIgnoreCase() {
+
+        // cases with nulls
+        assertFalse(startsWithIgnoreCase(null, "prefix"));
+        assertFalse(startsWithIgnoreCase("all", null));
+        assertFalse(startsWithIgnoreCase(null, null));
+
+        // cases where all is too short to possibly contain the prefix.
+        assertFalse(startsWithIgnoreCase("", "prefix"));
+        assertFalse(startsWithIgnoreCase("prefi", "prefix"));
+
+        // cases where it's just not the right prefix
+        assertFalse(startsWithIgnoreCase("real", "fake"));
+        assertFalse(startsWithIgnoreCase("real", "read"));
+
+        // cases where it's the right prefix, even with different cases.
+        assertTrue(startsWithIgnoreCase("real", "real"));
+        assertTrue(startsWithIgnoreCase("really", "real"));
+        assertTrue(startsWithIgnoreCase("REALly", "real"));
+        assertTrue(startsWithIgnoreCase("REALly", "ReAl"));
     }
 
     @Test
