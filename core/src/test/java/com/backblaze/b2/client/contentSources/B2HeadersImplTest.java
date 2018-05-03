@@ -39,7 +39,7 @@ public class B2HeadersImplTest extends B2BaseTest {
                 .set(B2Headers.SRC_LAST_MODIFIED_MILLIS, SAMPLE_LAST_MODIFIED)
                 .set(B2Headers.CONTENT_SHA1, SAMPLE_SHA1)
                 .set(B2Headers.FILE_INFO_PREFIX + "alphabet", "abc")
-                .set(B2Headers.FILE_INFO_PREFIX + "zoo", "san diego")
+                .set(B2Headers.FILE_INFO_PREFIX.toLowerCase() + "zoo", "san diego")
                 .build();
     }
 
@@ -55,7 +55,7 @@ public class B2HeadersImplTest extends B2BaseTest {
                 B2Headers.CONTENT_SHA1,
                 B2Headers.FILE_INFO_PREFIX + "alphabet",
                 B2Headers.SRC_LAST_MODIFIED_MILLIS,
-                B2Headers.FILE_INFO_PREFIX + "zoo");
+                B2Headers.FILE_INFO_PREFIX.toLowerCase() + "zoo");
         assertEquals(expectedNames, new ArrayList<>(headers.getNames()));
     }
 
