@@ -10,6 +10,7 @@ import com.backblaze.b2.client.exceptions.B2RuntimeException;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileNamesResponse;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,7 +29,7 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class B2ListFileNamesIterableTest {
+public class B2ListFileNamesIterableTest extends B2BaseTest {
     private final String BUCKET_ID = bucketId(1);
     private final B2StorageClientImpl client = mock(B2StorageClientImpl.class);
 

@@ -46,11 +46,10 @@ script:
   - (cd $OUTPUT_DIR; zip -r $TRAVIS_BUILD_DIR/build/$OUTPUT_ZIP *)
 
   #
-  # upload to b2
+  # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
   #
 
-  - b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
-  - b2 upload_file --contentType application/octet the-b2-sdk-java build/$OUTPUT_ZIP builds/$OUTPUT_ZIP
+  - ./maybe_upload_build_results $OUTPUT_ZIP
 
   ## list all files to help debug stuff!
   #- find $TRAVIS_BUILD_DIR

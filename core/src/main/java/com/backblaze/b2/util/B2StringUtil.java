@@ -187,7 +187,25 @@ public class B2StringUtil {
 
         return builder.toString();
     }
+  
+    /**
+     * @param all the string whose prefix we're checking
+     * @param possiblePrefix the prefix we're asking about being in all.
+     * @return true iff both all and possiblePrefix are non-null and
+     *                  all starts with possiblePrefix ignoring case.
+     */
+    public static boolean startsWithIgnoreCase(String all, String possiblePrefix) {
+        if (all == null || possiblePrefix == null) {
+            return false;  // by specification of this method.
+        }
+        if (all.length() < possiblePrefix.length()) {
+            return false;  // too short to have the prefix
+        }
 
+        // we have to actually check the prefix.
+        final String prefix = all.substring(0, possiblePrefix.length());
+        return prefix.equalsIgnoreCase(possiblePrefix);
+    }
 
     // this exists so it can be called for code coverage purposes in the unit test.
     // it is package-private so that no one else can call it.

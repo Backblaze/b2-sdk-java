@@ -279,6 +279,14 @@ public class B2Sample {
         B2FileVersion file2again = client.getFileInfo(file2.getFileId());
         writer.println("file2Again: " + file2again);
 
+        // get file info by name.
+        B2FileVersion file2ByName = client.getFileInfoByName(bucket.getBucketName(), file2.getFileName());
+        writer.println("file2ByName: " + file2ByName);
+
+        if (!file2again.equals(file2ByName)) {
+            throw new RuntimeException("file!");
+        }
+
         // hide file
         client.hideFile(bucketId, file2.getFileName());
 

@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.contentSources;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -17,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class B2HeadersImplTest {
+public class B2HeadersImplTest extends B2BaseTest {
     private static final String SAMPLE_SHA1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
     private static final Long   SAMPLE_LAST_MODIFIED_LONG = 1495210502000L;
     private static final String SAMPLE_LAST_MODIFIED = Long.toString(SAMPLE_LAST_MODIFIED_LONG);
@@ -38,7 +39,7 @@ public class B2HeadersImplTest {
                 .set(B2Headers.SRC_LAST_MODIFIED_MILLIS, SAMPLE_LAST_MODIFIED)
                 .set(B2Headers.CONTENT_SHA1, SAMPLE_SHA1)
                 .set(B2Headers.FILE_INFO_PREFIX + "alphabet", "abc")
-                .set(B2Headers.FILE_INFO_PREFIX + "zoo", "san diego")
+                .set(B2Headers.FILE_INFO_PREFIX.toLowerCase() + "zoo", "san diego")
                 .build();
     }
 
@@ -54,7 +55,7 @@ public class B2HeadersImplTest {
                 B2Headers.CONTENT_SHA1,
                 B2Headers.FILE_INFO_PREFIX + "alphabet",
                 B2Headers.SRC_LAST_MODIFIED_MILLIS,
-                B2Headers.FILE_INFO_PREFIX + "zoo");
+                B2Headers.FILE_INFO_PREFIX.toLowerCase() + "zoo");
         assertEquals(expectedNames, new ArrayList<>(headers.getNames()));
     }
 

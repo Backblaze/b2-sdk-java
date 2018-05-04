@@ -13,7 +13,7 @@ import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
 
-public class B2Sha1AppenderInputStreamTest {
+public class B2Sha1AppenderInputStreamTest extends B2BaseTest {
     private static final String CONTENTS = "Hello, World!";
     private static final String SHA1 = "0a0a9f2a6772942557ab5355d76af442f8f65e01";
 

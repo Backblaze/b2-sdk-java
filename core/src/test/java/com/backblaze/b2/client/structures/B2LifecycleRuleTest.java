@@ -4,13 +4,14 @@
  */
 package com.backblaze.b2.client.structures;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertEquals;
 
-public class B2LifecycleRuleTest {
+public class B2LifecycleRuleTest extends B2BaseTest {
     private static final String FILE_PREFIX = "files/";
 
     @Rule

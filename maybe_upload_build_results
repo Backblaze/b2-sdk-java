@@ -1,0 +1,55 @@
+#!/bin/bash
+
+################################################################################################
+#
+# If $B2_ACCOUNT_ID and $B2_APPLICATION_KEY are provided in the environment,
+# this will try to upload the file specified on the command line from the
+# build/ directory.  The exit code will indicate whether the upload worked.
+#
+# If either of those environment variables isn't provided, this just returns
+# prints a message and returns success.
+#
+################################################################################################
+
+ZIP_TO_UPLOAD="$1"
+if test -z "$ZIP_TO_UPLOAD"; then
+    echo "ERROR: missing name of the zip file to upload"
+    echo "usage: maybe_upload_build_results build.zip"
+    exit 1
+fi
+
+SRC=build/$ZIP_TO_UPLOAD
+if test ! -f $SRC; then
+    echo "ERROR: file $SRC doesn't exist"
+    echo "usage: maybe_upload_build_results build.zip"
+    exit 1
+fi
+
+if test -z "$B2_ACCOUNT_ID" -o -z "$B2_APPLICATION_KEY"; then
+    echo "NOT uploading build results because no credentials are provided."
+    echo "this probably isn't a backblaze build."
+    # it's non-obvious that we would return success, but it's a reasonable outcome.
+    exit 0
+fi
+
+DEST=builds/$ZIP_TO_UPLOAD
+
+echo authorizing account
+b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
+status=$?
+if test $status != "0"; then
+    echo "failed to authorize with b2 server"
+    exit $status
+fi
+
+
+echo uploading $SRC
+b2 upload_file --contentType application/octet the-b2-sdk-java $SRC $DEST
+status=$?
+if test $status != "0"; then
+    echo "failed to upload $SRC to b2"
+    exit $status
+fi
+
+# finally!
+exit 0

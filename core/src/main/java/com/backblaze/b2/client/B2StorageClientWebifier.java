@@ -25,6 +25,7 @@ import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
+import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
@@ -135,6 +136,9 @@ public interface B2StorageClientWebifier extends AutoCloseable {
 
     B2FileVersion getFileInfo(B2AccountAuthorization accountAuth,
                               B2GetFileInfoRequest request) throws B2Exception;
+
+    B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth,
+                                    B2GetFileInfoByNameRequest request) throws B2Exception;
 
     B2FileVersion hideFile(B2AccountAuthorization accountAuth,
                            B2HideFileRequest request) throws B2Exception;

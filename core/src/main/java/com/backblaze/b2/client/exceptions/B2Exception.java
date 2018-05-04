@@ -9,6 +9,7 @@ package com.backblaze.b2.client.exceptions;
  * all B2-specific exceptions thrown by b2-sdk-java.
  */
 public class B2Exception extends Exception {
+    public static final String DEFAULT_CODE = "unknown_code";
     private final String code;
     private final int status;
 
@@ -30,7 +31,7 @@ public class B2Exception extends Exception {
                        String message,
                        Throwable cause) {
         super(message, cause);
-        this.code = code;
+        this.code = orIfNull(code, DEFAULT_CODE);
         this.status = status;
         this.retryAfterSecondsOrNull = retryAfterSecondsOrNull;
     }
@@ -86,5 +87,18 @@ public class B2Exception extends Exception {
             default:
                 return new B2Exception(code, status, retryAfterSecondsOrNull, message);
         }
+    }
+
+    /**
+     * @param orig the preferred return value
+     * @param ifNull what to return if orig is null.
+     * @return ifNull if orig == null, otherwise orig.
+     */
+    static String orIfNull(String orig,
+                           String ifNull) {
+        if (orig != null) {
+            return orig;
+        }
+        return ifNull;
     }
 }

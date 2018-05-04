@@ -7,6 +7,7 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2InternalErrorException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class B2AccountAuthorizationCacheTest {
+public class B2AccountAuthorizationCacheTest extends B2BaseTest {
     private final B2StorageClientWebifier webifier = mock(B2StorageClientWebifier.class);
     private final B2AccountAuthorizer authorizer = mock(B2AccountAuthorizer.class);
 

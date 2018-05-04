@@ -4,12 +4,13 @@
  */
 package com.backblaze.b2.client;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-public class B2BoundedLruMapTest {
+public class B2BoundedLruMapTest extends B2BaseTest {
     @Test
     public void testOrderingAndMax() {
         final B2BoundedLruMap<String,Integer> map = B2BoundedLruMap.withMax(3);

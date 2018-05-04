@@ -26,6 +26,7 @@ import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
+import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
@@ -50,6 +51,7 @@ import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
+import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
@@ -98,7 +100,7 @@ import static org.mockito.Mockito.when;
 /**
  */
 @SuppressWarnings("unchecked")
-public class B2StorageClientImplTest {
+public class B2StorageClientImplTest extends B2BaseTest {
     private static final B2AccountAuthorization ACCOUNT_AUTH = B2TestHelpers.makeAuth(1);
     private static final String ACCOUNT_ID = ACCOUNT_AUTH.getAccountId();
     private static final String APPLICATION_KEY = "applicationKey";
@@ -193,16 +195,16 @@ public class B2StorageClientImplTest {
         );
         verify(webifier, times(1)).createBucket(eq(ACCOUNT_AUTH), eq(expectedRequest));
         retryer.assertCallCountIs(2); // auth + createBucket.
-     }
+    }
 
     @Test
     public void testCreateBucket() throws B2Exception {
-        final Map<String,String> bucketInfo = B2Collections.mapOf(
+        final Map<String, String> bucketInfo = B2Collections.mapOf(
                 "one", "1",
                 "two", "2"
         );
         final List<B2LifecycleRule> lifecycleRules = listOf(
-               B2LifecycleRule.builder(FILE_PREFIX).build()
+                B2LifecycleRule.builder(FILE_PREFIX).build()
         );
         final B2CreateBucketRequest request = B2CreateBucketRequest
                 .builder(BUCKET_NAME, BUCKET_TYPE)
@@ -276,7 +278,7 @@ public class B2StorageClientImplTest {
                 .builder(ACCOUNT_ID)
                 .build();
         final B2ListBucketsResponse response = new B2ListBucketsResponse(
-            listOf(bucket(1))
+                listOf(bucket(1))
         );
         when(webifier.listBuckets(ACCOUNT_AUTH, expectedRequest)).thenReturn(response);
 
@@ -415,6 +417,27 @@ public class B2StorageClientImplTest {
     }
 
     @Test
+    public void testGetFileInfoByName() throws B2Exception {
+        final B2FileVersion fileVersion = makeVersion(1, 2);
+        final B2GetFileInfoByNameRequest request = B2GetFileInfoByNameRequest
+                .builder(bucketName(1), fileName(1))
+                .build();
+
+        when(webifier.getFileInfoByName(anyObject(), eq(request))).thenReturn(fileVersion);
+
+        assertEquals(fileVersion, client.getFileInfoByName(request));
+
+        verify(webifier, times(1)).getFileInfoByName(anyObject(), eq(request));
+
+        assertEquals(fileVersion, client.getFileInfoByName(bucketName(1), fileName(1)));
+        verify(webifier, times(2)).getFileInfoByName(anyObject(), eq(request));
+
+        // for coverage
+        //noinspection ResultOfMethodCallIgnored
+        request.hashCode();
+    }
+
+    @Test
     public void testHideFile() throws B2Exception {
         final B2FileVersion fileVersion = makeVersion(6, 2);
         final B2HideFileRequest request = B2HideFileRequest.builder(bucketId(1), fileName(2)).build();
@@ -502,12 +525,12 @@ public class B2StorageClientImplTest {
         // with request object
         assertIterContents(client.fileVersions(request),
                 version1
-                );
+        );
 
         // convenience version.
         assertIterContents(client.fileVersions(bucketId(1)),
                 version1
-                );
+        );
     }
 
     @Test
@@ -520,12 +543,12 @@ public class B2StorageClientImplTest {
         // with request object
         assertIterContents(client.fileNames(request),
                 version1
-                );
+        );
 
         // convenience version.
         assertIterContents(client.fileNames(bucketId(1)),
                 version1
-                );
+        );
     }
 
     @Test
@@ -538,12 +561,12 @@ public class B2StorageClientImplTest {
         // with request object
         assertIterContents(client.unfinishedLargeFiles(request),
                 version1
-                );
+        );
 
         // convenience version.
         assertIterContents(client.unfinishedLargeFiles(bucketId(1)),
                 version1
-                );
+        );
     }
 
     @Test
@@ -556,12 +579,12 @@ public class B2StorageClientImplTest {
         // with request object
         assertIterContents(client.parts(request),
                 part
-                );
+        );
 
         // convenience version.
         assertIterContents(client.parts(LARGE_FILE_ID),
                 part
-                );
+        );
     }
 
     private <T> void assertIterContents(Iterable<T> iterable, T... expecteds) {
@@ -626,12 +649,13 @@ public class B2StorageClientImplTest {
 
     @Test
     public void testDownloadById() throws B2Exception {
-        final B2ContentSink handler = (responseHeaders, in) -> {};
+        final B2ContentSink handler = (responseHeaders, in) -> {
+        };
         B2DownloadByIdRequest request = B2DownloadByIdRequest
                 .builder(LARGE_FILE_ID)
-                .setRange(B2ByteRange.between(10,12))
+                .setRange(B2ByteRange.between(10, 12))
                 .build();
-        assertEquals(B2ByteRange.between(10,12), request.getRange());
+        assertEquals(B2ByteRange.between(10, 12), request.getRange());
         client.downloadById(request, handler);
 
         verify(webifier, times(1)).downloadById(anyObject(), eq(request), eq(handler));
@@ -665,7 +689,8 @@ public class B2StorageClientImplTest {
 
     @Test
     public void testDownloadByName() throws B2Exception {
-        final B2ContentSink handler = (responseHeaders, in) -> {};
+        final B2ContentSink handler = (responseHeaders, in) -> {
+        };
         B2DownloadByNameRequest request = B2DownloadByNameRequest
                 .builder(bucketName(1), fileName(1))
                 .setRange(B2ByteRange.startAt(17))
@@ -823,13 +848,11 @@ public class B2StorageClientImplTest {
         verifyNoMoreInteractions(listener);      // the webifier is a mock, so we don't get calls for progress, just calls for overall state changes.
 
 
-
         verify(webifier, times(1)).startLargeFile(anyObject(), anyObject());
         // there's a very unlikely race condition where we might upload one part and then unget the url and upload another.  it's really unlikely, but it means there's a chance there might only be one call, not two...
         //verify(webifier, times(2)).getUploadPartUrl(anyObject(), anyObject());
         verify(webifier, times(2)).uploadPart(anyObject(), anyObject());
         verify(webifier, times(1)).finishLargeFile(anyObject(), anyObject());
-
 
 
         // for coverage

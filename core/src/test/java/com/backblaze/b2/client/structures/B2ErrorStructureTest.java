@@ -4,11 +4,12 @@
  */
 package com.backblaze.b2.client.structures;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class B2ErrorStructureTest {
+public class B2ErrorStructureTest extends B2BaseTest {
     private static final int STATUS = 407;
     private static final String CODE = "test";
     private static final String MSG = "test message";
