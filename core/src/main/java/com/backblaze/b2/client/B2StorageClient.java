@@ -19,6 +19,7 @@ import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
+import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
@@ -402,6 +403,19 @@ public interface B2StorageClient extends Closeable {
     }
 
     /**
+     * Delete all files in bucket.
+     *
+     * @param bucketId the bucket whose file versions should be deleted
+     * @throws B2Exception if there's any trouble. if there's trouble, it's undefined which
+     * file versions have been deleted (if any) and which haven't (if any).
+     */
+    default void deleteAllFilesInBucket(String bucketId) throws B2Exception {
+        for (B2FileVersion fileVersion: fileNames(bucketId)) {
+           deleteFileVersion(fileVersion);
+        }
+    }
+
+    /**
      * @param request specifies what the download authorization should allow.
      * @return a download authorization
      * @throws B2Exception if there's any trouble.
@@ -425,6 +439,25 @@ public interface B2StorageClient extends Closeable {
      */
     default B2FileVersion getFileInfo(String fileId) throws B2Exception {
         return getFileInfo(B2GetFileInfoRequest.builder(fileId).build());
+    }
+
+    /**
+     * @param request specifies the file whose info to fetch.
+     * @return a B2FileVersion object
+     * @throws B2Exception if there's any trouble.
+     */
+    B2FileVersion getFileInfoByName(B2GetFileInfoByNameRequest request) throws B2Exception;
+
+    /**
+     * Just like getFileInfoByName(request), but for the most recent version of file
+     * with the specified fileName in the specified bucket.
+     *
+     * @param bucketName bucketName the name of the bucket containing the file you want info about.
+     * @param fileName   fileName the name of the file whose info you're interested in.
+     * @throws B2Exception if there's any trouble.
+     */
+    default B2FileVersion getFileInfoByName(String bucketName, String fileName) throws B2Exception {
+        return getFileInfoByName(B2GetFileInfoByNameRequest.builder(bucketName, fileName).build());
     }
 
     /**
@@ -481,6 +514,7 @@ public interface B2StorageClient extends Closeable {
     default B2Bucket deleteBucket(String bucketId) throws B2Exception {
         return deleteBucket(B2DeleteBucketRequest.builder(bucketId).build());
     }
+
 
     /**
      * Returns the URL for downloading the file specified by the request.

@@ -21,8 +21,10 @@ import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
+import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
@@ -62,6 +64,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.client.B2TestHelpers.bucketName;
+import static com.backblaze.b2.client.B2TestHelpers.makeFileHeaders;
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
 import static com.backblaze.b2.client.B2TestHelpers.makeBucket;
@@ -72,6 +75,7 @@ import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.Request
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.UPLOADING;
 import static com.backblaze.b2.json.B2Json.toJsonOrThrowRuntime;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
@@ -162,6 +166,11 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         public void getContent(String url,
                                B2Headers headersOrNull,
                                B2ContentSink handler) throws B2Exception {
+            throw new B2UnauthorizedException("unauthorized", null, "unauthorized msg");
+        }
+
+        @Override
+        public B2Headers head(String url, B2Headers headersOrNull) throws B2Exception {
             throw new B2UnauthorizedException("unauthorized", null, "unauthorized msg");
         }
 
@@ -258,6 +267,16 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                     indent(url) + "\n" +
                     "headers:\n" +
                     indent(toString(headersOrNull)) + "\n");
+        }
+
+        @Override
+        public B2Headers head(String url, B2Headers headersOrNull) throws B2Exception {
+            callDescription = ("head.\n" +
+                    "url:\n" +
+                    indent(url) + "\n" +
+                    "headers:\n" +
+                    indent(toString(headersOrNull)) + "\n" );
+            return makeFileHeaders(1);
         }
 
         @Override
@@ -806,6 +825,30 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         );
 
         checkRequestCategory(OTHER, w -> w.getFileInfo(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testGetFileInfoByName() throws B2Exception {
+        final B2GetFileInfoByNameRequest request = B2GetFileInfoByNameRequest
+                .builder(bucketName(1), fileName(1))
+                .build();
+
+        B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
+
+        assertEquals(fileId(1), version.getFileId());
+        assertEquals(fileName(1), version.getFileName());
+        assertEquals(1L, version.getContentLength());
+        assertEquals(1L, version.getUploadTimestamp());
+        assertEquals(1L, Long.parseLong(version.getFileInfo().get(B2Headers.SRC_LAST_MODIFIED_MILLIS)));
+
+        webApiClient.check("head.\n" +
+                "url:\n" +
+                "    downloadUrl1/file/bucketName1/files/0001\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n");
+        checkRequestCategory(OTHER, w -> w.getFileInfoByName(ACCOUNT_AUTH, request));
     }
 
     @Test

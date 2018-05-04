@@ -26,6 +26,7 @@ import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
+import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
@@ -61,6 +62,9 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.backblaze.b2.client.contentSources.B2Headers.FILE_ID;
+import static com.backblaze.b2.client.contentSources.B2Headers.FILE_NAME;
+import static com.backblaze.b2.client.contentSources.B2Headers.UPLOAD_TIMESTAMP;
 import static com.backblaze.b2.util.B2StringUtil.percentEncode;
 
 public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
@@ -199,7 +203,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             final B2HeadersImpl.Builder headersBuilder = B2HeadersImpl
                     .builder()
                     .set(B2Headers.AUTHORIZATION, uploadUrlResponse.getAuthorizationToken())
-                    .set(B2Headers.FILE_NAME, percentEncode(request.getFileName()))
+                    .set(FILE_NAME, percentEncode(request.getFileName()))
                     .set(B2Headers.CONTENT_TYPE, request.getContentType())
                     .set(B2Headers.CONTENT_SHA1, contentDetails.getContentSha1HeaderValue());
             setCommonHeaders(headersBuilder);
@@ -421,6 +425,18 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     @Override
+    public B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth,
+                                           B2GetFileInfoByNameRequest request) throws B2Exception {
+        B2Headers headers = webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(),
+                request.getFileName()), makeHeaders(accountAuth));
+
+
+        return new B2FileVersion(headers.getValueOrNull(FILE_ID), headers.getValueOrNull(FILE_NAME),
+                headers.getContentLength(), headers.getContentType(), headers.getContentSha1OrNull(),
+                headers.getB2FileInfo(), "upload", Long.parseLong(headers.getValueOrNull(UPLOAD_TIMESTAMP)));
+    }
+
+    @Override
     public B2FileVersion hideFile(B2AccountAuthorization accountAuth,
                                   B2HideFileRequest request) throws B2Exception {
         return webApiClient.postJsonReturnJson(
@@ -505,6 +521,12 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         url += API_VERSION_PATH + "b2_download_file_by_id?fileId=" + fguid;
         url += maybeB2ContentDisposition('&', b2ContentDisposition);
         return url;
+    }
+
+    private String makeGetFileInfoByNameUrl(B2AccountAuthorization accountAuth,
+                                         String bucketName,
+                                         String fileName) {
+        return makeDownloadByNameUrl(accountAuth, bucketName, fileName, null);
     }
 
     private String makeDownloadByNameUrl(B2AccountAuthorization accountAuth,
