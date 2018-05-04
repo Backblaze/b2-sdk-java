@@ -434,10 +434,10 @@ Potential future features
 Contributors
 ============
 
-In addition to the team at Backblaze, the following people have contributed
-questions and feedback to improve the SDK:
+In addition to the team at Backblaze, the following people have contributed to the SDK:
 
-* Kyle Hughart
+* Kyle Hughart: questions and feedback
+* Valentin Popov (valenpo): implemented getFileInfoByName() and deleteAllFilesInBucket().
 
 [integration checklist]: https://www.backblaze.com/b2/docs/integration_checklist.html
 [B2 API Docs]: https://www.backblaze.com/b2/docs/
