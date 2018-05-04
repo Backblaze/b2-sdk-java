@@ -7,14 +7,18 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
+import com.backblaze.b2.client.structures.B2CreateKeyRequestReal;
+import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionResponse;
+import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
@@ -32,6 +36,8 @@ import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileNamesResponse;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsResponse;
+import com.backblaze.b2.client.structures.B2ListKeysRequestReal;
+import com.backblaze.b2.client.structures.B2ListKeysResponse;
 import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListPartsResponse;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
@@ -71,6 +77,15 @@ public interface B2StorageClientWebifier extends AutoCloseable {
 
     B2Bucket createBucket(B2AccountAuthorization accountAuth,
                           B2CreateBucketRequestReal request) throws B2Exception;
+
+    B2CreatedApplicationKey createKey(B2AccountAuthorization accountAuth,
+                                      B2CreateKeyRequestReal request) throws B2Exception;
+
+    B2ListKeysResponse listKeys(B2AccountAuthorization accountAuth,
+                                B2ListKeysRequestReal request) throws B2Exception;
+
+    B2ApplicationKey deleteKey(B2AccountAuthorization accountAuth,
+                               B2DeleteKeyRequest request) throws B2Exception;
 
     B2ListBucketsResponse listBuckets(B2AccountAuthorization accountAuth,
                                       B2ListBucketsRequest request) throws B2Exception;

@@ -509,18 +509,18 @@ public class B2 implements AutoCloseable {
     }
 
     private void get_download_authorization(String[] args) throws B2Exception, B2JsonException {
-        // [--noProgress] <bucketId> <fileNamePrefix> <validDurationSecs>
+        // [--noProgress] <bucketId> <fileNamePrefix> <validDurationInSecs>
         checkArgCount(args, 3, 4);
         final int iLastArg = args.length - 1;
         final String bucketId = args[iLastArg-2];
         final String fileNamePrefix = args[iLastArg-1];
-        final int validDurationSecs = getPositiveIntArgOrDie(args, "validDurationSecs", iLastArg, iLastArg);
+        final int validDurationInSecs = getPositiveIntArgOrDie(args, "validDurationInSecs", iLastArg, iLastArg);
 
 
         //handleCommonArgsOrDie(args, 0, iLastArg-1);
 
         B2GetDownloadAuthorizationRequest request = B2GetDownloadAuthorizationRequest
-                .builder(bucketId, fileNamePrefix, validDurationSecs)
+                .builder(bucketId, fileNamePrefix, validDurationInSecs)
                 .setB2ContentDisposition("attachment; filename=\"helloHagi.txt\"")
                 .build();
         out.println("  downloadAuth:  " + B2Json.get().toJson(client.getDownloadAuthorization(request)));

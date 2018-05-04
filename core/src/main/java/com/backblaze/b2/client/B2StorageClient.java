@@ -8,11 +8,15 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
+import com.backblaze.b2.client.structures.B2CreateKeyRequest;
+import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequest;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
+import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
@@ -28,6 +32,7 @@ import com.backblaze.b2.client.structures.B2ListBucketsRequest;
 import com.backblaze.b2.client.structures.B2ListBucketsResponse;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
+import com.backblaze.b2.client.structures.B2ListKeysRequest;
 import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
@@ -104,6 +109,49 @@ public interface B2StorageClient extends Closeable {
     default B2Bucket createBucket(String bucketName,
                                   String bucketType) throws B2Exception {
         return createBucket(B2CreateBucketRequest.builder(bucketName, bucketType).build());
+    }
+
+    /**
+     * Creates a new application key.
+     *
+     * @param request the request to create the key.
+     * @return the newly created key
+     * @throws B2Exception if there's any trouble.
+     */
+    B2CreatedApplicationKey createKey(B2CreateKeyRequest request) throws B2Exception;
+
+    /**
+     * Returns an iterable whose iterator yields the application keys that
+     * match the given request.
+     *
+     * It will automatically call B2 to get batches of answers as needed.  If there's
+     * any trouble during hasNext() or next(), it will throw a B2RuntimeException
+     * since Iterable&lt;&gt; doesn't allow checked exceptions to be thrown.
+     *
+     * @param request specifies which application keys to list.
+     * @return a new iterable to iterate over fileVersions that match the given request.
+     * @throws B2Exception if there's any trouble
+     */
+    B2ListKeysIterable applicationKeys(B2ListKeysRequest request) throws B2Exception;
+
+    /**
+     * Deletes the specified application key.
+     *
+     * @param request specifies the key to delete.
+     * @return the deleted key
+     * @throws B2Exception if there's any trouble.
+     */
+    B2ApplicationKey deleteKey(B2DeleteKeyRequest request) throws B2Exception;
+
+    /**
+     * Just like applicationKeys(request), except that it makes a request for all
+     * application keys for the account.
+     *
+     * @return a new iterable to iterate over all of the keys in the specified account
+     * @throws B2Exception if there's any trouble
+     */
+    default B2ListKeysIterable applicationKeys() throws B2Exception {
+        return applicationKeys(B2ListKeysRequest.builder().build());
     }
 
     /**

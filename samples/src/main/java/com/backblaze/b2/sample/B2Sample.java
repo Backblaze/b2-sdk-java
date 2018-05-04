@@ -14,8 +14,13 @@ import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2FileContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketTypes;
+import com.backblaze.b2.client.structures.B2Capabilities;
+import com.backblaze.b2.client.structures.B2CreateKeyRequest;
+import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
+import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
@@ -37,8 +42,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,6 +79,31 @@ public class B2Sample {
             final double percent = (100. * (progress.getBytesSoFar() / (double) progress.getLength()));
             writer.println(String.format("  progress(%3.2f, %s)", percent, progress.toString()));
         };
+
+        bigHeader(writer, "create application key");
+        final String applicationKeyId;
+        {
+            final Set<String> capabilities = new HashSet<>();
+            capabilities.add(B2Capabilities.LIST_BUCKETS);
+            capabilities.add(B2Capabilities.READ_FILES);
+
+            final B2CreatedApplicationKey applicationKey =
+                    client.createKey(
+                            B2CreateKeyRequest.builder(capabilities, "testKey").build()
+                    );
+            applicationKeyId = applicationKey.getApplicationKeyId();
+            writer.println("key id: " + applicationKey.getApplicationKeyId() + "   key: " + applicationKey.getApplicationKey());
+        }
+
+        bigHeader(writer, "list application keys");
+        for (B2ApplicationKey key : client.applicationKeys()) {
+            writer.println("key id: " + key.getApplicationKeyId() + "   capabilities: " + key.getCapabilities());
+        }
+
+        bigHeader(writer, "delete application key");
+        {
+            client.deleteKey(B2DeleteKeyRequest.builder(applicationKeyId).build());
+        }
 
         bigHeader(writer, "cleanup existing bucket, if any");
         deleteBucketIfAny(writer, client, bucketName);

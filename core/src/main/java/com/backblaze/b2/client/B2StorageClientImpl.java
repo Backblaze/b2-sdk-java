@@ -9,13 +9,18 @@ import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
+import com.backblaze.b2.client.structures.B2CreateKeyRequest;
+import com.backblaze.b2.client.structures.B2CreateKeyRequestReal;
+import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequest;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
+import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
@@ -33,6 +38,9 @@ import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileNamesResponse;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsResponse;
+import com.backblaze.b2.client.structures.B2ListKeysRequest;
+import com.backblaze.b2.client.structures.B2ListKeysRequestReal;
+import com.backblaze.b2.client.structures.B2ListKeysResponse;
 import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListPartsResponse;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
@@ -138,6 +146,32 @@ public class B2StorageClientImpl implements B2StorageClient {
     public B2Bucket createBucket(B2CreateBucketRequest request) throws B2Exception {
         B2CreateBucketRequestReal realRequest = new B2CreateBucketRequestReal(accountId, request);
         return retryer.doRetry("b2_create_bucket", accountAuthCache, () -> webifier.createBucket(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
+    }
+
+    @Override
+    public B2CreatedApplicationKey createKey(B2CreateKeyRequest request) throws B2Exception {
+        final B2CreateKeyRequestReal realRequest = new B2CreateKeyRequestReal(accountId, request);
+        return retryer.doRetry(
+                "b2_create_key",
+                accountAuthCache,
+                () -> webifier.createKey(accountAuthCache.get(), realRequest),
+                retryPolicySupplier.get()
+        );
+    }
+
+    @Override
+    public B2ListKeysIterable applicationKeys(B2ListKeysRequest request) throws B2Exception {
+        return new B2ListKeysIterable(this, request);
+    }
+
+    @Override
+    public B2ApplicationKey deleteKey(B2DeleteKeyRequest request) throws B2Exception {
+        return retryer.doRetry(
+                "b2_delete_key",
+                accountAuthCache,
+                () -> webifier.deleteKey(accountAuthCache.get(), request),
+                retryPolicySupplier.get()
+        );
     }
 
     @Override
@@ -394,6 +428,15 @@ public class B2StorageClientImpl implements B2StorageClient {
     }
     B2ListFileNamesResponse listFileNames(B2ListFileNamesRequest request) throws B2Exception {
         return retryer.doRetry("b2_list_file_names", accountAuthCache, () -> webifier.listFileNames(accountAuthCache.get(), request), retryPolicySupplier.get());
+    }
+    B2ListKeysResponse listKeys(B2ListKeysRequest request) throws B2Exception {
+        final B2ListKeysRequestReal realRequest =
+                new B2ListKeysRequestReal(
+                        accountId,
+                        request.getMaxKeyCount(),
+                        request.getStartApplicationKeyId()
+                );
+        return retryer.doRetry("b2_list_keys", accountAuthCache, () -> webifier.listKeys(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
     }
     B2ListUnfinishedLargeFilesResponse listUnfinishedLargeFiles(B2ListUnfinishedLargeFilesRequest request) throws B2Exception {
         return retryer.doRetry("b2_list_unfinished_large_files", accountAuthCache, () -> webifier.listUnfinishedLargeFiles(accountAuthCache.get(), request), retryPolicySupplier.get());

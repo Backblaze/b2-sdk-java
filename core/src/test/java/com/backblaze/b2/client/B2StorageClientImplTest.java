@@ -83,6 +83,7 @@ import static com.backblaze.b2.client.structures.B2UploadState.STARTING;
 import static com.backblaze.b2.client.structures.B2UploadState.SUCCEEDED;
 import static com.backblaze.b2.client.structures.B2UploadState.WAITING_TO_START;
 import static com.backblaze.b2.util.B2Collections.listOf;
+import static com.backblaze.b2.util.B2DateTimeUtil.parseDateTime;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -159,6 +160,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
     @Before
     public void setup() throws B2Exception {
         {
+            B2Clock.useSimulator(parseDateTime("2018-04-17 01:26:32"));
             final B2AuthorizeAccountRequest request = new B2AuthorizeAccountRequest(ACCOUNT_ID, APPLICATION_KEY);
             when(webifier.authorizeAccount(request)).thenReturn(ACCOUNT_AUTH);
         }

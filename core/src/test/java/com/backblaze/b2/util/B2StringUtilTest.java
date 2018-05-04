@@ -125,4 +125,13 @@ public class B2StringUtilTest extends B2BaseTest {
         // grrrr....  i really don't want to have to do this.
         new B2StringUtil();
     }
+
+    @Test
+    public void testUnderscoresToCamelCase() {
+        assertEquals("", B2StringUtil.underscoresToCamelCase("", false));
+        assertEquals("listFiles", B2StringUtil.underscoresToCamelCase("LIST_FILES", false));
+        assertEquals("ListFiles", B2StringUtil.underscoresToCamelCase("_LIST_FILES", false));
+        assertEquals("ListFiles", B2StringUtil.underscoresToCamelCase("LIST_FILES", true));
+
+    }
 }
