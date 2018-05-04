@@ -24,7 +24,9 @@ import java.util.Collections;
 
 import static com.backblaze.b2.client.contentSources.B2Headers.CONTENT_LENGTH;
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_ID;
+import static com.backblaze.b2.client.contentSources.B2Headers.FILE_INFO_PREFIX;
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_NAME;
+import static com.backblaze.b2.client.contentSources.B2Headers.SRC_LAST_MODIFIED_MILLIS;
 import static com.backblaze.b2.client.contentSources.B2Headers.UPLOAD_TIMESTAMP;
 
 public class B2TestHelpers {
@@ -164,6 +166,7 @@ public class B2TestHelpers {
                 .set(FILE_NAME, fileName(i))
                 .set(CONTENT_LENGTH, Integer.toString(i))
                 .set(UPLOAD_TIMESTAMP, Integer.toString(i))
+                .set(FILE_INFO_PREFIX + SRC_LAST_MODIFIED_MILLIS, Integer.toString(i))
                 .build();
     }
 

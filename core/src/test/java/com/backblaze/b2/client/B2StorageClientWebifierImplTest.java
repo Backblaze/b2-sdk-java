@@ -839,6 +839,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         assertEquals(fileName(1), version.getFileName());
         assertEquals(1L, version.getContentLength());
         assertEquals(1L, version.getUploadTimestamp());
+        assertEquals(1L, Long.parseLong(version.getFileInfo().get(B2Headers.SRC_LAST_MODIFIED_MILLIS)));
 
         webApiClient.check("head.\n" +
                 "url:\n" +
