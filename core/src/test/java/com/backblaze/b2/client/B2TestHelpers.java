@@ -19,6 +19,7 @@ import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2Sha1;
+import com.backblaze.b2.util.B2StringUtil;
 
 import java.util.Collections;
 
@@ -28,6 +29,7 @@ import static com.backblaze.b2.client.contentSources.B2Headers.FILE_INFO_PREFIX;
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_NAME;
 import static com.backblaze.b2.client.contentSources.B2Headers.SRC_LAST_MODIFIED_MILLIS;
 import static com.backblaze.b2.client.contentSources.B2Headers.UPLOAD_TIMESTAMP;
+import static com.backblaze.b2.util.B2StringUtil.percentEncode;
 
 public class B2TestHelpers {
     public static final String SAMPLE_SHA1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
@@ -163,7 +165,7 @@ public class B2TestHelpers {
     public static B2Headers makeFileHeaders(int i) {
         return B2HeadersImpl.builder()
                 .set(FILE_ID, fileId(i))
-                .set(FILE_NAME, fileName(i))
+                .set(FILE_NAME, percentEncode(fileName(i)))
                 .set(CONTENT_LENGTH, Integer.toString(i))
                 .set(UPLOAD_TIMESTAMP, Integer.toString(i))
                 .set(FILE_INFO_PREFIX + SRC_LAST_MODIFIED_MILLIS, Integer.toString(i))
@@ -175,7 +177,7 @@ public class B2TestHelpers {
     }
 
     public static String fileName(int i) {
-        return String.format("files/%04d", i);
+        return String.format("files/\u81ea\u7531/%04d", i);
     }
 
 }

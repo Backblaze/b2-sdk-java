@@ -62,6 +62,7 @@ import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2InputStreamWithByteProgressListener;
 import com.backblaze.b2.util.B2Preconditions;
+import com.backblaze.b2.util.B2StringUtil;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -71,6 +72,7 @@ import java.util.TreeMap;
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_ID;
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_NAME;
 import static com.backblaze.b2.client.contentSources.B2Headers.UPLOAD_TIMESTAMP;
+import static com.backblaze.b2.util.B2StringUtil.percentDecode;
 import static com.backblaze.b2.util.B2StringUtil.percentEncode;
 
 public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
@@ -466,9 +468,16 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 request.getFileName()), makeHeaders(accountAuth));
 
 
-        return new B2FileVersion(headers.getValueOrNull(FILE_ID), headers.getValueOrNull(FILE_NAME),
-                headers.getContentLength(), headers.getContentType(), headers.getContentSha1OrNull(),
-                headers.getB2FileInfo(), "upload", Long.parseLong(headers.getValueOrNull(UPLOAD_TIMESTAMP)));
+        return new B2FileVersion(
+                headers.getValueOrNull(FILE_ID),
+                percentDecode(headers.getValueOrNull(FILE_NAME)),
+                headers.getContentLength(),
+                headers.getContentType(),
+                headers.getContentSha1OrNull(),
+                headers.getB2FileInfo(),
+                "upload",
+                Long.parseLong(headers.getValueOrNull(UPLOAD_TIMESTAMP))
+        );
     }
 
     @Override

@@ -14,6 +14,7 @@ import static com.backblaze.b2.util.B2StringUtil.decimalSubstringToInt;
 import static com.backblaze.b2.util.B2StringUtil.getUtf8Bytes;
 import static com.backblaze.b2.util.B2StringUtil.isEmpty;
 import static com.backblaze.b2.util.B2StringUtil.join;
+import static com.backblaze.b2.util.B2StringUtil.percentDecode;
 import static com.backblaze.b2.util.B2StringUtil.percentEncode;
 import static com.backblaze.b2.util.B2StringUtil.startsWithIgnoreCase;
 import static com.backblaze.b2.util.B2StringUtil.toHexString;
@@ -37,6 +38,12 @@ public class B2StringUtilTest extends B2BaseTest {
     public void testPercentEncode() {
         assertEquals("", percentEncode(""));
         assertEquals("a--/--b--%2B--%3A--%7C--+--", percentEncode("a--/--b--+--:--|-- --"));
+    }
+
+    @Test
+    public void testPercentDecode() {
+        assertEquals("", percentDecode(""));
+        assertEquals("a--/--b--+--:--|-- --", percentDecode("a--/--b--%2B--%3A--%7C--+--"));
     }
 
     @Test

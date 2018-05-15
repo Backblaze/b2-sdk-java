@@ -5,6 +5,7 @@
 package com.backblaze.b2.util;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 
 /**
@@ -37,6 +38,14 @@ public class B2StringUtil {
     public static String percentEncode(String s) {
         try {
             return URLEncoder.encode(s, UTF8).replace("%2F", "/");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("UTF8 isn't supported? " + e.getMessage(), e);
+        }
+    }
+
+    public static String percentDecode(String s) {
+        try {
+            return URLDecoder.decode(s, UTF8);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("UTF8 isn't supported? " + e.getMessage(), e);
         }
