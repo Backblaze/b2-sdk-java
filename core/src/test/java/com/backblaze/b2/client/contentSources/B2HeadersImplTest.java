@@ -36,6 +36,7 @@ public class B2HeadersImplTest extends B2BaseTest {
                 .builder()
                 .set(B2Headers.CONTENT_TYPE, B2ContentTypes.TEXT_PLAIN)
                 .set(B2Headers.CONTENT_LENGTH, "1234")
+                .set(B2Headers.FILE_NAME, "a--/--b--%2B--%3A--%7C--+--")
                 .set(B2Headers.SRC_LAST_MODIFIED_MILLIS, SAMPLE_LAST_MODIFIED)
                 .set(B2Headers.CONTENT_SHA1, SAMPLE_SHA1)
                 .set(B2Headers.FILE_INFO_PREFIX + "alphabet", "abc")
@@ -53,6 +54,7 @@ public class B2HeadersImplTest extends B2BaseTest {
                 B2Headers.CONTENT_LENGTH,
                 B2Headers.CONTENT_TYPE,
                 B2Headers.CONTENT_SHA1,
+                B2Headers.FILE_NAME,
                 B2Headers.FILE_INFO_PREFIX + "alphabet",
                 B2Headers.SRC_LAST_MODIFIED_MILLIS,
                 B2Headers.FILE_INFO_PREFIX.toLowerCase() + "zoo");
@@ -111,6 +113,20 @@ public class B2HeadersImplTest extends B2BaseTest {
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("can't parse Content-Length 'non-numerical' as a long: java.lang.NumberFormatException: For input string: \"non-numerical\"");
         withBogusContentLength.getContentLength();
+    }
+
+    @Test
+    public void testGetFileNameOrNull() {
+        assertEquals("a--/--b--+--:--|-- --", makeNormal().getFileNameOrNull());
+        assertEquals("a--/--b--%2B--%3A--%7C--+--", makeNormal().getValueOrNull(B2Headers.FILE_NAME));
+        assertNull(makeEmpty().getFileNameOrNull());
+
+        final B2Headers withBogusPercentEncoding = B2HeadersImpl
+                .builder()
+                .set(B2Headers.FILE_NAME, "percent-by-itself-%")
+                .build();
+
+        assertNull(withBogusPercentEncoding.getFileNameOrNull());
     }
 
     @Test

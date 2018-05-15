@@ -15,6 +15,13 @@ import static com.backblaze.b2.util.B2StringUtil.startsWithIgnoreCase;
 
 /**
  * B2Headers represents the HTTP headers that come with a response from the server.
+ *
+ * It stores the values as they are *set* on it, without modifying or encoding them.
+ * Callers are expected to store values as they should be encoded in HTTP requests.
+ *
+ * Note that getValueOrNull() returns the stored value without percentDecoding.
+ * Note that some convenience methods do percentDecode the value.  See the per-method
+ * documentation.
  */
 // XXX: is the way that the convenience methods handle trouble consistent enough?
 //      on the upside, they're just convenience methods and a client can always use
@@ -82,6 +89,42 @@ public interface B2Headers {
             return Long.parseLong(str);
         } catch (IllegalArgumentException e) {
             throw new IllegalStateException("can't parse Content-Length '" + str + "' as a long: " + e, e);
+        }
+    }
+
+    /**
+     * @return the value of the X-Bz-File-Name header (percentDecoded)
+     *         or null if that header isn't present or can't be percentDecoded.
+     * @apiNote We return null here because this is a completely optional, non-standard header
+     *          and anyone could put any type of value in it at any time.
+     */
+    default String getFileNameOrNull() {
+        final String str = getValueOrNull(B2Headers.FILE_NAME);
+        if (str == null) {
+            return null;
+        }
+
+        try {
+            return percentDecode(str);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return the value of the X-Bz-Upload-Timestamp header (parsed as a long)
+     *         or null if that header isn't present or can't be parsed.
+     * @apiNote We return null here because this is a completely optional, non-standard header
+     *          and anyone could put any type of value in it at any time.
+     */
+    default Long getUploadTimestampOrNull() {
+        final String str = getValueOrNull(B2Headers.UPLOAD_TIMESTAMP);
+        B2Preconditions.checkState(str != null, "don't call if there isn't a b2 filename");
+
+        try {
+            return Long.parseLong(str);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 
