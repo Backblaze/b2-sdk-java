@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.backblaze.b2.util.B2StringUtil.percentDecode;
 import static com.backblaze.b2.util.B2StringUtil.startsWithIgnoreCase;
 
 /**
@@ -133,7 +134,8 @@ public interface B2Headers {
         for (String name : getNames()) {
             if (startsWithIgnoreCase(name, FILE_INFO_PREFIX)) {
                 final String shortName = name.substring(FILE_INFO_PREFIX.length());
-                info.put(shortName, getValueOrNull(name));
+                // XXX the uploader encodes the name.  might as well decode here.
+                info.put(percentDecode(shortName), percentDecode(getValueOrNull(name)));
             }
         }
         return info;

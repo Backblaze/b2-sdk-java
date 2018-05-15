@@ -168,7 +168,8 @@ public class B2TestHelpers {
                 .set(FILE_NAME, percentEncode(fileName(i)))
                 .set(CONTENT_LENGTH, Integer.toString(i))
                 .set(UPLOAD_TIMESTAMP, Integer.toString(i))
-                .set(FILE_INFO_PREFIX + SRC_LAST_MODIFIED_MILLIS, Integer.toString(i))
+                .set(SRC_LAST_MODIFIED_MILLIS, Integer.toString(i))
+                .set(FILE_INFO_PREFIX + "Color", "gr%C3%BCn")
                 .build();
     }
 

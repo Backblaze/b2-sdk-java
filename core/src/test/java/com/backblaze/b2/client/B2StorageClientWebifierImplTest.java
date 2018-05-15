@@ -60,6 +60,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
@@ -835,11 +837,16 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
 
+        Map<String, String> expectedFileInfo = new HashMap<>();
+        expectedFileInfo.put("Color", "gr\u00fcn");
+        expectedFileInfo.put("src_last_modified_millis", "1");
+
         assertEquals(fileId(1), version.getFileId());
         assertEquals(fileName(1), version.getFileName());
         assertEquals(1L, version.getContentLength());
         assertEquals(1L, version.getUploadTimestamp());
-        assertEquals(1L, Long.parseLong(version.getFileInfo().get(B2Headers.SRC_LAST_MODIFIED_MILLIS)));
+        assertEquals(expectedFileInfo, version.getFileInfo());
+        assertEquals(1L, Long.parseLong(version.getFileInfo().get("src_last_modified_millis")));
 
         webApiClient.check("head.\n" +
                 "url:\n" +
@@ -1154,7 +1161,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
-                .setCustomField("color", "blue")
+                .setCustomField("color", "gr\u00fcn")
                 .setCustomField("number", "six")
                 .setListener(listener)
                 .build();
@@ -1170,7 +1177,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
                 "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
-                "    X-Bz-Info-color: blue\n" +
+                "    X-Bz-Info-color: gr%C3%BCn\n" +
                 "    X-Bz-Info-number: six\n" +
                 "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
