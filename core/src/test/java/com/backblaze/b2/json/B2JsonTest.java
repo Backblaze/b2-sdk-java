@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -87,6 +88,13 @@ public class B2JsonTest extends B2BaseTest {
     public void testBigDecimal() throws IOException, B2JsonException {
         checkDeserializeSerialize("13", BigDecimal.class);
         checkDeserializeSerialize("127.5243872835782375823758273582735", BigDecimal.class);
+    }
+
+    @Test
+    public void testBigInteger() throws IOException, B2JsonException {
+        checkDeserializeSerialize("13", BigInteger.class);
+        checkDeserializeSerialize("31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470", BigDecimal.class);
+        checkDeserializeSerialize("-271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746", BigDecimal.class);
     }
 
     @Test
