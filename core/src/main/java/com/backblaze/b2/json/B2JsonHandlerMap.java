@@ -8,6 +8,7 @@ package com.backblaze.b2.json;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,6 +42,7 @@ public class B2JsonHandlerMap {
     private B2JsonHandlerMap(Map<Class<?>, B2JsonTypeHandler<?>> initialMapOrNull) {
         // add all built-in handlers.
         map.put(BigDecimal.class, new B2JsonBigDecimalHandler());
+        map.put(BigInteger.class, new B2JsonBigIntegerHandler());
         map.put(boolean.class, new B2JsonBooleanHandler(true));
         map.put(Boolean.class, new B2JsonBooleanHandler(false));
         map.put(byte.class, new B2JsonByteHandler(true));
