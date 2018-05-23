@@ -10,10 +10,18 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.backblaze.b2.util.B2StringUtil.percentDecode;
 import static com.backblaze.b2.util.B2StringUtil.startsWithIgnoreCase;
 
 /**
  * B2Headers represents the HTTP headers that come with a response from the server.
+ *
+ * It stores the values as they are *set* on it, without modifying or encoding them.
+ * Callers are expected to store values as they should be encoded in HTTP requests.
+ *
+ * Note that getValueOrNull() returns the stored value without percentDecoding.
+ * Note that some convenience methods do percentDecode the value.  See the per-method
+ * documentation.
  */
 // XXX: is the way that the convenience methods handle trouble consistent enough?
 //      on the upside, they're just convenience methods and a client can always use
@@ -85,6 +93,44 @@ public interface B2Headers {
     }
 
     /**
+     * @return the value of the X-Bz-File-Name header (percentDecoded)
+     *         or null if that header isn't present or can't be percentDecoded.
+     * @apiNote We return null here because this is a completely optional, non-standard header
+     *          and anyone could put any type of value in it at any time.
+     */
+    default String getFileNameOrNull() {
+        final String str = getValueOrNull(B2Headers.FILE_NAME);
+        if (str == null) {
+            return null;
+        }
+
+        try {
+            return percentDecode(str);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return the value of the X-Bz-Upload-Timestamp header (parsed as a long)
+     *         or null if that header isn't present or can't be parsed.
+     * @apiNote We return null here because this is a completely optional, non-standard header
+     *          and anyone could put any type of value in it at any time.
+     */
+    default Long getUploadTimestampOrNull() {
+        final String str = getValueOrNull(B2Headers.UPLOAD_TIMESTAMP);
+        if (str == null) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(str);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /**
      * @return true iff there's a value for the Content-Range header
      */
     default boolean hasContentRange() {
@@ -133,7 +179,8 @@ public interface B2Headers {
         for (String name : getNames()) {
             if (startsWithIgnoreCase(name, FILE_INFO_PREFIX)) {
                 final String shortName = name.substring(FILE_INFO_PREFIX.length());
-                info.put(shortName, getValueOrNull(name));
+                // XXX the uploader encodes the name.  might as well decode here.
+                info.put(percentDecode(shortName), percentDecode(getValueOrNull(name)));
             }
         }
         return info;

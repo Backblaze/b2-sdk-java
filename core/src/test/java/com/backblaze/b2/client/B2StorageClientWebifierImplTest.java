@@ -60,6 +60,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
@@ -619,7 +621,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      \"fileInfo\": {\n" +
                 "        \"color\": \"blue\"\n" +
                 "      },\n" +
-                "      \"fileName\": \"files/0001\"\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\"\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2FileVersion\n"
@@ -655,7 +657,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "        \"color\": \"blue\",\n" +
                 "        \"large_file_sha1\": \"" + sha1 + "\"\n" +
                 "      },\n" +
-                "      \"fileName\": \"files/0001\"\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\"\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2FileVersion\n"
@@ -764,7 +766,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "request:\n" +
                 "    {\n" +
                 "      \"fileId\": \"4_zBlah_0000001\",\n" +
-                "      \"fileName\": \"files/0001\"\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\"\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2DeleteFileVersionResponse\n"
@@ -792,7 +794,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    {\n" +
                 "      \"b2ContentDisposition\": \"attachment; filename=\\\"example file name.txt\\\"\",\n" +
                 "      \"bucketId\": \"bucket1\",\n" +
-                "      \"fileNamePrefix\": \"files/0001\",\n" +
+                "      \"fileNamePrefix\": \"files/\u81ea\u7531/0001\",\n" +
                 "      \"validDurationInSeconds\": 123\n" +
                 "    }\n" +
                 "responseClass:\n" +
@@ -835,15 +837,20 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
 
+        Map<String, String> expectedFileInfo = new HashMap<>();
+        expectedFileInfo.put("Color", "gr\u00fcn");
+        expectedFileInfo.put("src_last_modified_millis", "1");
+
         assertEquals(fileId(1), version.getFileId());
         assertEquals(fileName(1), version.getFileName());
         assertEquals(1L, version.getContentLength());
         assertEquals(1L, version.getUploadTimestamp());
-        assertEquals(1L, Long.parseLong(version.getFileInfo().get(B2Headers.SRC_LAST_MODIFIED_MILLIS)));
+        assertEquals(expectedFileInfo, version.getFileInfo());
+        assertEquals(1L, Long.parseLong(version.getFileInfo().get("src_last_modified_millis")));
 
         webApiClient.check("head.\n" +
                 "url:\n" +
-                "    downloadUrl1/file/bucketName1/files/0001\n" +
+                "    downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -868,7 +875,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "request:\n" +
                 "    {\n" +
                 "      \"bucketId\": \"bucket1\",\n" +
-                "      \"fileName\": \"files/0001\"\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\"\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2FileVersion\n"
@@ -1011,7 +1018,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
     @Test
     public void testDownloadByName() throws B2Exception {
-        final String expectedUrl = "downloadUrl1/file/bucketName1/files/0001";
+        final String expectedUrl = "downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001";
         final B2DownloadByNameRequest request = B2DownloadByNameRequest
                 .builder(bucketName(1), fileName(1))
                 .build();
@@ -1059,7 +1066,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("getContent.\n" +
                 "url:\n" +
-                "    downloadUrl1/file/bucketName1/files/0001\n" +
+                "    downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    Range: bytes=200-\n" +
@@ -1080,7 +1087,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("getContent.\n" +
                 "url:\n" +
-                "    downloadUrl1/file/bucketName1/files/0001?b2ContentDisposition=attachment%3B+filename%3D%22with+space.txt%22\n" +
+                "    downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001?b2ContentDisposition=attachment%3B+filename%3D%22with+space.txt%22\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -1154,7 +1161,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
-                .setCustomField("color", "blue")
+                .setCustomField("color", "gr\u00fcn")
                 .setCustomField("number", "six")
                 .setListener(listener)
                 .build();
@@ -1169,8 +1176,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    Content-Type: b2/x-auto\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
-                "    X-Bz-File-Name: files/0001\n" +
-                "    X-Bz-Info-color: blue\n" +
+                "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
+                "    X-Bz-Info-color: gr%C3%BCn\n" +
                 "    X-Bz-Info-number: six\n" +
                 "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
@@ -1219,7 +1226,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    Content-Type: b2/x-auto\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: hex_digits_at_end\n" +
-                "    X-Bz-File-Name: files/0001\n" +
+                "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
                 "    X-Bz-Info-color: blue\n" +
                 "    X-Bz-Info-number: six\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +

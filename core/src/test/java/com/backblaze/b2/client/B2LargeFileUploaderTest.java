@@ -329,7 +329,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
         );
 
         thrown.expect(B2LocalException.class);
-        thrown.expectMessage("contentSource has fileName 'files/0002', but largeFileVersion has 'files/0001'");
+        thrown.expectMessage("contentSource has fileName 'files/\u81ea\u7531/0002', but largeFileVersion has 'files/\u81ea\u7531/0001'");
         B2LargeFileUploader.throwIfLargeFileVersionDoesntSeemToMatchRequest(largeFileVersion, contentSource.getContentLength(), request);
     }
 
