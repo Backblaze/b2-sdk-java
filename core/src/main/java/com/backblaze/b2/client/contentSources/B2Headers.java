@@ -119,7 +119,9 @@ public interface B2Headers {
      */
     default Long getUploadTimestampOrNull() {
         final String str = getValueOrNull(B2Headers.UPLOAD_TIMESTAMP);
-        B2Preconditions.checkState(str != null, "don't call if there isn't a b2 filename");
+        if (str == null) {
+            return null;
+        }
 
         try {
             return Long.parseLong(str);

@@ -43,6 +43,12 @@ public class B2HeadersImplTest extends B2BaseTest {
                 .set(B2Headers.FILE_INFO_PREFIX.toLowerCase() + "zoo", "san diego")
                 .build();
     }
+    private B2Headers makeWithTimestamp(String value) {
+        return B2HeadersImpl
+                .builder()
+                .set(B2Headers.UPLOAD_TIMESTAMP, value)
+                .build();
+    }
 
     @Test
     public void testGetNames() {
@@ -127,6 +133,18 @@ public class B2HeadersImplTest extends B2BaseTest {
                 .build();
 
         assertNull(withBogusPercentEncoding.getFileNameOrNull());
+    }
+
+    @Test
+    public void testGetUploadTimestampOrNull() {
+        // not present.
+        assertNull(makeNormal().getUploadTimestampOrNull());
+
+        // a valid long integer
+        assertEquals((Long) 1234L, makeWithTimestamp("1234").getUploadTimestampOrNull());
+
+        // present, but unparseable value
+        assertNull(makeWithTimestamp("1234abc").getUploadTimestampOrNull());
     }
 
     @Test

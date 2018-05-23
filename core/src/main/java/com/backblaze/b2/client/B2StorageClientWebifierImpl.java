@@ -468,13 +468,14 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 request.getFileName()), makeHeaders(accountAuth));
 
 
+        // b2_download_file_by_name promises most of these will be present, except as noted below,
         return new B2FileVersion(
                 headers.getValueOrNull(FILE_ID),
                 headers.getFileNameOrNull(),
                 headers.getContentLength(),
                 headers.getContentType(),
-                headers.getContentSha1OrNull(),
-                headers.getB2FileInfo(),
+                headers.getContentSha1OrNull(),    // might be null.
+                headers.getB2FileInfo(),           // might be empty.
                 "upload",
                 headers.getUploadTimestampOrNull()
         );
