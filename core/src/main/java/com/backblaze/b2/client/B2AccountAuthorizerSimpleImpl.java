@@ -25,11 +25,6 @@ public class B2AccountAuthorizerSimpleImpl implements B2AccountAuthorizer {
         this.applicationKey = applicationKey;
     }
 
-    @Override
-    public String getAccountId() {
-        return accountId;
-    }
-
     public static Builder builder(String accountId,
                                   String applicationKey) {
         return new Builder(accountId, applicationKey);

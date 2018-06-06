@@ -5,7 +5,6 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.exceptions.B2Exception;
-import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
@@ -21,16 +20,8 @@ import static org.mockito.Mockito.verify;
 
 public class B2ClientConfigTest extends B2BaseTest {
     private static final String USER_AGENT = "B2ClientConfigTest/0.0.1";
-    private final B2AccountAuthorizer AUTHORIZER = new B2AccountAuthorizer() {
-        @Override
-        public String getAccountId() {
-            throw new RuntimeException("not expected to be called!");
-        }
-
-        @Override
-        public B2AccountAuthorization authorize(B2StorageClientWebifier webifier) throws B2Exception {
-            throw new RuntimeException("not expected to be called!");
-        }
+    private final B2AccountAuthorizer AUTHORIZER = webifier -> {
+        throw new RuntimeException("not expected to be called!");
     };
 
 
@@ -68,7 +59,6 @@ public class B2ClientConfigTest extends B2BaseTest {
 
         final B2AccountAuthorizer authorizer = config.getAccountAuthorizer();
         assertTrue(authorizer instanceof B2AccountAuthorizerSimpleImpl);
-        assertEquals("accountId", authorizer.getAccountId());
 
         B2StorageClientWebifier webifier = mock(B2StorageClientWebifier.class);
         authorizer.authorize(webifier);
