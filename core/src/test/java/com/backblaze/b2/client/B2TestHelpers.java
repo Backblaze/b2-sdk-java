@@ -19,7 +19,6 @@ import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2Sha1;
-import com.backblaze.b2.util.B2StringUtil;
 
 import java.util.Collections;
 
@@ -53,7 +52,12 @@ public class B2TestHelpers {
      * @return a new B2AccountAuthorization, with bogus-but-recognizable values based on i.
      */
     public static B2AccountAuthorization makeAuth(int i) {
-        return new B2AccountAuthorization(Integer.toString(i),
+        return makeAuthWithAccountId(Integer.toString(i), i);
+    }
+
+    public static B2AccountAuthorization makeAuthWithAccountId(String accountId , int i) {
+        return new B2AccountAuthorization(
+                accountId,
                 "accountToken" + i,
                 "apiUrl" + i,
                 "downloadUrl" + i,

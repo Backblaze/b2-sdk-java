@@ -68,8 +68,6 @@ import java.util.function.Supplier;
  */
 public class B2StorageClientImpl implements B2StorageClient {
     private final B2StorageClientWebifier webifier;
-    private final String accountId;
-    private final B2ClientConfig config;
     private final Supplier<B2RetryPolicy> retryPolicySupplier;
     private final B2Retryer retryer;
 
@@ -106,8 +104,6 @@ public class B2StorageClientImpl implements B2StorageClient {
                         Supplier<B2RetryPolicy> retryPolicySupplier,
                         B2Retryer retryer) {
         this.webifier = webifier;
-        this.accountId = config.getAccountAuthorizer().getAccountId();
-        this.config = config;
         this.retryPolicySupplier = retryPolicySupplier;
         this.retryer = retryer;
         this.accountAuthCache = new B2AccountAuthorizationCache(webifier, config.getAccountAuthorizer());
@@ -128,8 +124,12 @@ public class B2StorageClientImpl implements B2StorageClient {
     }
 
     @Override
-    public String getAccountId() {
-        return config.getAccountAuthorizer().getAccountId();
+    public String getAccountId() throws B2Exception {
+        return retryer.doRetry("getAccountId", accountAuthCache, accountAuthCache::getAccountId, retryPolicySupplier.get());
+    }
+
+    private String getAccountIdWithoutRetry() throws B2Exception {
+        return accountAuthCache.getAccountId();
     }
 
     @Override
@@ -144,17 +144,21 @@ public class B2StorageClientImpl implements B2StorageClient {
 
     @Override
     public B2Bucket createBucket(B2CreateBucketRequest request) throws B2Exception {
-        B2CreateBucketRequestReal realRequest = new B2CreateBucketRequestReal(accountId, request);
-        return retryer.doRetry("b2_create_bucket", accountAuthCache, () -> webifier.createBucket(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
+        return retryer.doRetry("b2_create_bucket", accountAuthCache, () -> {
+            B2CreateBucketRequestReal realRequest = new B2CreateBucketRequestReal(getAccountIdWithoutRetry(), request);
+            return webifier.createBucket(accountAuthCache.get(), realRequest);
+        }, retryPolicySupplier.get());
     }
 
     @Override
     public B2CreatedApplicationKey createKey(B2CreateKeyRequest request) throws B2Exception {
-        final B2CreateKeyRequestReal realRequest = new B2CreateKeyRequestReal(accountId, request);
         return retryer.doRetry(
                 "b2_create_key",
                 accountAuthCache,
-                () -> webifier.createKey(accountAuthCache.get(), realRequest),
+                () -> {
+                    final B2CreateKeyRequestReal realRequest = new B2CreateKeyRequestReal(getAccountIdWithoutRetry(), request);
+                    return webifier.createKey(accountAuthCache.get(), realRequest);
+                } ,
                 retryPolicySupplier.get()
         );
     }
@@ -369,8 +373,10 @@ public class B2StorageClientImpl implements B2StorageClient {
 
     @Override
     public B2Bucket deleteBucket(B2DeleteBucketRequest request) throws B2Exception {
-        B2DeleteBucketRequestReal realRequest = new B2DeleteBucketRequestReal(accountId, request.getBucketId());
-        return retryer.doRetry("b2_delete_bucket", accountAuthCache, () -> webifier.deleteBucket(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
+        return retryer.doRetry("b2_delete_bucket", accountAuthCache, () ->  {
+            B2DeleteBucketRequestReal realRequest = new B2DeleteBucketRequestReal(getAccountIdWithoutRetry(), request.getBucketId());
+            return webifier.deleteBucket(accountAuthCache.get(), realRequest);
+        }, retryPolicySupplier.get());
     }
 
     @Override
@@ -430,13 +436,16 @@ public class B2StorageClientImpl implements B2StorageClient {
         return retryer.doRetry("b2_list_file_names", accountAuthCache, () -> webifier.listFileNames(accountAuthCache.get(), request), retryPolicySupplier.get());
     }
     B2ListKeysResponse listKeys(B2ListKeysRequest request) throws B2Exception {
-        final B2ListKeysRequestReal realRequest =
-                new B2ListKeysRequestReal(
-                        accountId,
-                        request.getMaxKeyCount(),
-                        request.getStartApplicationKeyId()
-                );
-        return retryer.doRetry("b2_list_keys", accountAuthCache, () -> webifier.listKeys(accountAuthCache.get(), realRequest), retryPolicySupplier.get());
+
+        return retryer.doRetry("b2_list_keys", accountAuthCache, () -> {
+            final B2ListKeysRequestReal realRequest =
+                    new B2ListKeysRequestReal(
+                            getAccountIdWithoutRetry(),
+                            request.getMaxKeyCount(),
+                            request.getStartApplicationKeyId()
+                    );
+            return webifier.listKeys(accountAuthCache.get(), realRequest);
+        }, retryPolicySupplier.get());
     }
     B2ListUnfinishedLargeFilesResponse listUnfinishedLargeFiles(B2ListUnfinishedLargeFilesRequest request) throws B2Exception {
         return retryer.doRetry("b2_list_unfinished_large_files", accountAuthCache, () -> webifier.listUnfinishedLargeFiles(accountAuthCache.get(), request), retryPolicySupplier.get());

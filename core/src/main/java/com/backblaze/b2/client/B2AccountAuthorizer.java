@@ -15,11 +15,6 @@ import com.backblaze.b2.client.structures.B2AccountAuthorization;
  */
 public interface B2AccountAuthorizer {
     /**
-     * @return the accountId whose authorization this returns.
-     */
-    String getAccountId();
-
-    /**
      * This will be called to get a new B2AccountAuthorization instance.
      *
      * @param webifier in case it's useful.  :)

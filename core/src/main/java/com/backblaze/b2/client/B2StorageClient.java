@@ -80,7 +80,7 @@ public interface B2StorageClient extends Closeable {
     /**
      * @return the accountId for this client.
      */
-    String getAccountId();
+    String getAccountId() throws B2Exception;
 
     /**
      * @return an object for answering policy questions, such as
@@ -159,7 +159,18 @@ public interface B2StorageClient extends Closeable {
      * @throws B2Exception if there's any trouble.
      */
     default B2ListBucketsResponse listBuckets() throws B2Exception {
-        return listBuckets(B2ListBucketsRequest.builder(getAccountId()).build());
+        // Note:
+        //   Usually we nest all retryable code in one retryer loop
+        //   so that we share the retry count and backoff behavior.
+        //   in this case, doing that is awkward, so we're just
+        //   calling getAccountId() which will do its own retry loop
+        //   before calling listBuckets() with its retry loop.
+        //   The AccountAuthorizationCache holds onto the accountId
+        //   after the first time we capture it, so the only time
+        //   getAccountId() might have to retry is if we haven't
+        //   succeeding in authorizing yet.
+        final String accountId = getAccountId();
+        return listBuckets(B2ListBucketsRequest.builder(accountId).build());
     }
 
     /**
