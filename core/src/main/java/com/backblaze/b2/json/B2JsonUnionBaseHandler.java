@@ -243,7 +243,9 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                         throw new B2JsonException("unknown field '" + fieldName + "' in union type " + clazz.getSimpleName());
                     }
                     else {
-                        fieldNameToValue.put(fieldName, handler.deserialize(in, options));
+                        // we allow all fields to be parsed as null here.
+                        // if it's a required field, we detect that in deserializeFromFieldNameToValueMap().
+                        fieldNameToValue.put(fieldName, B2JsonUtil.deserializeMaybeNull(handler, in, options));
                     }
                 }
             } while (in.objectHasMoreFields());

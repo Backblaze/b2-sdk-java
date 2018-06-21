@@ -1740,4 +1740,65 @@ public class B2JsonTest extends B2BaseTest {
 
     private static class SubclassF extends UnionF {
     }
+
+
+    @Test
+    public void testUnionSubclassHasNullOptionalField() throws B2JsonException, IOException {
+        final String json = "{\n" +
+                "  \"name\": null,\n" +
+                "  \"type\": \"g\"\n" +
+                "}";
+        checkDeserializeSerialize(json, UnionG.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionG {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("g", SubclassG.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassG extends UnionG {
+        @B2Json.optional
+        final String name;
+
+        @B2Json.constructor(params = "name")
+        private SubclassG(String name) {
+            this.name = name;
+        }
+    }
+
+    @Test
+    public void testUnionSubclassHasNullRequiredField() throws B2JsonException, IOException {
+        final String json = "{\n" +
+                "  \"name\": null,\n" +
+                "  \"type\": \"h\"\n" +
+                "}";
+        thrown.expectMessage("required field name cannot be null");
+        checkDeserializeSerialize(json, UnionH.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionH {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("h", SubclassH.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassH extends UnionH {
+        @B2Json.required
+        final String name;
+
+        @B2Json.constructor(params = "name")
+        private SubclassH(String name) {
+            this.name = name;
+        }
+    }
+
 }
