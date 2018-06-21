@@ -1479,6 +1479,33 @@ public class B2JsonTest extends B2BaseTest {
         B2Json.get().fromJson(json, UnionAZ.class);
     }
 
+    @Test
+    public void testSerializeUnionSubType() throws B2JsonException, IOException {
+        final String origJson = "{\n" +
+                "  \"contained\": {\n" +
+                "    \"a\": 1,\n" +
+                "    \"type\": \"a\"\n" +
+                "  }\n" +
+                "}";
+        checkDeserializeSerialize(origJson, ContainsUnion.class);
+    }
+
+    @Test
+    public void testSerializeOptionalAndMissingUnion() throws B2JsonException, IOException {
+        final String origJson = "{\n" +
+                "  \"contained\": null\n" +
+                "}";
+        checkDeserializeSerialize(origJson, ContainsOptionalUnion.class);
+    }
+
+    @Test
+    public void testSerializeUnregisteredUnionSubType() throws B2JsonException {
+        final SubclassUnregistered unregistered = new SubclassUnregistered("zzz");
+        final ContainsUnion container = new ContainsUnion(unregistered);
+        thrown.expectMessage("class com.backblaze.b2.json.B2JsonTest$SubclassUnregistered isn't a registered part of union class com.backblaze.b2.json.B2JsonTest$UnionAZ");
+        B2Json.get().toJson(container);
+    }
+
     @B2Json.union(typeField = "type")
     private static class UnionAZ {
         public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
@@ -1507,6 +1534,38 @@ public class B2JsonTest extends B2BaseTest {
         @B2Json.constructor(params = "z")
         private SubclassZ(String z) {
             this.z = z;
+        }
+    }
+
+    private static class SubclassUnregistered extends UnionAZ {
+        @B2Json.required
+        public final String u;
+
+        @B2Json.constructor(params = "u")
+        private SubclassUnregistered(String u) {
+            this.u = u;
+        }
+    }
+
+    // i *soooo* wanted to call this class "North",
+    // but the more boring name "ContainsUnion" is clearer.
+    private static class ContainsUnion {
+        @B2Json.required
+        private final UnionAZ contained;
+
+        @B2Json.constructor(params = "contained")
+        private ContainsUnion(UnionAZ contained) {
+            this.contained = contained;
+        }
+    }
+
+    private static class ContainsOptionalUnion {
+        @B2Json.optional
+        private final UnionAZ contained;
+
+        @B2Json.constructor(params = "contained")
+        private ContainsOptionalUnion(UnionAZ contained) {
+            this.contained = contained;
         }
     }
 
