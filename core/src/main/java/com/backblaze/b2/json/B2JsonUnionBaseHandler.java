@@ -40,6 +40,11 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     private final Map<String, B2JsonObjectHandler<?>> typeNameToHandler;
 
     /**
+     * Mapping from registered classes to their handlers.
+     */
+    private final Map<Class<?>, B2JsonObjectHandler<?>> classToHandler;
+
+    /**
      * Handlers for all of the fields in all of the subclasses.
      *
      * The rule is that in all of the subclasses of a union base class, all fields
@@ -79,17 +84,19 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         // Get the map of type name to class of all the members of the union.
         final Map<String, Class<?>> typeNameToClass = getUnionTypeMap(clazz).getTypeNameToClass();
 
-        // Build the map from type name to handler.
+        // Build the maps from type name and class to handler.
         typeNameToHandler = new HashMap<>();
+        classToHandler = new HashMap<>();
         for (Map.Entry<String, Class<?>> entry : typeNameToClass.entrySet()) {
             final String typeName = entry.getKey();
             final Class<?> typeClass = entry.getValue();
-            if (!hasSuperclass(typeClass, clazz)) {
+            if (!hasSuperclass(typeClass, clazz)) { // use clazz.isAssignableFrom(typeClass)?
                 throw new B2JsonException(typeClass + " is not a subclass of " + clazz);
             }
             final B2JsonTypeHandler<?> handler = handlerMap.getHandler(typeClass);
             if (handler instanceof B2JsonObjectHandler) {
                 typeNameToHandler.put(typeName, (B2JsonObjectHandler) handler);
+                classToHandler.put(typeClass, (B2JsonObjectHandler) handler);
             }
             else {
                 throw new B2JsonException("BUG: handler for subclass of union is not B2JsonObjectHandler");
@@ -198,7 +205,24 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
     @Override
     public void serialize(T obj, B2JsonWriter out) throws IOException, B2JsonException {
-        throw new B2JsonException("" + clazz + " is a union base class, and cannot be serialized");
+        if (obj.getClass() == clazz) {
+            // the union base class is basically "abstract" and can't be serialized.
+            throw new B2JsonException("" + clazz + " is a union base class, and cannot be serialized");
+        }
+
+        //
+        // we need to use the handler for obj's class to serialize obj.
+        //
+
+        // look in our map for the handler.
+        //noinspection unchecked
+        final B2JsonObjectHandler<T> objHandler = (B2JsonObjectHandler<T>) classToHandler.get(obj.getClass());
+        if (objHandler == null) {
+            throw new B2JsonException("" + obj.getClass() + " isn't a registered part of union " + clazz);
+        }
+
+        // we have the right handler, so make it do the work.
+        objHandler.serialize(obj, out);
     }
 
     @Override
@@ -219,7 +243,9 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                         throw new B2JsonException("unknown field '" + fieldName + "' in union type " + clazz.getSimpleName());
                     }
                     else {
-                        fieldNameToValue.put(fieldName, handler.deserialize(in, options));
+                        // we allow all fields to be parsed as null here.
+                        // if it's a required field, we detect that in deserializeFromFieldNameToValueMap().
+                        fieldNameToValue.put(fieldName, B2JsonUtil.deserializeMaybeNull(handler, in, options));
                     }
                 }
             } while (in.objectHasMoreFields());

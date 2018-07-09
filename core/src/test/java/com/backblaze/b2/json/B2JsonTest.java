@@ -1479,6 +1479,33 @@ public class B2JsonTest extends B2BaseTest {
         B2Json.get().fromJson(json, UnionAZ.class);
     }
 
+    @Test
+    public void testSerializeUnionSubType() throws B2JsonException, IOException {
+        final String origJson = "{\n" +
+                "  \"contained\": {\n" +
+                "    \"a\": 1,\n" +
+                "    \"type\": \"a\"\n" +
+                "  }\n" +
+                "}";
+        checkDeserializeSerialize(origJson, ContainsUnion.class);
+    }
+
+    @Test
+    public void testSerializeOptionalAndMissingUnion() throws B2JsonException, IOException {
+        final String origJson = "{\n" +
+                "  \"contained\": null\n" +
+                "}";
+        checkDeserializeSerialize(origJson, ContainsOptionalUnion.class);
+    }
+
+    @Test
+    public void testSerializeUnregisteredUnionSubType() throws B2JsonException {
+        final SubclassUnregistered unregistered = new SubclassUnregistered("zzz");
+        final ContainsUnion container = new ContainsUnion(unregistered);
+        thrown.expectMessage("class com.backblaze.b2.json.B2JsonTest$SubclassUnregistered isn't a registered part of union class com.backblaze.b2.json.B2JsonTest$UnionAZ");
+        B2Json.get().toJson(container);
+    }
+
     @B2Json.union(typeField = "type")
     private static class UnionAZ {
         public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
@@ -1507,6 +1534,38 @@ public class B2JsonTest extends B2BaseTest {
         @B2Json.constructor(params = "z")
         private SubclassZ(String z) {
             this.z = z;
+        }
+    }
+
+    private static class SubclassUnregistered extends UnionAZ {
+        @B2Json.required
+        public final String u;
+
+        @B2Json.constructor(params = "u")
+        private SubclassUnregistered(String u) {
+            this.u = u;
+        }
+    }
+
+    // i *soooo* wanted to call this class "North",
+    // but the more boring name "ContainsUnion" is clearer.
+    private static class ContainsUnion {
+        @B2Json.required
+        private final UnionAZ contained;
+
+        @B2Json.constructor(params = "contained")
+        private ContainsUnion(UnionAZ contained) {
+            this.contained = contained;
+        }
+    }
+
+    private static class ContainsOptionalUnion {
+        @B2Json.optional
+        private final UnionAZ contained;
+
+        @B2Json.constructor(params = "contained")
+        private ContainsOptionalUnion(UnionAZ contained) {
+            this.contained = contained;
         }
     }
 
@@ -1681,4 +1740,65 @@ public class B2JsonTest extends B2BaseTest {
 
     private static class SubclassF extends UnionF {
     }
+
+
+    @Test
+    public void testUnionSubclassHasNullOptionalField() throws B2JsonException, IOException {
+        final String json = "{\n" +
+                "  \"name\": null,\n" +
+                "  \"type\": \"g\"\n" +
+                "}";
+        checkDeserializeSerialize(json, UnionG.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionG {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("g", SubclassG.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassG extends UnionG {
+        @B2Json.optional
+        final String name;
+
+        @B2Json.constructor(params = "name")
+        private SubclassG(String name) {
+            this.name = name;
+        }
+    }
+
+    @Test
+    public void testUnionSubclassHasNullRequiredField() throws B2JsonException, IOException {
+        final String json = "{\n" +
+                "  \"name\": null,\n" +
+                "  \"type\": \"h\"\n" +
+                "}";
+        thrown.expectMessage("required field name cannot be null");
+        checkDeserializeSerialize(json, UnionH.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class UnionH {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("h", SubclassH.class)
+                    .build();
+        }
+    }
+
+    private static class SubclassH extends UnionH {
+        @B2Json.required
+        final String name;
+
+        @B2Json.constructor(params = "name")
+        private SubclassH(String name) {
+            this.name = name;
+        }
+    }
+
 }
