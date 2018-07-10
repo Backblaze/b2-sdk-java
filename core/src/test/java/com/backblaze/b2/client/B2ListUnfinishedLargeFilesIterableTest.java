@@ -124,8 +124,10 @@ public class B2ListUnfinishedLargeFilesIterableTest extends B2BaseTest {
     public void testBuilder() {
         B2ListUnfinishedLargeFilesRequest request3 = B2ListUnfinishedLargeFilesRequest
                 .builder(BUCKET_ID)
+                .setNamePrefix("foo")
                 .setMaxFileCount(6)
                 .build();
+        assertEquals("foo", request3.getNamePrefix());
         assertEquals((Integer) 6, request3.getMaxFileCount());
     }
 

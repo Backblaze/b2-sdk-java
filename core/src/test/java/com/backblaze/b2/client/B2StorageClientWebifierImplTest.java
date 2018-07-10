@@ -588,6 +588,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    {\n" +
                 "      \"bucketId\": \"bucket1\",\n" +
                 "      \"maxFileCount\": null,\n" +
+                "      \"namePrefix\": null,\n" +
                 "      \"startFileId\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +

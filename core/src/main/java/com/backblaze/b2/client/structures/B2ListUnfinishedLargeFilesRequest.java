@@ -12,21 +12,29 @@ public class B2ListUnfinishedLargeFilesRequest {
     @B2Json.required
     private final String bucketId;
     @B2Json.optional
+    private final String namePrefix;
+    @B2Json.optional
     private final String startFileId;
     @B2Json.optional
     private final Integer maxFileCount;
 
-    @B2Json.constructor(params = "bucketId,startFileId,maxFileCount")
+    @B2Json.constructor(params = "bucketId,namePrefix,startFileId,maxFileCount")
     public B2ListUnfinishedLargeFilesRequest(String bucketId,
+                                             String namePrefix,
                                              String startFileId,
                                              Integer maxFileCount) {
         this.bucketId = bucketId;
+        this.namePrefix = namePrefix;
         this.startFileId = startFileId;
         this.maxFileCount = maxFileCount;
     }
 
     public String getBucketId() {
         return bucketId;
+    }
+
+    public String getNamePrefix() {
+        return namePrefix;
     }
 
     public String getStartFileId() {
@@ -62,6 +70,7 @@ public class B2ListUnfinishedLargeFilesRequest {
 
     public static class Builder {
         private final String bucketId;
+        private String namePrefix;
         private String startFileId;
         private Integer maxFileCount;
 
@@ -73,6 +82,11 @@ public class B2ListUnfinishedLargeFilesRequest {
             this.bucketId = orig.bucketId;
             this.startFileId = orig.startFileId;
             this.maxFileCount = orig.maxFileCount;
+        }
+
+        public Builder setNamePrefix(String namePrefix) {
+            this.namePrefix = namePrefix;
+            return this;
         }
 
         public Builder setStartFileId(String startFileId) {
@@ -88,6 +102,7 @@ public class B2ListUnfinishedLargeFilesRequest {
         public B2ListUnfinishedLargeFilesRequest build() {
             return new B2ListUnfinishedLargeFilesRequest(
                     bucketId,
+                    namePrefix,
                     startFileId,
                     maxFileCount);
         }
