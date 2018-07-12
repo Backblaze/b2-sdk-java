@@ -21,6 +21,7 @@ import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.makeVersion;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -59,9 +60,9 @@ public class B2ListUnfinishedLargeFilesIterableTest extends B2BaseTest {
         // iter should have two names.
         final Iterator<B2FileVersion> iter = new B2ListUnfinishedLargeFilesIterable(client, request).iterator();
         assertTrue(iter.hasNext());
-        assertTrue(names.get(0) == iter.next());
+        assertSame(names.get(0), iter.next());
         assertTrue(iter.hasNext());
-        assertTrue(names.get(1) == iter.next());
+        assertSame(names.get(1), iter.next());
         assertTrue(!iter.hasNext());
     }
 
@@ -105,18 +106,18 @@ public class B2ListUnfinishedLargeFilesIterableTest extends B2BaseTest {
 
         // first page.
         assertTrue(iter.hasNext());
-        assertTrue(pageOneNames.get(0) == iter.next());
+        assertSame(pageOneNames.get(0), iter.next());
         assertTrue(iter.hasNext());
-        assertTrue(pageOneNames.get(1) == iter.next());
+        assertSame(pageOneNames.get(1), iter.next());
         assertTrue(iter.hasNext());
 
         // second page
         assertTrue(iter.hasNext());
-        assertTrue(pageTwoNames.get(0) == iter.next());
+        assertSame(pageTwoNames.get(0), iter.next());
         assertTrue(iter.hasNext());
-        assertTrue(pageTwoNames.get(1) == iter.next());
+        assertSame(pageTwoNames.get(1), iter.next());
         assertTrue(iter.hasNext());
-        assertTrue(pageTwoNames.get(2) == iter.next());
+        assertSame(pageTwoNames.get(2), iter.next());
         assertTrue(!iter.hasNext());
     }
 
@@ -124,8 +125,10 @@ public class B2ListUnfinishedLargeFilesIterableTest extends B2BaseTest {
     public void testBuilder() {
         B2ListUnfinishedLargeFilesRequest request3 = B2ListUnfinishedLargeFilesRequest
                 .builder(BUCKET_ID)
+                .setNamePrefix("foo")
                 .setMaxFileCount(6)
                 .build();
+        assertEquals("foo", request3.getNamePrefix());
         assertEquals((Integer) 6, request3.getMaxFileCount());
     }
 

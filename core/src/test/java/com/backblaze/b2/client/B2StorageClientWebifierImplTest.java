@@ -66,10 +66,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.client.B2TestHelpers.bucketName;
-import static com.backblaze.b2.client.B2TestHelpers.makeFileHeaders;
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
 import static com.backblaze.b2.client.B2TestHelpers.makeBucket;
+import static com.backblaze.b2.client.B2TestHelpers.makeFileHeaders;
 import static com.backblaze.b2.client.B2TestHelpers.uploadPartUrlResponse;
 import static com.backblaze.b2.client.B2TestHelpers.uploadUrlResponse;
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.ACCOUNT_AUTHORIZATION;
@@ -77,7 +77,6 @@ import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.Request
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.UPLOADING;
 import static com.backblaze.b2.json.B2Json.toJsonOrThrowRuntime;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
@@ -189,7 +188,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         public <ResponseType> ResponseType postJsonReturnJson(String url,
                                                               B2Headers headersOrNull,
                                                               Object request,
-                                                              Class<ResponseType> responseClass) throws B2Exception {
+                                                              Class<ResponseType> responseClass) {
             B2Preconditions.checkArgument(callDescription == null, "called more than once?");
 
             callDescription = ("postJsonReturnJson.\n" +
@@ -241,7 +240,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                                                               B2Headers headersOrNull,
                                                               InputStream inputStream,
                                                               long contentLength,
-                                                              Class<ResponseType> responseClass) throws B2Exception {
+                                                              Class<ResponseType> responseClass) {
             B2Preconditions.checkArgument(callDescription == null, "called more than once?");
 
             callDescription = ("postJsonReturnJson.\n" +
@@ -261,7 +260,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         @Override
         public void getContent(String url,
                                B2Headers headersOrNull,
-                               B2ContentSink handler) throws B2Exception {
+                               B2ContentSink handler) {
             B2Preconditions.checkArgument(callDescription == null, "called more than once?");
 
             callDescription = ("getContent.\n" +
@@ -272,7 +271,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         }
 
         @Override
-        public B2Headers head(String url, B2Headers headersOrNull) throws B2Exception {
+        public B2Headers head(String url, B2Headers headersOrNull) {
             callDescription = ("head.\n" +
                     "url:\n" +
                     indent(url) + "\n" +
@@ -359,6 +358,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
     @Test
     public void testDoesntAddExtraSlashAtEndOfMasterUrl() {
+        //noinspection ConstantConditions
         assertTrue(!MASTER_URL.endsWith("/"));
 
         final B2StorageClientWebifierImpl ifier = new B2StorageClientWebifierImpl(
@@ -456,6 +456,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "request:\n" +
                 "    {\n" +
                 "      \"accountId\": \"1\",\n" +
+                "      \"bucketId\": null,\n" +
+                "      \"bucketName\": null,\n" +
                 "      \"bucketTypes\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
@@ -588,6 +590,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    {\n" +
                 "      \"bucketId\": \"bucket1\",\n" +
                 "      \"maxFileCount\": null,\n" +
+                "      \"namePrefix\": null,\n" +
                 "      \"startFileId\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
@@ -1291,6 +1294,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "request:\n" +
                 "    {\n" +
                 "      \"accountId\": \"1\",\n" +
+                "      \"bucketId\": null,\n" +
+                "      \"bucketName\": null,\n" +
                 "      \"bucketTypes\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
