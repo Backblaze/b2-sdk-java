@@ -5,6 +5,7 @@
 package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.json.B2Json;
+import com.backblaze.b2.util.B2Preconditions;
 
 import java.util.Objects;
 
@@ -23,6 +24,7 @@ public class B2ListUnfinishedLargeFilesRequest {
                                              String namePrefix,
                                              String startFileId,
                                              Integer maxFileCount) {
+        B2Preconditions.checkArgumentIsNotNull(bucketId, "bucketId");
         this.bucketId = bucketId;
         this.namePrefix = namePrefix;
         this.startFileId = startFileId;
@@ -47,17 +49,22 @@ public class B2ListUnfinishedLargeFilesRequest {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         B2ListUnfinishedLargeFilesRequest that = (B2ListUnfinishedLargeFilesRequest) o;
-        return Objects.equals(getBucketId(), that.getBucketId()) &&
-                Objects.equals(getStartFileId(), that.getStartFileId()) &&
-                Objects.equals(getMaxFileCount(), that.getMaxFileCount());
+        return Objects.equals(bucketId, that.bucketId) &&
+                Objects.equals(namePrefix, that.namePrefix) &&
+                Objects.equals(startFileId, that.startFileId) &&
+                Objects.equals(maxFileCount, that.maxFileCount);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getBucketId(), getStartFileId(), getMaxFileCount());
+        return Objects.hash(bucketId, namePrefix, startFileId, maxFileCount);
     }
 
     public static Builder builder(String bucketId) {

@@ -456,6 +456,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "request:\n" +
                 "    {\n" +
                 "      \"accountId\": \"1\",\n" +
+                "      \"bucketId\": null,\n" +
+                "      \"bucketName\": null,\n" +
                 "      \"bucketTypes\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
@@ -1292,6 +1294,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "request:\n" +
                 "    {\n" +
                 "      \"accountId\": \"1\",\n" +
+                "      \"bucketId\": null,\n" +
+                "      \"bucketName\": null,\n" +
                 "      \"bucketTypes\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
