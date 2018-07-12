@@ -10,6 +10,8 @@
 #
 ######################################################################
 
+from __future__ import print_function
+
 import sys
 import argparse
 import os
@@ -118,8 +120,8 @@ def check(directoryOrFile, errors):
         return
     
     if isdir(directoryOrFile):
-       for entry in sorted(os.listdir(directoryOrFile)):
-       	   check(join(directoryOrFile, entry), errors)
+        for entry in sorted(os.listdir(directoryOrFile)):
+            check(join(directoryOrFile, entry), errors)
     else:
         #print "checking " + directoryOrFile
         check_file(directoryOrFile, errors)
@@ -138,7 +140,7 @@ def check_license(path, errors):
     has_copyright_line = False
     has_license_line = False
 
-    with open(path, "rb") as f:
+    with open(path, "r") as f:
         line_num = 0
         for line in f:
             line_num += 1
@@ -167,7 +169,7 @@ def package_for_import(path):
         com.backblaze.util.BzDateTimeUtil.MAX_DAY -> com.backblaze.util
     """
     words = path.split('.')
-    for i in xrange(len(words)):
+    for i in range(len(words)):
         if words[i][0].isupper() or words[i] == '*':
             words = words[:i]
             break
@@ -242,16 +244,16 @@ def main():
     args = handle_args(sys.argv)
 
     for directoryOrFile in args.directoriesOrFiles:
-    	errors = []
-	check(directoryOrFile, errors)
+        errors = []
+        check(directoryOrFile, errors)
 
     if errors:
-        print "check_code: there were %d errors" % (len(errors))
+        print("check_code: there were %d errors" % (len(errors),))
         for err in errors:
-            print "ERR: " + err
+            print("ERR: " + err)
         sys.exit(1)
     else:
-        print "check_code: looks good."
+        print("check_code: looks good.")
 
 
 
