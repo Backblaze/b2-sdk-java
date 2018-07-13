@@ -87,6 +87,7 @@ public class B2ListUnfinishedLargeFilesRequest {
 
         public Builder(B2ListUnfinishedLargeFilesRequest orig) {
             this.bucketId = orig.bucketId;
+            this.namePrefix = orig.namePrefix;
             this.startFileId = orig.startFileId;
             this.maxFileCount = orig.maxFileCount;
         }
