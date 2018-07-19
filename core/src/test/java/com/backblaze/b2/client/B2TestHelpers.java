@@ -11,6 +11,7 @@ import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2Allowed;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketTypes;
+import com.backblaze.b2.client.structures.B2Capabilities;
 import com.backblaze.b2.client.structures.B2CorsRule;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2LifecycleRule;
@@ -64,7 +65,7 @@ public class B2TestHelpers {
                 "downloadUrl" + i,
                 i * 1000,
                 i * 100,
-                new B2Allowed(B2Collections.listOf("list_files"), "", ""));
+                new B2Allowed(B2Collections.listOf(B2Capabilities.LIST_FILES), "", ""));
     }
 
     /**
