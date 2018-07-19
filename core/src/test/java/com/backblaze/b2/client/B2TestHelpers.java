@@ -8,6 +8,7 @@ import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.contentSources.B2HeadersImpl;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2Allowed;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2CorsRule;
@@ -62,7 +63,8 @@ public class B2TestHelpers {
                 "apiUrl" + i,
                 "downloadUrl" + i,
                 i * 1000,
-                i * 100);
+                i * 100,
+                new B2Allowed(B2Collections.listOf("list_files"), "", ""));
     }
 
     /**
