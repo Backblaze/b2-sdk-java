@@ -136,7 +136,7 @@ public class B2AccountAuthorizationCacheTest extends B2BaseTest {
         //noinspection ResultOfMethodCallIgnored
         a.hashCode();
 
-        assertEquals("B2AccountAuthorization{accountId='1', authorizationToken='accountToken1', apiUrl='apiUrl1', downloadUrl='downloadUrl1', recommendedPartSize=1000, absoluteMinimumPartSize=100, allowed=B2Allowed(capabilities=[list_files], bucketId=, namePrefix=)}", a.toString());
+        assertEquals("B2AccountAuthorization{accountId='1', authorizationToken='accountToken1', apiUrl='apiUrl1', downloadUrl='downloadUrl1', recommendedPartSize=1000, absoluteMinimumPartSize=100, allowed=B2Allowed(capabilities=[listFiles], bucketId=, namePrefix=)}", a.toString());
     }
 
 }
