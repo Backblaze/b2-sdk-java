@@ -55,7 +55,7 @@ class B2AccountAuthorizationCache {
             } else {
                 if (!accountId.equals(accountIdFromAuthorization)) {
                     throw new B2LocalException("unauthorized", "authorized as " + accountIdFromAuthorization +
-                            "but previously authroized as accountId " + accountId);
+                            "but previously authorized as accountId " + accountId);
                 }
             }
         }
