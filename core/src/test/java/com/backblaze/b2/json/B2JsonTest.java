@@ -1334,6 +1334,42 @@ public class B2JsonTest extends B2BaseTest {
         }
     }
 
+    @Test
+    public void testVersionRangeBackwards() throws B2JsonException {
+        thrown.expectMessage("last version 1 is before first version 2");
+        bzJson.toJson(new VersionRangeBackwardsClass(5));
+    }
+
+    private static class VersionRangeBackwardsClass {
+        @B2Json.required
+        @B2Json.versionRange(firstVersion = 2, lastVersion = 1)
+        private final int n;
+
+        @B2Json.constructor(params =  "n")
+        private VersionRangeBackwardsClass(int n) {
+            this.n = n;
+        }
+    }
+
+    @Test
+    public void testConflictingVersions() throws B2JsonException {
+        thrown.expectMessage("must not specify both 'firstVersion' and 'versionRange'");
+        bzJson.toJson(new VersionConflictClass(5));
+    }
+
+    private static class VersionConflictClass {
+        @B2Json.required
+        @B2Json.firstVersion(firstVersion = 5)
+        @B2Json.versionRange(firstVersion = 2, lastVersion = 1)
+        private final int n;
+
+        @B2Json.constructor(params =  "n")
+        private VersionConflictClass(int n) {
+            this.n = n;
+        }
+    }
+
+
     private static final class Node {
         @B2Json.optional
         public String name;

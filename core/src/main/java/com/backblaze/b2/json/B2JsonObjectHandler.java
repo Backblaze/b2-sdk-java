@@ -112,9 +112,10 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         for (Field field : clazz.getDeclaredFields()) {
             FieldRequirement requirement = getFieldRequirement(field);
             if (!Modifier.isStatic(field.getModifiers()) && requirement != FieldRequirement.IGNORED) {
-                B2JsonTypeHandler<?> handler = getFieldHandler(field.getGenericType(), handlerMap);
-                Object defaultValueOrNull = getDefaultValueOrNull(field, handler);
-                FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueOrNull);
+                final B2JsonTypeHandler<?> handler = getFieldHandler(field.getGenericType(), handlerMap);
+                final Object defaultValueOrNull = getDefaultValueOrNull(field, handler);
+                final VersionRange versionRange = getVersionRange(field);
+                final FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueOrNull, versionRange);
                 fieldMap.put(field.getName(), fieldInfo);
             }
         }
@@ -205,6 +206,29 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             catch (IOException e) {
                 throw new B2JsonException("error reading default value", e);
             }
+        }
+    }
+
+    /**
+     * Returns the version range for a field.
+     */
+    private VersionRange getVersionRange(Field field) throws B2JsonException {
+        final B2Json.firstVersion firstVersion = field.getAnnotation(B2Json.firstVersion.class);
+        final B2Json.versionRange versionRange = field.getAnnotation(B2Json.versionRange.class);
+
+        if (firstVersion != null && versionRange != null) {
+            throw new B2JsonException("must not specify both 'firstVersion' and 'versionRange'");
+        }
+
+
+        if (firstVersion != null) {
+            return VersionRange.allVersionsFrom(firstVersion.firstVersion());
+        }
+        else if (versionRange != null) {
+            return VersionRange.range(versionRange.firstVersion(), versionRange.lastVersion());
+        }
+        else {
+            return VersionRange.ALL_VERSIONS;
         }
     }
 

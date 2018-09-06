@@ -424,6 +424,25 @@ public class B2Json {
     public @interface ignored {}
 
     /**
+     * Annotation that says that a field exists in all versions at or after this one.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface firstVersion {
+        int firstVersion();
+    }
+
+    /**
+     * Annotation that says that a field exists in all versions in a range (inclusive).
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface versionRange {
+        int firstVersion();
+        int lastVersion();
+    }
+
+    /**
      * Constructor annotation saying that this is the constructor B2Json
      * should use.  This constructor must take ALL of the serializable
      * fields as parameters.
