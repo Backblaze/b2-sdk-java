@@ -26,7 +26,7 @@ public class B2JsonIntegerHandler implements B2JsonTypeHandler<Integer> {
         out.writeText(obj.toString());
     }
 
-    public Integer deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Integer deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readNumberAsString();
         return deserializeUrlParam(str);
     }

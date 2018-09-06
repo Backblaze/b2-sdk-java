@@ -32,7 +32,7 @@ public class B2JsonIntArrayHandler extends B2JsonNonUrlTypeHandler<int[]> {
         out.setAllowNewlines(true);
     }
 
-    public int[] deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public int[] deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         List<Integer> result = new ArrayList<Integer>();
         if (in.startArrayAndCheckForContents()) {
             do {

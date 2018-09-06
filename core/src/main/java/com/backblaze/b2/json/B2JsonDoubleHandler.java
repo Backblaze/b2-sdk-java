@@ -26,7 +26,7 @@ public class B2JsonDoubleHandler implements B2JsonTypeHandler<Double> {
         out.writeText(obj.toString());
     }
 
-    public Double deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Double deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readNumberAsString();
         return deserializeUrlParam(str);
     }

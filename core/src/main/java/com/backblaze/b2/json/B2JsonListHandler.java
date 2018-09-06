@@ -49,7 +49,7 @@ public class B2JsonListHandler extends B2JsonNonUrlTypeHandler<List> {
         out.setAllowNewlines(true);
     }
 
-    public List deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public List deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         List result = new ArrayList();
         if (in.startArrayAndCheckForContents()) {
             do {

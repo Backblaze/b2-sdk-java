@@ -29,7 +29,7 @@ public class B2JsonTreeSetHandler extends B2JsonNonUrlTypeHandler<TreeSet> {
         out.finishArray();
     }
 
-    public TreeSet deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public TreeSet deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         TreeSet result = new TreeSet();
         if (in.startArrayAndCheckForContents()) {
             do {

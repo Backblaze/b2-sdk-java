@@ -11,6 +11,17 @@ package com.backblaze.b2.json;
 public class B2JsonOptions {
 
     /**
+     * The default set of options.
+     */
+    public static final B2JsonOptions DEFAULT = builder().build();
+
+    /**
+     * The default set of options, except that extra fields are ignored.
+     */
+    public static final B2JsonOptions DEFAULT_AND_ALLOW_EXTRA_FIELDS =
+            builder().setExtraFieldOption(ExtraFieldOption.IGNORE).build();
+
+    /**
      * What to do with extra fields found when de-serializing.
      */
     enum ExtraFieldOption {

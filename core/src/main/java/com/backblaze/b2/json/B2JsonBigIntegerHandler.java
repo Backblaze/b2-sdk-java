@@ -21,7 +21,7 @@ public class B2JsonBigIntegerHandler implements B2JsonTypeHandler<BigInteger> {
         out.writeText(obj.toString());
     }
 
-    public BigInteger deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public BigInteger deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         return new BigInteger(in.readNumberAsString());
     }
 

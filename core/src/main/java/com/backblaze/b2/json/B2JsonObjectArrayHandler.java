@@ -37,7 +37,7 @@ public class B2JsonObjectArrayHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         out.finishArray();
     }
 
-    public T deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         List<Object> result = new ArrayList<>();
         if (in.startArrayAndCheckForContents()) {
             do {

@@ -39,7 +39,7 @@ public class B2JsonConcurrentMapHandler extends B2JsonNonUrlTypeHandler<Concurre
         out.finishObject();
     }
 
-    public ConcurrentMap deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public ConcurrentMap deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         ConcurrentMap result = new ConcurrentHashMap();
         if (in.startObjectAndCheckForContents()) {
             do {

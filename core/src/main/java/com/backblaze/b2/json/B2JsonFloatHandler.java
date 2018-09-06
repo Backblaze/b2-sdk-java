@@ -26,7 +26,7 @@ public class B2JsonFloatHandler implements B2JsonTypeHandler<Float> {
         out.writeText(obj.toString());
     }
 
-    public Float deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Float deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readNumberAsString();
         return deserializeUrlParam(str);
     }

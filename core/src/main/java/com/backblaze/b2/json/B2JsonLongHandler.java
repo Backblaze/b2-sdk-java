@@ -26,7 +26,7 @@ public class B2JsonLongHandler implements B2JsonTypeHandler<Long> {
         out.writeText(obj.toString());
     }
 
-    public Long deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Long deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readNumberAsString();
         return deserializeUrlParam(str);
     }

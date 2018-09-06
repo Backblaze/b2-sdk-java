@@ -33,7 +33,7 @@ public class B2JsonBooleanArrayHandler extends B2JsonNonUrlTypeHandler<boolean[]
         out.setAllowNewlines(true);
     }
 
-    public boolean[] deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public boolean[] deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         List<Boolean> result = new ArrayList<>();
         if (in.startArrayAndCheckForContents()) {
             do {

@@ -33,7 +33,7 @@ public class B2JsonFloatArrayHandler extends B2JsonNonUrlTypeHandler<float[]> {
         out.setAllowNewlines(true);
     }
 
-    public float[] deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public float[] deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         List<Float> result = new ArrayList<>();
         if (in.startArrayAndCheckForContents()) {
             do {

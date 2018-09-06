@@ -20,7 +20,7 @@ public class B2JsonLocalDateTimeHandler implements B2JsonTypeHandler<LocalDateTi
         out.writeString(B2DateTimeUtil.formatFguidDateTime(obj));
     }
 
-    public LocalDateTime deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public LocalDateTime deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readString();
         return B2DateTimeUtil.parseDateTime(str);
     }

@@ -26,7 +26,7 @@ public class B2JsonByteHandler implements B2JsonTypeHandler<Byte> {
         out.writeText(obj.toString());
     }
 
-    public Byte deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Byte deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readNumberAsString();
         try {
             return Byte.valueOf(str);

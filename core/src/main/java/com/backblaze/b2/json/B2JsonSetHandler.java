@@ -33,7 +33,7 @@ public class B2JsonSetHandler extends B2JsonNonUrlTypeHandler<Set> {
         out.finishArray();
     }
 
-    public Set deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Set deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         Set result = new HashSet();
         if (in.startArrayAndCheckForContents()) {
             do {

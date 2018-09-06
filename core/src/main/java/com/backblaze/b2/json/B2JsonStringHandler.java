@@ -20,7 +20,7 @@ public class B2JsonStringHandler implements B2JsonTypeHandler<String> {
         out.writeString(obj);
     }
 
-    public String deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public String deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         return in.readString();
     }
 

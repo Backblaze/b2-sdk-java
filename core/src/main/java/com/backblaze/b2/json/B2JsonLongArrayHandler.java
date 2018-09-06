@@ -33,7 +33,7 @@ public class B2JsonLongArrayHandler extends B2JsonNonUrlTypeHandler<long[]> {
         out.setAllowNewlines(true);
     }
 
-    public long[] deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public long[] deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         List<Long> result = new ArrayList<>();
         if (in.startArrayAndCheckForContents()) {
             do {

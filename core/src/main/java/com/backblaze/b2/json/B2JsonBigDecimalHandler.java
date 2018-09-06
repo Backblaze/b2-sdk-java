@@ -21,7 +21,7 @@ public class B2JsonBigDecimalHandler implements B2JsonTypeHandler<BigDecimal> {
         out.writeText(obj.toString());
     }
 
-    public BigDecimal deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public BigDecimal deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         return new BigDecimal(in.readNumberAsString());
     }
 

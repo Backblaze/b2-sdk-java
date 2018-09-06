@@ -200,7 +200,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             String jsonOfDefaultValue = optional.defaultValue();
             try {
                 B2JsonReader reader = new B2JsonReader(new StringReader(jsonOfDefaultValue));
-                return handler.deserialize(reader, 0);
+                return handler.deserialize(reader, B2JsonOptions.DEFAULT);
             }
             catch (IOException e) {
                 throw new B2JsonException("error reading default value", e);
@@ -335,7 +335,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         }
     }
 
-    public T deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         if (fields == null) {
             throw new B2JsonException("B2JsonObjectHandler.deserializes called with null fields");
 
@@ -353,7 +353,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 String fieldName = in.readObjectFieldNameAndColon();
                 FieldInfo fieldInfo = fieldMap.get(fieldName);
                 if (fieldInfo == null) {
-                    if (((options & B2Json.ALLOW_EXTRA_FIELDS) == 0) &&
+                    if ((options.getExtraFieldOption() == B2JsonOptions.ExtraFieldOption.ERROR) &&
                             (fieldsToDiscard == null || !fieldsToDiscard.contains(fieldName))) {
                         throw new B2JsonException("unknown field in " + clazz.getName() + ": " + fieldName);
                     }
@@ -378,7 +378,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         return deserializeFromConstructorArgs(constructorArgs, foundFieldBits);
     }
 
-    public T deserializeFromFieldNameToValueMap(Map<String, Object> fieldNameToValue, int options) throws B2JsonException {
+    public T deserializeFromFieldNameToValueMap(Map<String, Object> fieldNameToValue, B2JsonOptions options) throws B2JsonException {
         Object [] constructorArgs = new Object [fields.length];
 
         // Read the values that are present in the map.
@@ -391,7 +391,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             String fieldName = entry.getKey();
             FieldInfo fieldInfo = fieldMap.get(fieldName);
             if (fieldInfo == null) {
-                if (((options & B2Json.ALLOW_EXTRA_FIELDS) == 0) &&
+                if ((options.getExtraFieldOption() == B2JsonOptions.ExtraFieldOption.ERROR) &&
                         (fieldsToDiscard == null || !fieldsToDiscard.contains(fieldName))) {
                     throw new B2JsonException("unknown field in " + clazz.getName() + ": " + fieldName);
                 }
@@ -408,7 +408,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         return deserializeFromConstructorArgs(constructorArgs, foundFieldBits);
     }
 
-    public T deserializeFromUrlParameterMap(Map<String, String> parameterMap, int options) throws B2JsonException {
+    public T deserializeFromUrlParameterMap(Map<String, String> parameterMap, B2JsonOptions options) throws B2JsonException {
         Object [] constructorArgs = new Object [fields.length];
 
         // Read the values that are present in the parameter map.
@@ -423,7 +423,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
             FieldInfo fieldInfo = fieldMap.get(fieldName);
             if (fieldInfo == null) {
-                if (((options & B2Json.ALLOW_EXTRA_FIELDS) == 0) &&
+                if ((options.getExtraFieldOption() == B2JsonOptions.ExtraFieldOption.ERROR) &&
                         (fieldsToDiscard == null || !fieldsToDiscard.contains(fieldName))) {
                     throw new B2JsonException("unknown field in " + clazz.getName() + ": " + fieldName);
                 }

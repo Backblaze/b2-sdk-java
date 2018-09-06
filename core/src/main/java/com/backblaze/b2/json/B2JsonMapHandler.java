@@ -46,7 +46,7 @@ public class B2JsonMapHandler extends B2JsonNonUrlTypeHandler<Map> {
         out.finishObject();
     }
 
-    public Map deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Map deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         Map result = new TreeMap();
         if (in.startObjectAndCheckForContents()) {
             do {

@@ -20,7 +20,7 @@ class B2JsonDurationHandler implements B2JsonTypeHandler<Duration> {
         out.writeString(B2DateTimeUtil.durationString(obj.getSeconds()));
     }
 
-    public Duration deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Duration deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readString();
         return deserializeUrlParam(str);
     }

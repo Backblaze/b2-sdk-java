@@ -29,7 +29,7 @@ public class B2JsonLinkedHashSetHandler extends B2JsonNonUrlTypeHandler<LinkedHa
         out.finishArray();
     }
 
-    public LinkedHashSet deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public LinkedHashSet deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         LinkedHashSet result = new LinkedHashSet();
         if (in.startArrayAndCheckForContents()) {
             do {

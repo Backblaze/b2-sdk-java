@@ -1211,7 +1211,7 @@ public class B2JsonTest extends B2BaseTest {
                 out.writeString("GoodCustomHandler");
             }
 
-            public GoodCustomHandler deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+            public GoodCustomHandler deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
                 return deserialize(in.readString());
             }
 
@@ -1418,7 +1418,7 @@ public class B2JsonTest extends B2BaseTest {
             }
 
             @Override
-            public Letter deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+            public Letter deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
                 return deserializeUrlParam(in.readString());
             }
 

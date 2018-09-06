@@ -226,7 +226,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     }
 
     @Override
-    public T deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
 
         // Gather the values of all fields present, and also the name of the type of object to create.
         String typeName = null;

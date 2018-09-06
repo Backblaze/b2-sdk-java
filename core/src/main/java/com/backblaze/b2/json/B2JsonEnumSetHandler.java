@@ -33,7 +33,7 @@ public class B2JsonEnumSetHandler extends B2JsonNonUrlTypeHandler<EnumSet> {
         out.finishArray();
     }
 
-    public EnumSet deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public EnumSet deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         EnumSet result = EnumSet.noneOf(itemHandler.getHandledClass());
         if (in.startArrayAndCheckForContents()) {
             do {

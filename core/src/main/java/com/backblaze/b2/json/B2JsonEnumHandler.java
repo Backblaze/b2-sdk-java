@@ -66,7 +66,7 @@ public class B2JsonEnumHandler<T> implements B2JsonTypeHandler<T> {
         out.writeString(obj.toString());
     }
 
-    public T deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readString();
         return deserializeUrlParam(str);
     }

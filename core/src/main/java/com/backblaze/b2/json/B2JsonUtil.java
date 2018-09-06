@@ -24,7 +24,7 @@ public class B2JsonUtil {
     /**
      * Deserialize an object that may be null.
      */
-    public static <T> T deserializeMaybeNull(B2JsonTypeHandler<T> handler, B2JsonReader in, int options) throws B2JsonException, IOException {
+    public static <T> T deserializeMaybeNull(B2JsonTypeHandler<T> handler, B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         if (in.peekNextNotWhitespaceChar() == 'n') {
             in.readNull();
             return null;
