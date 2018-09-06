@@ -78,7 +78,10 @@ public class B2Json {
 
     /**
      * Bit map values for the options parameter to the constructor.
+     *
+     * Deprecated in favor of using B2JsonOptions.
      */
+    @Deprecated
     public static final int ALLOW_EXTRA_FIELDS = 1;
 
     /**
@@ -243,10 +246,10 @@ public class B2Json {
      * if there is anything but whitespace after the JSON value.
      */
     public <T> T fromJsonUntilEof(InputStream in, Class<T> clazz) throws IOException, B2JsonException {
-        return fromJsonUntilEof(in, clazz, 0);
+        return fromJsonUntilEof(in, clazz, B2JsonOptions.DEFAULT);
     }
 
-
+    @Deprecated
     public <T> T fromJsonUntilEof(InputStream in, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
         return fromJsonUntilEof(in, clazz, optionsFromFlags(optionFlags));
     }
@@ -269,6 +272,7 @@ public class B2Json {
         return fromJson(in, clazz, 0);
     }
 
+    @Deprecated
     public <T> T fromJson(InputStream in, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
         return fromJson(in, clazz, optionsFromFlags(optionFlags));
     }
@@ -292,12 +296,17 @@ public class B2Json {
         return fromJson(json, clazz, 0);
     }
 
-    public <T> T fromJson(String json, Class<T> clazz, int options) throws B2JsonException {
+    @Deprecated
+    public <T> T fromJson(String json, Class<T> clazz, int optionFlags) throws B2JsonException {
+        return fromJson(json, clazz, optionsFromFlags(optionFlags));
+    }
+
+    public <T> T fromJson(String json, Class<T> clazz, B2JsonOptions options) throws B2JsonException {
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         return fromJsonWithHandler(json, handler, options);
     }
 
-
+    @Deprecated
     private <T> T fromJsonWithHandler(String json, B2JsonTypeHandler handler, int optionFlags) throws B2JsonException {
         return fromJsonWithHandler(json, handler, optionsFromFlags(optionFlags));
     }
@@ -316,10 +325,10 @@ public class B2Json {
      * Parse JSON as an object of the given class.
      */
     public <T> T fromJson(byte[] jsonUtf8Bytes, Class<T> clazz) throws IOException, B2JsonException {
-        return fromJson(jsonUtf8Bytes, clazz, 0);
+        return fromJson(jsonUtf8Bytes, clazz, B2JsonOptions.DEFAULT);
     }
 
-
+    @Deprecated
     public <T> T fromJson(byte[] jsonUtf8Bytes, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
         return fromJson(jsonUtf8Bytes, clazz, optionsFromFlags(optionFlags));
     }
@@ -339,9 +348,10 @@ public class B2Json {
      * before passing them to this method.
      */
     public <T> T fromUrlParameterMap(Map<String, String> parameterMap, Class<T> clazz) throws IOException, B2JsonException {
-        return fromUrlParameterMap(parameterMap, clazz, 0);
+        return fromUrlParameterMap(parameterMap, clazz, B2JsonOptions.DEFAULT);
     }
 
+    @Deprecated
     public <T> T fromUrlParameterMap(Map<String, String> parameterMap, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
         return fromUrlParameterMap(parameterMap, clazz, optionsFromFlags(optionFlags));
     }
