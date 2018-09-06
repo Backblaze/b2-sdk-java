@@ -492,7 +492,9 @@ public class B2Json {
                     optionalWithDefault.class,
                     ignored.class,
                     constructor.class,
-                    defaultForInvalidEnumValue.class
+                    defaultForInvalidEnumValue.class,
+                    firstVersion.class,
+                    versionRange.class
             };
 
     /**
