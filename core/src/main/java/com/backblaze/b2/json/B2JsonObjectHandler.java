@@ -65,9 +65,19 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     private final Constructor<T> constructor;
 
     /**
+     * Number of parameters to constructor.
+     */
+    private final int constructorParamCount;
+
+    /**
      * Bit mask of all required fields.
      */
     private final long requiredBitMask;
+
+    /**
+     * Position of version parameter to constructor.
+     */
+    private final Integer versionParamIndexOrNull;
 
     /**
      * null or a set containing the names of fields to discard during parsing.
@@ -139,8 +149,12 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         }
         this.constructor = chosenConstructor;
 
-        // Figure out the argument positions for the constructor.
+        // Does the constructor take the version number as a parameter?
         final B2Json.constructor annotation = chosenConstructor.getAnnotation(B2Json.constructor.class);
+        final String versionParamOrEmpty = annotation.versionParam();
+        final int numberOfVersionParams = versionParamOrEmpty.isEmpty() ? 0 : 1;
+
+        // Figure out the argument positions for the constructor.
         {
             String paramsWithCommas = annotation.params().replace(" ", "");
             String [] paramNames = paramsWithCommas.split(",");
@@ -148,23 +162,35 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 paramNames = new String [0];
             }
 
-            if (paramNames.length != fields.length) {
+            final int constructorParamCount = fields.length + numberOfVersionParams;
+            if (paramNames.length != constructorParamCount) {
                 throw new IllegalArgumentException(clazz.getName() + " constructor does not have the right number of parameters");
             }
 
             int bitMask = 0;
+            Integer versionParamIndex = null;
             for (int i = 0; i < paramNames.length; i++) {
                 String paramName = paramNames[i];
-                final FieldInfo fieldInfo = fieldMap.get(paramName);
-                if (fieldInfo == null) {
-                    throw new B2JsonException(clazz.getName() + " param name is not a field: " + paramName);
+                if (paramName.isEmpty()) {
+                    throw new B2JsonException("parameter name must not be empty");
                 }
-                fieldInfo.setConstructorArgIndex(i);
-                if (fieldInfo.requirement == FieldRequirement.REQUIRED) {
-                    bitMask |= fieldInfo.bit;
+                if (paramName.equals(versionParamOrEmpty)) {
+                    versionParamIndex = i;
+                }
+                else {
+                    final FieldInfo fieldInfo = fieldMap.get(paramName);
+                    if (fieldInfo == null) {
+                        throw new B2JsonException(clazz.getName() + " param name is not a field: " + paramName);
+                    }
+                    fieldInfo.setConstructorArgIndex(i);
+                    if (fieldInfo.requirement == FieldRequirement.REQUIRED) {
+                        bitMask |= fieldInfo.bit;
+                    }
                 }
             }
             this.requiredBitMask = bitMask;
+            this.versionParamIndexOrNull = versionParamIndex;
+            this.constructorParamCount = constructorParamCount;
         }
 
         // figure out which names to discard, if any
@@ -364,7 +390,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             throw new B2JsonException("B2JsonObjectHandler.deserializes called with null fields");
 
         }
-        Object [] constructorArgs = new Object [fields.length];
+        Object [] constructorArgs = new Object [constructorParamCount];
 
         // Read the values that are present in the JSON.
         long foundFieldBits = 0;
@@ -398,6 +424,11 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             } while (in.objectHasMoreFields());
         }
         in.finishObject();
+
+        // Add the version number.
+        if (versionParamIndexOrNull != null) {
+            constructorArgs[versionParamIndexOrNull] = Integer.valueOf(1);  // TODO: use the real version number
+        }
 
         return deserializeFromConstructorArgs(constructorArgs, foundFieldBits);
     }

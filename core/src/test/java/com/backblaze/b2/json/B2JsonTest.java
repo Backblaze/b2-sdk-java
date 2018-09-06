@@ -1837,4 +1837,30 @@ public class B2JsonTest extends B2BaseTest {
         }
     }
 
+    @Test
+    public void testVersionParameter() throws IOException, B2JsonException {
+        final String json =
+                "{\n" +
+                "  \"x\": 5\n" +
+                "}";
+        checkDeserializeSerialize(json, VersionedContainer.class);
+        assertEquals(1, bzJson.fromJson(json, VersionedContainer.class).version);
+    }
+
+    private static class VersionedContainer {
+        @B2Json.firstVersion(firstVersion = 4)
+        @B2Json.optional
+        public final int x;
+
+        @B2Json.ignored
+        public final int version;
+
+        @B2Json.constructor(params = "x, v", versionParam = "v")
+        public VersionedContainer(int x, int v) {
+            this.x = x;
+            this.version = v;
+        }
+    }
+
+
 }

@@ -456,14 +456,19 @@ public class B2Json {
      * that don't exist or for fields marked @ignored.  This is useful
      * for accepting deprecated fields without having to use
      * ALLOW_EXTRA_FIELDS, which would accept ALL unknown fields.
+     *
+     * When versionParam is non-empty, it is the name of a parameter that
+     * is not a field name, and will take the version number being constructed.
+     * This should be included for objects that have multiple versions,
+     * and the code in the constructor should validate the data based on it.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.CONSTRUCTOR)
     public @interface constructor {
         String params();
         String discards() default "";
+        String versionParam() default "";
     }
-
 
     /**
      * Field annotation that designates the enum value to use when the
