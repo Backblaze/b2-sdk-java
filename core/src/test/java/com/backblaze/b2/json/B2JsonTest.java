@@ -335,7 +335,7 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"x\": 7" +
                 "}";
 
-        Container c = bzJson.fromJson(json, Container.class, B2Json.ALLOW_EXTRA_FIELDS);
+        Container c = bzJson.fromJson(json, Container.class, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
 
         String expectedJson =
                 "{\n" +
