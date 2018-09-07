@@ -1837,9 +1837,45 @@ public class B2JsonTest extends B2BaseTest {
         }
     }
 
+    @Test
+    public void testRequiredFieldNotInVersion() throws IOException, B2JsonException {
+        final String json = "{}";
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(1).build();
+        final VersionedContainer obj = bzJson.fromJson(json, VersionedContainer.class, options);
+        assertEquals(0, obj.x);
+        assertEquals(1, obj.version);
+    }
+
+    @Test
+    public void testRequiredFieldMissingInVersion() throws IOException, B2JsonException {
+        final String json = "{}";
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(5).build();
+
+        thrown.expectMessage("required field x is missing");
+        bzJson.fromJson(json, VersionedContainer.class, options);
+    }
+
+    @Test
+    public void testFieldPresentButNotInVersion() throws IOException, B2JsonException {
+        final String json = "{ \"x\": 5 }";
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(1).build();
+
+        thrown.expectMessage("field x is not in version 1");
+        bzJson.fromJson(json, VersionedContainer.class, options);
+    }
+
+    @Test
+    public void testFieldPresentAndInVersion() throws IOException, B2JsonException {
+        final String json = "{ \"x\": 5 }";
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(10).build();
+        final VersionedContainer obj = bzJson.fromJson(json, VersionedContainer.class, options);
+        assertEquals(5, obj.x);
+        assertEquals(10, obj.version);
+    }
+
     private static class VersionedContainer {
         @B2Json.firstVersion(firstVersion = 4)
-        @B2Json.optional
+        @B2Json.required
         public final int x;
 
         @B2Json.ignored
