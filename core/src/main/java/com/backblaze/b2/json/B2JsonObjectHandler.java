@@ -417,7 +417,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
         // Add the version number.
         if (versionParamIndexOrNull != null) {
-            constructorArgs[versionParamIndexOrNull] = Integer.valueOf(1);  // TODO: use the real version number
+            constructorArgs[versionParamIndexOrNull] = version;
         }
 
         return deserializeFromConstructorArgs(constructorArgs);
@@ -503,6 +503,11 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 }
                 else {
                     constructorArgs[index] = fieldInfo.handler.defaultValueForOptional();
+                }
+            }
+            else {
+                if (!fieldInfo.isInVersion(version)) {
+                    throw new B2JsonException("field " + fieldInfo.getName() + " is not in version " + version);
                 }
             }
         }

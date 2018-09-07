@@ -59,4 +59,8 @@ public final class FieldInfo implements Comparable<FieldInfo> {
         bit = 1L << index;
     }
 
+    public boolean isInVersion(int version) {
+        return versionRange.includesVersion(version);
+    }
+
 }
