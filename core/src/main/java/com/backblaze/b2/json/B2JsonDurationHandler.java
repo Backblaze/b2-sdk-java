@@ -16,7 +16,7 @@ class B2JsonDurationHandler implements B2JsonTypeHandler<Duration> {
         return Duration.class;
     }
 
-    public void serialize(Duration obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(Duration obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.writeString(B2DateTimeUtil.durationString(obj.getSeconds()));
     }
 

@@ -22,12 +22,12 @@ public class B2JsonBooleanArrayHandler extends B2JsonNonUrlTypeHandler<boolean[]
         return boolean[].class;
     }
 
-    public void serialize(boolean[] array, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(boolean[] array, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.setAllowNewlines(false);
         out.startArray();
         for (Boolean item : array) {
             out.startArrayValue();
-            B2JsonUtil.serializeMaybeNull(itemHandler, item, out);
+            B2JsonUtil.serializeMaybeNull(itemHandler, item, out, options);
         }
         out.finishArray();
         out.setAllowNewlines(true);

@@ -344,7 +344,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      *
      * The type name field for a member of a union type is added alphabetically in sequence, if needed.
      */
-    public void serialize(T obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         try {
             boolean typeFieldDone = false;  // whether the type field for a member of a union type has been emitted
             out.startObject();
@@ -361,7 +361,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                         throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
                     }
                     //noinspection unchecked
-                    B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out);
+                    B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out, options);
                 }
             }
             if (unionTypeFieldName != null && !typeFieldDone) {

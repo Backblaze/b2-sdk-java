@@ -16,7 +16,7 @@ public class B2JsonLocalDateTimeHandler implements B2JsonTypeHandler<LocalDateTi
         return LocalDateTime.class;
     }
 
-    public void serialize(LocalDateTime obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(LocalDateTime obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.writeString(B2DateTimeUtil.formatFguidDateTime(obj));
     }
 

@@ -19,12 +19,12 @@ public class B2JsonTreeSetHandler extends B2JsonNonUrlTypeHandler<TreeSet> {
         return TreeSet.class;
     }
 
-    public void serialize(TreeSet obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(TreeSet obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.startArray();
         for (Object item : obj) {
             out.startArrayValue();
             //noinspection unchecked
-            B2JsonUtil.serializeMaybeNull(itemHandler, item, out);
+            B2JsonUtil.serializeMaybeNull(itemHandler, item, out, options);
         }
         out.finishArray();
     }

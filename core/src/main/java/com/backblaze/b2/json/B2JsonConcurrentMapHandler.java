@@ -28,13 +28,13 @@ public class B2JsonConcurrentMapHandler extends B2JsonNonUrlTypeHandler<Concurre
         return ConcurrentMap.class;
     }
 
-    public void serialize(ConcurrentMap obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(ConcurrentMap obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.startObject();
         for (Map.Entry entry : (Set<Map.Entry>) obj.entrySet()) {
             out.startObjectFieldName();
-            keyHandler.serialize(entry.getKey(), out);
+            keyHandler.serialize(entry.getKey(), options, out);
             out.writeText(": ");
-            B2JsonUtil.serializeMaybeNull(valueHandler, entry.getValue(), out);
+            B2JsonUtil.serializeMaybeNull(valueHandler, entry.getValue(), out, options);
         }
         out.finishObject();
     }

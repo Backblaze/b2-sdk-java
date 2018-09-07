@@ -22,7 +22,7 @@ public class B2JsonCharacterHandler implements B2JsonTypeHandler<Character> {
         return Character.class;
     }
 
-    public void serialize(Character obj, B2JsonWriter out) throws IOException {
+    public void serialize(Character obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
         out.writeText(Integer.toString((int) obj.charValue()));
     }
 

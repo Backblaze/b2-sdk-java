@@ -22,7 +22,7 @@ public class B2JsonLongHandler implements B2JsonTypeHandler<Long> {
         return Long.class;
     }
 
-    public void serialize(Long obj, B2JsonWriter out) throws IOException {
+    public void serialize(Long obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
         out.writeText(obj.toString());
     }
 

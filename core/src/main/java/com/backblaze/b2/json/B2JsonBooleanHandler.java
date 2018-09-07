@@ -22,7 +22,7 @@ public class B2JsonBooleanHandler implements B2JsonTypeHandler<Boolean> {
         return Boolean.class;
     }
 
-    public void serialize(Boolean obj, B2JsonWriter out) throws IOException {
+    public void serialize(Boolean obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
         out.writeText(obj.toString());
     }
 

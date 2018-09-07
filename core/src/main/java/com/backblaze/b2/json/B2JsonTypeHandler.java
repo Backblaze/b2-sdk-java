@@ -22,7 +22,7 @@ public interface B2JsonTypeHandler<T> {
      *
      * The object is guaranteed not to be null.
      */
-    void serialize(T obj, B2JsonWriter out) throws IOException, B2JsonException;
+    void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException;
 
     /**
      * Deserialize one object from a JSON input stream.

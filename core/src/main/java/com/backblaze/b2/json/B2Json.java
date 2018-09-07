@@ -158,7 +158,7 @@ public class B2Json {
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         B2JsonWriter jsonWriter = new B2JsonWriter(out);
         //noinspection unchecked
-        handler.serialize(obj, jsonWriter);
+        handler.serialize(obj, options, jsonWriter);
     }
 
     /**
@@ -177,7 +177,7 @@ public class B2Json {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
-            handler.serialize(obj, jsonWriter);
+            handler.serialize(obj, options, jsonWriter);
             return out.toString();
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
@@ -219,7 +219,7 @@ public class B2Json {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
-            handler.serialize(map, jsonWriter);
+            handler.serialize(map, options, jsonWriter);
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
@@ -256,7 +256,7 @@ public class B2Json {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
-            handler.serialize(list, jsonWriter);
+            handler.serialize(list, options, jsonWriter);
             return out.toString();
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");

@@ -21,13 +21,13 @@ public class B2JsonLongArrayHandler extends B2JsonNonUrlTypeHandler<long[]> {
         return long[].class;
     }
 
-    public void serialize(long[] array, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(long[] array, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.setAllowNewlines(false);
         out.startArray();
         for (Long item : array) {
             out.startArrayValue();
             //noinspection unchecked
-            B2JsonUtil.serializeMaybeNull(itemHandler, item, out);
+            B2JsonUtil.serializeMaybeNull(itemHandler, item, out, options);
         }
         out.finishArray();
         out.setAllowNewlines(true);

@@ -27,7 +27,7 @@ public class B2JsonMapHandler extends B2JsonNonUrlTypeHandler<Map> {
         return Map.class;
     }
 
-    public void serialize(Map obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(Map obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.startObject();
         //noinspection unchecked
         for (Map.Entry entry : (Set<Map.Entry>) obj.entrySet()) {
@@ -38,10 +38,10 @@ public class B2JsonMapHandler extends B2JsonNonUrlTypeHandler<Map> {
             }
             out.startObjectFieldName();
             //noinspection unchecked
-            keyHandler.serialize(entry.getKey(), out);
+            keyHandler.serialize(entry.getKey(), options, out);
             out.writeText(": ");
             //noinspection unchecked
-            B2JsonUtil.serializeMaybeNull(valueHandler, entry.getValue(), out);
+            B2JsonUtil.serializeMaybeNull(valueHandler, entry.getValue(), out, options);
         }
         out.finishObject();
     }

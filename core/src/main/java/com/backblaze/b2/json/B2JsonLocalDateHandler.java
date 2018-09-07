@@ -24,7 +24,7 @@ public class B2JsonLocalDateHandler implements B2JsonTypeHandler<LocalDate> {
         return LocalDate.class;
     }
 
-    public void serialize(LocalDate obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(LocalDate obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.writeString(B2DateTimeUtil.formatSolidDate(obj));
     }
 

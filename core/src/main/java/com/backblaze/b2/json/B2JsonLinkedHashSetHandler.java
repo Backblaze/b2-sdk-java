@@ -19,12 +19,12 @@ public class B2JsonLinkedHashSetHandler extends B2JsonNonUrlTypeHandler<LinkedHa
         return LinkedHashSet.class;
     }
 
-    public void serialize(LinkedHashSet obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(LinkedHashSet obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.startArray();
         for (Object item : obj) {
             out.startArrayValue();
             //noinspection unchecked
-            B2JsonUtil.serializeMaybeNull(itemHandler, item, out);
+            B2JsonUtil.serializeMaybeNull(itemHandler, item, out, options);
         }
         out.finishArray();
     }

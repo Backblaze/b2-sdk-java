@@ -17,7 +17,7 @@ public class B2JsonBigIntegerHandler implements B2JsonTypeHandler<BigInteger> {
         return BigInteger.class;
     }
 
-    public void serialize(BigInteger obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(BigInteger obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.writeText(obj.toString());
     }
 

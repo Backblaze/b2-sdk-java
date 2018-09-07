@@ -17,7 +17,7 @@ public class B2JsonBigDecimalHandler implements B2JsonTypeHandler<BigDecimal> {
         return BigDecimal.class;
     }
 
-    public void serialize(BigDecimal obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(BigDecimal obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.writeText(obj.toString());
     }
 

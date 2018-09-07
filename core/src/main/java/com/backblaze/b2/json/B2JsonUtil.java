@@ -12,12 +12,12 @@ public class B2JsonUtil {
     /**
      * Serialize an object that may be null.
      */
-    public static <T> void serializeMaybeNull(B2JsonTypeHandler<T> handler, T obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public static <T> void serializeMaybeNull(B2JsonTypeHandler<T> handler, T obj, B2JsonWriter out, B2JsonOptions options) throws IOException, B2JsonException {
         if (obj == null) {
             out.writeText("null");
         }
         else {
-            handler.serialize(obj, out);
+            handler.serialize(obj, options, out);
         }
     }
 

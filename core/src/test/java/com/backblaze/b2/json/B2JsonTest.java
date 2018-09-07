@@ -1207,7 +1207,7 @@ public class B2JsonTest extends B2BaseTest {
                 return GoodCustomHandler.class;
             }
 
-            public void serialize(GoodCustomHandler obj, B2JsonWriter out) throws IOException {
+            public void serialize(GoodCustomHandler obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
                 out.writeString("GoodCustomHandler");
             }
 
@@ -1449,7 +1449,7 @@ public class B2JsonTest extends B2BaseTest {
             }
 
             @Override
-            public void serialize(Letter obj, B2JsonWriter out) throws IOException {
+            public void serialize(Letter obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
                 out.writeString("b");
             }
 

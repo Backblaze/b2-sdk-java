@@ -22,7 +22,7 @@ public class B2JsonByteHandler implements B2JsonTypeHandler<Byte> {
         return Byte.class;
     }
 
-    public void serialize(Byte obj, B2JsonWriter out) throws IOException {
+    public void serialize(Byte obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
         out.writeText(obj.toString());
     }
 

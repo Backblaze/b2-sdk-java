@@ -22,7 +22,7 @@ public class B2JsonDoubleHandler implements B2JsonTypeHandler<Double> {
         return Double.class;
     }
 
-    public void serialize(Double obj, B2JsonWriter out) throws IOException {
+    public void serialize(Double obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
         out.writeText(obj.toString());
     }
 

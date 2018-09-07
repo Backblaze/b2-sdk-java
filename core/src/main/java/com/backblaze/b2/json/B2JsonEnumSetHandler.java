@@ -23,12 +23,12 @@ public class B2JsonEnumSetHandler extends B2JsonNonUrlTypeHandler<EnumSet> {
         return EnumSet.class;
     }
 
-    public void serialize(EnumSet obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(EnumSet obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.startArray();
         for (Object item : obj) {
             out.startArrayValue();
             //noinspection unchecked
-            B2JsonUtil.serializeMaybeNull(itemHandler, item, out);
+            B2JsonUtil.serializeMaybeNull(itemHandler, item, out, options);
         }
         out.finishArray();
     }

@@ -22,7 +22,7 @@ public class B2JsonFloatHandler implements B2JsonTypeHandler<Float> {
         return Float.class;
     }
 
-    public void serialize(Float obj, B2JsonWriter out) throws IOException {
+    public void serialize(Float obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
         out.writeText(obj.toString());
     }
 
