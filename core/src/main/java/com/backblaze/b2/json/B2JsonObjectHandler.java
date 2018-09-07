@@ -346,6 +346,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      */
     public void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         try {
+            final int version = options.getVersion();
             boolean typeFieldDone = false;  // whether the type field for a member of a union type has been emitted
             out.startObject();
             if (fields != null) {
@@ -355,13 +356,15 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                         out.writeString(unionTypeFieldValue);
                         typeFieldDone = true;
                     }
-                    out.writeObjectFieldNameAndColon(fieldInfo.getName());
-                    final Object value = fieldInfo.field.get(obj);
-                    if (fieldInfo.requirement == FieldRequirement.REQUIRED && value == null) {
-                        throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                    if (fieldInfo.isInVersion(version)) {
+                        out.writeObjectFieldNameAndColon(fieldInfo.getName());
+                        final Object value = fieldInfo.field.get(obj);
+                        if (fieldInfo.isRequiredInVersion(version) && value == null) {
+                            throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                        }
+                        //noinspection unchecked
+                        B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out, options);
                     }
-                    //noinspection unchecked
-                    B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out, options);
                 }
             }
             if (unionTypeFieldName != null && !typeFieldDone) {
