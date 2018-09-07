@@ -70,11 +70,6 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     private final int constructorParamCount;
 
     /**
-     * Bit mask of all required fields.
-     */
-    private final long requiredBitMask;
-
-    /**
      * Position of version parameter to constructor.
      */
     private final Integer versionParamIndexOrNull;
@@ -167,7 +162,6 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 throw new IllegalArgumentException(clazz.getName() + " constructor does not have the right number of parameters");
             }
 
-            int bitMask = 0;
             Integer versionParamIndex = null;
             for (int i = 0; i < paramNames.length; i++) {
                 String paramName = paramNames[i];
@@ -183,12 +177,8 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                         throw new B2JsonException(clazz.getName() + " param name is not a field: " + paramName);
                     }
                     fieldInfo.setConstructorArgIndex(i);
-                    if (fieldInfo.requirement == FieldRequirement.REQUIRED) {
-                        bitMask |= fieldInfo.bit;
-                    }
                 }
             }
-            this.requiredBitMask = bitMask;
             this.versionParamIndexOrNull = versionParamIndex;
             this.constructorParamCount = constructorParamCount;
         }
@@ -430,7 +420,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             constructorArgs[versionParamIndexOrNull] = Integer.valueOf(1);  // TODO: use the real version number
         }
 
-        return deserializeFromConstructorArgs(constructorArgs, foundFieldBits);
+        return deserializeFromConstructorArgs(constructorArgs);
     }
 
     public T deserializeFromFieldNameToValueMap(Map<String, Object> fieldNameToValue, B2JsonOptions options) throws B2JsonException {
@@ -460,7 +450,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 foundFieldBits |= fieldInfo.bit;
             }
         }
-        return deserializeFromConstructorArgs(constructorArgs, foundFieldBits);
+        return deserializeFromConstructorArgs(constructorArgs);
     }
 
     public T deserializeFromUrlParameterMap(Map<String, String> parameterMap, B2JsonOptions options) throws B2JsonException {
@@ -492,27 +482,22 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 foundFieldBits |= fieldInfo.bit;
             }
         }
-        return deserializeFromConstructorArgs(constructorArgs, foundFieldBits);
+        return deserializeFromConstructorArgs(constructorArgs);
     }
 
-    private T deserializeFromConstructorArgs(Object[] constructorArgs, long foundFieldBits) throws B2JsonException {
+    private T deserializeFromConstructorArgs(Object[] constructorArgs) throws B2JsonException {
         if (fields == null) {
             throw new B2JsonException("B2JsonObjectHandler.deserializeFromConstructorArgs called with null fields");
+        }
 
-        }
-        // Add default values for optional fields that are not present.
-        // Are there missing required fields?
-        if (requiredBitMask != (requiredBitMask & foundFieldBits)) {
-            for (FieldInfo fieldInfo : fields) {
-                if (fieldInfo.requirement == FieldRequirement.REQUIRED && (fieldInfo.bit & foundFieldBits) == 0) {
-                    throw new B2JsonException("required field " + fieldInfo.getName() + " is missing");
-                }
-            }
-            throw new RuntimeException("bug: didn't find name of missing field");
-        }
+        // Add default values for optional fields that are not present, and
+        // check for required fields that are not present.
         for (FieldInfo fieldInfo : fields) {
             int index = fieldInfo.constructorArgIndex;
             if (constructorArgs[index] == null) {
+                if (fieldInfo.requirement == FieldRequirement.REQUIRED) {
+                    throw new B2JsonException("required field " + fieldInfo.getName() + " is missing");
+                }
                 if (fieldInfo.defaultValueOrNull != null) {
                     constructorArgs[index] = fieldInfo.defaultValueOrNull;
                 }
