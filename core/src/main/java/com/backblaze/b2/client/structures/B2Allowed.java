@@ -18,6 +18,9 @@ public class B2Allowed {
     public final String bucketId;
 
     @B2Json.optional
+    public final String bucketName;
+
+    @B2Json.optional
     public final String namePrefix;
 
     public List<String> getCapabilities() {
@@ -28,14 +31,19 @@ public class B2Allowed {
         return bucketId;
     }
 
+    public String getBucketName() {
+        return bucketName;
+    }
+
     public String getNamePrefix() {
         return namePrefix;
     }
 
-    @B2Json.constructor(params = "capabilities, bucketId, namePrefix")
-    public B2Allowed(List<String> capabilities, String bucketId, String namePrefix) {
+    @B2Json.constructor(params = "capabilities, bucketId, bucketName, namePrefix")
+    public B2Allowed(List<String> capabilities, String bucketId, String bucketName, String namePrefix) {
         this.capabilities = capabilities;
         this.bucketId = bucketId;
+        this.bucketName = bucketName;
         this.namePrefix = namePrefix;
     }
 
@@ -44,6 +52,7 @@ public class B2Allowed {
         return "B2Allowed(" +
                 "capabilities=" + capabilities +
                 ", bucketId=" + bucketId +
+                ", bucketName=" + bucketName +
                 ", namePrefix=" + namePrefix +
                 ")";
     }
@@ -55,6 +64,7 @@ public class B2Allowed {
         B2Allowed b2Allowed = (B2Allowed) o;
         return Objects.equals(getCapabilities(), b2Allowed.getCapabilities()) &&
                 Objects.equals(getBucketId(), b2Allowed.getBucketId()) &&
+                Objects.equals(getBucketName(), b2Allowed.getBucketName()) &&
                 Objects.equals(getNamePrefix(), b2Allowed.getNamePrefix());
     }
 }
