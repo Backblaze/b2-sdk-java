@@ -62,7 +62,6 @@ import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2InputStreamWithByteProgressListener;
 import com.backblaze.b2.util.B2Preconditions;
-import com.backblaze.b2.util.B2StringUtil;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -71,13 +70,13 @@ import java.util.TreeMap;
 
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_ID;
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_NAME;
-import static com.backblaze.b2.client.contentSources.B2Headers.UPLOAD_TIMESTAMP;
-import static com.backblaze.b2.util.B2StringUtil.percentDecode;
 import static com.backblaze.b2.util.B2StringUtil.percentEncode;
 
 public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
-    // this is
-    private static String API_VERSION_PATH = "b2api/v1/";
+
+    // This path specifies which version of the B2 APIs to use.
+    // See: https://www.backblaze.com/b2/docs/versions.html
+    private static String API_VERSION_PATH = "b2api/v2/";
 
     private final B2WebApiClient webApiClient;
     private final String userAgent;
@@ -397,7 +396,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
     @Override
     public String getDownloadByIdUrl(B2AccountAuthorization accountAuth,
-                              B2DownloadByIdRequest request) throws B2Exception {
+                              B2DownloadByIdRequest request) {
         return makeDownloadByIdUrl(accountAuth, request.getFileId(), request.getB2ContentDisposition());
     }
 
@@ -413,7 +412,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
     @Override
     public String getDownloadByNameUrl(B2AccountAuthorization accountAuth,
-                                B2DownloadByNameRequest request) throws B2Exception {
+                                B2DownloadByNameRequest request) {
         return makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request.getB2ContentDisposition());
     }
 
