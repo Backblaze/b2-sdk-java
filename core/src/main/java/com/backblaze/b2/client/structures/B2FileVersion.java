@@ -10,6 +10,14 @@ import com.backblaze.b2.json.B2Json;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Information about a file, as returned by the B2 API.
+ *
+ * The API returns two fields that are not included here: accountId and bucketId.
+ * The reason for not including them is that this SDK also returns the same
+ * structure from getFileInfoByName, which gets the info from the headers returned
+ * by a HEAD request on the file, which do no include the 
+ */
 public class B2FileVersion {
 
     public static final String UPLOAD_ACTION = "upload";
