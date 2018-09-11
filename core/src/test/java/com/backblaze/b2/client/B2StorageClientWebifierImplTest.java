@@ -379,7 +379,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                         "url:\n" +
-                        "    https://api.testb2.com/b2api/v1/b2_authorize_account\n" +
+                        "    https://api.testb2.com/b2api/v2/b2_authorize_account\n" +
                         "headers:\n" +
                         "    Authorization: Basic MTphcHBsaWNhdGlvbktleQ==\n" +
                         "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -405,7 +405,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_create_bucket\n" +
+                "    apiUrl1/b2api/v2/b2_create_bucket\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -448,7 +448,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_list_buckets\n" +
+                "    apiUrl1/b2api/v2/b2_list_buckets\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -474,7 +474,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_get_upload_url\n" +
+                "    apiUrl1/b2api/v2/b2_get_upload_url\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -497,7 +497,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_get_upload_part_url\n" +
+                "    apiUrl1/b2api/v2/b2_get_upload_part_url\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -522,7 +522,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_list_file_versions\n" +
+                "    apiUrl1/b2api/v2/b2_list_file_versions\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -552,7 +552,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_list_file_names\n" +
+                "    apiUrl1/b2api/v2/b2_list_file_names\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -581,7 +581,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_list_unfinished_large_files\n" +
+                "    apiUrl1/b2api/v2/b2_list_unfinished_large_files\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -612,7 +612,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_start_large_file\n" +
+                "    apiUrl1/b2api/v2/b2_start_large_file\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -647,7 +647,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_start_large_file\n" +
+                "    apiUrl1/b2api/v2/b2_start_large_file\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -679,7 +679,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_finish_large_file\n" +
+                "    apiUrl1/b2api/v2/b2_finish_large_file\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -709,7 +709,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_cancel_large_file\n" +
+                "    apiUrl1/b2api/v2/b2_cancel_large_file\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -734,7 +734,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_list_parts\n" +
+                "    apiUrl1/b2api/v2/b2_list_parts\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -761,7 +761,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_delete_file_version\n" +
+                "    apiUrl1/b2api/v2/b2_delete_file_version\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -788,7 +788,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_get_download_authorization\n" +
+                "    apiUrl1/b2api/v2/b2_get_download_authorization\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -816,7 +816,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_get_file_info\n" +
+                "    apiUrl1/b2api/v2/b2_get_file_info\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -870,7 +870,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_hide_file\n" +
+                "    apiUrl1/b2api/v2/b2_hide_file\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -897,7 +897,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_update_bucket\n" +
+                "    apiUrl1/b2api/v2/b2_update_bucket\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -940,7 +940,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_delete_bucket\n" +
+                "    apiUrl1/b2api/v2/b2_delete_bucket\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -959,7 +959,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
     @Test
     public void testDownloadById() throws B2Exception {
-        final String expectedUrl = "downloadUrl1/b2api/v1/b2_download_file_by_id?fileId=4_zBlah_0000001";
+        final String expectedUrl = "downloadUrl1/b2api/v2/b2_download_file_by_id?fileId=4_zBlah_0000001";
         final B2DownloadByIdRequest request = B2DownloadByIdRequest
                 .builder(fileId(1))
                 .build();
@@ -989,7 +989,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("getContent.\n" +
                 "url:\n" +
-                "    downloadUrl1/b2api/v1/b2_download_file_by_id?fileId=4_zBlah_0000001\n" +
+                "    downloadUrl1/b2api/v2/b2_download_file_by_id?fileId=4_zBlah_0000001\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    Range: bytes=100-200\n" +
@@ -1009,7 +1009,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         webApiClient.check("getContent.\n" +
                 "url:\n" +
-                "    downloadUrl1/b2api/v1/b2_download_file_by_id?fileId=4_zBlah_0000001&b2ContentDisposition=attachment%3B+filename%3D%22surprise.txt%22\n" +
+                "    downloadUrl1/b2api/v2/b2_download_file_by_id?fileId=4_zBlah_0000001&b2ContentDisposition=attachment%3B+filename%3D%22surprise.txt%22\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
@@ -1284,7 +1284,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         localWebApiClient.check("postJsonReturnJson.\n" +
                 "url:\n" +
-                "    apiUrl1/b2api/v1/b2_list_buckets\n" +
+                "    apiUrl1/b2api/v2/b2_list_buckets\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +

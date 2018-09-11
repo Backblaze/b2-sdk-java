@@ -65,7 +65,7 @@ public class B2TestHelpers {
                 "downloadUrl" + i,
                 i * 1000,
                 i * 100,
-                new B2Allowed(B2Collections.listOf(B2Capabilities.LIST_FILES), "", ""));
+                new B2Allowed(B2Collections.listOf(B2Capabilities.LIST_FILES), null, null, ""));
     }
 
     /**
