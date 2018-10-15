@@ -16,7 +16,7 @@ import java.util.Objects;
  * The API returns two fields that are not included here: accountId and bucketId.
  * The reason for not including them is that this SDK also returns the same
  * structure from getFileInfoByName, which gets the info from the headers returned
- * by a HEAD request on the file, which do no include the 
+ * by a HEAD request on the file, which do no include them.
  */
 public class B2FileVersion {
 
