@@ -12,19 +12,19 @@ public class B2JsonUtil {
     /**
      * Serialize an object that may be null.
      */
-    public static <T> void serializeMaybeNull(B2JsonTypeHandler<T> handler, T obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public static <T> void serializeMaybeNull(B2JsonTypeHandler<T> handler, T obj, B2JsonWriter out, B2JsonOptions options) throws IOException, B2JsonException {
         if (obj == null) {
             out.writeText("null");
         }
         else {
-            handler.serialize(obj, out);
+            handler.serialize(obj, options, out);
         }
     }
 
     /**
      * Deserialize an object that may be null.
      */
-    public static <T> T deserializeMaybeNull(B2JsonTypeHandler<T> handler, B2JsonReader in, int options) throws B2JsonException, IOException {
+    public static <T> T deserializeMaybeNull(B2JsonTypeHandler<T> handler, B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         if (in.peekNextNotWhitespaceChar() == 'n') {
             in.readNull();
             return null;

@@ -24,11 +24,11 @@ public class B2JsonLocalDateHandler implements B2JsonTypeHandler<LocalDate> {
         return LocalDate.class;
     }
 
-    public void serialize(LocalDate obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(LocalDate obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.writeString(B2DateTimeUtil.formatSolidDate(obj));
     }
 
-    public LocalDate deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public LocalDate deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readString();
         int len = str.length();
 

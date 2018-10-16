@@ -335,7 +335,7 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"x\": 7" +
                 "}";
 
-        Container c = bzJson.fromJson(json, Container.class, B2Json.ALLOW_EXTRA_FIELDS);
+        Container c = bzJson.fromJson(json, Container.class, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
 
         String expectedJson =
                 "{\n" +
@@ -1207,11 +1207,11 @@ public class B2JsonTest extends B2BaseTest {
                 return GoodCustomHandler.class;
             }
 
-            public void serialize(GoodCustomHandler obj, B2JsonWriter out) throws IOException {
+            public void serialize(GoodCustomHandler obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
                 out.writeString("GoodCustomHandler");
             }
 
-            public GoodCustomHandler deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+            public GoodCustomHandler deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
                 return deserialize(in.readString());
             }
 
@@ -1334,6 +1334,42 @@ public class B2JsonTest extends B2BaseTest {
         }
     }
 
+    @Test
+    public void testVersionRangeBackwards() throws B2JsonException {
+        thrown.expectMessage("last version 1 is before first version 2 in class com.backblaze.b2.json.B2JsonTest$VersionRangeBackwardsClass");
+        bzJson.toJson(new VersionRangeBackwardsClass(5));
+    }
+
+    private static class VersionRangeBackwardsClass {
+        @B2Json.required
+        @B2Json.versionRange(firstVersion = 2, lastVersion = 1)
+        private final int n;
+
+        @B2Json.constructor(params =  "n")
+        private VersionRangeBackwardsClass(int n) {
+            this.n = n;
+        }
+    }
+
+    @Test
+    public void testConflictingVersions() throws B2JsonException {
+        thrown.expectMessage("must not specify both 'firstVersion' and 'versionRange' in class com.backblaze.b2.json.B2JsonTest$VersionConflictClass");
+        bzJson.toJson(new VersionConflictClass(5));
+    }
+
+    private static class VersionConflictClass {
+        @B2Json.required
+        @B2Json.firstVersion(firstVersion = 5)
+        @B2Json.versionRange(firstVersion = 2, lastVersion = 1)
+        private final int n;
+
+        @B2Json.constructor(params =  "n")
+        private VersionConflictClass(int n) {
+            this.n = n;
+        }
+    }
+
+
     private static final class Node {
         @B2Json.optional
         public String name;
@@ -1413,12 +1449,12 @@ public class B2JsonTest extends B2BaseTest {
             }
 
             @Override
-            public void serialize(Letter obj, B2JsonWriter out) throws IOException {
+            public void serialize(Letter obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
                 out.writeString("b");
             }
 
             @Override
-            public Letter deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+            public Letter deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
                 return deserializeUrlParam(in.readString());
             }
 
@@ -1798,6 +1834,129 @@ public class B2JsonTest extends B2BaseTest {
         @B2Json.constructor(params = "name")
         private SubclassH(String name) {
             this.name = name;
+        }
+    }
+
+    @Test
+    public void testRequiredFieldNotInVersion() throws B2JsonException {
+        final String json = "{}";
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(1).build();
+        final VersionedContainer obj = bzJson.fromJson(json, VersionedContainer.class, options);
+        assertEquals(0, obj.x);
+        assertEquals(1, obj.version);
+    }
+
+    @Test
+    public void testRequiredFieldMissingInVersion() throws B2JsonException {
+        final String json = "{}";
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(5).build();
+
+        thrown.expectMessage("required field x is missing");
+        bzJson.fromJson(json, VersionedContainer.class, options);
+    }
+
+    @Test
+    public void testFieldPresentButNotInVersion() throws B2JsonException {
+        final String json = "{ \"x\": 5 }";
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(1).build();
+
+        thrown.expectMessage("field x is not in version 1");
+        bzJson.fromJson(json, VersionedContainer.class, options);
+    }
+
+    @Test
+    public void testFieldPresentAndInVersion() throws B2JsonException {
+        final String json = "{ \"x\": 7 }";
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(5).build();
+        final VersionedContainer obj = bzJson.fromJson(json, VersionedContainer.class, options);
+        assertEquals(7, obj.x);
+        assertEquals(5, obj.version);
+    }
+
+    @Test
+    public void testSerializeSkipFieldNotInVersion() throws B2JsonException {
+        // Version 3 is too soon
+        {
+            final B2JsonOptions options = B2JsonOptions.builder().setVersion(3).build();
+            assertEquals(
+                    "{}",
+                    bzJson.toJson(new VersionedContainer(3, 5), options)
+            );
+        }
+
+        // Version 4 is the first version where it's present
+        {
+            final B2JsonOptions options = B2JsonOptions.builder().setVersion(4).build();
+            assertEquals(
+                    "{\n  \"x\": 3\n}",
+                    bzJson.toJson(new VersionedContainer(3, 5), options)
+            );
+        }
+
+        // Version 6 is the last version where it's present
+        {
+            final B2JsonOptions options = B2JsonOptions.builder().setVersion(4).build();
+            assertEquals(
+                    "{\n  \"x\": 3\n}",
+                    bzJson.toJson(new VersionedContainer(3, 5), options)
+            );
+        }
+
+        // Version 7 is too late.
+        {
+            final B2JsonOptions options = B2JsonOptions.builder().setVersion(7).build();
+            assertEquals(
+                    "{}",
+                    bzJson.toJson(new VersionedContainer(3, 5), options)
+            );
+        }
+    }
+
+    @Test
+    public void testSerializeIncludeFieldInVersion() throws B2JsonException {
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(5).build();
+        assertEquals(
+                "{\n" +
+                "  \"x\": 3\n" +
+                "}",
+                bzJson.toJson(new VersionedContainer(3, 5), options)
+        );
+    }
+
+
+    private static class VersionedContainer {
+        @B2Json.versionRange(firstVersion = 4, lastVersion = 6)
+        @B2Json.required
+        public final int x;
+
+        @B2Json.ignored
+        public final int version;
+
+        @B2Json.constructor(params = "x, v", versionParam = "v")
+        public VersionedContainer(int x, int v) {
+            this.x = x;
+            this.version = v;
+        }
+    }
+
+    @Test
+    public void testParamListedTwice() throws B2JsonException {
+        final B2JsonOptions options = B2JsonOptions.builder().build();
+        thrown.expectMessage("com.backblaze.b2.json.B2JsonTest$ConstructorParamListedTwice constructor parameter 'a' listed twice");
+        bzJson.fromJson("{}", ConstructorParamListedTwice.class, options);
+    }
+
+    private static class ConstructorParamListedTwice {
+        @B2Json.required
+        public final int a;
+
+        @B2Json.optional
+        public final int b;
+
+        @B2Json.constructor(params = "a, a")
+        public ConstructorParamListedTwice(int a, int b) {
+            this.a = a;
+            this.b = b;
         }
     }
 

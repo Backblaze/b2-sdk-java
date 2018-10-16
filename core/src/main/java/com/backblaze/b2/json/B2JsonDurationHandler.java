@@ -16,11 +16,11 @@ class B2JsonDurationHandler implements B2JsonTypeHandler<Duration> {
         return Duration.class;
     }
 
-    public void serialize(Duration obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(Duration obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.writeString(B2DateTimeUtil.durationString(obj.getSeconds()));
     }
 
-    public Duration deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Duration deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readString();
         return deserializeUrlParam(str);
     }

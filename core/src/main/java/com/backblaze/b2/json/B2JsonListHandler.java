@@ -35,7 +35,7 @@ public class B2JsonListHandler extends B2JsonNonUrlTypeHandler<List> {
         return List.class;
     }
 
-    public void serialize(List obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(List obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         if (obj.size() != 0 && PRIMITIVE_TYPES.contains(obj.get(0).getClass())) {
             out.setAllowNewlines(false);
         }
@@ -43,13 +43,13 @@ public class B2JsonListHandler extends B2JsonNonUrlTypeHandler<List> {
         for (Object item : obj) {
             out.startArrayValue();
             //noinspection unchecked
-            B2JsonUtil.serializeMaybeNull(itemHandler, item, out);
+            B2JsonUtil.serializeMaybeNull(itemHandler, item, out, options);
         }
         out.finishArray();
         out.setAllowNewlines(true);
     }
 
-    public List deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public List deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         List result = new ArrayList();
         if (in.startArrayAndCheckForContents()) {
             do {

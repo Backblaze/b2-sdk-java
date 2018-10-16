@@ -21,18 +21,18 @@ public class B2JsonIntArrayHandler extends B2JsonNonUrlTypeHandler<int[]> {
         return int[].class;
     }
 
-    public void serialize(int[] array, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(int[] array, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.setAllowNewlines(false);
         out.startArray();
         for (int item : array) {
             out.startArrayValue();
-            B2JsonUtil.serializeMaybeNull(itemHandler, item, out);
+            B2JsonUtil.serializeMaybeNull(itemHandler, item, out, options);
         }
         out.finishArray();
         out.setAllowNewlines(true);
     }
 
-    public int[] deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public int[] deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         List<Integer> result = new ArrayList<Integer>();
         if (in.startArrayAndCheckForContents()) {
             do {

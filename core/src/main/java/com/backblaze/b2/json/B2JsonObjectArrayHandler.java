@@ -27,17 +27,17 @@ public class B2JsonObjectArrayHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         return arrayClazz;
     }
 
-    public void serialize(T array, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(T array, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.startArray();
         final int nElts = Array.getLength(array);
         for (int i=0; i < nElts; i++) {
             out.startArrayValue();
-            B2JsonUtil.serializeMaybeNull(itemHandler, Array.get(array,i), out);
+            B2JsonUtil.serializeMaybeNull(itemHandler, Array.get(array,i), out, options);
         }
         out.finishArray();
     }
 
-    public T deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         List<Object> result = new ArrayList<>();
         if (in.startArrayAndCheckForContents()) {
             do {

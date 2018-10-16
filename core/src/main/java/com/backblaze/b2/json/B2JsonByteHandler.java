@@ -22,11 +22,11 @@ public class B2JsonByteHandler implements B2JsonTypeHandler<Byte> {
         return Byte.class;
     }
 
-    public void serialize(Byte obj, B2JsonWriter out) throws IOException {
+    public void serialize(Byte obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
         out.writeText(obj.toString());
     }
 
-    public Byte deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Byte deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readNumberAsString();
         try {
             return Byte.valueOf(str);

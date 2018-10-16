@@ -22,14 +22,21 @@ public final class FieldInfo implements Comparable<FieldInfo> {
     public final B2JsonTypeHandler handler;
     public final FieldRequirement requirement;
     public final Object defaultValueOrNull;
+    public final VersionRange versionRange;
     public int constructorArgIndex;
     public long bit;
 
-    /*package*/ FieldInfo(Field field, B2JsonTypeHandler<?> handler, FieldRequirement requirement, Object defaultValueOrNull) {
+    /*package*/ FieldInfo(
+            Field field, B2JsonTypeHandler<?> handler,
+            FieldRequirement requirement,
+            Object defaultValueOrNull,
+            VersionRange versionRange
+    ) {
         this.field = field;
         this.handler =  handler;
         this.requirement = requirement;
         this.defaultValueOrNull = defaultValueOrNull;
+        this.versionRange = versionRange;
 
         this.field.setAccessible(true);
     }
@@ -50,6 +57,14 @@ public final class FieldInfo implements Comparable<FieldInfo> {
         B2Preconditions.checkArgument(index < 64);
         constructorArgIndex = index;
         bit = 1L << index;
+    }
+
+    public boolean isInVersion(int version) {
+        return versionRange.includesVersion(version);
+    }
+
+    public boolean isRequiredAndInVersion(int version) {
+        return requirement == FieldRequirement.REQUIRED && versionRange.includesVersion(version);
     }
 
 }

@@ -62,11 +62,11 @@ public class B2JsonEnumHandler<T> implements B2JsonTypeHandler<T> {
         return enumClass;
     }
 
-    public void serialize(T obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.writeString(obj.toString());
     }
 
-    public T deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readString();
         return deserializeUrlParam(str);
     }

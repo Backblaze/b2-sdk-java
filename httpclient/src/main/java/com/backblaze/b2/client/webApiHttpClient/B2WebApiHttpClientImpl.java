@@ -17,6 +17,7 @@ import com.backblaze.b2.client.structures.B2ErrorStructure;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.json.B2JsonException;
+import com.backblaze.b2.json.B2JsonOptions;
 import com.backblaze.b2.util.B2Preconditions;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -69,7 +70,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                                                           Class<ResponseType> responseClass) throws B2Exception {
         final String responseString = postJsonAndReturnString(url, headersOrNull, request);
         try {
-            return bzJson.fromJson(responseString, responseClass, B2Json.ALLOW_EXTRA_FIELDS);
+            return bzJson.fromJson(responseString, responseClass, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
         } catch (B2JsonException e) {
             throw new B2LocalException("parsing_failed", "can't convert response from json: " + e.getMessage(), e);
         }
@@ -84,7 +85,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         try {
             InputStreamEntity requestEntity = new InputStreamEntity(inputStream, contentLength);
             String responseJson = postAndReturnString(url, headersOrNull, requestEntity);
-            return B2Json.get().fromJson(responseJson, responseClass, B2Json.ALLOW_EXTRA_FIELDS);
+            return B2Json.get().fromJson(responseJson, responseClass, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
         } catch (B2JsonException e) {
             throw new B2LocalException("parsing_failed", "can't convert response from json: " + e.getMessage(), e);
         }

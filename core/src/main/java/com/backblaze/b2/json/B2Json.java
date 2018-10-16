@@ -1,7 +1,5 @@
-/**
- * JSON (de)serialization of Java objects.
- *
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+/*
+ * Copyright 2018, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -80,7 +78,10 @@ public class B2Json {
 
     /**
      * Bit map values for the options parameter to the constructor.
+     *
+     * Deprecated in favor of using B2JsonOptions.
      */
+    @Deprecated
     public static final int ALLOW_EXTRA_FIELDS = 1;
 
     /**
@@ -108,8 +109,12 @@ public class B2Json {
      * bytes.
      */
     public byte[] toJsonUtf8Bytes(Object obj) throws B2JsonException {
+        return toJsonUtf8Bytes(obj, B2JsonOptions.DEFAULT);
+    }
+
+    public byte[] toJsonUtf8Bytes(Object obj, B2JsonOptions options) throws B2JsonException {
         try {
-            return toJson(obj).getBytes(UTF8);
+            return toJson(obj, options).getBytes(UTF8);
         } catch (IOException e) {
             throw new RuntimeException("error writing to byte array: " + e.getMessage());
         }
@@ -120,9 +125,13 @@ public class B2Json {
      * bytes.
      */
     public byte[] toJsonUtf8BytesWithNewline(Object obj) throws B2JsonException {
+        return toJsonUtf8BytesWithNewline(obj, B2JsonOptions.DEFAULT);
+    }
+
+    public byte[] toJsonUtf8BytesWithNewline(Object obj, B2JsonOptions options) throws B2JsonException {
         try {
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
-            toJson(obj, out);
+            toJson(obj, options, out);
             out.write('\n');
             return out.toByteArray();
         } catch (IOException e) {
@@ -138,6 +147,10 @@ public class B2Json {
      * It was a bug that it was being closed in version 1.1.1 and earlier.
      */
     public void toJson(Object obj, OutputStream out) throws IOException, B2JsonException {
+        toJson(obj, B2JsonOptions.DEFAULT, out);
+    }
+
+    public void toJson(Object obj, B2JsonOptions options, OutputStream out) throws IOException, B2JsonException {
         if (obj == null) {
             throw new B2JsonException("top level object must not be null");
         }
@@ -145,13 +158,17 @@ public class B2Json {
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         B2JsonWriter jsonWriter = new B2JsonWriter(out);
         //noinspection unchecked
-        handler.serialize(obj, jsonWriter);
+        handler.serialize(obj, options, jsonWriter);
     }
 
     /**
      * Turn an object into JSON, returning the result as a string.
      */
     public String toJson(Object obj) throws B2JsonException {
+        return toJson(obj, B2JsonOptions.DEFAULT);
+    }
+
+    public String toJson(Object obj, B2JsonOptions options) throws B2JsonException {
         if (obj == null) {
             throw new B2JsonException("top level object must not be null");
         }
@@ -160,7 +177,7 @@ public class B2Json {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
-            handler.serialize(obj, jsonWriter);
+            handler.serialize(obj, options, jsonWriter);
             return out.toString();
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
@@ -173,8 +190,12 @@ public class B2Json {
      * so use it carefully.
      */
     public static String toJsonOrThrowRuntime(Object obj) {
+        return toJsonOrThrowRuntime(obj, B2JsonOptions.DEFAULT);
+    }
+
+    public static String toJsonOrThrowRuntime(Object obj, B2JsonOptions options) {
         try {
-            return get().toJson(obj);
+            return get().toJson(obj, options);
         } catch (B2JsonException e) {
             throw new IllegalArgumentException("failed to convert to json: " + e.getMessage(), e);
         }
@@ -185,6 +206,10 @@ public class B2Json {
      * Turn a map into JSON, returning the result as a string.
      */
     public String mapToJson(Map<?, ?> map, Class<?> keyClass, Class<?> valueClass) throws B2JsonException {
+        return mapToJson(map, keyClass, valueClass, B2JsonOptions.DEFAULT);
+    }
+
+    public String mapToJson(Map<?, ?> map, Class<?> keyClass, Class<?> valueClass, B2JsonOptions options) throws B2JsonException {
         if (map == null) {
             throw new B2JsonException("map must not be null");
         }
@@ -194,7 +219,7 @@ public class B2Json {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
-            handler.serialize(map, jsonWriter);
+            handler.serialize(map, options, jsonWriter);
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
@@ -205,16 +230,24 @@ public class B2Json {
      * Parses a JSON object into a map.
      */
     public <K, V> Map<K, V> mapFromJson(String json, Class<K> keyClass, Class<V> valueClass) throws B2JsonException {
+        return mapFromJson(json, keyClass, valueClass, B2JsonOptions.DEFAULT);
+    }
+
+    public <K, V> Map<K, V> mapFromJson(String json, Class<K> keyClass, Class<V> valueClass, B2JsonOptions options) throws B2JsonException {
         final B2JsonTypeHandler keyHandler = handlerMap.getHandler(keyClass);
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonMapHandler(keyHandler, valueHandler);
-        return fromJsonWithHandler(json, handler, 0);
+        return fromJsonWithHandler(json, handler, options);
     }
 
     /**
      * Turn a map into JSON, returning the result as a string.
      */
     public String listToJson(List<?> list, Class<?> valueClass) throws B2JsonException {
+        return listToJson(list, valueClass, B2JsonOptions.DEFAULT);
+    }
+
+    public String listToJson(List<?> list, Class<?> valueClass, B2JsonOptions options) throws B2JsonException {
         if (list == null) {
             throw new B2JsonException("list must not be null");
         }
@@ -223,7 +256,7 @@ public class B2Json {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
-            handler.serialize(list, jsonWriter);
+            handler.serialize(list, options, jsonWriter);
             return out.toString();
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
@@ -234,9 +267,13 @@ public class B2Json {
      * Parses a JSON object into a map.
      */
     public <V> List<V> listFromJson(String json, Class<V> valueClass) throws B2JsonException {
+        return listFromJson(json, valueClass, B2JsonOptions.DEFAULT);
+    }
+
+    public <V> List<V> listFromJson(String json, Class<V> valueClass, B2JsonOptions options) throws B2JsonException {
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonListHandler(valueHandler);
-        return fromJsonWithHandler(json, handler, 0);
+        return fromJsonWithHandler(json, handler, options);
     }
 
     /**
@@ -245,10 +282,18 @@ public class B2Json {
      * if there is anything but whitespace after the JSON value.
      */
     public <T> T fromJsonUntilEof(InputStream in, Class<T> clazz) throws IOException, B2JsonException {
-        return fromJsonUntilEof(in, clazz, 0);
+        return fromJsonUntilEof(in, clazz, B2JsonOptions.DEFAULT);
     }
 
-    public <T> T fromJsonUntilEof(InputStream in, Class<T> clazz, int options) throws IOException, B2JsonException {
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
+    @Deprecated
+    public <T> T fromJsonUntilEof(InputStream in, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
+        return fromJsonUntilEof(in, clazz, optionsFromFlags(optionFlags));
+    }
+
+    public <T> T fromJsonUntilEof(InputStream in, Class<T> clazz, B2JsonOptions options) throws IOException, B2JsonException {
         B2JsonReader reader = new B2JsonReader(new InputStreamReader(in, "UTF-8"));
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         //noinspection unchecked
@@ -263,10 +308,18 @@ public class B2Json {
      * Parse JSON as an object of the given class with the given options.
      */
     public <T> T fromJson(InputStream in, Class<T> clazz) throws IOException, B2JsonException {
-        return fromJson(in, clazz, 0);
+        return fromJson(in, clazz, B2JsonOptions.DEFAULT);
     }
 
-    public <T> T fromJson(InputStream in, Class<T> clazz, int options) throws IOException, B2JsonException {
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
+    @Deprecated
+    public <T> T fromJson(InputStream in, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
+        return fromJson(in, clazz, optionsFromFlags(optionFlags));
+    }
+
+    public <T> T fromJson(InputStream in, Class<T> clazz, B2JsonOptions options) throws IOException, B2JsonException {
         B2JsonReader reader = new B2JsonReader(new InputStreamReader(in, "UTF-8"));
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
 
@@ -282,15 +335,31 @@ public class B2Json {
      * Parse JSON as an object of the given class.
      */
     public <T> T fromJson(String json, Class<T> clazz) throws B2JsonException {
-        return fromJson(json, clazz, 0);
+        return fromJson(json, clazz, B2JsonOptions.DEFAULT);
     }
 
-    public <T> T fromJson(String json, Class<T> clazz, int options) throws B2JsonException {
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
+    @Deprecated
+    public <T> T fromJson(String json, Class<T> clazz, int optionFlags) throws B2JsonException {
+        return fromJson(json, clazz, optionsFromFlags(optionFlags));
+    }
+
+    public <T> T fromJson(String json, Class<T> clazz, B2JsonOptions options) throws B2JsonException {
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         return fromJsonWithHandler(json, handler, options);
     }
 
-    private <T> T fromJsonWithHandler(String json, B2JsonTypeHandler handler, int options) throws B2JsonException {
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
+    @Deprecated
+    private <T> T fromJsonWithHandler(String json, B2JsonTypeHandler handler, int optionFlags) throws B2JsonException {
+        return fromJsonWithHandler(json, handler, optionsFromFlags(optionFlags));
+    }
+
+    private <T> T fromJsonWithHandler(String json, B2JsonTypeHandler handler, B2JsonOptions options) throws B2JsonException {
         try {
             B2JsonReader reader = new B2JsonReader(new StringReader(json));
             //noinspection unchecked
@@ -304,10 +373,18 @@ public class B2Json {
      * Parse JSON as an object of the given class.
      */
     public <T> T fromJson(byte[] jsonUtf8Bytes, Class<T> clazz) throws IOException, B2JsonException {
-        return fromJson(jsonUtf8Bytes, clazz, 0);
+        return fromJson(jsonUtf8Bytes, clazz, B2JsonOptions.DEFAULT);
     }
 
-    public <T> T fromJson(byte[] jsonUtf8Bytes, Class<T> clazz, int options) throws IOException, B2JsonException {
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
+    @Deprecated
+    public <T> T fromJson(byte[] jsonUtf8Bytes, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
+        return fromJson(jsonUtf8Bytes, clazz, optionsFromFlags(optionFlags));
+    }
+
+    public <T> T fromJson(byte[] jsonUtf8Bytes, Class<T> clazz, B2JsonOptions options) throws IOException, B2JsonException {
         B2JsonReader reader = new B2JsonReader(new InputStreamReader(new ByteArrayInputStream(jsonUtf8Bytes), "UTF-8"));
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         //noinspection unchecked
@@ -322,9 +399,18 @@ public class B2Json {
      * before passing them to this method.
      */
     public <T> T fromUrlParameterMap(Map<String, String> parameterMap, Class<T> clazz) throws IOException, B2JsonException {
-        return fromUrlParameterMap(parameterMap, clazz, 0);
+        return fromUrlParameterMap(parameterMap, clazz, B2JsonOptions.DEFAULT);
     }
-    public <T> T fromUrlParameterMap(Map<String, String> parameterMap, Class<T> clazz, int options) throws IOException, B2JsonException {
+
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
+    @Deprecated
+    public <T> T fromUrlParameterMap(Map<String, String> parameterMap, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
+        return fromUrlParameterMap(parameterMap, clazz, optionsFromFlags(optionFlags));
+    }
+
+    public <T> T fromUrlParameterMap(Map<String, String> parameterMap, Class<T> clazz, B2JsonOptions options) throws IOException, B2JsonException {
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
 
         if (!(handler instanceof B2JsonObjectHandler)) {
@@ -392,6 +478,25 @@ public class B2Json {
     public @interface ignored {}
 
     /**
+     * Annotation that says that a field exists in all versions at or after this one.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface firstVersion {
+        int firstVersion();
+    }
+
+    /**
+     * Annotation that says that a field exists in all versions in a range (inclusive).
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface versionRange {
+        int firstVersion();
+        int lastVersion();
+    }
+
+    /**
      * Constructor annotation saying that this is the constructor B2Json
      * should use.  This constructor must take ALL of the serializable
      * fields as parameters.
@@ -405,14 +510,19 @@ public class B2Json {
      * that don't exist or for fields marked @ignored.  This is useful
      * for accepting deprecated fields without having to use
      * ALLOW_EXTRA_FIELDS, which would accept ALL unknown fields.
+     *
+     * When versionParam is non-empty, it is the name of a parameter that
+     * is not a field name, and will take the version number being constructed.
+     * This should be included for objects that have multiple versions,
+     * and the code in the constructor should validate the data based on it.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.CONSTRUCTOR)
     public @interface constructor {
         String params();
         String discards() default "";
+        String versionParam() default "";
     }
-
 
     /**
      * Field annotation that designates the enum value to use when the
@@ -436,7 +546,25 @@ public class B2Json {
                     optionalWithDefault.class,
                     ignored.class,
                     constructor.class,
-                    defaultForInvalidEnumValue.class
+                    defaultForInvalidEnumValue.class,
+                    firstVersion.class,
+                    versionRange.class
             };
+
+    /**
+     * Convert from deprecated options flags to options object.
+     *
+     * Called a lot, so optimized to always return the same objects.
+     */
+    private static B2JsonOptions optionsFromFlags(int optionFlags) {
+        // There was only one option before we switched to B2JsonOptions, so
+        // the logic is simple here.
+        if ((optionFlags & B2Json.ALLOW_EXTRA_FIELDS) == 0) {
+            return B2JsonOptions.DEFAULT;
+        }
+        else {
+            return B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS;
+        }
+    }
 
 }

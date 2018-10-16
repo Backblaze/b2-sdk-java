@@ -22,11 +22,11 @@ public class B2JsonBooleanHandler implements B2JsonTypeHandler<Boolean> {
         return Boolean.class;
     }
 
-    public void serialize(Boolean obj, B2JsonWriter out) throws IOException {
+    public void serialize(Boolean obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
         out.writeText(obj.toString());
     }
 
-    public Boolean deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Boolean deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         char c = in.peekNextNotWhitespaceChar();
         if (c == 'f') {
             in.readFalse();

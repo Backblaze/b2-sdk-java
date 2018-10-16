@@ -22,11 +22,11 @@ public class B2JsonCharacterHandler implements B2JsonTypeHandler<Character> {
         return Character.class;
     }
 
-    public void serialize(Character obj, B2JsonWriter out) throws IOException {
+    public void serialize(Character obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
         out.writeText(Integer.toString((int) obj.charValue()));
     }
 
-    public Character deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public Character deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readNumberAsString();
         try {
             int value = Integer.valueOf(str);

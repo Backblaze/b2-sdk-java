@@ -16,11 +16,11 @@ public class B2JsonStringHandler implements B2JsonTypeHandler<String> {
         return String.class;
     }
 
-    public void serialize(String obj, B2JsonWriter out) throws IOException {
+    public void serialize(String obj, B2JsonOptions options, B2JsonWriter out) throws IOException {
         out.writeString(obj);
     }
 
-    public String deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public String deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         return in.readString();
     }
 

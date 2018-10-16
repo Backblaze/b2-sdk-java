@@ -204,7 +204,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     }
 
     @Override
-    public void serialize(T obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         if (obj.getClass() == clazz) {
             // the union base class is basically "abstract" and can't be serialized.
             throw new B2JsonException("" + clazz + " is a union base class, and cannot be serialized");
@@ -222,11 +222,11 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         }
 
         // we have the right handler, so make it do the work.
-        objHandler.serialize(obj, out);
+        objHandler.serialize(obj, options, out);
     }
 
     @Override
-    public T deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
 
         // Gather the values of all fields present, and also the name of the type of object to create.
         String typeName = null;

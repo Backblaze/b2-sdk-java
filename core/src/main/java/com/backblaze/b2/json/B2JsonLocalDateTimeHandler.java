@@ -16,11 +16,11 @@ public class B2JsonLocalDateTimeHandler implements B2JsonTypeHandler<LocalDateTi
         return LocalDateTime.class;
     }
 
-    public void serialize(LocalDateTime obj, B2JsonWriter out) throws IOException, B2JsonException {
+    public void serialize(LocalDateTime obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
         out.writeString(B2DateTimeUtil.formatFguidDateTime(obj));
     }
 
-    public LocalDateTime deserialize(B2JsonReader in, int options) throws B2JsonException, IOException {
+    public LocalDateTime deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
         String str = in.readString();
         return B2DateTimeUtil.parseDateTime(str);
     }

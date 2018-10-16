@@ -22,7 +22,7 @@ public interface B2JsonTypeHandler<T> {
      *
      * The object is guaranteed not to be null.
      */
-    void serialize(T obj, B2JsonWriter out) throws IOException, B2JsonException;
+    void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException;
 
     /**
      * Deserialize one object from a JSON input stream.
@@ -30,7 +30,7 @@ public interface B2JsonTypeHandler<T> {
      * Will never be called when there is "null" in the input stream,
      * and will never return null.
      */
-    T deserialize(B2JsonReader in, int options) throws B2JsonException, IOException;
+    T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException;
 
     /**
      * When an API is called with GET, this is used to deserialize one of the
