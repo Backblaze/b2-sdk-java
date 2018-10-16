@@ -23,7 +23,7 @@ public class VersionRange {
     private final int firstVersion;
 
     /**
-     * The last version (inclusive!) tht the field appears in.
+     * The last version (inclusive!) that the field appears in.
      */
     private final int lastVersion;
 

@@ -19,6 +19,7 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -163,10 +164,15 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             }
 
             Integer versionParamIndex = null;
+            Set<String> paramNamesSeen = new HashSet<>();
             for (int i = 0; i < paramNames.length; i++) {
                 String paramName = paramNames[i];
+                if (paramNamesSeen.contains(paramName)) {
+                    throw new B2JsonException(clazz.getName() + " constructor parameter '" + paramName + "' listed twice");
+                }
+                paramNamesSeen.add(paramName);
                 if (paramName.isEmpty()) {
-                    throw new B2JsonException("parameter name must not be empty");
+                    throw new B2JsonException(clazz.getName() + " constructor parameter name must not be empty");
                 }
                 if (paramName.equals(versionParamOrEmpty)) {
                     versionParamIndex = i;
@@ -233,7 +239,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         final B2Json.versionRange versionRange = field.getAnnotation(B2Json.versionRange.class);
 
         if (firstVersion != null && versionRange != null) {
-            throw new B2JsonException("must not specify both 'firstVersion' and 'versionRange'");
+            throw new B2JsonException("must not specify both 'firstVersion' and 'versionRange' in " + clazz);
         }
 
 
@@ -241,6 +247,13 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             return VersionRange.allVersionsFrom(firstVersion.firstVersion());
         }
         else if (versionRange != null) {
+            if (versionRange.lastVersion() < versionRange.firstVersion()) {
+                throw new B2JsonException(
+                        "last version " + versionRange.lastVersion() +
+                        " is before first version " + versionRange.firstVersion() +
+                        " in " + clazz
+                );
+            }
             return VersionRange.range(versionRange.firstVersion(), versionRange.lastVersion());
         }
         else {
@@ -359,7 +372,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                     if (fieldInfo.isInVersion(version)) {
                         out.writeObjectFieldNameAndColon(fieldInfo.getName());
                         final Object value = fieldInfo.field.get(obj);
-                        if (fieldInfo.isRequiredInVersion(version) && value == null) {
+                        if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
                             throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
                         }
                         //noinspection unchecked
@@ -411,7 +424,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                     }
                     @SuppressWarnings("unchecked")
                     final Object value = B2JsonUtil.deserializeMaybeNull(fieldInfo.handler, in, options);
-                    if (fieldInfo.isRequiredInVersion(version) && value == null) {
+                    if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
                         throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
                     }
                     constructorArgs[fieldInfo.constructorArgIndex] = value;
@@ -451,7 +464,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             }
             else {
                 Object value = entry.getValue();
-                if (fieldInfo.isRequiredInVersion(version) && value == null) {
+                if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
                     throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
                 }
                 constructorArgs[fieldInfo.constructorArgIndex] = value;
@@ -485,7 +498,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             }
             else {
                 final Object value = fieldInfo.handler.deserializeUrlParam(strOfValue);
-                if (fieldInfo.isRequiredInVersion(version) && value == null) {
+                if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
                     throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
                 }
                 constructorArgs[fieldInfo.constructorArgIndex] = value;
@@ -505,7 +518,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         for (FieldInfo fieldInfo : fields) {
             int index = fieldInfo.constructorArgIndex;
             if (constructorArgs[index] == null) {
-                if (fieldInfo.isRequiredInVersion(version)) {
+                if (fieldInfo.isRequiredAndInVersion(version)) {
                     throw new B2JsonException("required field " + fieldInfo.getName() + " is missing");
                 }
                 if (fieldInfo.defaultValueOrNull != null) {

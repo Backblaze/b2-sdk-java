@@ -63,7 +63,7 @@ public final class FieldInfo implements Comparable<FieldInfo> {
         return versionRange.includesVersion(version);
     }
 
-    public boolean isRequiredInVersion(int version) {
+    public boolean isRequiredAndInVersion(int version) {
         return requirement == FieldRequirement.REQUIRED && versionRange.includesVersion(version);
     }
 

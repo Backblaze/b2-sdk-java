@@ -285,6 +285,9 @@ public class B2Json {
         return fromJsonUntilEof(in, clazz, B2JsonOptions.DEFAULT);
     }
 
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
     @Deprecated
     public <T> T fromJsonUntilEof(InputStream in, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
         return fromJsonUntilEof(in, clazz, optionsFromFlags(optionFlags));
@@ -308,6 +311,9 @@ public class B2Json {
         return fromJson(in, clazz, B2JsonOptions.DEFAULT);
     }
 
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
     @Deprecated
     public <T> T fromJson(InputStream in, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
         return fromJson(in, clazz, optionsFromFlags(optionFlags));
@@ -332,6 +338,9 @@ public class B2Json {
         return fromJson(json, clazz, B2JsonOptions.DEFAULT);
     }
 
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
     @Deprecated
     public <T> T fromJson(String json, Class<T> clazz, int optionFlags) throws B2JsonException {
         return fromJson(json, clazz, optionsFromFlags(optionFlags));
@@ -342,6 +351,9 @@ public class B2Json {
         return fromJsonWithHandler(json, handler, options);
     }
 
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
     @Deprecated
     private <T> T fromJsonWithHandler(String json, B2JsonTypeHandler handler, int optionFlags) throws B2JsonException {
         return fromJsonWithHandler(json, handler, optionsFromFlags(optionFlags));
@@ -364,6 +376,9 @@ public class B2Json {
         return fromJson(jsonUtf8Bytes, clazz, B2JsonOptions.DEFAULT);
     }
 
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
     @Deprecated
     public <T> T fromJson(byte[] jsonUtf8Bytes, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
         return fromJson(jsonUtf8Bytes, clazz, optionsFromFlags(optionFlags));
@@ -387,6 +402,9 @@ public class B2Json {
         return fromUrlParameterMap(parameterMap, clazz, B2JsonOptions.DEFAULT);
     }
 
+    /**
+     * Use the call that takes B2JsonOptions, no this one with 'int optionFlags'.
+     */
     @Deprecated
     public <T> T fromUrlParameterMap(Map<String, String> parameterMap, Class<T> clazz, int optionFlags) throws IOException, B2JsonException {
         return fromUrlParameterMap(parameterMap, clazz, optionsFromFlags(optionFlags));
