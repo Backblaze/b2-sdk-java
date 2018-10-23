@@ -76,6 +76,10 @@ public class B2ByteArrayContentSource implements B2ContentSource {
             this.source = source;
         }
 
+        /**
+         * @param sha1OrNull the sha1 for this file.
+         * @see B2ContentSource#getSha1OrNull()
+         */
         public Builder setSha1OrNull(String sha1OrNull) {
             this.sha1OrNull = sha1OrNull;
             return this;

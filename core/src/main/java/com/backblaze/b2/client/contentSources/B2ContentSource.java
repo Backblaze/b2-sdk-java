@@ -32,6 +32,11 @@ public interface B2ContentSource {
      * return null, B2StorageClient will compute the SHA1 from the bytes in the
      * stream.
      *
+     * Note that large files do not have SHA-1s for the entire file.
+     * If you provide a SHA-1 for a large file upload, the SDK follows
+     * the recommendation of putting your value into the 'large_file_sha1'
+     * fileInfo.  See "SHA1 Checksums" in https://www.backblaze.com/b2/docs/large_files.html
+     *
      * @return the hex-encoded sha1 for the content or null if it's not known yet.
      * @throws IOException if there's trouble
      */
