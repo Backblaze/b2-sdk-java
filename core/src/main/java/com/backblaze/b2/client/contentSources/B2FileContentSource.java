@@ -55,6 +55,10 @@ public class B2FileContentSource implements B2ContentSource {
             this.source = source;
         }
 
+        /**
+         * @param sha1 the sha1 for this file.
+         * @see B2ContentSource#getSha1OrNull()
+         */
         public Builder setSha1(String sha1) {
             this.sha1 = sha1;
             return this;
