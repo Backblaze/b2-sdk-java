@@ -24,7 +24,7 @@ public class B2JsonOptions {
     /**
      * What to do with extra fields found when de-serializing.
      */
-    enum ExtraFieldOption {
+    public enum ExtraFieldOption {
         ERROR,   // Throw an exception if an unexpected field is found.
         IGNORE   // Silently ignore extra fields.
     }
