@@ -207,7 +207,7 @@ public class B2Json {
      * so use it carefully.
      * @param json JSON String to try and parse
      * @param clazz Class to map the JSON String to.
-     * @param <T> The deserialized object casted to specific type <T> from clazz
+     * @param <T> The deserialized object casted to the specific type from clazz
      * @return the object deserialized from the JSON String
      */
     public static <T> T fromJsonOrThrowRuntime(String json, Class<T> clazz) {
