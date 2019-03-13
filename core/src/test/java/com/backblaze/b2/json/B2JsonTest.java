@@ -76,7 +76,7 @@ public class B2JsonTest extends B2BaseTest {
         }
     }
 
-    private static final B2Json bzJson = B2Json.get();
+    private static final B2Json b2Json = B2Json.get();
 
     @Test
     public void testBoolean() throws IOException, B2JsonException {
@@ -152,8 +152,8 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"b\": \"hello\"\n" +
                 "}";
         Container obj = new Container(41, "hello");
-        assertEquals(json, bzJson.toJson(obj));
-        assertEquals(obj, bzJson.fromJson(json, Container.class));
+        assertEquals(json, b2Json.toJson(obj));
+        assertEquals(obj, b2Json.fromJson(json, Container.class));
     }
 
     @Test
@@ -189,8 +189,8 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"b\": \"hello\"\n" +
                 "}";
         Container obj = new Container(41, "hello");
-        assertEquals(jsonWithoutComment, bzJson.toJson(obj));
-        assertEquals(obj, bzJson.fromJson(json, Container.class));
+        assertEquals(jsonWithoutComment, b2Json.toJson(obj));
+        assertEquals(obj, b2Json.fromJson(json, Container.class));
     }
 
     @Test
@@ -201,8 +201,8 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"b\": \"he//o\"\n" +
                 "}";
         Container obj = new Container(41, "he//o");
-        assertEquals(json, bzJson.toJson(obj));
-        assertEquals(obj, bzJson.fromJson(json, Container.class));
+        assertEquals(json, b2Json.toJson(obj));
+        assertEquals(obj, b2Json.fromJson(json, Container.class));
     }
 
     @Test
@@ -214,7 +214,7 @@ public class B2JsonTest extends B2BaseTest {
                 "}";
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("invalid comment: single slash");
-        bzJson.fromJson(json, Container.class);
+        b2Json.fromJson(json, Container.class);
     }
 
     @Test
@@ -226,7 +226,7 @@ public class B2JsonTest extends B2BaseTest {
                 "}";
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("object should end with brace but found: \"");
-        bzJson.fromJson(json, Container.class);
+        b2Json.fromJson(json, Container.class);
     }
 
     @Test
@@ -238,7 +238,7 @@ public class B2JsonTest extends B2BaseTest {
                 "}";
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("string does not start with quote");
-        bzJson.fromJson(json, Container.class);
+        b2Json.fromJson(json, Container.class);
     }
 
     @Test
@@ -252,7 +252,7 @@ public class B2JsonTest extends B2BaseTest {
 
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("duplicate field: a");
-        bzJson.fromJson(json, Container.class);
+        b2Json.fromJson(json, Container.class);
     }
 
     @Test
@@ -266,7 +266,7 @@ public class B2JsonTest extends B2BaseTest {
 
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("unknown field");
-        bzJson.fromJson(json, Container.class);
+        b2Json.fromJson(json, Container.class);
     }
 
     @Test
@@ -280,7 +280,7 @@ public class B2JsonTest extends B2BaseTest {
 
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("unknown field");
-        bzJson.fromJson(json, Container.class);
+        b2Json.fromJson(json, Container.class);
     }
 
     private static class Discarder {
@@ -335,14 +335,14 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"x\": 7" +
                 "}";
 
-        Container c = bzJson.fromJson(json, Container.class, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
+        Container c = b2Json.fromJson(json, Container.class, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
 
         String expectedJson =
                 "{\n" +
                 "  \"a\": 41,\n" +
                 "  \"b\": \"hello\"\n" +
                 "}";
-        assertEquals(expectedJson, bzJson.toJson(c));
+        assertEquals(expectedJson, b2Json.toJson(c));
     }
 
     @Test
@@ -353,7 +353,7 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"c\": 7" +
                 "}";
 
-        final Discarder discarder = bzJson.fromJson(jsonWithExtra, Discarder.class);
+        final Discarder discarder = b2Json.fromJson(jsonWithExtra, Discarder.class);
         assertEquals(41, discarder.a);
         assertEquals(7, discarder.c);
 
@@ -361,7 +361,7 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"a\": 41,\n" +
                 "  \"c\": 7\n" +
                 "}";
-        assertEquals(expectedJson, bzJson.toJson(discarder));
+        assertEquals(expectedJson, b2Json.toJson(discarder));
     }
 
     @Test
@@ -372,14 +372,14 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"c\": 7" +
                 "}";
 
-        final DiscardingIgnoredFieldIsOk discarder = bzJson.fromJson(jsonWithExtra, DiscardingIgnoredFieldIsOk.class);
+        final DiscardingIgnoredFieldIsOk discarder = b2Json.fromJson(jsonWithExtra, DiscardingIgnoredFieldIsOk.class);
         assertEquals(41, discarder.a);
         assertEquals(42, discarder.c); // 'cuz ignored from json and set by constructor.
 
         final String expectedJson = "{\n" +
                 "  \"a\": 41\n" +
                 "}";
-        assertEquals(expectedJson, bzJson.toJson(discarder));
+        assertEquals(expectedJson, b2Json.toJson(discarder));
     }
 
     @Test
@@ -392,7 +392,7 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"c\": 7" +
                 "}";
 
-        bzJson.fromJson(jsonWithExtra, DiscardingNonIgnoredFieldIsIllegal.class);
+        b2Json.fromJson(jsonWithExtra, DiscardingNonIgnoredFieldIsIllegal.class);
     }
 
 
@@ -402,7 +402,7 @@ public class B2JsonTest extends B2BaseTest {
 
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("required field a is missing");
-        bzJson.fromJson(json, Container.class);
+        b2Json.fromJson(json, Container.class);
     }
 
     private static class Empty {
@@ -448,7 +448,7 @@ public class B2JsonTest extends B2BaseTest {
     @Test
     public void testOptionalNotPresent() throws IOException, B2JsonException {
         String json = "{}";
-        AllOptionalTypes obj = bzJson.fromJson(json, AllOptionalTypes.class);
+        AllOptionalTypes obj = b2Json.fromJson(json, AllOptionalTypes.class);
         assertFalse(obj.v_boolean);
         assertEquals(0, obj.v_byte);
         assertEquals(0, obj.v_char);
@@ -472,7 +472,7 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"v_long\": 0,\n" +
                 "  \"v_string\": null\n" +
                 "}";
-        assertEquals(expectedJson, bzJson.toJson(obj));
+        assertEquals(expectedJson, b2Json.toJson(obj));
 
         checkDeserializeSerialize(expectedJson, AllOptionalTypes.class);
     }
@@ -490,7 +490,7 @@ public class B2JsonTest extends B2BaseTest {
                 "v_long", "10",
                 "v_string", "abc"
         );
-        AllOptionalTypes obj = bzJson.fromUrlParameterMap(parameterMap, AllOptionalTypes.class);
+        AllOptionalTypes obj = b2Json.fromUrlParameterMap(parameterMap, AllOptionalTypes.class);
         assertTrue(obj.v_boolean);
         assertEquals(5, obj.v_byte);
         assertEquals(6, obj.v_char);
@@ -524,7 +524,7 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"v_string\" : null,\n" +
                 "  \"v_empty\" : null\n" +
                 "}";
-        AllOptionalTypes obj = bzJson.fromJson(json, AllOptionalTypes.class);
+        AllOptionalTypes obj = b2Json.fromJson(json, AllOptionalTypes.class);
         assertNull(obj.v_string);
         assertNull(obj.v_empty);
     }
@@ -542,7 +542,7 @@ public class B2JsonTest extends B2BaseTest {
     public void testSerializeNullTopLevel() throws B2JsonException {
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("top level object must not be null");
-        bzJson.toJson(null);
+        b2Json.toJson(null);
     }
 
     @Test
@@ -551,7 +551,7 @@ public class B2JsonTest extends B2BaseTest {
 
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("required field a cannot be null");
-        bzJson.toJson(obj);
+        b2Json.toJson(obj);
     }
 
     @Test
@@ -560,7 +560,7 @@ public class B2JsonTest extends B2BaseTest {
 
         thrown.expect(B2JsonException.class);
         thrown.expectMessage("required field a cannot be null");
-        bzJson.fromJson(json, RequiredObject.class);
+        b2Json.fromJson(json, RequiredObject.class);
     }
 
     private static class ListHolder {
@@ -591,25 +591,25 @@ public class B2JsonTest extends B2BaseTest {
     }
 
     private <T> void checkDeserializeSerialize(String json, Class<T> clazz) throws IOException, B2JsonException {
-        T obj = bzJson.fromJson(json, clazz);
-        assertEquals(json, bzJson.toJson(obj));
+        T obj = b2Json.fromJson(json, clazz);
+        assertEquals(json, b2Json.toJson(obj));
 
         byte [] bytes = getUtf8Bytes(json);
-        T obj2 = bzJson.fromJson(bytes, clazz);
-        assertArrayEquals(bytes, bzJson.toJsonUtf8Bytes(obj2));
+        T obj2 = b2Json.fromJson(bytes, clazz);
+        assertArrayEquals(bytes, b2Json.toJsonUtf8Bytes(obj2));
 
-        T obj3 = bzJson.fromJson(bytes, clazz);
+        T obj3 = b2Json.fromJson(bytes, clazz);
         byte [] bytesWithNewline = getUtf8Bytes(json + "\n");
-        assertArrayEquals(bytesWithNewline, bzJson.toJsonUtf8BytesWithNewline(obj3));
+        assertArrayEquals(bytesWithNewline, b2Json.toJsonUtf8BytesWithNewline(obj3));
     }
 
     private <T> void checkDeserializeSerialize(String json, Class<T> clazz, String expectedJson) throws IOException, B2JsonException {
-        T obj = bzJson.fromJson(json, clazz);
-        assertEquals(expectedJson, bzJson.toJson(obj));
+        T obj = b2Json.fromJson(json, clazz);
+        assertEquals(expectedJson, b2Json.toJson(obj));
 
         byte [] bytes = getUtf8Bytes(json);
-        T obj2 = bzJson.fromJson(bytes, clazz);
-        assertArrayEquals(getUtf8Bytes(expectedJson), bzJson.toJsonUtf8Bytes(obj2));
+        T obj2 = b2Json.fromJson(bytes, clazz);
+        assertArrayEquals(getUtf8Bytes(expectedJson), b2Json.toJsonUtf8Bytes(obj2));
     }
 
     private static class MapHolder {
@@ -655,7 +655,7 @@ public class B2JsonTest extends B2BaseTest {
         map.put(null, "Text");
         MapWithNullKeyHolder mapWithNullKeyHolder = new MapWithNullKeyHolder(map);
         try {
-            bzJson.toJson(mapWithNullKeyHolder);
+            b2Json.toJson(mapWithNullKeyHolder);
             assertTrue("Map with null key should not be allowed to be serialized", false);
         } catch (B2JsonException ex) {
             assertEquals("Map key is null", ex.getMessage());
@@ -712,7 +712,7 @@ public class B2JsonTest extends B2BaseTest {
                 "    \"20150502\": 7\n" +
                 "  }\n" +
                 "}" ;
-        assertEquals(json, bzJson.toJson(holder));
+        assertEquals(json, b2Json.toJson(holder));
     }
 
     @Test
@@ -725,8 +725,8 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"a\": 5,\n" +
                 "  \"b\": 6\n" +
                 "}";
-        assertEquals(json, bzJson.mapToJson(map, String.class, Integer.class));
-        assertEquals(map, bzJson.mapFromJson(json, String.class, Integer.class));
+        assertEquals(json, b2Json.mapToJson(map, String.class, Integer.class));
+        assertEquals(map, b2Json.mapFromJson(json, String.class, Integer.class));
     }
 
     @Test
@@ -739,8 +739,8 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"alfa\",\n" +
                 "  \"bravo\"\n" +
                 "]";
-        assertEquals(json, bzJson.listToJson(list, String.class));
-        assertEquals(list, bzJson.listFromJson(json, String.class));
+        assertEquals(json, b2Json.listToJson(list, String.class));
+        assertEquals(list, b2Json.listFromJson(json, String.class));
     }
 
 
@@ -779,17 +779,17 @@ public class B2JsonTest extends B2BaseTest {
         };
 
         // Check de-serializing from string
-        assertEquals(str, bzJson.fromJson(json, String.class));
+        assertEquals(str, b2Json.fromJson(json, String.class));
 
         // Check de-serializing from bytes
-        assertEquals(str, bzJson.fromJson(new ByteArrayInputStream(utf8Json), String.class));
+        assertEquals(str, b2Json.fromJson(new ByteArrayInputStream(utf8Json), String.class));
 
         // Check serializing to string
-        assertEquals(json, bzJson.toJson(str));
+        assertEquals(json, b2Json.toJson(str));
 
         // Check serializing to bytes
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            bzJson.toJson(str, out);
+            b2Json.toJson(str, out);
             assertArrayEquals(utf8Json, out.toByteArray());
         }
     }
@@ -811,7 +811,7 @@ public class B2JsonTest extends B2BaseTest {
         assertEquals(6, orig.age);
 
         // ensure we can serialize a private member.
-        final String json = bzJson.toJson(orig);
+        final String json = b2Json.toJson(orig);
         final String expectedJson =
                 "{\n" +
                 "  \"age\": 6\n" +
@@ -942,7 +942,7 @@ public class B2JsonTest extends B2BaseTest {
         String json = "{ \"number\" : 7 }";
         thrown.expect(B2JsonBadValueException.class);
         thrown.expectMessage("not even: 7");
-        bzJson.fromJson(json, EvenNumber.class);
+        b2Json.fromJson(json, EvenNumber.class);
     }
 
     private static class PrimitiveArrayContainer {
@@ -1324,12 +1324,12 @@ public class B2JsonTest extends B2BaseTest {
     public void testOptionalWithDefault() throws B2JsonException {
         {
             OptionalWithDefaultHolder expected = new OptionalWithDefaultHolder(0, 5, "hello");
-            OptionalWithDefaultHolder actual = bzJson.fromJson("{}", OptionalWithDefaultHolder.class);
+            OptionalWithDefaultHolder actual = b2Json.fromJson("{}", OptionalWithDefaultHolder.class);
             assertEquals(expected, actual);
         }
         {
             OptionalWithDefaultHolder expected = new OptionalWithDefaultHolder(2, 3, "4");
-            OptionalWithDefaultHolder actual = bzJson.fromJson("{\"a\": 2, \"b\": 3, \"c\": \"4\"}", OptionalWithDefaultHolder.class);
+            OptionalWithDefaultHolder actual = b2Json.fromJson("{\"a\": 2, \"b\": 3, \"c\": \"4\"}", OptionalWithDefaultHolder.class);
             assertEquals(expected, actual);
         }
     }
@@ -1337,7 +1337,7 @@ public class B2JsonTest extends B2BaseTest {
     @Test
     public void testVersionRangeBackwards() throws B2JsonException {
         thrown.expectMessage("last version 1 is before first version 2 in class com.backblaze.b2.json.B2JsonTest$VersionRangeBackwardsClass");
-        bzJson.toJson(new VersionRangeBackwardsClass(5));
+        b2Json.toJson(new VersionRangeBackwardsClass(5));
     }
 
     private static class VersionRangeBackwardsClass {
@@ -1354,7 +1354,7 @@ public class B2JsonTest extends B2BaseTest {
     @Test
     public void testConflictingVersions() throws B2JsonException {
         thrown.expectMessage("must not specify both 'firstVersion' and 'versionRange' in class com.backblaze.b2.json.B2JsonTest$VersionConflictClass");
-        bzJson.toJson(new VersionConflictClass(5));
+        b2Json.toJson(new VersionConflictClass(5));
     }
 
     private static class VersionConflictClass {
@@ -1841,7 +1841,7 @@ public class B2JsonTest extends B2BaseTest {
     public void testRequiredFieldNotInVersion() throws B2JsonException {
         final String json = "{}";
         final B2JsonOptions options = B2JsonOptions.builder().setVersion(1).build();
-        final VersionedContainer obj = bzJson.fromJson(json, VersionedContainer.class, options);
+        final VersionedContainer obj = b2Json.fromJson(json, VersionedContainer.class, options);
         assertEquals(0, obj.x);
         assertEquals(1, obj.version);
     }
@@ -1852,7 +1852,7 @@ public class B2JsonTest extends B2BaseTest {
         final B2JsonOptions options = B2JsonOptions.builder().setVersion(5).build();
 
         thrown.expectMessage("required field x is missing");
-        bzJson.fromJson(json, VersionedContainer.class, options);
+        b2Json.fromJson(json, VersionedContainer.class, options);
     }
 
     @Test
@@ -1861,14 +1861,14 @@ public class B2JsonTest extends B2BaseTest {
         final B2JsonOptions options = B2JsonOptions.builder().setVersion(1).build();
 
         thrown.expectMessage("field x is not in version 1");
-        bzJson.fromJson(json, VersionedContainer.class, options);
+        b2Json.fromJson(json, VersionedContainer.class, options);
     }
 
     @Test
     public void testFieldPresentAndInVersion() throws B2JsonException {
         final String json = "{ \"x\": 7 }";
         final B2JsonOptions options = B2JsonOptions.builder().setVersion(5).build();
-        final VersionedContainer obj = bzJson.fromJson(json, VersionedContainer.class, options);
+        final VersionedContainer obj = b2Json.fromJson(json, VersionedContainer.class, options);
         assertEquals(7, obj.x);
         assertEquals(5, obj.version);
     }
@@ -1880,7 +1880,7 @@ public class B2JsonTest extends B2BaseTest {
             final B2JsonOptions options = B2JsonOptions.builder().setVersion(3).build();
             assertEquals(
                     "{}",
-                    bzJson.toJson(new VersionedContainer(3, 5), options)
+                    b2Json.toJson(new VersionedContainer(3, 5), options)
             );
         }
 
@@ -1889,7 +1889,7 @@ public class B2JsonTest extends B2BaseTest {
             final B2JsonOptions options = B2JsonOptions.builder().setVersion(4).build();
             assertEquals(
                     "{\n  \"x\": 3\n}",
-                    bzJson.toJson(new VersionedContainer(3, 5), options)
+                    b2Json.toJson(new VersionedContainer(3, 5), options)
             );
         }
 
@@ -1898,7 +1898,7 @@ public class B2JsonTest extends B2BaseTest {
             final B2JsonOptions options = B2JsonOptions.builder().setVersion(4).build();
             assertEquals(
                     "{\n  \"x\": 3\n}",
-                    bzJson.toJson(new VersionedContainer(3, 5), options)
+                    b2Json.toJson(new VersionedContainer(3, 5), options)
             );
         }
 
@@ -1907,7 +1907,7 @@ public class B2JsonTest extends B2BaseTest {
             final B2JsonOptions options = B2JsonOptions.builder().setVersion(7).build();
             assertEquals(
                     "{}",
-                    bzJson.toJson(new VersionedContainer(3, 5), options)
+                    b2Json.toJson(new VersionedContainer(3, 5), options)
             );
         }
     }
@@ -1919,7 +1919,7 @@ public class B2JsonTest extends B2BaseTest {
                 "{\n" +
                 "  \"x\": 3\n" +
                 "}",
-                bzJson.toJson(new VersionedContainer(3, 5), options)
+                b2Json.toJson(new VersionedContainer(3, 5), options)
         );
     }
 
@@ -1943,7 +1943,78 @@ public class B2JsonTest extends B2BaseTest {
     public void testParamListedTwice() throws B2JsonException {
         final B2JsonOptions options = B2JsonOptions.builder().build();
         thrown.expectMessage("com.backblaze.b2.json.B2JsonTest$ConstructorParamListedTwice constructor parameter 'a' listed twice");
-        bzJson.fromJson("{}", ConstructorParamListedTwice.class, options);
+        b2Json.fromJson("{}", ConstructorParamListedTwice.class, options);
+    }
+
+    private static class TestClassOne {
+        @B2Json.required
+        final String name;
+
+        @B2Json.required
+        final int number;
+
+        @B2Json.constructor(params = "name, number")
+        private TestClassOne(String name, int number) {
+            this.name = name;
+            this.number = number;
+        }
+    }
+
+    @Test
+    public void testToJson() {
+        final TestClassOne testClassOne = new TestClassOne("testABC", 1);
+        final String testClassOneStr = B2Json.toJsonOrThrowRuntime(testClassOne);
+        assertEquals("{\n  \"name\": \"testABC\",\n  \"number\": 1\n}", testClassOneStr);
+    }
+
+    @Test
+    public void testToJsonWithOptions() {
+        final B2JsonOptions options = B2JsonOptions.builder().build();
+        final TestClassOne testClassOne = new TestClassOne("testABC", 1);
+        final String testClassOneStr = B2Json.toJsonOrThrowRuntime(testClassOne, options);
+        assertEquals("{\n  \"name\": \"testABC\",\n  \"number\": 1\n}", testClassOneStr);
+    }
+
+    @Test
+    public void testToJsonThrows() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("failed to convert to json: required field a cannot be null");
+        RequiredObject obj = new RequiredObject(null);
+        B2Json.toJsonOrThrowRuntime(obj);
+    }
+
+
+    /**
+     * Because of serialization, the object returned from B2Json will never be the same object as an
+     * instantiated one.
+     *
+     * So we just look at and test the members.
+     */
+    @Test
+    public void testFromJson() {
+        final String testClassOneStr = "{\n \"name\": \"testABC\",\n \"number\": 1\n}";
+        final TestClassOne testClassOne = B2Json.fromJsonOrThrowRuntime(testClassOneStr, TestClassOne.class);
+
+        assertEquals("testABC", testClassOne.name);
+        assertEquals(1, testClassOne.number);
+    }
+
+    @Test
+    public void testFromJsonWithOptions() {
+        final B2JsonOptions options = B2JsonOptions.builder().build();
+        final String testClassOneStr = "{\n \"name\": \"testABC\",\n \"number\": 1\n}";
+        final TestClassOne testClassOne = B2Json.fromJsonOrThrowRuntime(testClassOneStr, TestClassOne.class, options);
+
+        assertEquals("testABC", testClassOne.name);
+        assertEquals(1, testClassOne.number);
+    }
+
+    @Test
+    public void testFromJsonThrows() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("failed to convert from json: required field number is missing");
+        final String testClassOneStr = "{\n \"name\": \"testABC\"\n}";
+        B2Json.fromJsonOrThrowRuntime(testClassOneStr, TestClassOne.class);
     }
 
     private static class ConstructorParamListedTwice {
