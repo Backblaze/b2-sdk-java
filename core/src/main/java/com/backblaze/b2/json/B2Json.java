@@ -201,6 +201,27 @@ public class B2Json {
         }
     }
 
+    /**
+     * Parse an assumed JSON string into a defined class.
+     * This throws a RuntimeException instead of a B2JsonException,
+     * so use it carefully.
+     * @param json JSON String to try and parse
+     * @param clazz Class to map the JSON String to.
+     * @param <T> The deserialized object casted to specific type <T> from clazz
+     * @return the object deserialized from the JSON String
+     */
+    public static <T> T fromJsonOrThrowRuntime(String json, Class<T> clazz) {
+        return fromJsonOrThrowRuntime(json, clazz, B2JsonOptions.DEFAULT);
+    }
+
+    public static <T> T fromJsonOrThrowRuntime(String json, Class<T> clazz, B2JsonOptions options) {
+        try {
+            return get().fromJson(json, clazz, options);
+        } catch (B2JsonException e) {
+            throw new IllegalArgumentException("failed to convert from json: " + e.getMessage(), e);
+        }
+    }
+
 
     /**
      * Turn a map into JSON, returning the result as a string.
