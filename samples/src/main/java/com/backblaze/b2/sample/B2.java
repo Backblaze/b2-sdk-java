@@ -45,7 +45,7 @@ public class B2 implements AutoCloseable {
     private static final String USER_AGENT = APP_NAME + "/" + VERSION;
 
     // these just don't make sense (yet), since i'm getting credentials from the environment:
-    //  "    b2 authorize_account [<accountId>] [<applicationKey>]\n" +
+    //  "    b2 authorize_account [<applicationKeyId>] [<applicationKey>]\n" +
     //  "    b2 clear_account\n" +
 
     // these are more work than i want to do right now:

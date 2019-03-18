@@ -14,43 +14,43 @@ import com.backblaze.b2.util.B2Preconditions;
  * Almost everyone is expected to use this right now.
  */
 public class B2AccountAuthorizerSimpleImpl implements B2AccountAuthorizer {
-    private final String accountId;
+    private final String applicationKeyId;
     private final String applicationKey;
 
-    private B2AccountAuthorizerSimpleImpl(String accountId,
+    private B2AccountAuthorizerSimpleImpl(String applicationKeyId,
                                           String applicationKey) {
-        B2Preconditions.checkArgument(accountId != null);
+        B2Preconditions.checkArgument(applicationKeyId != null);
         B2Preconditions.checkArgument(applicationKey != null);
-        this.accountId = accountId;
+        this.applicationKeyId = applicationKeyId;
         this.applicationKey = applicationKey;
     }
 
-    public static Builder builder(String accountId,
+    public static Builder builder(String applicationKeyId,
                                   String applicationKey) {
-        return new Builder(accountId, applicationKey);
+        return new Builder(applicationKeyId, applicationKey);
     }
 
     @Override
     public B2AccountAuthorization authorize(B2StorageClientWebifier webifier) throws B2Exception {
         final B2AuthorizeAccountRequest request = B2AuthorizeAccountRequest
-                .builder(accountId, applicationKey)
+                .builder(applicationKeyId, applicationKey)
                 .build();
         return webifier.authorizeAccount(request);
     }
 
 
     public static class Builder {
-        private final String accountId;
+        private final String applicationKeyId;
         private final String applicationKey;
 
-        public Builder(String accountId,
+        public Builder(String applicationKeyId,
                        String applicationKey) {
-            this.accountId = accountId;
+            this.applicationKeyId = applicationKeyId;
             this.applicationKey = applicationKey;
         }
 
         public B2AccountAuthorizerSimpleImpl build() {
-            return new B2AccountAuthorizerSimpleImpl(accountId, applicationKey);
+            return new B2AccountAuthorizerSimpleImpl(applicationKeyId, applicationKey);
         }
     }
 }

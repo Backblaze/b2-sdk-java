@@ -2,7 +2,7 @@
 
 ################################################################################################
 #
-# If $B2_ACCOUNT_ID and $B2_APPLICATION_KEY are provided in the environment,
+# If $B2_APPLICATION_KEY_ID and $B2_APPLICATION_KEY are provided in the environment,
 # this will try to upload the file specified on the command line from the
 # build/ directory.  The exit code will indicate whether the upload worked.
 #
@@ -25,7 +25,7 @@ if test ! -f $SRC; then
     exit 1
 fi
 
-if test -z "$B2_ACCOUNT_ID" -o -z "$B2_APPLICATION_KEY"; then
+if test -z "$B2_APPLICATION_KEY_ID" -o -z "$B2_APPLICATION_KEY"; then
     echo "NOT uploading build results because no credentials are provided."
     echo "this probably isn't a backblaze build."
     # it's non-obvious that we would return success, but it's a reasonable outcome.
@@ -35,7 +35,7 @@ fi
 DEST=builds/$ZIP_TO_UPLOAD
 
 echo authorizing account
-b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
+b2 authorize_account $B2_APPLICATION_KEY_ID $B2_APPLICATION_KEY
 status=$?
 if test $status != "0"; then
     echo "failed to authorize with b2 server"

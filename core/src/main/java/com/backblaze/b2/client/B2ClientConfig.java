@@ -68,9 +68,9 @@ public class B2ClientConfig {
         return new Builder(accountAuthorizer, userAgent);
     }
 
-    public static Builder builder(String accountId, String applicationKey, String userAgent) {
+    public static Builder builder(String applicationKeyId, String applicationKey, String userAgent) {
         return new Builder(B2AccountAuthorizerSimpleImpl
-                .builder(accountId, applicationKey)
+                .builder(applicationKeyId, applicationKey)
                 .build(),
                 userAgent);
     }

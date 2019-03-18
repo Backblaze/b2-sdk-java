@@ -8,7 +8,7 @@ import com.backblaze.b2.util.B2Preconditions;
 
 /**
  * This B2CredentialsSource reads the credentials from two environment variables:
- *   B2_ACCOUNT_ID
+ *   B2_APPLICATION_KEY_ID
  *   B2_APPLICATION_KEY
  *
  * If either is missing, getCredentials() will throw.
@@ -19,15 +19,15 @@ public class B2CredentialsFromEnvironmentSource implements B2CredentialsSource {
     private B2CredentialsFromEnvironmentSource() {
         B2Credentials tmp;
          try {
-             final String accountId = System.getenv("B2_ACCOUNT_ID");
-             B2Preconditions.checkState(accountId != null, "B2_ACCOUNT_ID must be set in the environment");
-             B2Preconditions.checkState(!accountId.isEmpty(), "B2_ACCOUNT_ID must be non-empty.");
+             final String applicationKeyId = System.getenv("B2_APPLICATION_KEY_ID");
+             B2Preconditions.checkState(applicationKeyId != null, "B2_APPLICATION_KEY_ID must be set in the environment");
+             B2Preconditions.checkState(!applicationKeyId.isEmpty(), "B2_APPLICATION_KEY_ID must be non-empty.");
 
              final String appKey = System.getenv("B2_APPLICATION_KEY");
              B2Preconditions.checkState(appKey != null, "B2_APPLICATION_KEY must be set in the environment");
              B2Preconditions.checkState(!appKey.isEmpty(), "B2_APPLICATION_KEY must be non-empty.");
 
-             tmp = new B2CredentialsImpl(accountId, appKey);
+             tmp = new B2CredentialsImpl(applicationKeyId, appKey);
         } catch (IllegalStateException e) {
              tmp = null;
         }
@@ -41,7 +41,7 @@ public class B2CredentialsFromEnvironmentSource implements B2CredentialsSource {
     @Override
     public B2Credentials getCredentials() {
         B2Preconditions.checkState(credentials != null,
-                "B2_ACCOUNT_ID and B2_APPLICATION_KEY must be set to non-empty values in the environment.");
+                "B2_APPLICATION_KEY_ID and B2_APPLICATION_KEY must be set to non-empty values in the environment.");
         return credentials;
     }
 

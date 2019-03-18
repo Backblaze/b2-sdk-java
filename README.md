@@ -57,7 +57,7 @@ SAMPLE
   * To run B2Sample, you will need to add your credentials to your environment
     in these environment variables:
 
-    * B2_ACCOUNT_ID
+    * B2_APPLICATION_KEY_ID
     * B2_APPLICATION_KEY
 
   * Be sure to add the jars to your class path along with their dependencies.  
@@ -97,11 +97,11 @@ HOW TO USE
 
   * create a B2StorageClient.
 
-    * if your code has access to the accountId and applicationKey,
+    * if your code has access to the applicationKeyId and applicationKey,
       here's the simplest way to do it:
 
       ```java
-      B2StorageClient client = B2StorageHttpClientBuilder.builder(accountId,
+      B2StorageClient client = B2StorageHttpClientBuilder.builder(applicationKeyId,
                                            applicationKey,
                                            userAgent).build();
       ```

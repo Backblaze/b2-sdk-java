@@ -149,7 +149,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     private String makeAuthorizationValue(B2AuthorizeAccountRequest request) {
-        final String value = request.getAccountId() + ":" + request.getApplicationKey();
+        final String value = request.getApplicationKeyId() + ":" + request.getApplicationKey();
         return "Basic " + base64Encoder.encodeToString(value.getBytes());
     }
 
