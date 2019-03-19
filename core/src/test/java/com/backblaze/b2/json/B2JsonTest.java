@@ -1947,6 +1947,7 @@ public class B2JsonTest extends B2BaseTest {
     }
 
     private static class TestClassOne {
+        @B2Json.versionRange(firstVersion = 1, lastVersion = 3)
         @B2Json.required
         final String name;
 
@@ -1968,11 +1969,20 @@ public class B2JsonTest extends B2BaseTest {
     }
 
     @Test
-    public void testToJsonWithOptions() {
+    public void testToJsonWithDefaultOptions() {
         final B2JsonOptions options = B2JsonOptions.builder().build();
         final TestClassOne testClassOne = new TestClassOne("testABC", 1);
         final String testClassOneStr = B2Json.toJsonOrThrowRuntime(testClassOne, options);
         assertEquals("{\n  \"name\": \"testABC\",\n  \"number\": 1\n}", testClassOneStr);
+    }
+
+    @Test
+    public void testToJsonWithOptions() {
+        // name is only in first 3 versions
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(4).build();
+        final TestClassOne testClassOne = new TestClassOne("testABC", 1);
+        final String testClassOneStr = B2Json.toJsonOrThrowRuntime(testClassOne, options);
+        assertEquals("{\n  \"number\": 1\n}", testClassOneStr);
     }
 
     @Test
@@ -2000,13 +2010,22 @@ public class B2JsonTest extends B2BaseTest {
     }
 
     @Test
-    public void testFromJsonWithOptions() {
+    public void testFromJsonWithDefaultOptions() {
         final B2JsonOptions options = B2JsonOptions.builder().build();
         final String testClassOneStr = "{\n \"name\": \"testABC\",\n \"number\": 1\n}";
         final TestClassOne testClassOne = B2Json.fromJsonOrThrowRuntime(testClassOneStr, TestClassOne.class, options);
 
         assertEquals("testABC", testClassOne.name);
         assertEquals(1, testClassOne.number);
+    }
+
+    @Test
+    public void testFromJsonWithOptions() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("failed to convert from json: field name is not in version 6");
+        final B2JsonOptions options = B2JsonOptions.builder().setVersion(6).build();
+        final String testClassOneStr = "{\n \"name\": \"testABC\",\n \"number\": 1\n}";
+        final TestClassOne testClassOne = B2Json.fromJsonOrThrowRuntime(testClassOneStr, TestClassOne.class, options);
     }
 
     @Test
