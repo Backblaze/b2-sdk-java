@@ -54,7 +54,7 @@ SAMPLE
   * To run B2Sample, you will need to add your credentials to your environment
     in these environment variables:
 
-    * B2_APPLICATION_KEY_ID
+    * B2_ACCOUNT_ID OR B2_APPLICATION_KEY_ID
     * B2_APPLICATION_KEY
 
   * Be sure to add the jars to your class path along with their dependencies.  

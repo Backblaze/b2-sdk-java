@@ -8,7 +8,7 @@ import com.backblaze.b2.util.B2Preconditions;
 
 /**
  * This B2CredentialsSource reads the credentials from two environment variables:
- *   B2_APPLICATION_KEY_ID
+ *   B2_ACCOUNT_ID or B2_APPLICATION_KEY_ID
  *   B2_APPLICATION_KEY
  *
  * If either is missing, getCredentials() will throw.
@@ -19,9 +19,14 @@ public class B2CredentialsFromEnvironmentSource implements B2CredentialsSource {
     private B2CredentialsFromEnvironmentSource() {
         B2Credentials tmp;
          try {
-             final String applicationKeyId = System.getenv("B2_APPLICATION_KEY_ID");
-             B2Preconditions.checkState(applicationKeyId != null, "B2_APPLICATION_KEY_ID must be set in the environment");
-             B2Preconditions.checkState(!applicationKeyId.isEmpty(), "B2_APPLICATION_KEY_ID must be non-empty.");
+             String applicationKeyId = System.getenv("B2_APPLICATION_KEY_ID");
+
+             if (applicationKeyId == null || applicationKeyId.isEmpty()) {
+                 applicationKeyId = System.getenv("B2_ACCOUNT_ID");
+             }
+
+             B2Preconditions.checkState(applicationKeyId != null, "B2_ACCOUNT_ID or B2_APPLICATION_KEY_ID must be set in the environment");
+             B2Preconditions.checkState(!applicationKeyId.isEmpty(), "B2_ACCOUNT_ID or B2_APPLICATION_KEY_ID must be non-empty.");
 
              final String appKey = System.getenv("B2_APPLICATION_KEY");
              B2Preconditions.checkState(appKey != null, "B2_APPLICATION_KEY must be set in the environment");
@@ -41,7 +46,7 @@ public class B2CredentialsFromEnvironmentSource implements B2CredentialsSource {
     @Override
     public B2Credentials getCredentials() {
         B2Preconditions.checkState(credentials != null,
-                "B2_APPLICATION_KEY_ID and B2_APPLICATION_KEY must be set to non-empty values in the environment.");
+                "B2_ACCOUNT_ID or B2_APPLICATION_KEY_ID and B2_APPLICATION_KEY must be set to non-empty values in the environment.");
         return credentials;
     }
 

@@ -9,6 +9,12 @@ package com.backblaze.b2.client.credentialsSources;
  */
 public interface B2Credentials {
     /**
+     * @return the accountId to use for b2_authorize_account.
+     */
+    @Deprecated
+    String getAccountId();
+
+    /**
      * @return the applicationKeyId to use for b2_authorize_account.
      */
     String getApplicationKeyId();
