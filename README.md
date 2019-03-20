@@ -42,10 +42,7 @@ FEATURES
 * The SDK provides three jars:
   * **b2-sdk-core** provides almost all of the SDK.  it does not contain the code for making HTTP requests (B2WebApiClient).
   * **b2-sdk-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.  It is separate so that if you provide your own B2WebApiClient, you won't need to pull in HttpClient or its dependencies.**
-  * **b2-sdk-samples** has some samples.
-
-* **NOTE:** The SDK supports the upcoming [Application Keys][] APIs, which have not not been released yet.  If you try to use those APIs before the feature is released, you will get errors. 
-
+  * **b2-sdk-samples** has some samples. 
 
 SAMPLE
 ======
