@@ -9,32 +9,22 @@ import com.backblaze.b2.json.B2Json;
 import java.util.Objects;
 
 public class B2AuthorizeAccountRequest {
-
-    private final String applicationKeyId;
-
     @B2Json.required
-    private final String accountId;
+    private final String applicationKeyId;
     @B2Json.required
     private final String applicationKey;
 
-    @B2Json.constructor(params = "accountId,applicationKey")
-    public B2AuthorizeAccountRequest(String accountId,
+    @B2Json.constructor(params = "applicationKeyId,applicationKey")
+    public B2AuthorizeAccountRequest(String applicationKeyId,
                                      String applicationKey) {
-        this.applicationKeyId = accountId;
-
-        this.accountId = accountId;
+        this.applicationKeyId = applicationKeyId;
         this.applicationKey = applicationKey;
     }
 
-    public static Builder builder(String accountId,
+    public static Builder builder(String applicationKeyId,
                                   String applicationKey) {
-        return new Builder(accountId, applicationKey);
+        return new Builder(applicationKeyId, applicationKey);
 
-    }
-
-    @Deprecated
-    public String getAccountId() {
-        return accountId;
     }
 
     public String getApplicationKeyId() {
