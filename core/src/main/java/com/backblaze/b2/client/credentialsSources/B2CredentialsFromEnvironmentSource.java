@@ -11,22 +11,16 @@ import com.backblaze.b2.util.B2Preconditions;
  *   B2_APPLICATION_KEY_ID
  *   B2_APPLICATION_KEY
  *
- * If either is missing, getCredentials() will throw.
+ * If either is missing or empty, getCredentials() will throw.
  */
 public class B2CredentialsFromEnvironmentSource implements B2CredentialsSource {
     private final B2Credentials credentials;
+    private String errorMessageOrNull;
 
     private B2CredentialsFromEnvironmentSource() {
         B2Credentials tmp;
          try {
-             final String applicationKeyId = System.getenv("B2_APPLICATION_KEY_ID");
-             final String accountId = System.getenv("B2_ACCOUNT_ID");
-
-             B2Preconditions.checkArgument(accountId != null && !accountId.isEmpty(),
-                     "B2_ACCOUNT_ID is still being used, please rename it to B2_APPLICATION_KEY_ID");
-             B2Preconditions.checkState(applicationKeyId != null, "B2_APPLICATION_KEY_ID must be set in the environment");
-             B2Preconditions.checkState(!applicationKeyId.isEmpty(), "B2_APPLICATION_KEY_ID must be non-empty.");
-
+             final String applicationKeyId = getApplicationKeyIdOrThrow();
              final String appKey = System.getenv("B2_APPLICATION_KEY");
              B2Preconditions.checkState(appKey != null, "B2_APPLICATION_KEY must be set in the environment");
              B2Preconditions.checkState(!appKey.isEmpty(), "B2_APPLICATION_KEY must be non-empty.");
@@ -34,6 +28,7 @@ public class B2CredentialsFromEnvironmentSource implements B2CredentialsSource {
              tmp = new B2CredentialsImpl(applicationKeyId, appKey);
         } catch (IllegalStateException e) {
              tmp = null;
+             errorMessageOrNull = e.toString();
         }
         credentials = tmp;
     }
@@ -44,8 +39,7 @@ public class B2CredentialsFromEnvironmentSource implements B2CredentialsSource {
      */
     @Override
     public B2Credentials getCredentials() {
-        B2Preconditions.checkState(credentials != null,
-                "B2_APPLICATION_KEY_ID and B2_APPLICATION_KEY must be set to non-empty values in the environment.");
+        B2Preconditions.checkState(credentials != null, errorMessageOrNull);
         return credentials;
     }
 
@@ -63,5 +57,35 @@ public class B2CredentialsFromEnvironmentSource implements B2CredentialsSource {
         } catch (IllegalStateException e) {
             return false;
         }
+    }
+
+    /**
+     * Retrieves the application key ID from the environment or throws.
+     *
+     * Uses B2_APPLICATION_KEY_ID if available.
+     *
+     * Otherwise, for backwards compatibility, checks for B2_ACCOUNT_ID.
+     *
+     * @return the application key ID specified in the environment variable.
+     * @throws IllegalArgumentException if a non-empty value can't be found.
+     */
+    private String getApplicationKeyIdOrThrow() throws IllegalArgumentException{
+        String applicationKeyId = System.getenv("B2_APPLICATION_KEY_ID");
+
+        if (applicationKeyId == null) {
+            // maybe fallback to using the old variable
+            final String accountId = System.getenv("B2_ACCOUNT_ID");
+            if (accountId != null) {
+                B2Preconditions.checkState( accountId.isEmpty(),
+                        "The B2_ACCOUNT_ID environment variable is empty, please use B2_APPLICATION_KEY_ID instead.");
+
+                applicationKeyId = accountId;
+            }
+        }
+
+        B2Preconditions.checkState(applicationKeyId != null, "B2_APPLICATION_KEY_ID must be set in the environment");
+        B2Preconditions.checkState(!applicationKeyId.isEmpty(), "B2_APPLICATION_KEY_ID must be non-empty.");
+
+        return applicationKeyId;
     }
 }
