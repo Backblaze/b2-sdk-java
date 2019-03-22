@@ -209,6 +209,16 @@ HOW TO USE
 FAQ
 ===
 
+  * How do I get the accountId?
+  
+    You can use B2StorageClient.getAccountId() to get the accountId.
+    
+    In previous versions of the SDK you were able to get the accountId from 
+    B2AuthorizeAccountRequest.getAccountId() and B2Credentials.getAccountId().
+    Now that the SDK supports B2 Application Keys, those structures
+    no longer always have access to the accountId. The accountId is 
+    always available in the response to b2_authorize_account.
+  
   * Can I add metadata to the files I upload?  How?
 
     You can add some immutable name-value pairs to each file at the time you upload it.

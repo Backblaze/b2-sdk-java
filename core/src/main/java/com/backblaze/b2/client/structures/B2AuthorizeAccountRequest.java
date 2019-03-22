@@ -8,6 +8,13 @@ import com.backblaze.b2.json.B2Json;
 
 import java.util.Objects;
 
+/**
+ *
+ * This structure holds the information for b2_authorize_account.
+ *
+ * If you used getAccountId() in a previous version of the SDK, please
+ * use B2StorageClient.getAccountId() in this version.
+ */
 public class B2AuthorizeAccountRequest {
     @B2Json.required
     private final String applicationKeyId;
