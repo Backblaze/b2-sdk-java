@@ -52,7 +52,7 @@ public class B2ClientConfigTest extends B2BaseTest {
     @Test
     public void testSimpleBuilder() throws B2Exception {
         final B2ClientConfig config = B2ClientConfig
-                .builder("accountId", "applicationKey", USER_AGENT)
+                .builder("applicationKeyId", "applicationKey", USER_AGENT)
                 .build();
 
         assertEquals(USER_AGENT, config.getUserAgent());
@@ -66,7 +66,7 @@ public class B2ClientConfigTest extends B2BaseTest {
         ArgumentCaptor<B2AuthorizeAccountRequest> requestCaptor = ArgumentCaptor.forClass(B2AuthorizeAccountRequest.class);
         verify(webifier, times(1)).authorizeAccount(requestCaptor.capture());
         final B2AuthorizeAccountRequest request = requestCaptor.getValue();
-        assertEquals("accountId", request.getAccountId());
+        assertEquals("applicationKeyId", request.getApplicationKeyId());
         assertEquals("applicationKey", request.getApplicationKey());
     }
 

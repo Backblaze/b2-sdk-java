@@ -6,12 +6,15 @@ package com.backblaze.b2.client.credentialsSources;
 
 /**
  * Credentials for accessing B2's APIs.
+ *
+ * If you used getAccountId() in a previous version of the SDK, please
+ * use B2StorageClient.getAccountId() in this version.
  */
 public interface B2Credentials {
     /**
-     * @return the accountId to use for b2_authorize_account.
+     * @return the applicationKeyId to use for b2_authorize_account.
      */
-    String getAccountId();
+    String getApplicationKeyId();
 
     /**
      * @return the applicationKey to use for b2_authorize_account.

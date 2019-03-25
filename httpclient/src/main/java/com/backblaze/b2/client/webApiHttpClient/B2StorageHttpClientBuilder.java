@@ -39,9 +39,9 @@ public class B2StorageHttpClientBuilder {
     // is used by *everyone*, so i want to make it so that most users don't
     // need to worry about making an authorizer.
     @SuppressWarnings("WeakerAccess")
-    public static B2StorageHttpClientBuilder builder(String accountId, String applicationKey, String userAgent) {
+    public static B2StorageHttpClientBuilder builder(String applicationKeyId, String applicationKey, String userAgent) {
         final B2AccountAuthorizer accountAuthorizer = B2AccountAuthorizerSimpleImpl
-                .builder(accountId, applicationKey)
+                .builder(applicationKeyId, applicationKey)
                 .build();
         final B2ClientConfig config = B2ClientConfig
                 .builder(accountAuthorizer, userAgent)
@@ -56,7 +56,7 @@ public class B2StorageHttpClientBuilder {
      */
     public static B2StorageHttpClientBuilder builder(String userAgent) throws B2Exception {
         final B2Credentials credentials = B2CredentialsFromEnvironmentSource.build().getCredentials();
-        return builder(credentials.getAccountId(), credentials.getApplicationKey(), userAgent);
+        return builder(credentials.getApplicationKeyId(), credentials.getApplicationKey(), userAgent);
     }
 
     private B2StorageHttpClientBuilder(B2ClientConfig config) {
