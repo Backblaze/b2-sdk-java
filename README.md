@@ -324,6 +324,8 @@ STRUCTURE
 
 This section is mostly for developers who work on the SDK.
 
+**Layering**
+
 To simplify implementation and testing, the B2StorageClient has three main layers and a few helpers.
 
 The top-most layer consists of the B2StorageClientImpl and the various Request and Response classes.  This layer provides the main interface for developers.  The B2StorageClientImpl is responsible for acquiring account authorizations, upload urls and upload authorizations, as needed.  It is also responsible for retrying operations that fail for retryable reasons.  The B2StorageClientImpl uses a B2Retryer to do the retrying.  An implementation of the B2RetryPolicy controls the number of retries that are attempted and the amount of waiting between attempts; the B2DefaultRetryPolicy follows our recommendations and should be suitable for almost all users.  A few operations are complicated enough that they are handled by a separate class; the most prominent example is the B2LargeFileUploader.
@@ -334,6 +336,56 @@ The bottom layer is the B2WebApiClient.  It provides a few simple methods, such 
 
 One of the main helpers is our B2Json class.  It uses annotations on class members
 and constructors to convert between Java classes and JSON.
+
+**Caching**
+
+Each B2StorageClientImpl has a B2AccountAuthorizationCache and a
+B2UploadUrlCache.
+
+Whenever the SDK needs an account authorization, it gets it from the
+B2AccountAuthorizationCache.  If the cache doesn't have one, it will
+use its B2AccountAuthorizer to get one.  When there's an authorization
+error, the B2Retryer clears the cache so a new authorization will be
+fetched the next time it's needed.
+
+Whenever the SDK needs an upload url it gets one from its
+B2UploadUrlCache, which can hold multiple urls (and upload auth
+tokens) per bucket. When there's no upload url for a given bucket, the
+cache requests one from the B2 service. When the SDK uses one of them,
+it is removed from the cache.  If the upload succeeds, the url is put
+back in the cache for later use.  If the upload fails, the url is not
+put back in the cache, so it will not be reused.  The
+B2LoadFileUploader, which encapsulates large file uploads, uses an
+instance of B2UploadPartUrlCache in a similar fashion.
+
+**Retrying**
+
+B2 clients may need to retry operations while using the B2 API.  The
+most common time is when an upload is interrupted and the client needs
+to fetch a new upload URL and try again.  Long-running B2 clients may
+also have their B2 authTokens expire; when that happens, the client
+needs to reauthenticate.  Additionally, network issues between the
+client and the B2 service can cause errors that should be retried.
+Periodically, there are B2 service issues which could result in
+retryable errors.  The SDK handles most of this retrying transparently
+to the client.
+
+For each high-level call, the B2StorageClient uses an instance of
+B2Retryer; each B2Retryer is given a B2RetryPolicy object.  When the
+retrier catches an error, it clears cached authTokens (and upload urls
+are not put back in the upload url cache).  The retryer uses
+information in the error objects to categorize errors as unretryable,
+retryable immediately, or retryable after a delay.  The B2Retryer
+then notifies the B2RetryPolicy what has happened and, for retryable
+errors and takes the policy's guidance about whether to retry and, for
+retries that need a delay, how long to sleep.
+
+SDK users can customize their retry policy by providing a
+B2RetryPolicy factory.  By default, a factory that returns instances
+of B2DefaultRetryPolicy is used. The B2DefaultRetryPolicy implements
+the policy described in the B2 documentation using the retry specified
+in the B2 response or an exponential backoff if none is provided.
+
 
 TESTING
 =======
