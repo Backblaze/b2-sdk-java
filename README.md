@@ -328,7 +328,7 @@ This section is mostly for developers who work on the SDK.
 
 To simplify implementation and testing, the B2StorageClient has three main layers and a few helpers.
 
-The top-most layer consists of the B2StorageClientImpl and the various Request and Response classes.  This layer provides the main interface for developers.  The B2StorageClientImpl is responsible for acquiring account authorizations, upload urls and upload authorizations, as needed.  It is also responsible for retrying operations that fail for retryable reasons.  The B2StorageClientImpl uses a B2Retryer to do the retrying.  An implementation of the B2RetryPolicy controls the number of retries that are attempted and the amount of waiting between attempts; the B2DefaultRetryPolicy follows our recommendations and should be suitable for almost all users.  A few operations are complicated enough that they are handled by a separate class; the most prominent example is the B2LargeFileUploader.
+The top-most layer consists of the [B2StorageClientImpl][] and the various Request and Response classes.  This layer provides the main interface for developers.  The B2StorageClientImpl is responsible for acquiring account authorizations, upload urls and upload authorizations, as needed.  It is also responsible for retrying operations that fail for retryable reasons.  The B2StorageClientImpl uses a [B2Retryer][] to do the retrying.  An implementation of the B2RetryPolicy controls the number of retries that are attempted and the amount of waiting between attempts; the B2DefaultRetryPolicy follows our recommendations and should be suitable for almost all users.  A few operations are complicated enough that they are handled by a separate class; the most prominent example is the B2LargeFileUploader.
 
 The middle layer, consists of the B2StorageClientWebifier.  The webifier's job is to translate logical B2 API calls (such as "list file names", or "upload a file") into the appropriate HTTP requests and to interpret the responses.  The webifier isolates the B2StorageClientImpl from having to do this mapping.  We stub the webifier layer to test B2StorageClientImpl.
 
@@ -339,8 +339,8 @@ and constructors to convert between Java classes and JSON.
 
 **Caching**
 
-Each B2StorageClientImpl has a B2AccountAuthorizationCache and a
-B2UploadUrlCache.
+Each B2StorageClientImpl has a [B2AccountAuthorizationCache][] and a
+[B2UploadUrlCache][].
 
 Whenever the SDK needs an account authorization, it gets it from the
 B2AccountAuthorizationCache.  If the cache doesn't have one, it will
@@ -355,8 +355,8 @@ cache requests one from the B2 service. When the SDK uses one of them,
 it is removed from the cache.  If the upload succeeds, the url is put
 back in the cache for later use.  If the upload fails, the url is not
 put back in the cache, so it will not be reused.  The
-B2LoadFileUploader, which encapsulates large file uploads, uses an
-instance of B2UploadPartUrlCache in a similar fashion.
+[B2LoadFileUploader][], which encapsulates large file uploads, uses an
+instance of [B2UploadPartUrlCache][] in a similar fashion.
 
 **Retrying**
 
@@ -371,7 +371,7 @@ retryable errors.  The SDK handles most of this retrying transparently
 to the client.
 
 For each high-level call, the B2StorageClient uses an instance of
-B2Retryer; each B2Retryer is given a B2RetryPolicy object.  When the
+[B2Retryer][]; each B2Retryer is given a [B2RetryPolicy][] object.  When the
 retrier catches an error, it clears cached authTokens (and upload urls
 are not put back in the upload url cache).  The retryer uses
 information in the error objects to categorize errors as unretryable,
@@ -382,7 +382,7 @@ retries that need a delay, how long to sleep.
 
 SDK users can customize their retry policy by providing a
 B2RetryPolicy factory.  By default, a factory that returns instances
-of B2DefaultRetryPolicy is used. The B2DefaultRetryPolicy implements
+of [B2DefaultRetryPolicy][] is used. The B2DefaultRetryPolicy implements
 the policy described in the B2 documentation using the retry specified
 in the B2 response or an exponential backoff if none is provided.
 
@@ -506,6 +506,14 @@ In addition to the team at Backblaze, the following people have contributed to t
 [Application Keys]: https://www.backblaze.com/b2/docs/application_keys.html
 [Calling the API]: https://www.backblaze.com/b2/docs/calling.html
 [Apache HttpClient]: https://hc.apache.org/httpcomponents-client-ga/
+[B2StorageClientImpl]: https://github.com/Backblaze/b2-sdk-java/blob/master/core/src/main/java/com/backblaze/b2/client/B2StorageClientImpl.java
+[B2AccountAuthorizationCache]: https://github.com/Backblaze/b2-sdk-java/blob/master/core/src/main/java/com/backblaze/b2/client/B2AccountAuthorizationCache.java
+[B2Retryer]: https://github.com/Backblaze/b2-sdk-java/blob/master/core/src/main/java/com/backblaze/b2/client/B2Retryer.java
+[B2RetryPolicy]: https://github.com/Backblaze/b2-sdk-java/blob/master/core/src/main/java/com/backblaze/b2/client/B2RetryPolicy.java
+[B2LoadFileUploader]: https://github.com/Backblaze/b2-sdk-java/blob/master/core/src/main/java/com/backblaze/b2/client/B2LargeFileUploader.java
+[B2UploadUrlCache]: https://github.com/Backblaze/b2-sdk-java/blob/master/core/src/main/java/com/backblaze/b2/client/B2UploadUrlCache.java
+[B2UploadPartUrlCache]: https://github.com/Backblaze/b2-sdk-java/blob/master/core/src/main/java/com/backblaze/b2/client/B2UploadPartUrlCache.java
+[B2DefaultRetryPolicy]: https://github.com/Backblaze/b2-sdk-java/blob/master/core/src/main/java/com/backblaze/b2/client/B2DefaultRetryPolicy.java
 [B2 Files]: https://www.backblaze.com/b2/docs/files.html
 [javadocs]: https://backblaze.github.io/b2-sdk-java/
 [B2UploadListener]: https://backblaze.github.io/b2-sdk-java/com/backblaze/b2/client/structures/B2UploadListener.html
