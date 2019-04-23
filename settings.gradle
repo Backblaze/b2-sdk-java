@@ -3,4 +3,5 @@
 
 include 'core'
 include 'httpclient'
+include 'okhttp'
 include 'samples'
