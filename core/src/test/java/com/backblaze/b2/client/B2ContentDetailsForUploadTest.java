@@ -124,7 +124,7 @@ public class B2ContentDetailsForUploadTest extends B2BaseTest {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         B2IoUtils.copy(inputStream, outputStream);
 
-        final String actualContents = outputStream.toString();
+        final String actualContents = outputStream.toString(B2StringUtil.UTF8);
         assertEquals(expectedContents, actualContents);
     }
 }

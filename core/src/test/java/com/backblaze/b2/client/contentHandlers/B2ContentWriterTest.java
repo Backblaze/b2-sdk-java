@@ -11,6 +11,7 @@ import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Sha1;
+import com.backblaze.b2.util.B2StringUtil;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -211,7 +212,7 @@ public class B2ContentWriterTest extends B2BaseTest {
 
     @Test
     public void testSha1CheckFailsWhileRereadingFromDestination() throws B2Exception, IOException {
-        writer.addToDestination("ab".getBytes()); // this will mess up the checksum we get later!
+        writer.addToDestination(B2StringUtil.getUtf8Bytes("ab")); // this will mess up the checksum we get later!
 
         thrown.expect(B2Exception.class);
         thrown.expectMessage("sha1 mismatch from destination.  expected " + rightSha1 + ", but got 52386c157cc658dc5794f01e40bf55c752f1ff79");
@@ -220,7 +221,7 @@ public class B2ContentWriterTest extends B2BaseTest {
 
     @Test
     public void testRereadingFromDestinationIsntPerformedWhenToldNotTo() throws B2Exception, IOException {
-        writer.addToDestination("ab".getBytes()); // this will mess up the checksum from the destination
+        writer.addToDestination(B2StringUtil.getUtf8Bytes("ab")); // this will mess up the checksum from the destination
 
         // this writer doesn't double check its work, so it won't notice the mismatch in the destination.
         final Writer lackadaisicalWriter = new Writer(false);
