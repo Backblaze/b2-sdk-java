@@ -2,12 +2,13 @@
  * Copyright 2017, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
-package com.backblaze.b2.client.webApiHttpClient;
+package com.backblaze.b2.client.okHttpClient;
 
 import com.backblaze.b2.client.exceptions.B2Exception;
-import org.apache.http.impl.client.CloseableHttpClient;
 
-public interface HttpClientFactory extends AutoCloseable {
+import okhttp3.OkHttpClient;
+
+public interface OkHttpClientFactory {
 
     /**
      * This returns a CloseableHttpClient (instead of an HttpClient) because
@@ -22,11 +23,6 @@ public interface HttpClientFactory extends AutoCloseable {
      *         this will be called often.
      * @throws B2Exception if there's any trouble creating the client.
      */
-    CloseableHttpClient create() throws B2Exception;
+    OkHttpClient create() throws B2Exception;
 
-    /**
-     * Called to release resources, such as an HttpClientConnectionManager.
-     */
-    @Override
-    void close();
 }
