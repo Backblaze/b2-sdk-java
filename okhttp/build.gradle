@@ -10,7 +10,7 @@ project.ext {
 apply from: '../common.gradle'
 
 dependencies {
-    implementation 'com.backblaze.b2:b2-sdk-core:2.0.0'
+    compile project(':core')
     implementation "com.squareup.okhttp3:okhttp:3.12.1"
     implementation "com.squareup.okhttp3:okhttp-urlconnection:3.12.1"
     implementation 'org.jetbrains:annotations:15.0'
