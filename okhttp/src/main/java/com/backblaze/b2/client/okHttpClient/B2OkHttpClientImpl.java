@@ -7,17 +7,14 @@ package com.backblaze.b2.client.okHttpClient;
 import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.contentSources.B2HeadersImpl;
-import com.backblaze.b2.client.exceptions.B2ConnectFailedException;
-import com.backblaze.b2.client.exceptions.B2Exception;
-import com.backblaze.b2.client.exceptions.B2LocalException;
-import com.backblaze.b2.client.exceptions.B2NetworkException;
-import com.backblaze.b2.client.exceptions.B2NetworkTimeoutException;
+import com.backblaze.b2.client.exceptions.*;
 import com.backblaze.b2.client.structures.B2ErrorStructure;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.json.B2JsonOptions;
-
+import okhttp3.*;
+import okio.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,35 +29,16 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Headers;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okio.Buffer;
-import okio.BufferedSource;
-import okio.ForwardingSource;
-import okio.Okio;
-import okio.Source;
-
 public class B2OkHttpClientImpl implements B2WebApiClient {
-    private static final int DEFAULT_CONNECTION_REQUEST_TIMEOUT_SECONDS = 5;
     private static final int DEFAULT_CONNECT_TIMEOUT_SECONDS = 5;
     private static final int DEFAULT_SOCKET_TIMEOUT_SECONDS = 300;
-
-    private static final int DEFAULT_MAX_TOTAL_CONNECTIONS_IN_POOL = 100;
-    private static final int DEFAULT_MAX_CONNECTIONS_PER_ROUTE = 100;
 
     private final static String UTF8 = "UTF-8";
 
     private final B2Json bzJson = B2Json.get();
-    private OkHttpClient okHttpClient = null;
-    private static B2OkHttpClientImpl instance = null;
+    private final OkHttpClient okHttpClient;
     private ProgressListener progressListener = null;
 
     public void setProgressListener(ProgressListener progressListener){
@@ -68,36 +46,36 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
     }
 
     public B2OkHttpClientImpl() {
-        if( okHttpClient == null) {
-            OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                    .addNetworkInterceptor(chain -> {
-                        Response originalResponse = chain.proceed(chain.request());
-                        return maybeDecorateResponse(originalResponse);
-                    })
-                    .connectTimeout(DEFAULT_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                    .writeTimeout(DEFAULT_SOCKET_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                    .callTimeout(DEFAULT_SOCKET_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                    .readTimeout(DEFAULT_SOCKET_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            okHttpClient = builder.build();
-        }
+        OkHttpClient.Builder builder = new OkHttpClient.Builder()
+                .addNetworkInterceptor(chain -> {
+                    Response originalResponse = chain.proceed(chain.request());
+                    return maybeDecorateResponse(originalResponse);
+                })
+                .connectTimeout(DEFAULT_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .writeTimeout(DEFAULT_SOCKET_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .callTimeout(DEFAULT_SOCKET_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .readTimeout(DEFAULT_SOCKET_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        okHttpClient = builder.build();
     }
 
-    private Response maybeDecorateResponse( Response originalResponse ){
-        if( progressListener == null){
-            return originalResponse;
-        } else {
-            Request request = originalResponse.request();
-            if (request.method().equalsIgnoreCase("GET")
-                    && request.url().toString().contains("b2_download_file")) {
-                String b2FileID = request.url().queryParameter("fileId");
-                return originalResponse.newBuilder()
-                        .body(new ProgressResponseBody(originalResponse.body(), progressListener, b2FileID))
-                        .build();
-            } else {
-                return originalResponse;
-            }
-        }
+    /**
+     * Client apps receive download progress notifications through this interface
+     */
+
+    public interface ProgressListener {
+        /**
+         * update client download progress
+         * @param b2FileID download file
+         * @param bytesRead bytes read so far
+         * @param contentLength total size
+         * @param done if read exhausted
+         */
+        void update(String b2FileID, long bytesRead, long contentLength, boolean done);
     }
+
+    /**
+     * Decorated response body that reports read progress
+     */
 
     private static class ProgressResponseBody extends ResponseBody {
 
@@ -142,8 +120,27 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
         }
     }
 
-    public interface ProgressListener {
-        void update(String b2FileID, long bytesRead, long contentLength, boolean done);
+    /**
+     * Inspect the original response to see if it is a download. If so, set up progress reporting
+     * @param originalResponse response body
+     * @return decorated response body or original response body
+     */
+
+    private Response maybeDecorateResponse( Response originalResponse ){
+        if( progressListener == null){
+            return originalResponse;
+        } else {
+            Request request = originalResponse.request();
+            if (request.method().equalsIgnoreCase("GET")
+                    && request.url().toString().contains("b2_download_file")) {
+                String b2FileID = request.url().queryParameter("fileId");
+                return originalResponse.newBuilder()
+                        .body(new ProgressResponseBody(originalResponse.body(), progressListener, b2FileID))
+                        .build();
+            } else {
+                return originalResponse;
+            }
+        }
     }
 
     @Override
@@ -169,7 +166,7 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
             String responseJson = postAndReturnString(url, headersOrNull, inputStream, contentLength);
             return B2Json.get().fromJson(responseJson, responseClass, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
         } catch (B2JsonException e) {
-            throw new B2LocalException("parsing_failed", "can't convert responcse from json: " + e.getMessage(), e);
+            throw new B2LocalException("parsing_failed", "can't convert response from json: " + e.getMessage(), e);
         }
     }
 
@@ -417,8 +414,4 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
             throw new RuntimeException("No UTF-8 charset", e);
         }
     }
-
-
-
-    private final static String TAG = B2OkHttpClientImpl.class.getSimpleName();
 }
