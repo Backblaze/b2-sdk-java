@@ -15,8 +15,6 @@ import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.json.B2JsonOptions;
 import okhttp3.*;
 import okio.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -170,7 +168,7 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
         }
     }
 
-    private @Nullable B2Headers makeB2Headers(@Nullable Headers headers){
+    private  B2Headers makeB2Headers( Headers headers){
         if( headers != null ) {
             Map<String, List<String>> headerMap = headers.toMultimap();
             B2HeadersImpl.Builder builder = B2HeadersImpl.builder();
@@ -192,7 +190,7 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
         }
     }
 
-    private @Nullable Headers makeOkHeaders( @Nullable B2Headers b2Headers){
+    private  Headers makeOkHeaders(  B2Headers b2Headers){
         if (b2Headers == null) {
             return null;
         } else {
@@ -316,7 +314,7 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
      * @return the body of the response.
      * @throws B2Exception if there's any trouble
      */
-    private @Nullable String postAndReturnString(@NotNull String url, @Nullable B2Headers headersOrNull, @NotNull InputStream inputStream, long contentLength)
+    private  String postAndReturnString( String url,  B2Headers headersOrNull,  InputStream inputStream, long contentLength)
             throws B2Exception {
         byte[] bytes;
         try {
