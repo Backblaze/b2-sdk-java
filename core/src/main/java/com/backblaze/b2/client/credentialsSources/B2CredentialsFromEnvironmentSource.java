@@ -76,7 +76,7 @@ public class B2CredentialsFromEnvironmentSource implements B2CredentialsSource {
             // maybe fallback to using the old variable
             final String accountId = System.getenv("B2_ACCOUNT_ID");
             if (accountId != null) {
-                B2Preconditions.checkState( !accountId.isEmpty(),
+                B2Preconditions.checkState(!accountId.isEmpty(),
                         "The B2_ACCOUNT_ID environment variable is empty, please use B2_APPLICATION_KEY_ID instead.");
 
                 applicationKeyId = accountId;
