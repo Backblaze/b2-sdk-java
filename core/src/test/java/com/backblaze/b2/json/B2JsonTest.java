@@ -1993,6 +1993,36 @@ public class B2JsonTest extends B2BaseTest {
         B2Json.toJsonOrThrowRuntime(obj);
     }
 
+    private static class SecureContainer {
+        @B2Json.required
+        @B2Json.sensitive
+        private final String sensitiveString;
+
+        @B2Json.required
+        private final String insensitiveString;
+
+        @B2Json.constructor(params = "sensitiveString,insensitiveString")
+        public SecureContainer(String secureString, String insecureString) {
+            this.sensitiveString = secureString;
+            this.insensitiveString = insecureString;
+        }
+    }
+
+    @Test
+    public void testSensitiveRedactedWhenOptionSet() {
+        final B2JsonOptions options = B2JsonOptions.builder().setRedactSensitive(true).build();
+        final SecureContainer secureContainer = new SecureContainer("foo", "bar");
+        assertEquals("{\n  \"insensitiveString\": \"bar\",\n  \"sensitiveString\": \"***REDACTED***\"\n}",
+                B2Json.toJsonOrThrowRuntime(secureContainer, options));
+    }
+
+    @Test
+    public void testSensitiveWrittenWhenOptionNotSet() {
+        final B2JsonOptions options = B2JsonOptions.builder().setRedactSensitive(false).build();
+        final SecureContainer secureContainer = new SecureContainer("foo", "bar");
+        assertEquals("{\n  \"insensitiveString\": \"bar\",\n  \"sensitiveString\": \"foo\"\n}",
+                B2Json.toJsonOrThrowRuntime(secureContainer, options));
+    }
 
     /**
      * Because of serialization, the object returned from B2Json will never be the same object as an

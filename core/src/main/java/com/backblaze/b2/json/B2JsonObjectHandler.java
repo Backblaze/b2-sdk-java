@@ -121,7 +121,8 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 final B2JsonTypeHandler<?> handler = getFieldHandler(field.getGenericType(), handlerMap);
                 final Object defaultValueOrNull = getDefaultValueOrNull(field, handler);
                 final VersionRange versionRange = getVersionRange(field);
-                final FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueOrNull, versionRange);
+                final boolean isSensitive = field.getAnnotation(B2Json.sensitive.class) != null;
+                final FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueOrNull, versionRange, isSensitive);
                 fieldMap.put(field.getName(), fieldInfo);
             }
         }
@@ -371,12 +372,16 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                     }
                     if (fieldInfo.isInVersion(version)) {
                         out.writeObjectFieldNameAndColon(fieldInfo.getName());
-                        final Object value = fieldInfo.field.get(obj);
-                        if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
-                            throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                        if (fieldInfo.getIsSensitive() && options.getRedactSensitive()) {
+                            out.writeString("***REDACTED***");
+                        } else {
+                            final Object value = fieldInfo.field.get(obj);
+                            if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
+                                throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                            }
+                            //noinspection unchecked
+                            B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out, options);
                         }
-                        //noinspection unchecked
-                        B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out, options);
                     }
                 }
             }
