@@ -518,6 +518,14 @@ public class B2Json {
     }
 
     /**
+     * Annotation that says this is a sensitive field and should be redacted when outputting
+     * for logging
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface sensitive {}
+
+    /**
      * Constructor annotation saying that this is the constructor B2Json
      * should use.  This constructor must take ALL of the serializable
      * fields as parameters.

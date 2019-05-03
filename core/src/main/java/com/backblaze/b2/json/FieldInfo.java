@@ -25,18 +25,21 @@ public final class FieldInfo implements Comparable<FieldInfo> {
     public final VersionRange versionRange;
     public int constructorArgIndex;
     public long bit;
+    public final boolean isSensitive;
 
     /*package*/ FieldInfo(
             Field field, B2JsonTypeHandler<?> handler,
             FieldRequirement requirement,
             Object defaultValueOrNull,
-            VersionRange versionRange
+            VersionRange versionRange,
+            boolean isSensitive
     ) {
         this.field = field;
         this.handler =  handler;
         this.requirement = requirement;
         this.defaultValueOrNull = defaultValueOrNull;
         this.versionRange = versionRange;
+        this.isSensitive = isSensitive;
 
         this.field.setAccessible(true);
     }
@@ -47,6 +50,10 @@ public final class FieldInfo implements Comparable<FieldInfo> {
 
     public B2JsonTypeHandler getHandler() {
         return handler;
+    }
+
+    public boolean getIsSensitive() {
+        return isSensitive;
     }
 
     public int compareTo(@SuppressWarnings("NullableProblems") FieldInfo o) {
