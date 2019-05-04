@@ -59,7 +59,7 @@ public class B2Utf8UtilTest extends B2BaseTest {
     }
 
     private void checkValidCodePoint(String str) throws IOException {
-        final byte[] fromJava = str.getBytes(StandardCharsets.UTF_8);
+        final byte[] fromJava = B2StringUtil.getUtf8Bytes(str);
         final byte[] ourBytes = convert(str);
 
         if (!Arrays.equals(fromJava, ourBytes)) {
@@ -97,7 +97,7 @@ public class B2Utf8UtilTest extends B2BaseTest {
                 final String codePointStr = stringForCodePoint(codePoint);
                 if (codePoint < 32) {
                     final String expected = '"' + String.format("\\u%04x", codePoint) + '"';
-                    checkByteArrays(expected.getBytes(), convertForJsonString(codePointStr));
+                    checkByteArrays(B2StringUtil.getUtf8Bytes(expected), convertForJsonString(codePointStr));
                 } else if (codePoint == '"') {
                     // in json, it should be "\"", so...
                     final byte[] expected = { '"', '\\', '"', '"'};
@@ -132,7 +132,7 @@ public class B2Utf8UtilTest extends B2BaseTest {
 
     private void checkValidCodePointForJsonString(String str) throws IOException {
         final String quotedStr = '"' + str + '"';
-        final byte[] fromJava = quotedStr.getBytes(StandardCharsets.UTF_8);
+        final byte[] fromJava = B2StringUtil.getUtf8Bytes(quotedStr);
         final byte[] ourBytes = convertForJsonString(str);
 
         checkByteArrays(fromJava, ourBytes);

@@ -225,11 +225,11 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
             return b.toString();
         }
 
-        private String copyToString(InputStream inputStream) {
+        private String copyUtf8ToString(InputStream inputStream) {
             try {
                 final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 B2IoUtils.copy(inputStream, outputStream);
-                return outputStream.toString();
+                return outputStream.toString(B2StringUtil.UTF8);
             } catch (IOException e) {
                 throw new RuntimeException("unexpected exception: " + e, e);
             }
@@ -249,7 +249,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                     "headers:\n" +
                     indent(toString(headersOrNull)) + "\n" +
                     "inputStream:\n" +
-                    indent(copyToString(inputStream)) + "\n" +
+                    indent(copyUtf8ToString(inputStream)) + "\n" +
                     "contentLength:\n" +
                     indent("") + contentLength + "\n" +
                     "responseClass:\n" +

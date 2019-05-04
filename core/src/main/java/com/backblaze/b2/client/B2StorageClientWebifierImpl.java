@@ -62,6 +62,7 @@ import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2InputStreamWithByteProgressListener;
 import com.backblaze.b2.util.B2Preconditions;
+import com.backblaze.b2.util.B2StringUtil;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -150,7 +151,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
     private String makeAuthorizationValue(B2AuthorizeAccountRequest request) {
         final String value = request.getApplicationKeyId() + ":" + request.getApplicationKey();
-        return "Basic " + base64Encoder.encodeToString(value.getBytes());
+        return "Basic " + base64Encoder.encodeToString(B2StringUtil.getUtf8Bytes(value));
     }
 
     @Override

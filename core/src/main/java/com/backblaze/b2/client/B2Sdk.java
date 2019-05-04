@@ -5,6 +5,7 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.util.B2Preconditions;
+import com.backblaze.b2.util.B2StringUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,7 +18,7 @@ public class B2Sdk {
 
     private static String readVersion() {
         try (final InputStream in = B2Sdk.class.getClassLoader().getResourceAsStream("b2-sdk-core/version.txt");
-             final BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+             final BufferedReader reader = new BufferedReader(new InputStreamReader(in, B2StringUtil.UTF8))) {
             final String version = reader.readLine().trim();
             B2Preconditions.checkState(!version.isEmpty());
             return version;

@@ -101,7 +101,7 @@ public class B2Sha1AppenderInputStreamTest extends B2BaseTest {
         assertEquals(-1, withSha1.read());
 
         // does the destination contain the expected contents?
-        final String actual = new String(dest);
+        final String actual = new String(dest, B2StringUtil.UTF8);
         final String expected = CONTENTS + SHA1;
         assertEquals(expected, actual);
     }
