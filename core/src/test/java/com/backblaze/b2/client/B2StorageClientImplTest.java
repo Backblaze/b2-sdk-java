@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2019, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -88,6 +88,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -834,6 +835,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
 
         verify(contentSource, times(1)).getContentLength();
         verify(contentSource, times(2)).getSha1OrNull(); // once above while making the startLargeRequest for the mock & once for real
+        verify(contentSource, times(2)).createContentSourceWithRangeOrNull(anyLong(), anyLong()); // once above while making the startLargeRequest for the mock & once for real
         verifyNoMoreInteractions(contentSource); // the webifier is a mock, so it doesn't do normal things
 
 
@@ -918,6 +920,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
 
         verify(contentSource, times(1)).getContentLength();
         verify(contentSource, times(1)).getSha1OrNull();
+        verify(contentSource, times(1)).createContentSourceWithRangeOrNull(anyLong(), anyLong());
         verifyNoMoreInteractions(contentSource); // the webifier is a mock, so it doesn't do normal things
 
         // we should be using the existing largeFile, not starting a new one.
