@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2019, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -275,8 +275,16 @@ class B2LargeFileUploader {
 
                         request.getListener().progress(B2UploadProgressUtil.forPart(partSpec, partCount, 0, B2UploadState.STARTING));
 
-
-                        B2ContentSource source = new B2PartOfContentSource(request.getContentSource(), partSpec.start, partSpec.length);
+                        // we ask the content source for a new stream for the given part.
+                        // we start by asking for a stream for a particular range.
+                        final B2ContentSource overallSource = request.getContentSource();
+                        B2ContentSource source = overallSource.createContentSourceWithRangeOrNull(partSpec.start, partSpec.length);
+                        if (source == null) {
+                            // the content source doesn't support making a stream for a range, so we fallback to the old api.
+                            // this is less efficient because we end up reading and discarding the start of the each stream
+                            // up until the range we want.
+                            source = new B2PartOfContentSource(overallSource, partSpec.start, partSpec.length);
+                        }
                         source = new B2ContentSourceWithByteProgressListener(source, progressListener);
 
                         final B2UploadPartRequest partRequest = B2UploadPartRequest

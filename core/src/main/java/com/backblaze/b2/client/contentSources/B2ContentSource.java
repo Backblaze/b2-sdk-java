@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2019, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -58,6 +58,25 @@ public interface B2ContentSource {
      */
     InputStream createInputStream() throws IOException;
 
-    // XXX: is there a *range* version of createInputStream() to help with
-    //      large files?
+    /**
+     * If possible, this returns a NEW input stream for just the specified range of the
+     * content.  If it's not possible (or just not implemented), this returns null.
+     *
+     * The large file uploading mechanism uses this call to get a stream for each
+     * part that will be uploaded separately.  If this returns null, the large file
+     * uploader will use createInputStream() and read and discard the initial
+     * part of the stream to get to the part it needs.
+     *
+     * This method is optional.  However, if your content source will be used
+     * for large file uploads, please implement it to make your uploads more
+     * efficient.
+     *
+     * NOTE: this may be called multiple times as uploads are retried, etc.
+     *       The overall content is expected to be identical each time this is called.
+     * @return a new inputStream containing the specified range of the overall contents.
+     * @throws IOException if there's trouble
+     */
+    default B2ContentSource createContentSourceWithRangeOrNull(long start, long length) throws IOException {
+        return null;
+    }
 }
