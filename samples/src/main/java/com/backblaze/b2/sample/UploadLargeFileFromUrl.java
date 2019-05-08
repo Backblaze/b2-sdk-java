@@ -43,7 +43,7 @@ public class UploadLargeFileFromUrl {
         if (args.length != 6 && args.length != 7) {
             System.err.println("usage:");
             System.err.println("  java -classpath blahBlah " + UploadLargeFileFromUrl.class.getCanonicalName() +
-                    " applicationKeyId applicationKey bucketName fileNameInB2 url contentLen [sha1OrNull]");
+                    " applicationKeyId applicationKey bucketName fileNameInB2 url contentLen [sha1]");
             System.exit(1);
         }
         final String appKeyId = args[0];
