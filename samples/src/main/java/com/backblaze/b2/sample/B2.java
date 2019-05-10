@@ -19,7 +19,9 @@ import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
-import com.backblaze.b2.client.webApiHttpClient.B2StorageClientFactory;
+import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
+import com.backblaze.b2.client.webApiHttpClient.HttpClientFactory;
+import com.backblaze.b2.client.webApiHttpClient.HttpClientFactoryImpl;
 import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.util.B2ExecutorUtils;
@@ -98,7 +100,13 @@ public class B2 implements AutoCloseable {
 
     private B2() throws B2Exception {
         out = System.out;
-        client = B2StorageClientFactory.make2(USER_AGENT);
+        final HttpClientFactory httpClientFactory = HttpClientFactoryImpl
+                .builder()
+                .build();
+        client = B2StorageHttpClientBuilder
+                .builder(USER_AGENT)
+                .setHttpClientFactory(httpClientFactory)
+                .build();
     }
 
     private ExecutorService getExecutor() {

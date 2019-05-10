@@ -26,11 +26,6 @@ public class B2StorageOkHttpClientBuilder {
 
     private final B2ClientConfig config;
     private Supplier<B2RetryPolicy> retryPolicySupplier;
-    private B2OkHttpClientImpl.ProgressListener progressListener;
-
-    public static B2StorageClient make(String userAgent){
-        return B2StorageOkHttpClientBuilder.builder(userAgent).build();
-    }
 
     @SuppressWarnings("WeakerAccess")
     public static B2StorageOkHttpClientBuilder builder(String userAgent)  {
@@ -56,11 +51,6 @@ public class B2StorageOkHttpClientBuilder {
 
     private B2StorageOkHttpClientBuilder(B2ClientConfig config) {
         this.config = config;
-    }
-
-    public B2StorageOkHttpClientBuilder setProgressListener(B2OkHttpClientImpl.ProgressListener progressListener){
-        this.progressListener = progressListener;
-        return this;
     }
 
     public B2StorageClient build() {

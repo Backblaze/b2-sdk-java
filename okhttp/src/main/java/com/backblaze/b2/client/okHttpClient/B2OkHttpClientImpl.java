@@ -14,7 +14,6 @@ import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.json.B2JsonOptions;
 import okhttp3.*;
-import okio.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -46,69 +45,6 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
                 .readTimeout(DEFAULT_SOCKET_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         okHttpClient = builder.build();
     }
-
-    /**
-     * Client apps receive download progress notifications through this interface
-     */
-
-    public interface ProgressListener {
-        /**
-         * update client download progress
-         * @param b2FileID download file
-         * @param bytesRead bytes read so far
-         * @param contentLength total size
-         * @param done if read exhausted
-         */
-        void update(String b2FileID, long bytesRead, long contentLength, boolean done);
-    }
-
-    /**
-     * Decorated response body that reports read progress
-     */
-
-    private static class ProgressResponseBody extends ResponseBody {
-
-        private final ResponseBody responseBody;
-        private final ProgressListener progressListener;
-        private BufferedSource bufferedSource;
-        private final String b2FileID;
-
-        ProgressResponseBody(ResponseBody responseBody, ProgressListener progressListener, String b2FileID) {
-            this.responseBody = responseBody;
-            this.progressListener = progressListener;
-            this.b2FileID = b2FileID;
-        }
-
-        @Override public MediaType contentType() {
-            return responseBody.contentType();
-        }
-
-        @Override public long contentLength() {
-            return responseBody.contentLength();
-        }
-
-        @Override public BufferedSource source() {
-            if (bufferedSource == null) {
-                bufferedSource = Okio.buffer(source(responseBody.source()));
-            }
-            return bufferedSource;
-        }
-
-        private Source source(Source source) {
-            return new ForwardingSource(source) {
-                long totalBytesRead = 0L;
-
-                @Override public long read(Buffer sink, long byteCount) throws IOException {
-                    long bytesRead = super.read(sink, byteCount);
-                    // read() returns the number of bytes read, or -1 if this source is exhausted.
-                    totalBytesRead += bytesRead != -1 ? bytesRead : 0;
-                    progressListener.update(b2FileID, totalBytesRead, responseBody.contentLength(), bytesRead == -1);
-                    return bytesRead;
-                }
-            };
-        }
-    }
-
 
     @Override
     public <ResponseType> ResponseType postJsonReturnJson(String url,

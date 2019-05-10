@@ -31,8 +31,7 @@ import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
-
-import com.backblaze.b2.client.webApiHttpClient.B2StorageClientFactory;
+import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2ExecutorUtils;
 import com.backblaze.b2.util.B2Preconditions;
@@ -62,7 +61,7 @@ public class B2Sample {
 
         final ExecutorService executor = Executors.newFixedThreadPool(10, createThreadFactory("B2Sample-executor-%02d"));
 
-        try (final B2StorageClient client = B2StorageClientFactory.make(USER_AGENT)) {
+        try (final B2StorageClient client = B2StorageHttpClientBuilder.builder(USER_AGENT).build()) {
             mainGuts(writer, client, executor);
         } finally {
             B2ExecutorUtils.shutdownAndAwaitTermination(executor, 10, 10);
