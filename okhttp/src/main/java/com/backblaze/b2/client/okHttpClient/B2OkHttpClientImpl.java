@@ -221,16 +221,21 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
             if( contentLength <= Integer.MAX_VALUE) {
                 bytes = readFully(inputStream, (int) contentLength);
             } else {
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 long bytesToRead = contentLength;
-                while(bytesToRead > 0){
-                    int partLen = bytesToRead > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)bytesToRead;
-                    byte[] part = readFully(inputStream, partLen);
-                    outputStream.write(part);
-                    bytesToRead -= partLen;
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                try {
+                    while (bytesToRead > 0) {
+                        int partLen = bytesToRead > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) bytesToRead;
+                        byte[] part = readFully(inputStream, partLen);
+                        outputStream.write(part);
+                        bytesToRead -= partLen;
+                    }
+                    bytes = outputStream.toByteArray();
+                } catch (IOException e){
+                    throw translateToB2Exception(e, url);
+                } finally {
+                    outputStream.close();
                 }
-                bytes = outputStream.toByteArray();
-                outputStream.close();
             }
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
