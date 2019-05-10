@@ -2,7 +2,7 @@
  * Copyright 2017, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
-package com.backblaze.b2.sample;
+package com.backblaze.b2.client.okHttpClient;
 
 import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.contentHandlers.B2ContentFileWriter;
@@ -10,26 +10,13 @@ import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2FileContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
-import com.backblaze.b2.client.structures.B2Bucket;
-import com.backblaze.b2.client.structures.B2CorsRule;
-import com.backblaze.b2.client.structures.B2FileVersion;
-import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
-import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
-import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
-import com.backblaze.b2.client.structures.B2Part;
-import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
-import com.backblaze.b2.client.structures.B2UploadFileRequest;
-import com.backblaze.b2.client.webApiHttpClient.B2StorageClientFactory;
+import com.backblaze.b2.client.structures.*;
 import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.util.B2ExecutorUtils;
 import com.backblaze.b2.util.B2IoUtils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +24,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class B2 implements AutoCloseable {
+public class B2Okhttp implements AutoCloseable {
     private static final String APP_NAME = "b2_4j";
     private static final String VERSION = "0.0.1";
     private static final String USER_AGENT = APP_NAME + "/" + VERSION;
@@ -96,9 +83,9 @@ public class B2 implements AutoCloseable {
     // it's null until the first time getExecutor() is called.
     private ExecutorService executor;
 
-    private B2() throws B2Exception {
+    private B2Okhttp() throws B2Exception {
         out = System.out;
-        client = B2StorageClientFactory.make2(USER_AGENT);
+        client = B2StorageOkHttpClientBuilder.builder(USER_AGENT).build();
     }
 
     private ExecutorService getExecutor() {
@@ -134,7 +121,7 @@ public class B2 implements AutoCloseable {
 
         final String command = args[0];
         final String[] remainingArgs = Arrays.copyOfRange(args, 1, args.length);
-        try (B2 b2 = new B2()) {
+        try (B2Okhttp b2 = new B2Okhttp()) {
             if ("cancel_all_unfinished_large_files".equals(command)) {
                 b2.cancel_all_unfinished_large_files(remainingArgs);
             } else if ("cancel_large_file".equals(command)) {

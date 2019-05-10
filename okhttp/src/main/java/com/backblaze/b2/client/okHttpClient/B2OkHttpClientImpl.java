@@ -37,18 +37,9 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
 
     private final B2Json bzJson = B2Json.get();
     private final OkHttpClient okHttpClient;
-    private ProgressListener progressListener = null;
-
-    public void setProgressListener(ProgressListener progressListener){
-        this.progressListener = progressListener;
-    }
 
     public B2OkHttpClientImpl() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                .addNetworkInterceptor(chain -> {
-                    Response originalResponse = chain.proceed(chain.request());
-                    return maybeDecorateResponse(originalResponse);
-                })
                 .connectTimeout(DEFAULT_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .writeTimeout(DEFAULT_SOCKET_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .callTimeout(DEFAULT_SOCKET_TIMEOUT_SECONDS, TimeUnit.SECONDS)
@@ -118,28 +109,6 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
         }
     }
 
-    /**
-     * Inspect the original response to see if it is a download. If so, set up progress reporting
-     * @param originalResponse response body
-     * @return decorated response body or original response body
-     */
-
-    private Response maybeDecorateResponse( Response originalResponse ){
-        if( progressListener == null){
-            return originalResponse;
-        } else {
-            Request request = originalResponse.request();
-            if (request.method().equalsIgnoreCase("GET")
-                    && request.url().toString().contains("b2_download_file")) {
-                String b2FileID = request.url().queryParameter("fileId");
-                return originalResponse.newBuilder()
-                        .body(new ProgressResponseBody(originalResponse.body(), progressListener, b2FileID))
-                        .build();
-            } else {
-                return originalResponse;
-            }
-        }
-    }
 
     @Override
     public <ResponseType> ResponseType postJsonReturnJson(String url,
@@ -226,7 +195,7 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
                 }
             }
         } catch (IOException e) {
-            translateToB2Exception(e, url);
+            throw translateToB2Exception(e, url);
         }
     }
 
@@ -255,16 +224,14 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
             } else {
                 if( response.code() == 200){
                     Headers responseHeaders = response.headers();
-                    B2Headers b2headers = makeB2Headers(responseHeaders);
-                    return b2headers;
+                    return makeB2Headers(responseHeaders);
                 } else {
                     throw B2Exception.create(null, response.code(), null, "");
                 }
             }
         } catch (IOException e) {
-            translateToB2Exception(e, url);
+            throw translateToB2Exception(e, url);
         }
-        return null;
     }
 
     @Override
@@ -341,9 +308,8 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
                 }
             }
         } catch (IOException e) {
-            translateToB2Exception(e, url);
+            throw translateToB2Exception(e, url);
         }
-        return null;
     }
 
     private B2Exception translateToB2Exception(IOException e, String url) {

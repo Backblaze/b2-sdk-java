@@ -14,6 +14,8 @@ import com.backblaze.b2.client.B2StorageClient;
 import com.backblaze.b2.client.B2StorageClientImpl;
 import com.backblaze.b2.client.B2StorageClientWebifier;
 import com.backblaze.b2.client.B2StorageClientWebifierImpl;
+import com.backblaze.b2.client.credentialsSources.B2Credentials;
+import com.backblaze.b2.client.credentialsSources.B2CredentialsFromEnvironmentSource;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 
 import java.util.function.Supplier;
@@ -25,6 +27,16 @@ public class B2StorageOkHttpClientBuilder {
     private final B2ClientConfig config;
     private Supplier<B2RetryPolicy> retryPolicySupplier;
     private B2OkHttpClientImpl.ProgressListener progressListener;
+
+    public static B2StorageClient make(String userAgent){
+        return B2StorageOkHttpClientBuilder.builder(userAgent).build();
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public static B2StorageOkHttpClientBuilder builder(String userAgent)  {
+        final B2Credentials credentials = B2CredentialsFromEnvironmentSource.build().getCredentials();
+        return builder(credentials.getApplicationKeyId(), credentials.getApplicationKey(), userAgent );
+    }
 
     @SuppressWarnings("WeakerAccess")
     public static B2StorageOkHttpClientBuilder builder(B2ClientConfig config) {
@@ -52,13 +64,8 @@ public class B2StorageOkHttpClientBuilder {
     }
 
     public B2StorageClient build() {
-        B2OkHttpClientImpl clientImpl = new B2OkHttpClientImpl();
-        if( progressListener != null) {
-            clientImpl.setProgressListener(progressListener);
-        }
-        final B2WebApiClient webApiClient = clientImpl;
         final B2StorageClientWebifier webifier = new B2StorageClientWebifierImpl(
-                webApiClient,
+                new B2OkHttpClientImpl(),
                 config.getUserAgent() + " " + B2Sdk.getName() + "/" + B2Sdk.getVersion(),
                 (config.getMasterUrl() == null) ? DEFAULT_MASTER_URL : config.getMasterUrl(),
                 config.getTestModeOrNull());
