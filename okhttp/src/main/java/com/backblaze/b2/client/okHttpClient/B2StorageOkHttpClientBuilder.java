@@ -28,6 +28,10 @@ public class B2StorageOkHttpClientBuilder {
     private Supplier<B2RetryPolicy> retryPolicySupplier;
     private B2OkHttpClientImpl.ProgressListener progressListener;
 
+    public static B2StorageClient make(String userAgent){
+        return B2StorageOkHttpClientBuilder.builder(userAgent).build();
+    }
+
     @SuppressWarnings("WeakerAccess")
     public static B2StorageOkHttpClientBuilder builder(String userAgent)  {
         final B2Credentials credentials = B2CredentialsFromEnvironmentSource.build().getCredentials();
@@ -60,13 +64,8 @@ public class B2StorageOkHttpClientBuilder {
     }
 
     public B2StorageClient build() {
-        B2OkHttpClientImpl clientImpl = new B2OkHttpClientImpl();
-        if( progressListener != null) {
-            clientImpl.setProgressListener(progressListener);
-        }
-        final B2WebApiClient webApiClient = clientImpl;
         final B2StorageClientWebifier webifier = new B2StorageClientWebifierImpl(
-                webApiClient,
+                new B2OkHttpClientImpl(),
                 config.getUserAgent() + " " + B2Sdk.getName() + "/" + B2Sdk.getVersion(),
                 (config.getMasterUrl() == null) ? DEFAULT_MASTER_URL : config.getMasterUrl(),
                 config.getTestModeOrNull());
