@@ -15,10 +15,7 @@ import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.json.B2JsonOptions;
 import okhttp3.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -221,7 +218,20 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
             throws B2Exception {
         byte[] bytes;
         try {
-            bytes = readFully(inputStream, (int)contentLength);
+            if( contentLength <= Integer.MAX_VALUE) {
+                bytes = readFully(inputStream, (int) contentLength);
+            } else {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                long bytesToRead = contentLength;
+                while(bytesToRead > 0){
+                    int partLen = bytesToRead > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)bytesToRead;
+                    byte[] part = readFully(inputStream, partLen);
+                    outputStream.write(part);
+                    bytesToRead -= partLen;
+                }
+                bytes = outputStream.toByteArray();
+                outputStream.close();
+            }
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
         }
