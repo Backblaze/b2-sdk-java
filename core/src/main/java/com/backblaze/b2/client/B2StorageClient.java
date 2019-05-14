@@ -11,6 +11,7 @@ import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
+import com.backblaze.b2.client.structures.B2CopyFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateKeyRequest;
 import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
@@ -210,6 +211,16 @@ public interface B2StorageClient extends Closeable {
      * @throws B2Exception if there's any trouble.
      */
     B2FileVersion uploadSmallFile(B2UploadFileRequest request) throws B2Exception;
+
+    /**
+     * Makes a copy of a file in the same bucket.
+     * The new file must be smaller than the maximum file size (5 GB).
+     *
+     * @param request describes what file to copy, the range of bytes to copy, and how to handle file metadata.
+     * @return The B2FileVersion of the new file.
+     * @throws B2Exception if there's any trouble.
+     */
+    B2FileVersion copySmallFile(B2CopyFileRequest request) throws B2Exception;
 
     /**
      * Uploads the specified content as separate parts to form a B2 large file.

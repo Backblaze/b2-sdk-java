@@ -15,6 +15,7 @@ import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
+import com.backblaze.b2.client.structures.B2CopyFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
@@ -1255,6 +1256,36 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         thrown.expect(B2Exception.class);
         thrown.expectMessage("failed to get lastModified from source: java.io.IOException: testing!");
         webifier.uploadFile(uploadUrl, request);
+    }
+
+    @Test
+    public void testCopyFile() throws B2Exception {
+        final B2CopyFileRequest request = B2CopyFileRequest
+                .builder(fileId(1), fileName(2))
+                .build();
+        webifier.copyFile(ACCOUNT_AUTH, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_copy_file\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"contentType\": null,\n" +
+                "      \"fileInfo\": null,\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0002\",\n" +
+                "      \"metadataDirective\": null,\n" +
+                "      \"range\": null,\n" +
+                "      \"sourceFileId\": \"4_zBlah_0000001\"\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.copyFile(ACCOUNT_AUTH, request));
     }
 
     @Test
