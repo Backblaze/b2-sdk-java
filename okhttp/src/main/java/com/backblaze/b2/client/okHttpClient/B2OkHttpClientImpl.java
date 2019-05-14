@@ -23,13 +23,18 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import static com.backblaze.b2.util.B2IoUtils.copy;
 
 public class B2OkHttpClientImpl implements B2WebApiClient {
     private static final int DEFAULT_CONNECT_TIMEOUT_SECONDS = 5;
     private static final int DEFAULT_SOCKET_TIMEOUT_SECONDS = 300;
 
     private final static String UTF8 = "UTF-8";
+    private final static String APPLICATION_JSON = "application/json";
+    private final static long HOTSPOT_FUDGE = 5; // hotspot JVM max array index is actually less than max int
 
     private final B2Json bzJson = B2Json.get();
     private final OkHttpClient okHttpClient;
@@ -216,31 +221,22 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
      */
     private  String postAndReturnString( String url,  B2Headers headersOrNull,  InputStream inputStream, long contentLength)
             throws B2Exception {
-        byte[] bytes;
+        RequestBody body;
         try {
-            if( contentLength <= Integer.MAX_VALUE) {
-                bytes = readFully(inputStream, (int) contentLength);
+            if( contentLength <= (Integer.MAX_VALUE-HOTSPOT_FUDGE) ){
+                byte[] bytes = readFully(inputStream, (int) contentLength);
+                body = RequestBody.create(MediaType.get(APPLICATION_JSON), bytes);
             } else {
-                long bytesToRead = contentLength;
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                try {
-                    while (bytesToRead > 0) {
-                        int partLen = bytesToRead > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) bytesToRead;
-                        byte[] part = readFully(inputStream, partLen);
-                        outputStream.write(part);
-                        bytesToRead -= partLen;
-                    }
-                    bytes = outputStream.toByteArray();
-                } catch (IOException e){
-                    throw translateToB2Exception(e, url);
-                } finally {
-                    outputStream.close();
-                }
+                String tempFileName = UUID.randomUUID().toString();
+                File tempFile = File.createTempFile(tempFileName, ".tmp");
+                FileOutputStream outputStream = new FileOutputStream(tempFile);
+                copy( inputStream, outputStream);
+                body = RequestBody.create(MediaType.get(APPLICATION_JSON), tempFile);
+                tempFile.deleteOnExit();
             }
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
         }
-        RequestBody body = RequestBody.create(MediaType.get("application/json"), bytes);
         Request.Builder builder = new Request.Builder()
                 .url(url)
                 .post(body);
