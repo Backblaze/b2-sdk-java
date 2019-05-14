@@ -174,8 +174,7 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
 
     @Override
     public void close() {
-        // todo: Closing response body streams is handled elsewhere by OkHttp. Do we need anything here?
-        // clientFactory.close();
+        // Closing response body streams is handled elsewhere by OkHttp.
     }
 
     private String postJsonAndReturnString(String url,
