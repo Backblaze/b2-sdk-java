@@ -43,11 +43,22 @@ public class B2JsonOptions {
     private final int version;
 
     /**
+     * Whether to redact sensitive fields
+     *
+     * When set, fields marked as @B2Json.sensitive will be redacted from the serialized
+     * JSON and replaced with the string value "***REDACTED***"
+     * The output will be valid Json but the structure/types will not conform to the expected
+     * output. Use for logging situations where round-tripping the JSON is not required
+     */
+    private final boolean redactSensitive;
+
+    /**
      * Initialize a new B2JsonOptions.
      */
-    private B2JsonOptions(ExtraFieldOption extraFieldOption, int version) {
+    private B2JsonOptions(ExtraFieldOption extraFieldOption, int version, boolean redactSensitive) {
         this.extraFieldOption = extraFieldOption;
         this.version = version;
+        this.redactSensitive = redactSensitive;
     }
 
     /**
@@ -65,6 +76,13 @@ public class B2JsonOptions {
     }
 
     /**
+     * Redact sensitive fields from output
+     */
+    public boolean getRedactSensitive() {
+        return redactSensitive;
+    }
+
+    /**
      * Returns a new builder for B2JsonOptions.
      */
     public static Builder builder() {
@@ -78,9 +96,15 @@ public class B2JsonOptions {
 
         private ExtraFieldOption extraFieldOption = ExtraFieldOption.ERROR;
         private int version = 1;
+        private boolean redactSensitive = false;
 
         public Builder setExtraFieldOption(ExtraFieldOption extraFieldOption) {
             this.extraFieldOption = extraFieldOption;
+            return this;
+        }
+
+        public Builder setRedactSensitive(boolean redactSensitive) {
+            this.redactSensitive = redactSensitive;
             return this;
         }
 
@@ -90,7 +114,7 @@ public class B2JsonOptions {
         }
 
         public B2JsonOptions build() {
-            return new B2JsonOptions(extraFieldOption, version);
+            return new B2JsonOptions(extraFieldOption, version, redactSensitive);
         }
     }
 }

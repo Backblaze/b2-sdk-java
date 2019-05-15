@@ -5,6 +5,7 @@
 package com.backblaze.b2.client.contentSources;
 
 import com.backblaze.b2.util.B2BaseTest;
+import com.backblaze.b2.util.B2StringUtil;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -17,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class B2ByteArrayContentSourceTest extends B2BaseTest {
-    private static final byte[] sourceBytes = "Hello, World!".getBytes();
+    private static final byte[] sourceBytes = B2StringUtil.getUtf8Bytes("Hello, World!");
     private static final Long SRC_LAST_MOD_MILLIS = 123456L;
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2019, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -31,6 +31,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -526,10 +527,12 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
 
 
     private void checkPartMatching(List<B2Part> alreadyUploadedParts,
-                                   Integer... expectedUploadPartNumbers) throws IOException, B2Exception {
+                                   Integer... vExpectedUploadPartNumbers) throws IOException, B2Exception {
         final long contentLen = (3 * ACCOUNT_AUTH.getRecommendedPartSize() + 124);
         final B2ContentSource contentSource = mock(B2ContentSource.class);
         when(contentSource.getContentLength()).thenReturn(contentLen);
+
+        final Set<Integer> expectedUploadPartNumbers = B2Collections.unmodifiableSet(vExpectedUploadPartNumbers);
 
         final String largeFileId = fileId(1);
         final B2FileVersion largeFileVersion = new B2FileVersion(largeFileId,
@@ -565,7 +568,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
 
         // with the single-threaded executor, the uploadPartUrlCache should always have an upload url after the first time it's used.
         // of course, if we don't upload anything, we don't need any upload urls at all.
-        final int expectedUploadPartCount = expectedUploadPartNumbers.length;
+        final int expectedUploadPartCount = expectedUploadPartNumbers.size();
         final int numUploadUrlsNeeded = (expectedUploadPartCount == 0) ? 0 : 1;
         verify(webifier, times(numUploadUrlsNeeded)).getUploadPartUrl(anyObject(), anyObject());
 
@@ -575,7 +578,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
 
         final Set<Integer> uploadedPartNumbers = uploadPartRequestCaptor.getAllValues().stream().map(B2UploadPartRequest::getPartNumber).collect(Collectors.toSet());
         assertEquals(expectedUploadPartCount, uploadedPartNumbers.size());
-        assertEquals(B2Collections.unmodifiableSet(expectedUploadPartNumbers), uploadedPartNumbers);
+        assertEquals(expectedUploadPartNumbers, uploadedPartNumbers);
 
         // make sure only call finish once & with the expected parts in it.
         final ArgumentCaptor<B2FinishLargeFileRequest> finishRequestCaptor = ArgumentCaptor.forClass(B2FinishLargeFileRequest.class);
@@ -588,6 +591,35 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
         );
         final List<String> sha1s = finishRequestCaptor.getValue().getPartSha1Array();
         assertEquals(expectedSha1s, sha1s);
+
+        // we always try to create a contentSource specific to each part of the inputStream.
+        // let's make sure we're calling createContentSourceWithRangeOrNull() with the
+        // expected arguments.
+        //
+        // here we're verifying that createContentSourceWithRangeOrNull() is called the expected
+        // number of times with the expected start and length arguments.  it would be nice to
+        // check that if we return non-null it definitely uses the returned source and that
+        // if we return null it makes B2PartOfContentSource, but those will be fairly
+        // intricate tests.
+        final ArgumentCaptor<Long> startCaptor = ArgumentCaptor.forClass(Long.class);
+        final ArgumentCaptor<Long> lengthCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(contentSource, times(expectedUploadPartCount)).createContentSourceWithRangeOrNull(startCaptor.capture(), lengthCaptor.capture());
+        final List<Long> expectedStarts = new ArrayList<>();
+        final List<Long> expectedLengths = new ArrayList<>();
+        if (expectedUploadPartNumbers.contains(1)) {
+            expectedStarts.add(0L);
+            expectedLengths.add(1041L);
+        }
+        if (expectedUploadPartNumbers.contains(2)) {
+            expectedStarts.add(1041L);
+            expectedLengths.add(1041L);
+        }
+        if (expectedUploadPartNumbers.contains(3)) {
+            expectedStarts.add(2082L);
+            expectedLengths.add(1042L);
+        }
+        assertEquals(expectedStarts, startCaptor.getAllValues());
+        assertEquals(expectedLengths, lengthCaptor.getAllValues());
     }
 
     enum When {

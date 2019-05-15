@@ -5,6 +5,7 @@
 package com.backblaze.b2.sample;
 
 import com.backblaze.b2.client.B2StorageClient;
+import com.backblaze.b2.client.B2StorageClientFactory;
 import com.backblaze.b2.client.contentHandlers.B2ContentFileWriter;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
@@ -19,9 +20,6 @@ import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
-import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
-import com.backblaze.b2.client.webApiHttpClient.HttpClientFactory;
-import com.backblaze.b2.client.webApiHttpClient.HttpClientFactoryImpl;
 import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.util.B2ExecutorUtils;
@@ -98,15 +96,9 @@ public class B2 implements AutoCloseable {
     // it's null until the first time getExecutor() is called.
     private ExecutorService executor;
 
-    private B2() throws B2Exception {
+    private B2() {
         out = System.out;
-        final HttpClientFactory httpClientFactory = HttpClientFactoryImpl
-                .builder()
-                .build();
-        client = B2StorageHttpClientBuilder
-                .builder(USER_AGENT)
-                .setHttpClientFactory(httpClientFactory)
-                .build();
+        client = B2StorageClientFactory.createDefaultFactory().create(USER_AGENT);
     }
 
     private ExecutorService getExecutor() {
@@ -568,7 +560,7 @@ public class B2 implements AutoCloseable {
         out.println("  url:  " + client.getDownloadByNameUrl(bucketName, b2Path));
     }
 
-    private void finish_uploading_large_file(String[] args) throws B2Exception, IOException {
+    private void finish_uploading_large_file(String[] args) throws B2Exception {
         // [--noProgress] [--threads N] <bucketName> <largeFileId> <localPath>
         checkArgCount(args, 3, 5);
         final int iLastArg = args.length - 1;

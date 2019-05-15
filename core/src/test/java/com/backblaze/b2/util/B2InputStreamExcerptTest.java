@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 
 public class B2InputStreamExcerptTest extends B2BaseTest {
     private static final String DIGITS_STR = "0123456789";
-    private static final byte[] DIGITS_BYTES = DIGITS_STR.getBytes();
+    private static final byte[] DIGITS_BYTES = B2StringUtil.getUtf8Bytes(DIGITS_STR);
     private static final int EOF = -1;
 
     @Rule
@@ -30,7 +30,7 @@ public class B2InputStreamExcerptTest extends B2BaseTest {
     @After
     public void after() {
         // make sure we didn't corrupt the array during the tests.
-        assertArrayEquals(DIGITS_STR.getBytes(), DIGITS_BYTES);
+        assertArrayEquals(B2StringUtil.getUtf8Bytes(DIGITS_STR), DIGITS_BYTES);
     }
 
     @Test

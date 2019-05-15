@@ -178,7 +178,7 @@ public class B2Json {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
             handler.serialize(obj, options, jsonWriter);
-            return out.toString();
+            return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
         }
@@ -278,7 +278,7 @@ public class B2Json {
             B2JsonWriter jsonWriter = new B2JsonWriter(out);
             //noinspection unchecked
             handler.serialize(list, options, jsonWriter);
-            return out.toString();
+            return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
         }
@@ -516,6 +516,14 @@ public class B2Json {
         int firstVersion();
         int lastVersion();
     }
+
+    /**
+     * Annotation that says this is a sensitive field and should be redacted when outputting
+     * for logging
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface sensitive {}
 
     /**
      * Constructor annotation saying that this is the constructor B2Json
