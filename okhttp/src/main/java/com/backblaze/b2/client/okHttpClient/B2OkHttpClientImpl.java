@@ -20,6 +20,8 @@ import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -221,20 +223,25 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
     private  String postAndReturnString( String url,  B2Headers headersOrNull,  InputStream inputStream, long contentLength)
             throws B2Exception {
         RequestBody body;
+        File tempFile = null;
         try {
             if( contentLength <= (Integer.MAX_VALUE-HOTSPOT_FUDGE) ){
                 byte[] bytes = readFully(inputStream, (int) contentLength);
                 body = RequestBody.create(MediaType.get(APPLICATION_JSON), bytes);
             } else {
                 String tempFileName = UUID.randomUUID().toString();
-                File tempFile = File.createTempFile(tempFileName, ".tmp");
+                Path tempFilePath = Files.createTempFile(tempFileName, ".tmp");
+                tempFile = tempFilePath.toFile();
                 FileOutputStream outputStream = new FileOutputStream(tempFile);
                 copy( inputStream, outputStream);
                 body = RequestBody.create(MediaType.get(APPLICATION_JSON), tempFile);
-                tempFile.deleteOnExit();
             }
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
+        } finally {
+            if( tempFile != null ){
+                tempFile.delete();
+            }
         }
         Request.Builder builder = new Request.Builder()
                 .url(url)
