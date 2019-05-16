@@ -11,7 +11,7 @@ apply from: '../common.gradle'
 
 // this implementation can use either okhttp or apache httpclient
 dependencies {
-    // we need the core of the project and an http client. Pick a client.
+    // B2StorageClientFactory determines which one is used
     compile project(':httpclient')
-    //compile project(':okhttp')
+    compile project(':okhttp')
 }

@@ -223,6 +223,7 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
     private  String postAndReturnString( String url,  B2Headers headersOrNull,  InputStream inputStream, long contentLength)
             throws B2Exception {
         RequestBody body;
+        Response response = null;
         File tempFile = null;
         try {
             if( contentLength <= (Integer.MAX_VALUE-HOTSPOT_FUDGE) ){
@@ -236,21 +237,14 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
                 copy( inputStream, outputStream);
                 body = RequestBody.create(MediaType.get(APPLICATION_JSON), tempFile);
             }
-        } catch (IOException e) {
-            throw translateToB2Exception(e, url);
-        } finally {
-            if( tempFile != null ){
-                tempFile.delete();
+            Request.Builder builder = new Request.Builder()
+                    .url(url)
+                    .post(body);
+            if( headersOrNull != null ){
+                builder.headers(makeOkHeaders(headersOrNull));
             }
-        }
-        Request.Builder builder = new Request.Builder()
-                .url(url)
-                .post(body);
-        if( headersOrNull != null ){
-            builder.headers(makeOkHeaders(headersOrNull));
-        }
-        Request request = builder.build();
-        try (Response response = okHttpClient.newCall(request).execute()) {
+            Request request = builder.build();
+            response = okHttpClient.newCall(request).execute();
             if (!response.isSuccessful()) {
                 throw extractExceptionFromErrorResponse(response, response.body().string());
             } else {
@@ -262,6 +256,13 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
             }
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
+        } finally {
+            if( tempFile != null ){
+                tempFile.delete();
+            }
+            if( response != null ) {
+                response.close();
+            }
         }
     }
 
