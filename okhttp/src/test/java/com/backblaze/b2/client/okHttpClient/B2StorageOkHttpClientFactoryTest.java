@@ -11,7 +11,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class B2StorageHttpClientFactoryTest {
+public class B2StorageOkHttpClientFactoryTest {
 
     @Test
     public void testCreate() {
