@@ -36,17 +36,8 @@ import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2ExecutorUtils;
 import com.backblaze.b2.util.B2Preconditions;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -163,7 +154,7 @@ public class B2Sample {
         final byte[] largeFileBytes = makeLargeFileBytes();
 
         // uploading a large file is about the same.
-        bigHeader(writer, "Upload large file");
+        bigHeader(writer, "Upload large (10MB) file");
         final B2FileVersion file3;
         {
             final File largeFileOnDisk = new File("/tmp/B2Sample-uploadMeLarge.txt");
@@ -188,6 +179,25 @@ public class B2Sample {
             for (B2Part part : client.parts(file3.getFileId())) {
                 System.out.println("  " + part);
             }
+        }
+
+        // upload a huge file but use the small file API.
+        bigHeader(writer, "Upload huge (2GB+) file using small file API");
+        final File largeFileOnDisk;
+        try {
+            final String fileName = "demo/large/huge2GBfile.txt";
+            largeFileOnDisk = B2Sample.makeHugeFile(fileName);
+            final B2ContentSource source = B2FileContentSource.builder(largeFileOnDisk).build();
+
+            B2UploadFileRequest request = B2UploadFileRequest
+                    .builder(bucketId, fileName, B2ContentTypes.APPLICATION_OCTET, source)
+                    .setCustomField("color", "green")
+                    .setListener(uploadListener)
+                    .build();
+            B2FileVersion file4 = client.uploadSmallFile(request);
+            writer.println("uploaded " + file4);
+        } catch (IOException e) {
+            writer.println("test failed: "+e.getMessage());
         }
 
         // upload some more files here so the folder structure is interesting.
@@ -402,6 +412,26 @@ public class B2Sample {
             }
         }
         return bytes;
+    }
+
+    /**
+     * Create a file large enough to be considered a large file in production;
+     * @return File too big to be completely loaded into a byte array
+     */
+
+
+    private static File makeHugeFile(String fileNamePrefix) throws IOException {
+        final long fileSize = (long)Integer.MAX_VALUE + 1000*1000;
+        final byte[] bytes = {0xD, 0xE, 0xA, 0xD, 0xB, 0xE, 0xE, 0xF};
+        final File tempFile = File.createTempFile(fileNamePrefix, ".tmp");
+        final RandomAccessFile randomAccessFile= new RandomAccessFile(tempFile, "rw");
+        // write bytes at end to size the file
+        long seekTo = fileSize - bytes.length;
+        randomAccessFile.seek(seekTo);
+        randomAccessFile.write(bytes);
+        randomAccessFile.close();
+        tempFile.deleteOnExit();
+        return tempFile;
     }
 
     private static void bigHeader(PrintWriter writer,

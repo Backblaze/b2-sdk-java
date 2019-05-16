@@ -52,6 +52,7 @@ NUMBER_OF_LINES_TO_EXAMINE = 10
 LAYERS = [
     'sample',
     'client.webApiHttpClient',
+    'client.okHttpClient',
     'client',
     'client.webApiClients',
     'client.structures',
