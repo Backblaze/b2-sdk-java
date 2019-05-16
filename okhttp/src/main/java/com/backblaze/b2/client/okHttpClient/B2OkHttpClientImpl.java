@@ -222,19 +222,21 @@ public class B2OkHttpClientImpl implements B2WebApiClient {
      */
     private  String postAndReturnString( String url,  B2Headers headersOrNull,  InputStream inputStream, long contentLength)
             throws B2Exception {
-        RequestBody body;
         Response response = null;
+        FileOutputStream outputStream = null;
         File tempFile = null;
         try {
-            if( contentLength <= (Integer.MAX_VALUE-HOTSPOT_FUDGE) ){
+            RequestBody body;
+            if( contentLength <= Integer.MAX_VALUE-HOTSPOT_FUDGE ){
                 byte[] bytes = readFully(inputStream, (int) contentLength);
                 body = RequestBody.create(MediaType.get(APPLICATION_JSON), bytes);
             } else {
                 String tempFileName = UUID.randomUUID().toString();
                 Path tempFilePath = Files.createTempFile(tempFileName, ".tmp");
                 tempFile = tempFilePath.toFile();
-                FileOutputStream outputStream = new FileOutputStream(tempFile);
+                outputStream = new FileOutputStream(tempFile);
                 copy( inputStream, outputStream);
+                outputStream.close();
                 body = RequestBody.create(MediaType.get(APPLICATION_JSON), tempFile);
             }
             Request.Builder builder = new Request.Builder()
