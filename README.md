@@ -39,9 +39,11 @@ FEATURES
 
 * The SDK requires Java 8.
 
-* The SDK provides three jars:
+* The SDK provides four jars:
   * **b2-sdk-core** provides almost all of the SDK.  it does not contain the code for making HTTP requests (B2WebApiClient).
-  * **b2-sdk-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.  It is separate so that if you provide your own B2WebApiClient, you won't need to pull in HttpClient or its dependencies.**
+  * two jars that provide implementations of B2WebApiClient.  they are separate so that you can use them independently -- or your own B2WebApiClient implementation -- without pulling in the libraries they're built on.
+    * **b2-sdk-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.
+    * **b2-sdk-okhttp** provides an implementation of B2WebApiClient built on OkHttp3.  See limitations below.
   * **b2-sdk-samples** has some samples. 
 
 SAMPLE
