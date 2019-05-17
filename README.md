@@ -214,6 +214,8 @@ OkHttp Limitations
 
 OkHttp intentionally does not support using Java InputStreams to stream data to servers.  As a result, we have to read all of the data you are uploading into either an array or into a local file before uploading it.  If the content is less than about 2 GB, we read the content into an in-memory array.  If the content is bigger than that, we write the content to a local file and upload it from there.
 
+A side effect of this temporary copying is that the upload progress is currently misleading.  Progress notifications are provided during the copy to the temporary array or file and then the meter stays at 100% while the actual upload occurs.
+
 FAQ
 ===
 
