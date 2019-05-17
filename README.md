@@ -100,15 +100,15 @@ HOW TO USE
       here's the simplest way to do it:
 
       ```java
-      B2StorageClient client = B2StorageHttpClientBuilder.builder(applicationKeyId,
-                                           applicationKey,
-                                           userAgent).build();
+      B2StorageClient client = B2StorageClientFactory
+                   .createDefaultFactory()
+                   .create(APP_KEY_ID, APP_KEY, USER_AGENT);
       ```
 
     * if you want to get the credentials from the environment,
       as B2Sample does, here's how to create your client:
       ```
-      B2StorageClient client = B2StorageHttpClientBuilder.builder(userAgent).build();
+      B2StorageClient client = B2StorageClientFactory.createDefaultFactory().create(USER_AGENT);
       ```
 
   * There's a very straight-forward mapping from B2 API calls to
