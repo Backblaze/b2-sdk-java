@@ -43,7 +43,7 @@ FEATURES
   * **b2-sdk-core** provides almost all of the SDK.  it does not contain the code for making HTTP requests (B2WebApiClient).
   * two jars that provide implementations of B2WebApiClient.  they are separate so that you can use them independently -- or your own B2WebApiClient implementation -- without pulling in the libraries they're built on.
     * **b2-sdk-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.
-    * **b2-sdk-okhttp** provides an implementation of B2WebApiClient built on OkHttp3.  See limitations below.
+    * **b2-sdk-okhttp** provides an implementation of B2WebApiClient built on OkHttp3.  See "OkHttp limitations" below.
   * **b2-sdk-samples** has some samples. 
 
 SAMPLE
@@ -73,12 +73,12 @@ HOW TO USE
 
   * Add the jars to your build.  In the following examples, replace N.N.N
     with the version of the sdk you're using:
-    * If you're using gradle, here are the dependency lines to use the sdk:
+    * If you're using gradle, here are the dependency lines to use the sdk with our Apache HttpClient-based B2WebApiClient:
     ```gradle
     compile 'com.backblaze.b2:b2-sdk-core:N.N.N'
     compile 'com.backblaze.b2:b2-sdk-httpclient:N.N.N'
     ```
-    * If you're using maven, here are the dependency tags to use the sdk:
+    * If you're using maven, here are the dependency tags to use the sdk with our Apache Commons HttpClient-based B2WebApiClient:
     ```xml
       <dependency>
         <groupId>com.backblaze.b2</groupId>
@@ -93,6 +93,7 @@ HOW TO USE
         <scope>compile</scope>
       </dependency>
     ```
+    If you want to use our OkHttp-based B2WebApiClient instead, use artifactId 'b2-sdk-okhttp' instead of 'b2-sdk-httpclient'.  See "OkHttp limitations" below.
 
   * create a B2StorageClient.
 
@@ -207,6 +208,11 @@ HOW TO USE
 
     Take a look at the example progress listener in B2Sample.java and run it to
     see an example of the notifications you'll get.
+
+OkHttp Limitations
+===
+
+OkHttp intentionally does not support using Java InputStreams to stream data to servers.  As a result, we have to read all of the data you are uploading into either an array or into a local file before uploading it.  If the content is less than about 2 GB, we read the content into an in-memory array.  If the content is bigger than that, we write the content to a local file and upload it from there.
 
 FAQ
 ===
