@@ -221,6 +221,39 @@ public class B2StorageClientImpl implements B2StorageClient {
         return uploadLargeFileGuts(executor, partSizes, request, contentLength);
     }
 
+    @Override
+    public B2FileVersion storeLargeFileFromLocalContent(
+            B2FileVersion fileVersion,
+            B2ContentSource contentSource,
+            ExecutorService executor) throws B2Exception {
+
+        return B2LargeFileStorer.forLocalContent(
+                fileVersion,
+                contentSource,
+                getPartSizes(),
+                accountAuthCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                executor).storeFile();
+    }
+
+    @Override
+    public B2FileVersion storeLargeFile(
+            B2FileVersion fileVersion, List<B2PartStorer> partStorers,
+            ExecutorService executor) throws B2Exception {
+
+        // Instantiate and return the manager.
+        return new B2LargeFileStorer(
+                fileVersion,
+                partStorers,
+                accountAuthCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                executor).storeFile();
+    }
+
     private B2FileVersion uploadLargeFileGuts(ExecutorService executor,
                                               B2PartSizes partSizes,
                                               B2UploadFileRequest request,

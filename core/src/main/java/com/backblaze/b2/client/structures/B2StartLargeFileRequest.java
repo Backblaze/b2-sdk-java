@@ -138,6 +138,10 @@ public class B2StartLargeFileRequest {
             return this;
         }
 
+        public Builder setLargeFileSha1(String largeFileSha1) {
+            return setCustomField("large_file_sha1", largeFileSha1);
+        }
+
         public Builder setCustomFields(Map<String,String> newFileInfo) {
             B2Preconditions.checkArgumentIsNotNull(newFileInfo, "newFileInfo");
             newFileInfo.forEach(this::setCustomField);

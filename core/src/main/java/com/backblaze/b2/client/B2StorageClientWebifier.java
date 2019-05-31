@@ -12,6 +12,7 @@ import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
+import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
 import com.backblaze.b2.client.structures.B2CreateKeyRequestReal;
 import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
@@ -101,6 +102,9 @@ public interface B2StorageClientWebifier extends AutoCloseable {
 
     B2Part uploadPart(B2UploadPartUrlResponse uploadPartUrlResponse,
                       B2UploadPartRequest request) throws B2Exception;
+
+    B2Part copyPart(B2AccountAuthorization accountAuth,
+                    B2CopyPartRequest request) throws B2Exception;
 
     B2ListFileVersionsResponse listFileVersions(B2AccountAuthorization accountAuth,
                                                 B2ListFileVersionsRequest request) throws B2Exception;
