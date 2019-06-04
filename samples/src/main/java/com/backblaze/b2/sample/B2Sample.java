@@ -420,8 +420,9 @@ public class B2Sample {
      */
 
 
+    @SuppressWarnings("SameParameterValue")
     private static File makeHugeFile(String fileNamePrefix) throws IOException {
-        final long fileSize = (long)Integer.MAX_VALUE + 1000*1000;
+        final long fileSize = 1000 * 1000 ;//(long)Integer.MAX_VALUE + 1000*1000;
         final byte[] bytes = {0xD, 0xE, 0xA, 0xD, 0xB, 0xE, 0xE, 0xF};
         final File tempFile = File.createTempFile(fileNamePrefix, ".tmp");
         final RandomAccessFile randomAccessFile= new RandomAccessFile(tempFile, "rw");

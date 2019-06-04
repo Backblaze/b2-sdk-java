@@ -41,12 +41,14 @@ public class B2StorageClientFactoryPathBasedImpl implements B2StorageClientFacto
     private B2StorageClientFactory factory;
 
     B2StorageClientFactoryPathBasedImpl() {
-
         // register the Apache HttpClient-based implementation:
         registerClass("com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientFactory");
 
         // register the okhttp-based implementation:
         registerClass("com.backblaze.b2.client.okHttpClient.B2StorageOkHttpClientFactory");
+
+        // register the UrlConnection-based implementation:
+        registerClass("com.backblaze.b2.client.webApiUrlConnectionClient.B2WebApiUrlConnectionClientFactory");
 
     }
 

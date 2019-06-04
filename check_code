@@ -53,6 +53,7 @@ LAYERS = [
     'sample',
     'client.webApiHttpClient',
     'client.okHttpClient',
+    'client.webApiUrlConnectionClient',
     'client',
     'client.webApiClients',
     'client.structures',

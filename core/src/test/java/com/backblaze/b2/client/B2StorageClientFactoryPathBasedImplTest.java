@@ -8,6 +8,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;
@@ -18,11 +19,10 @@ public class B2StorageClientFactoryPathBasedImplTest {
 
 
     @Test
-    public void testDefaultFactory_failsBecauseTestEnvironmentDoesntIncludeHttpClientJars() {
+    public void testDefaultFactory_failsSucceedsTestEnvironmentIncludesUrlBasedImplementation() {
         final B2StorageClientFactory factory = B2StorageClientFactory.createDefaultFactory();
 
-        thrown.expectMessage("can't find any of the registered classes.");
-        factory.create("appKeyId", "appKey", "userAgent");
+        assertNotNull(factory.create("appKeyId", "appKey", "userAgent"));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
