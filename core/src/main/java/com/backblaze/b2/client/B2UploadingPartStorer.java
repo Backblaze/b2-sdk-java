@@ -37,5 +37,10 @@ public class B2UploadingPartStorer implements B2PartStorer {
         return partNumber == that.partNumber &&
                 Objects.equals(contentSource, that.contentSource);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(partNumber, contentSource);
+    }
 }
 

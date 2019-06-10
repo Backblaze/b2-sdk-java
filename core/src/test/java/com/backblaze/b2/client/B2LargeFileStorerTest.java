@@ -57,7 +57,7 @@ public class B2LargeFileStorerTest {
     // Set up the parts of the large file.
     private final B2Part part1 = new B2Part(fileId(1), 1, PART_SIZE_FOR_FIRST_TWO, makeSha1(1), 1111);
     private final B2Part part2 = new B2Part(fileId(2), 2, PART_SIZE_FOR_FIRST_TWO, makeSha1(2), 2222);
-    private final B2Part part3 = new B2Part(fileId(3), 3, PART_SIZE_FOR_FIRST_TWO, makeSha1(3), 3333);
+    private final B2Part part3 = new B2Part(fileId(3), 3, LAST_PART_SIZE, makeSha1(3), 3333);
 
 
     private final B2PartSizes partSizes;

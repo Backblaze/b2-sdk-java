@@ -244,7 +244,8 @@ public interface B2StorageClient extends Closeable {
      * @throws B2Exception If there's trouble.
      */
     B2FileVersion storeLargeFileFromLocalContent(
-            B2FileVersion fileVersion, B2ContentSource contentSource,
+            B2FileVersion fileVersion,
+            B2ContentSource contentSource,
             ExecutorService executor) throws B2Exception;
 
     /**

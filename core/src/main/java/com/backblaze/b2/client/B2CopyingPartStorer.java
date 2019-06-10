@@ -12,13 +12,13 @@ import java.util.Objects;
 
 /**
  * This implementation stores a part of a large file by copying
- * a file that is already stored in B2.
+ * from a file that is already stored in B2.
  */
 public class B2CopyingPartStorer implements B2PartStorer {
 
-    private int partNumber;
-    private String sourceFileId;
-    private B2ByteRange byteRangeOrNull;
+    private final int partNumber;
+    private final String sourceFileId;
+    private final B2ByteRange byteRangeOrNull;
 
     public B2CopyingPartStorer(int partNumber, String sourceFileId) {
         this(partNumber, sourceFileId, null);
@@ -43,6 +43,11 @@ public class B2CopyingPartStorer implements B2PartStorer {
         return partNumber == that.partNumber &&
                 Objects.equals(sourceFileId, that.sourceFileId) &&
                 Objects.equals(byteRangeOrNull, that.byteRangeOrNull);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(partNumber, sourceFileId, byteRangeOrNull);
     }
 }
 

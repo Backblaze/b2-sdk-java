@@ -20,7 +20,7 @@ import java.util.Objects;
  */
 public class B2AlreadyStoredPartStorer implements B2PartStorer {
 
-    private B2Part part;
+    private final B2Part part;
 
     public B2AlreadyStoredPartStorer(B2Part part) {
         this.part = part;
@@ -37,6 +37,11 @@ public class B2AlreadyStoredPartStorer implements B2PartStorer {
         if (o == null || getClass() != o.getClass()) return false;
         B2AlreadyStoredPartStorer that = (B2AlreadyStoredPartStorer) o;
         return Objects.equals(part, that.part);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(part);
     }
 }
 

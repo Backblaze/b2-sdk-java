@@ -141,7 +141,7 @@ public class B2LargeFileStorer {
         } finally {
             // we've either called get() on all of the futures, or we've hit an exception and
             // we aren't going to wait for the others.  let's call cancel on all of them.
-            // the ones that have finished already, won't mind and the others will be stopped.
+            // the ones that have finished already won't mind and the others will be stopped.
             for (Future<B2Part> future : partFutures) {
                 future.cancel(true);
             }
@@ -183,7 +183,7 @@ public class B2LargeFileStorer {
 
     B2Part copyPart(int partNumber, String sourceFileId, B2ByteRange byteRangeOrNull) throws B2Exception {
         final B2CopyPartRequest copyPartRequest = B2CopyPartRequest
-                .builder(sourceFileId, fileVersion.getFileId(), partNumber)
+                .builder(partNumber, sourceFileId, fileVersion.getFileId())
                 .setRange(byteRangeOrNull)
                 .build();
 

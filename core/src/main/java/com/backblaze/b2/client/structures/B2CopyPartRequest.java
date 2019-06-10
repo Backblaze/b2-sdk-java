@@ -12,24 +12,28 @@ import java.util.Objects;
 public class B2CopyPartRequest {
 
     @B2Json.required
+    private final int partNumber;
+    @B2Json.required
     private final String sourceFileId;
     @B2Json.required
     private final String largeFileId;
-    @B2Json.required
-    private final int partNumber;
     @B2Json.optional
     private final String range;
 
-    @B2Json.constructor(params = "sourceFileId, largeFileId, partNumber, range")
-    private B2CopyPartRequest(String sourceFileId, String largeFileId, int partNumber, String range) {
+    @B2Json.constructor(params = "partNumber, sourceFileId, largeFileId, range")
+    private B2CopyPartRequest(int partNumber, String sourceFileId, String largeFileId, String range) {
+        this.partNumber = partNumber;
         this.sourceFileId = sourceFileId;
         this.largeFileId = largeFileId;
-        this.partNumber = partNumber;
         this.range = range;
     }
 
-    public static Builder builder(String sourceFileId, String largeFileId, int partNumber) {
-        return new Builder(sourceFileId, largeFileId, partNumber);
+    public static Builder builder(int partNumber, String sourceFileId, String largeFileId) {
+        return new Builder(partNumber, sourceFileId, largeFileId);
+    }
+
+    public int getPartNumber() {
+        return partNumber;
     }
 
     public String getSourceFileId() {
@@ -38,10 +42,6 @@ public class B2CopyPartRequest {
 
     public String getLargeFileId() {
         return largeFileId;
-    }
-
-    public int getPartNumber() {
-        return partNumber;
     }
 
     public String getRange() {
@@ -53,22 +53,27 @@ public class B2CopyPartRequest {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         B2CopyPartRequest that = (B2CopyPartRequest) o;
-        return getPartNumber() == that.getPartNumber() &&
-                Objects.equals(getSourceFileId(), that.getSourceFileId()) &&
-                Objects.equals(getLargeFileId(), that.getLargeFileId()) &&
-                Objects.equals(getRange(), that.getRange());
+        return partNumber == that.partNumber &&
+                Objects.equals(sourceFileId, that.sourceFileId) &&
+                Objects.equals(largeFileId, that.largeFileId) &&
+                Objects.equals(range, that.range);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(partNumber, sourceFileId, largeFileId, range);
     }
 
     public static class Builder {
+        private final int partNumber;
         private final String sourceFileId;
         private final String largeFileId;
-        private final int partNumber;
         private B2ByteRange range;
 
-        public Builder(String sourceFileId, String largeFileId, int partNumber) {
+        public Builder(int partNumber, String sourceFileId, String largeFileId) {
+            this.partNumber = partNumber;
             this.sourceFileId = sourceFileId;
             this.largeFileId = largeFileId;
-            this.partNumber = partNumber;
         }
 
         public Builder setRange(B2ByteRange range) {
@@ -78,9 +83,8 @@ public class B2CopyPartRequest {
 
         public B2CopyPartRequest build() {
             return new B2CopyPartRequest(
-                    sourceFileId,
+                    partNumber, sourceFileId,
                     largeFileId,
-                    partNumber,
                     range == null ? null : range.toString());
         }
     }

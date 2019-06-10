@@ -1162,7 +1162,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     @Test
     public void testCopyPart() throws B2Exception {
         final B2CopyPartRequest request = B2CopyPartRequest
-                .builder(fileId(1), fileId(2), 3)
+                .builder(3, fileId(1), fileId(2))
                 .build();
         webifier.copyPart(ACCOUNT_AUTH, request);
 
