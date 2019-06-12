@@ -4,8 +4,9 @@
  */
 package com.backblaze.b2.client;
 
-import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2UploadListener;
+import com.backblaze.b2.client.structures.B2UploadState;
 
 import java.util.Objects;
 
@@ -27,7 +28,17 @@ public class B2AlreadyStoredPartStorer implements B2PartStorer {
     }
 
     @Override
-    public B2Part storePart(B2LargeFileStorer largeFileCreationManager) throws B2Exception {
+    public B2Part storePart(
+            B2LargeFileStorer largeFileCreationManager,
+            B2UploadListener uploadListener) {
+
+        largeFileCreationManager.updateProgress(
+                uploadListener,
+                part.getPartNumber(),
+                part.getContentLength(),
+                part.getContentLength(),
+                B2UploadState.SUCCEEDED);
+
         return part;
     }
 

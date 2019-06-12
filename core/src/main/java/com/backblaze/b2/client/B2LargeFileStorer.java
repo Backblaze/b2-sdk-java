@@ -11,8 +11,12 @@ import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.client.structures.B2UploadProgress;
+import com.backblaze.b2.client.structures.B2UploadState;
+import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2ByteRange;
 
 import java.io.IOException;
@@ -26,7 +30,7 @@ import java.util.function.Supplier;
 /**
  * A class for handling the creation of large files.
  *
- * @see B2StorageClient#storeLargeFile(B2FileVersion, List, ExecutorService)
+ * @see B2StorageClient#storeLargeFile(B2FileVersion, List, B2UploadListener, ExecutorService)
  * for a description of the various ways large files can be created
  * and the uses cases supported.
  */
@@ -107,12 +111,12 @@ public class B2LargeFileStorer {
                 executor);
     }
 
-    B2FileVersion storeFile() throws B2Exception {
+    B2FileVersion storeFile(B2UploadListener uploadListener) throws B2Exception {
         final List<Future<B2Part>> partFutures = new ArrayList<>();
 
         // Store each part in parallel.
         for (final B2PartStorer partStorer : partStorers) {
-            partFutures.add(executor.submit(() -> partStorer.storePart(this)));
+            partFutures.add(executor.submit(() -> partStorer.storePart(this, uploadListener)));
         }
 
         return finishLargeFileFromB2PartFutures(fileVersion, partFutures);
@@ -158,39 +162,138 @@ public class B2LargeFileStorer {
                 retryPolicySupplier.get());
     }
 
-    B2Part uploadPart(int partNumber, B2ContentSource contentSource) throws B2Exception {
+    void updateProgress(
+            B2UploadListener uploadListener,
+            int partNumber,
+            long partLength,
+            long bytesSoFar,
+            B2UploadState uploadState) {
 
-        return retryer.doRetry(
-                "b2_upload_part",
-                accountAuthCache,
-                (isRetry) -> {
-                    final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
-
-                    final B2UploadPartRequest uploadPartRequest = B2UploadPartRequest
-                            .builder(partNumber, contentSource)
-                            .build();
-
-                    final B2Part part = webifier.uploadPart(uploadPartUrlResponse, uploadPartRequest);
-
-                    // Return the upload part URL, because it works and can be reused.
-                    uploadPartUrlCache.unget(uploadPartUrlResponse);
-
-                    return part;
-                },
-                retryPolicySupplier.get()
-        );
+        uploadListener.progress(
+                new B2UploadProgress(
+                        partNumber - 1, partStorers.size(), -1, partLength, bytesSoFar, uploadState));
     }
 
-    B2Part copyPart(int partNumber, String sourceFileId, B2ByteRange byteRangeOrNull) throws B2Exception {
+    B2Part uploadPart(
+            int partNumber,
+            B2ContentSource contentSource,
+            B2UploadListener uploadListener) throws IOException, B2Exception {
+
+        updateProgress(
+                uploadListener,
+                partNumber,
+                contentSource.getContentLength(),
+                0,
+                B2UploadState.WAITING_TO_START);
+
+        // Set up the listener for the part upload.
+        final B2ByteProgressListener progressAdapter = new B2UploadProgressAdapter(
+                uploadListener,
+                partNumber - 1,
+                partStorers.size(),
+                -1,
+                contentSource.getContentLength());
+        final B2ByteProgressFilteringListener progressListener = new B2ByteProgressFilteringListener(progressAdapter);
+
+        try {
+            return retryer.doRetry(
+                    "b2_upload_part",
+                    accountAuthCache,
+                    (isRetry) -> {
+                        final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
+
+                        final B2ContentSource contentSourceThatReportsProgress =
+                                new B2ContentSourceWithByteProgressListener(contentSource, progressListener);
+                        final B2UploadPartRequest uploadPartRequest = B2UploadPartRequest
+                                .builder(partNumber, contentSourceThatReportsProgress)
+                                .build();
+
+                        updateProgress(
+                                uploadListener,
+                                partNumber,
+                                contentSource.getContentLength(),
+                                0,
+                                B2UploadState.STARTING);
+
+                        final B2Part part = webifier.uploadPart(uploadPartUrlResponse, uploadPartRequest);
+
+                        // Return the upload part URL, because it works and can be reused.
+                        uploadPartUrlCache.unget(uploadPartUrlResponse);
+
+                        updateProgress(
+                                uploadListener,
+                                partNumber,
+                                part.getContentLength(),
+                                part.getContentLength(),
+                                B2UploadState.SUCCEEDED);
+
+                        return part;
+                    },
+                    retryPolicySupplier.get()
+            );
+        } catch (Exception e) {
+            updateProgress(
+                    uploadListener,
+                    partNumber,
+                    contentSource.getContentLength(),
+                    0,
+                    B2UploadState.FAILED);
+
+            throw e;
+        }
+    }
+
+    B2Part copyPart(
+            int partNumber,
+            String sourceFileId,
+            B2ByteRange byteRangeOrNull,
+            B2UploadListener uploadListener) throws B2Exception {
+
+        updateProgress(
+                uploadListener,
+                partNumber,
+                1,
+                0,
+                B2UploadState.WAITING_TO_START);
+
         final B2CopyPartRequest copyPartRequest = B2CopyPartRequest
                 .builder(partNumber, sourceFileId, fileVersion.getFileId())
                 .setRange(byteRangeOrNull)
                 .build();
 
-        return retryer.doRetry(
-                "b2_copy_part",
-                accountAuthCache, () -> webifier.copyPart(accountAuthCache.get(), copyPartRequest),
-                retryPolicySupplier.get());
+        try {
+            return retryer.doRetry(
+                    "b2_copy_part",
+                    accountAuthCache, () -> {
+                        updateProgress(
+                                uploadListener,
+                                partNumber,
+                                1,
+                                0,
+                                B2UploadState.STARTING);
+
+                        final B2Part part = webifier.copyPart(accountAuthCache.get(), copyPartRequest);
+
+                        updateProgress(
+                                uploadListener,
+                                partNumber,
+                                part.getContentLength(),
+                                part.getContentLength(),
+                                B2UploadState.SUCCEEDED);
+
+                        return part;
+                    },
+                    retryPolicySupplier.get());
+        } catch (Exception e) {
+            updateProgress(
+                    uploadListener,
+                    partNumber,
+                    1,
+                    0,
+                    B2UploadState.FAILED);
+
+            throw e;
+        }
     }
 
     static B2ContentSource createRangedContentSource(

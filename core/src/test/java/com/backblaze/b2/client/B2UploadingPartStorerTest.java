@@ -7,7 +7,10 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import org.junit.Test;
+
+import java.io.IOException;
 
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.makeSha1;
@@ -24,15 +27,17 @@ public class B2UploadingPartStorerTest {
 
     private final B2Part part = new B2Part(FILE_ID, PART_NUMBER, 5000000, SHA1, 2222);
 
+    private final B2UploadListener uploadListener = mock(B2UploadListener.class);
+
     @Test
-    public void testStorePart() throws B2Exception {
+    public void testStorePart() throws IOException, B2Exception {
         final B2ContentSource contentSource = mock(B2ContentSource.class);
         final B2UploadingPartStorer partStorer = new B2UploadingPartStorer(PART_NUMBER, contentSource);
         final B2LargeFileStorer largeFileStorer = mock(B2LargeFileStorer.class);
 
-        when(largeFileStorer.uploadPart(anyInt(), anyObject())).thenReturn(part);
+        when(largeFileStorer.uploadPart(anyInt(), anyObject(), anyObject())).thenReturn(part);
 
-        assertEquals(part, partStorer.storePart(largeFileStorer));
-        verify(largeFileStorer).uploadPart(2, contentSource);
+        assertEquals(part, partStorer.storePart(largeFileStorer, uploadListener));
+        verify(largeFileStorer).uploadPart(2, contentSource, uploadListener);
     }
 }

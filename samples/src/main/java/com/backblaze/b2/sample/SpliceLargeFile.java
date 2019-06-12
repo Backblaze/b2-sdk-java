@@ -13,6 +13,7 @@ import com.backblaze.b2.client.contentSources.B2ByteArrayContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2ExecutorUtils;
@@ -59,7 +60,7 @@ public class SpliceLargeFile {
             // Start a new large file. The B2LargeFileStorer requires a fileId for the large file
             // to be established before it is constructed.
             final B2StartLargeFileRequest startLargeFileRequest = B2StartLargeFileRequest.builder(
-                    bucketId, "test-mix-and-match", "x/b2-auto").build();
+                    bucketId, "b2-sdk-sample-splice", "x/b2-auto").build();
             final B2FileVersion largeFileVersion = client.startLargeFile(startLargeFileRequest);
 
             // The list of B2PartStorers. These are objects that each know how to store a single
@@ -78,7 +79,7 @@ public class SpliceLargeFile {
 
             // Store the large file. This method will finish the large file and return the
             // B2FileVersion for the new large file.
-            client.storeLargeFile(largeFileVersion, partContentSources, executor);
+            client.storeLargeFile(largeFileVersion, partContentSources, B2UploadListener.noopListener(), executor);
         } finally {
             B2ExecutorUtils.shutdownAndAwaitTermination(executor, 10, 10);
         }
