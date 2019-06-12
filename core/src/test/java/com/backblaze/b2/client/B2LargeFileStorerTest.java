@@ -25,8 +25,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
@@ -69,9 +70,8 @@ public class B2LargeFileStorerTest {
 
     private final B2Retryer retryer = new B2Retryer(mock(B2Sleeper.class));
     private final Supplier<B2RetryPolicy> retryPolicySupplier = B2DefaultRetryPolicy.supplier();
-    // According to the docs, tasks are guaranteed to execute sequentially with the executor. This is important
-    // because the assertions expect a certain order of execution. Do not change this executor!
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    // Use an executor that has a predictable order of events.
+    private final ExecutorService executor = new ExecutorThatUsesMainThread();
 
     private final B2UploadListener uploadListenerMock = mock(B2UploadListener.class);
 
@@ -305,6 +305,42 @@ public class B2LargeFileStorerTest {
             return start == that.start &&
                     length == that.length &&
                     canCreateRanges == that.canCreateRanges;
+        }
+    }
+
+    /**
+     * An executor that runs tasks in the order they are submitted. It accomplishes this by running them in the main
+     * thread. This is done so our assertions can assume a specific order of progress events. This works because the
+     * tasks are all independent of each other and the main thread has no work to do while the tasks are running.
+     */
+    private class ExecutorThatUsesMainThread extends AbstractExecutorService {
+        @Override
+        public void shutdown() {
+        }
+
+        @Override
+        public List<Runnable> shutdownNow() {
+            return null;
+        }
+
+        @Override
+        public boolean isShutdown() {
+            return false;
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return false;
+        }
+
+        @Override
+        public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+            return false;
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            command.run();
         }
     }
 }
