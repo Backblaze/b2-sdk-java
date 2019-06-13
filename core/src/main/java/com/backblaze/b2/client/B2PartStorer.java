@@ -4,7 +4,9 @@
  */
 package com.backblaze.b2.client;
 
+import com.backblaze.b2.client.exceptions.B2CannotComputeException;
 import com.backblaze.b2.client.exceptions.B2Exception;
+import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UploadListener;
 
@@ -15,6 +17,12 @@ import java.io.IOException;
  * part of a large file in B2.
  */
 public interface B2PartStorer {
+
+    /**
+     * @return The size of the part that this object will store, or throw if that
+     * cannot be determined.
+     */
+    long getPartSizeOrThrow() throws B2CannotComputeException;
 
     /**
      * Store the part this B2PartStorer is responsible for.

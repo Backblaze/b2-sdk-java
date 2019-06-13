@@ -28,6 +28,11 @@ public class B2AlreadyStoredPartStorer implements B2PartStorer {
     }
 
     @Override
+    public long getPartSizeOrThrow() {
+        return part.getContentLength();
+    }
+
+    @Override
     public B2Part storePart(
             B2LargeFileStorer largeFileCreationManager,
             B2UploadListener uploadListener) {

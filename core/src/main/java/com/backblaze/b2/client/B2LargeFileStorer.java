@@ -5,6 +5,7 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentSources.B2ContentSource;
+import com.backblaze.b2.client.exceptions.B2CannotComputeException;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.structures.B2CopyPartRequest;
@@ -46,6 +47,13 @@ public class B2LargeFileStorer {
      */
     private final List<B2PartStorer> partStorers;
 
+    /**
+     * Stores where each part will begin in the finished large file.
+     * Will be set to B2UploadProgress.UNKNOWN_PART_START_BYTE for
+     * parts that come after a copied part.
+     */
+    private final List<Long> startingBytePositions;
+
     private final B2AccountAuthorizationCache accountAuthCache;
     private final B2UploadPartUrlCache uploadPartUrlCache;
     private final B2StorageClientWebifier webifier;
@@ -64,6 +72,7 @@ public class B2LargeFileStorer {
 
         this.fileVersion = fileVersion;
         this.partStorers = partStorers;
+        this.startingBytePositions = computeStartingBytePositions(partStorers);
 
         this.accountAuthCache = accountAuthCache;
         this.uploadPartUrlCache = new B2UploadPartUrlCache(webifier, accountAuthCache, fileVersion.getFileId());
@@ -75,6 +84,28 @@ public class B2LargeFileStorer {
 
     List<B2PartStorer> getPartStorers() {
         return partStorers;
+    }
+
+    private static List<Long> computeStartingBytePositions(List<B2PartStorer> partStorers) {
+        final List<Long> startingPositions = new ArrayList<>();
+
+        long cursor = 0;
+        try {
+            for (final B2PartStorer partStorer : partStorers) {
+                startingPositions.add(cursor);
+                cursor += partStorer.getPartSizeOrThrow();
+            }
+        } catch (B2CannotComputeException e) {
+            while (startingPositions.size() < partStorers.size()) {
+                startingPositions.add(B2UploadProgress.UNKNOWN_PART_START_BYTE);
+            }
+        }
+
+        return startingPositions;
+    }
+
+    long getStartByte(int partNumber) {
+        return startingBytePositions.get(partNumber - 1);
     }
 
     public static B2LargeFileStorer forLocalContent(
@@ -111,7 +142,14 @@ public class B2LargeFileStorer {
                 executor);
     }
 
-    B2FileVersion storeFile(B2UploadListener uploadListener) throws B2Exception {
+    B2FileVersion storeFile(B2UploadListener uploadListenerOrNull) throws B2Exception {
+        final B2UploadListener uploadListener;
+        if (uploadListenerOrNull == null) {
+            uploadListener = B2UploadListener.noopListener();
+        } else {
+            uploadListener = uploadListenerOrNull;
+        }
+
         final List<Future<B2Part>> partFutures = new ArrayList<>();
 
         // Store each part in parallel.
@@ -171,9 +209,17 @@ public class B2LargeFileStorer {
 
         uploadListener.progress(
                 new B2UploadProgress(
-                        partNumber - 1, partStorers.size(), -1, partLength, bytesSoFar, uploadState));
+                        partNumber - 1,
+                        partStorers.size(),
+                        getStartByte(partNumber),
+                        partLength,
+                        bytesSoFar,
+                        uploadState));
     }
 
+    /**
+     * Stores a part by uploading the bytes from a content source.
+     */
     B2Part uploadPart(
             int partNumber,
             B2ContentSource contentSource,
@@ -191,7 +237,7 @@ public class B2LargeFileStorer {
                 uploadListener,
                 partNumber - 1,
                 partStorers.size(),
-                -1,
+                getStartByte(partNumber),
                 contentSource.getContentLength());
         final B2ByteProgressFilteringListener progressListener = new B2ByteProgressFilteringListener(progressAdapter);
 
@@ -243,6 +289,15 @@ public class B2LargeFileStorer {
         }
     }
 
+    /**
+     * Stores a part by copying from a file that is already stored in a bucket.
+     *
+     * We do not know the true size of the part until it is finally stored. Some
+     * copy operations do not provide a byte range being copied, and byte ranges
+     * can be clamped down if they exceed the bounds of the file. Therefore, we
+     * use a placeholder value until the operation succeeds. Once the API returns
+     * a B2Part object, we supply the true size in the SUCCEEDED event.
+     */
     B2Part copyPart(
             int partNumber,
             String sourceFileId,
@@ -252,7 +307,7 @@ public class B2LargeFileStorer {
         updateProgress(
                 uploadListener,
                 partNumber,
-                1,
+                B2UploadProgress.UNKNOWN_PART_SIZE_PLACEHOLDER,
                 0,
                 B2UploadState.WAITING_TO_START);
 
@@ -264,11 +319,12 @@ public class B2LargeFileStorer {
         try {
             return retryer.doRetry(
                     "b2_copy_part",
-                    accountAuthCache, () -> {
+                    accountAuthCache,
+                    () -> {
                         updateProgress(
                                 uploadListener,
                                 partNumber,
-                                1,
+                                B2UploadProgress.UNKNOWN_PART_SIZE_PLACEHOLDER,
                                 0,
                                 B2UploadState.STARTING);
 
@@ -288,7 +344,7 @@ public class B2LargeFileStorer {
             updateProgress(
                     uploadListener,
                     partNumber,
-                    1,
+                    B2UploadProgress.UNKNOWN_PART_SIZE_PLACEHOLDER,
                     0,
                     B2UploadState.FAILED);
 

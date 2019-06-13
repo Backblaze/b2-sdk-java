@@ -244,7 +244,7 @@ public class B2StorageClientImpl implements B2StorageClient {
     public B2FileVersion storeLargeFile(
             B2FileVersion fileVersion,
             List<B2PartStorer> partStorers,
-            B2UploadListener uploadListener,
+            B2UploadListener uploadListenerOrNull,
             ExecutorService executor) throws B2Exception {
 
         // Instantiate and return the manager.
@@ -255,7 +255,7 @@ public class B2StorageClientImpl implements B2StorageClient {
                 webifier,
                 retryer,
                 retryPolicySupplier,
-                executor).storeFile(uploadListener);
+                executor).storeFile(uploadListenerOrNull);
     }
 
     private B2FileVersion uploadLargeFileGuts(ExecutorService executor,

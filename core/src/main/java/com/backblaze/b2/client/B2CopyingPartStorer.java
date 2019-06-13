@@ -4,9 +4,12 @@
  */
 package com.backblaze.b2.client;
 
+import com.backblaze.b2.client.exceptions.B2CannotComputeException;
 import com.backblaze.b2.client.exceptions.B2Exception;
+import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UploadListener;
+import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.util.B2ByteRange;
 
 import java.util.Objects;
@@ -29,6 +32,11 @@ public class B2CopyingPartStorer implements B2PartStorer {
         this.partNumber = partNumber;
         this.sourceFileId = sourceFileId;
         this.byteRangeOrNull = byteRangeOrNull;
+    }
+
+    @Override
+    public long getPartSizeOrThrow() throws B2CannotComputeException {
+        throw new B2CannotComputeException("cannot determine copied part size.");
     }
 
     @Override

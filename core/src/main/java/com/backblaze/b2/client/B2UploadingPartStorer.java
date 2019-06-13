@@ -5,6 +5,7 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentSources.B2ContentSource;
+import com.backblaze.b2.client.exceptions.B2CannotComputeException;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UploadListener;
@@ -24,6 +25,15 @@ public class B2UploadingPartStorer implements B2PartStorer {
     public B2UploadingPartStorer(int partNumber, B2ContentSource contentSource) {
         this.partNumber = partNumber;
         this.contentSource = contentSource;
+    }
+
+    @Override
+    public long getPartSizeOrThrow() throws B2CannotComputeException {
+        try {
+            return contentSource.getContentLength();
+        } catch (IOException e) {
+            throw new B2CannotComputeException("error computing content source's length.");
+        }
     }
 
     @Override
