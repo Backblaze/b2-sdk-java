@@ -15,10 +15,10 @@ import java.util.Objects;
  *       the contentLength will be at least 40 bytes longer than you expect
  *       because we're adding an ascii-hex-encoded SHA1.
  *
- * NOTE: when storing a large file that involves copying parts, it no
- *       longer becomes possible to reliably compute the startByte for
- *       parts that come after a copied part. As a result, these values
- *       will be set to the constant UNKNOWN_PART_START_BYTE.
+ * NOTE: when storing a large file that involves copying parts, it's not
+ *       possible to reliably compute the startByte for parts that come
+ *       after a copied part. As a result, these values will be set to
+ *       the constant UNKNOWN_PART_START_BYTE.
  *
  *       Additionally, until copied parts are successfully stored and the
  *       B2 API returns the corresponding B2Part, progress events for copied
@@ -31,6 +31,7 @@ public class B2UploadProgress {
      * Placeholder value for part sizes that will not be known until the
      * part is stored in B2. For copy operations, we will not always know
      * the true part size until we receive the B2Part from b2_copy_part.
+     * FYI This will lead to underestimates on the progress percentage.
      */
     public static final long UNKNOWN_PART_SIZE_PLACEHOLDER = 1;
 

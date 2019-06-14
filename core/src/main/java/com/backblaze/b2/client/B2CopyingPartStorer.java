@@ -35,6 +35,11 @@ public class B2CopyingPartStorer implements B2PartStorer {
     }
 
     @Override
+    public int getPartNumber() {
+        return partNumber;
+    }
+
+    @Override
     public long getPartSizeOrThrow() throws B2CannotComputeException {
         throw new B2CannotComputeException("cannot determine copied part size.");
     }

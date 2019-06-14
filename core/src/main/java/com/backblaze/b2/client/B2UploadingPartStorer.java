@@ -28,6 +28,11 @@ public class B2UploadingPartStorer implements B2PartStorer {
     }
 
     @Override
+    public int getPartNumber() {
+        return partNumber;
+    }
+
+    @Override
     public long getPartSizeOrThrow() throws B2CannotComputeException {
         try {
             return contentSource.getContentLength();

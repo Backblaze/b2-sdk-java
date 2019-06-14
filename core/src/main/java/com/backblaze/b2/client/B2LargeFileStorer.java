@@ -22,6 +22,7 @@ import com.backblaze.b2.util.B2ByteRange;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -71,7 +72,7 @@ public class B2LargeFileStorer {
             ExecutorService executor) {
 
         this.fileVersion = fileVersion;
-        this.partStorers = partStorers;
+        this.partStorers = validateAndSortPartStorers(partStorers);
         this.startingBytePositions = computeStartingBytePositions(partStorers);
 
         this.accountAuthCache = accountAuthCache;
@@ -82,12 +83,30 @@ public class B2LargeFileStorer {
         this.executor = executor;
     }
 
-    List<B2PartStorer> getPartStorers() {
+    private List<B2PartStorer> validateAndSortPartStorers(List<B2PartStorer> partStorers) {
+        partStorers.sort(Comparator.comparingInt(B2PartStorer::getPartNumber));
+
+        // Go through the parts - throw if there are duplicates or gaps.
+        for (int i = 0; i < partStorers.size(); i++) {
+            final int expectedPartNumber = i + 1;
+            final int partNumber = partStorers.get(i).getPartNumber();
+
+            if (partNumber < 1) {
+                throw new IllegalArgumentException("invalid part number: " + partNumber);
+            }
+            if (partNumber < expectedPartNumber) {
+                throw new IllegalArgumentException("part number " + partNumber + " has multiple part storers");
+            }
+            if (partNumber > expectedPartNumber) {
+                throw new IllegalArgumentException("part number " + expectedPartNumber + " has no part storers");
+            }
+        }
+
         return partStorers;
     }
 
     private static List<Long> computeStartingBytePositions(List<B2PartStorer> partStorers) {
-        final List<Long> startingPositions = new ArrayList<>();
+        final List<Long> startingPositions = new ArrayList<>(partStorers.size());
 
         long cursor = 0;
         try {
@@ -104,7 +123,15 @@ public class B2LargeFileStorer {
         return startingPositions;
     }
 
-    long getStartByte(int partNumber) {
+    List<B2PartStorer> getPartStorers() {
+        return partStorers;
+    }
+
+
+    /**
+     * @return The start byte for the part, or UNKNOWN_PART_START_BYTE if not known.
+     */
+    long getStartByteOrUnknown(int partNumber) {
         return startingBytePositions.get(partNumber - 1);
     }
 
@@ -211,7 +238,7 @@ public class B2LargeFileStorer {
                 new B2UploadProgress(
                         partNumber - 1,
                         partStorers.size(),
-                        getStartByte(partNumber),
+                        getStartByteOrUnknown(partNumber),
                         partLength,
                         bytesSoFar,
                         uploadState));
@@ -237,7 +264,7 @@ public class B2LargeFileStorer {
                 uploadListener,
                 partNumber - 1,
                 partStorers.size(),
-                getStartByte(partNumber),
+                getStartByteOrUnknown(partNumber),
                 contentSource.getContentLength());
         final B2ByteProgressFilteringListener progressListener = new B2ByteProgressFilteringListener(progressAdapter);
 

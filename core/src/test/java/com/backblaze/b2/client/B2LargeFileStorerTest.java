@@ -16,7 +16,9 @@ import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Matchers;
 
 import java.io.IOException;
@@ -28,6 +30,7 @@ import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.makeSha1;
@@ -74,6 +77,9 @@ public class B2LargeFileStorerTest {
 
     private final B2UploadListener uploadListenerMock = mock(B2UploadListener.class);
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     public B2LargeFileStorerTest() throws B2Exception {
         final B2AccountAuthorization accountAuth = mock(B2AccountAuthorization.class);
         when(accountAuth.getAbsoluteMinimumPartSize()).thenReturn(FIVE_MEGABYTES);
@@ -89,6 +95,59 @@ public class B2LargeFileStorerTest {
     public void tearDown() {
         executor.shutdown();
     }
+
+    public List<B2PartStorer> createB2LargeFileStorerAndGetSortedPartStorers(List<B2PartStorer> outOfOrderPartStorers) {
+        return new B2LargeFileStorer(
+                largeFileVersion,
+                outOfOrderPartStorers,
+                authCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                executor).getPartStorers();
+    }
+
+    @Test
+    public void testOutOfOrderPartStorers() throws IOException {
+        final List<B2PartStorer> partStorers = Arrays.asList(
+                new B2AlreadyStoredPartStorer(part2),
+                new B2UploadingPartStorer(1, createContentSourceWithSize(100)),
+                new B2CopyingPartStorer(3, fileId(3)));
+
+        final List<B2PartStorer> sortedPartStorers = createB2LargeFileStorerAndGetSortedPartStorers(partStorers);
+
+        assertEquals(
+                Arrays.asList(1, 2, 3),
+                sortedPartStorers.stream().map(B2PartStorer::getPartNumber).collect(Collectors.toList())
+        );
+    }
+
+    @Test
+    public void testPartStorers_duplicatePartNumber() throws IOException {
+        final List<B2PartStorer> partStorers = Arrays.asList(
+                new B2AlreadyStoredPartStorer(part2),
+                new B2UploadingPartStorer(1, createContentSourceWithSize(100)),
+                new B2CopyingPartStorer(2, fileId(3)));
+
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("part number 2 has multiple part storers");
+
+        createB2LargeFileStorerAndGetSortedPartStorers(partStorers);
+    }
+
+    @Test
+    public void testPartStorers_missingPartNumber() throws IOException {
+        final List<B2PartStorer> partStorers = Arrays.asList(
+                new B2AlreadyStoredPartStorer(part2),
+                new B2UploadingPartStorer(1, createContentSourceWithSize(100)),
+                new B2CopyingPartStorer(4, fileId(4)));
+
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("part number 3 has no part storers");
+
+        createB2LargeFileStorerAndGetSortedPartStorers(partStorers);
+    }
+
 
     private B2LargeFileStorer createFromLocalContent() throws B2Exception {
         final B2ContentSource contentSource = new TestContentSource(0, FILE_SIZE);
@@ -116,7 +175,7 @@ public class B2LargeFileStorerTest {
                 new B2UploadingPartStorer(1, createContentSourceWithSize(100)),
                 new B2AlreadyStoredPartStorer(part2),
                 new B2CopyingPartStorer(3, fileId(3)),
-                new B2UploadingPartStorer(1, createContentSourceWithSize(900)));
+                new B2UploadingPartStorer(4, createContentSourceWithSize(900)));
 
         return new B2LargeFileStorer(
                 largeFileVersion,
@@ -132,20 +191,20 @@ public class B2LargeFileStorerTest {
     public void testStartByte() throws IOException {
         final B2LargeFileStorer largeFileStorer = createLargeFileStorerForStartByteTests();
 
-        assertEquals(0, largeFileStorer.getStartByte(1));
-        assertEquals(100, largeFileStorer.getStartByte(2));
-        assertEquals(100 + PART_SIZE_FOR_FIRST_TWO, largeFileStorer.getStartByte(3));
-        assertEquals(B2UploadProgress.UNKNOWN_PART_START_BYTE, largeFileStorer.getStartByte(4));
+        assertEquals(0, largeFileStorer.getStartByteOrUnknown(1));
+        assertEquals(100, largeFileStorer.getStartByteOrUnknown(2));
+        assertEquals(100 + PART_SIZE_FOR_FIRST_TWO, largeFileStorer.getStartByteOrUnknown(3));
+        assertEquals(B2UploadProgress.UNKNOWN_PART_START_BYTE, largeFileStorer.getStartByteOrUnknown(4));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testStartByte_partNumberTooLow() throws IOException {
-        createLargeFileStorerForStartByteTests().getStartByte(0);
+        createLargeFileStorerForStartByteTests().getStartByteOrUnknown(0);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void testStartByte_partNumberTooHigh() throws IOException {
-        createLargeFileStorerForStartByteTests().getStartByte(5);
+        createLargeFileStorerForStartByteTests().getStartByteOrUnknown(5);
     }
 
     @Test
@@ -380,7 +439,7 @@ public class B2LargeFileStorerTest {
 
         @Override
         public List<Runnable> shutdownNow() {
-            return null;
+            return new ArrayList<>();
         }
 
         @Override
@@ -394,7 +453,7 @@ public class B2LargeFileStorerTest {
         }
 
         @Override
-        public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+        public boolean awaitTermination(long timeout, TimeUnit unit) {
             return false;
         }
 

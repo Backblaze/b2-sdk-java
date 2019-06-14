@@ -33,6 +33,11 @@ public class B2AlreadyStoredPartStorer implements B2PartStorer {
     }
 
     @Override
+    public int getPartNumber() {
+        return part.getPartNumber();
+    }
+
+    @Override
     public B2Part storePart(
             B2LargeFileStorer largeFileCreationManager,
             B2UploadListener uploadListener) {

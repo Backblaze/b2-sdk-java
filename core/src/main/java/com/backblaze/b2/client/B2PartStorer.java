@@ -19,6 +19,11 @@ import java.io.IOException;
 public interface B2PartStorer {
 
     /**
+     * @return The part number this object will store.
+     */
+    int getPartNumber();
+
+    /**
      * @return The size of the part that this object will store, or throw if that
      * cannot be determined.
      */
