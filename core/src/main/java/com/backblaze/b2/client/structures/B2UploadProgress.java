@@ -31,7 +31,9 @@ public class B2UploadProgress {
      * Placeholder value for part sizes that will not be known until the
      * part is stored in B2. For copy operations, we will not always know
      * the true part size until we receive the B2Part from b2_copy_part.
-     * FYI This will lead to underestimates on the progress percentage.
+     * Unless the part being stored is 1 byte, using this value will lead
+     * to underestimates on the progress percentage until the part is
+     * properly stored.
      */
     public static final long UNKNOWN_PART_SIZE_PLACEHOLDER = 1;
 

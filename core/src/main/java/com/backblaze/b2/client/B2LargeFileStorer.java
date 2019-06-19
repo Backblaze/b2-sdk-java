@@ -304,7 +304,7 @@ public class B2LargeFileStorer {
                     },
                     retryPolicySupplier.get()
             );
-        } catch (Exception e) {
+        } catch (B2Exception e) {
             updateProgress(
                     uploadListener,
                     partNumber,
@@ -367,7 +367,7 @@ public class B2LargeFileStorer {
                         return part;
                     },
                     retryPolicySupplier.get());
-        } catch (Exception e) {
+        } catch (B2Exception e) {
             updateProgress(
                     uploadListener,
                     partNumber,
