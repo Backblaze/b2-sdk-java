@@ -9,8 +9,10 @@ project.ext {
 
 apply from: '../common.gradle'
 
-// this implementation is built on httpclient, which needs commons-logging.
+// this implementation can use either okhttp or apache httpclient
 dependencies {
-    // we need the core of the project!
+    // B2StorageClientFactory determines which one is used depending on
+    // what's in the java classpath at runtime.  for now, build both jars.
     compile project(':httpclient')
+    compile project(':okhttp')
 }
