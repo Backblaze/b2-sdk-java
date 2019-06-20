@@ -45,6 +45,7 @@ import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
+import com.backblaze.b2.client.structures.MetadataDirective;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
@@ -1262,6 +1263,10 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     public void testCopyFile() throws B2Exception {
         final B2CopyFileRequest request = B2CopyFileRequest
                 .builder(fileId(1), fileName(2))
+                .setDestinationBucketId(bucketId(3))
+                .setContentType("b2/x-auto")
+                .setMetadataDirective(MetadataDirective.COPY)
+                .setRange(B2ByteRange.between(10, 100))
                 .build();
         webifier.copyFile(ACCOUNT_AUTH, request);
 
@@ -1274,11 +1279,12 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "request:\n" +
                 "    {\n" +
-                "      \"contentType\": null,\n" +
+                "      \"contentType\": \"b2/x-auto\",\n" +
+                "      \"destinationBucketId\": \"bucket3\",\n" +
                 "      \"fileInfo\": null,\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0002\",\n" +
-                "      \"metadataDirective\": null,\n" +
-                "      \"range\": null,\n" +
+                "      \"metadataDirective\": \"COPY\",\n" +
+                "      \"range\": \"bytes=10-100\",\n" +
                 "      \"sourceFileId\": \"4_zBlah_0000001\"\n" +
                 "    }\n" +
                 "responseClass:\n" +

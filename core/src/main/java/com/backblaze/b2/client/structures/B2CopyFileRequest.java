@@ -17,6 +17,9 @@ public class B2CopyFileRequest {
     @B2Json.required
     private final String sourceFileId;
 
+    @B2Json.optional
+    private final String destinationBucketId;
+
     @B2Json.required
     private final String fileName;
 
@@ -32,9 +35,18 @@ public class B2CopyFileRequest {
     @B2Json.optional
     private final Map<String, String> fileInfo;
 
-    @B2Json.constructor(params = "sourceFileId, fileName, range, metadataDirective, contentType, fileInfo")
-    private B2CopyFileRequest(String sourceFileId, String fileName, String range, MetadataDirective metadataDirective, String contentType, Map<String, String> fileInfo) {
+    @B2Json.constructor(params = "sourceFileId, destinationBucketId, fileName, range, metadataDirective, contentType, fileInfo")
+    private B2CopyFileRequest(
+            String sourceFileId,
+            String destinationBucketId,
+            String fileName,
+            String range,
+            MetadataDirective metadataDirective,
+            String contentType,
+            Map<String, String> fileInfo) {
+
         this.sourceFileId = sourceFileId;
+        this.destinationBucketId = destinationBucketId;
         this.fileName = fileName;
         this.range = range;
         this.metadataDirective = metadataDirective;
@@ -42,12 +54,12 @@ public class B2CopyFileRequest {
         this.fileInfo = fileInfo;
     }
 
-    public static Builder builder(String sourceFileId, String fileName) {
-        return new Builder(sourceFileId, fileName);
-    }
-
     public String getSourceFileId() {
         return sourceFileId;
+    }
+
+    public String getDestinationBucketId() {
+        return destinationBucketId;
     }
 
     public String getFileName() {
@@ -75,22 +87,27 @@ public class B2CopyFileRequest {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         B2CopyFileRequest that = (B2CopyFileRequest) o;
-        return Objects.equals(getSourceFileId(), that.getSourceFileId()) &&
-                Objects.equals(getFileName(), that.getFileName()) &&
-                Objects.equals(getRange(), that.getRange()) &&
-                getMetadataDirective() == that.getMetadataDirective() &&
-                Objects.equals(getContentType(), that.getContentType()) &&
-                Objects.equals(getFileInfo(), that.getFileInfo());
+        return Objects.equals(sourceFileId, that.sourceFileId) &&
+                Objects.equals(destinationBucketId, that.destinationBucketId) &&
+                Objects.equals(fileName, that.fileName) &&
+                Objects.equals(range, that.range) &&
+                metadataDirective == that.metadataDirective &&
+                Objects.equals(contentType, that.contentType) &&
+                Objects.equals(fileInfo, that.fileInfo);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                getSourceFileId(), getFileName(), getRange(), getMetadataDirective(), getContentType(), getFileInfo());
+        return Objects.hash(sourceFileId, destinationBucketId, fileName, range, metadataDirective, contentType, fileInfo);
+    }
+
+    public static Builder builder(String sourceFileId, String fileName) {
+        return new Builder(sourceFileId, fileName);
     }
 
     public static class Builder {
         private final String sourceFileId;
+        private String destinationBucketId;
         private final String fileName;
         private B2ByteRange range;
         private MetadataDirective metadataDirective;
@@ -100,6 +117,11 @@ public class B2CopyFileRequest {
         public Builder(String sourceFileId, String fileName) {
             this.sourceFileId = sourceFileId;
             this.fileName = fileName;
+        }
+
+        public Builder setDestinationBucketId(String destinationBucketId) {
+            this.destinationBucketId = destinationBucketId;
+            return this;
         }
 
         public Builder setRange(B2ByteRange range) {
@@ -125,6 +147,7 @@ public class B2CopyFileRequest {
         public B2CopyFileRequest build() {
             return new B2CopyFileRequest(
                     sourceFileId,
+                    destinationBucketId,
                     fileName,
                     range == null ? null : range.toString(),
                     metadataDirective,
