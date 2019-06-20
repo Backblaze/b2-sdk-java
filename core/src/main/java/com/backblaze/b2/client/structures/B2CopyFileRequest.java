@@ -14,6 +14,9 @@ import java.util.Objects;
 
 public class B2CopyFileRequest {
 
+    public static final String COPY_METADATA_DIRECTIVE = "COPY";
+    public static final String REPLACE_METADATA_DIRECTIVE = "REPLACE";
+
     @B2Json.required
     private final String sourceFileId;
 
@@ -27,7 +30,7 @@ public class B2CopyFileRequest {
     private final String range;
 
     @B2Json.optionalWithDefault(defaultValue = "\"COPY\"")
-    private final MetadataDirective metadataDirective;
+    private final String metadataDirective;
 
     @B2Json.optional
     private final String contentType;
@@ -41,7 +44,7 @@ public class B2CopyFileRequest {
             String destinationBucketId,
             String fileName,
             String range,
-            MetadataDirective metadataDirective,
+            String metadataDirective,
             String contentType,
             Map<String, String> fileInfo) {
 
@@ -70,7 +73,7 @@ public class B2CopyFileRequest {
         return range;
     }
 
-    public MetadataDirective getMetadataDirective() {
+    public String getMetadataDirective() {
         return metadataDirective;
     }
 
@@ -110,7 +113,7 @@ public class B2CopyFileRequest {
         private String destinationBucketId;
         private final String fileName;
         private B2ByteRange range;
-        private MetadataDirective metadataDirective;
+        private String metadataDirective;
         private String contentType;
         private Map<String, String> fileInfo;
 
@@ -129,7 +132,7 @@ public class B2CopyFileRequest {
             return this;
         }
 
-        public Builder setMetadataDirective(MetadataDirective metadataDirective) {
+        public Builder setMetadataDirective(String metadataDirective) {
             this.metadataDirective = metadataDirective;
             return this;
         }

@@ -45,7 +45,6 @@ import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
-import com.backblaze.b2.client.structures.MetadataDirective;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
@@ -1265,7 +1264,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 .builder(fileId(1), fileName(2))
                 .setDestinationBucketId(bucketId(3))
                 .setContentType("b2/x-auto")
-                .setMetadataDirective(MetadataDirective.COPY)
+                .setMetadataDirective(B2CopyFileRequest.COPY_METADATA_DIRECTIVE)
                 .setRange(B2ByteRange.between(10, 100))
                 .build();
         webifier.copyFile(ACCOUNT_AUTH, request);
