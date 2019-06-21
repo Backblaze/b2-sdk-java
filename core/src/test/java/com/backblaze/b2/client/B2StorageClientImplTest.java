@@ -14,6 +14,7 @@ import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
+import com.backblaze.b2.client.structures.B2CopyFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequest;
@@ -798,6 +799,20 @@ public class B2StorageClientImplTest extends B2BaseTest {
         //noinspection ResultOfMethodCallIgnored
         uploadUrl.hashCode();
         assertEquals(uploadUrl, new B2UploadUrlResponse(bucketId(1), "uploadUrl", "uploadAuthToken"));
+    }
+
+    @Test
+    public void testSmallFileCopy() throws B2Exception {
+        final B2FileVersion fileVersion = makeVersion(2, 2);
+        final B2CopyFileRequest request = B2CopyFileRequest.builder(fileId(1), fileName(2)).build();
+        when(webifier.copyFile(anyObject(), eq(request))).thenReturn(fileVersion);
+
+        assertEquals(fileVersion, client.copySmallFile(request));
+        verify(webifier, times(1)).copyFile(anyObject(), eq(request));
+
+        // for coverage
+        //noinspection ResultOfMethodCallIgnored
+        request.hashCode();
     }
 
     @Test

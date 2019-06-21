@@ -17,6 +17,7 @@ import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
+import com.backblaze.b2.client.structures.B2CopyFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
 import com.backblaze.b2.client.structures.B2CreateKeyRequestReal;
 import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
@@ -285,6 +286,15 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 throw e;
             }
         }
+    }
+
+    @Override
+    public B2FileVersion copyFile(B2AccountAuthorization accountAuth, B2CopyFileRequest request) throws B2Exception {
+            return webApiClient.postJsonReturnJson(
+                    makeUrl(accountAuth, "b2_copy_file"),
+                    makeHeaders(accountAuth),
+                    request,
+                    B2FileVersion.class);
     }
 
     @Override
