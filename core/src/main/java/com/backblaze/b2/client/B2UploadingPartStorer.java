@@ -5,9 +5,12 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentSources.B2ContentSource;
+import com.backblaze.b2.client.exceptions.B2CannotComputeException;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2UploadListener;
 
+import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -25,8 +28,25 @@ public class B2UploadingPartStorer implements B2PartStorer {
     }
 
     @Override
-    public B2Part storePart(B2LargeFileStorer largeFileCreationManager) throws B2Exception {
-        return largeFileCreationManager.uploadPart(partNumber, contentSource);
+    public int getPartNumber() {
+        return partNumber;
+    }
+
+    @Override
+    public long getPartSizeOrThrow() throws B2CannotComputeException {
+        try {
+            return contentSource.getContentLength();
+        } catch (IOException e) {
+            throw new B2CannotComputeException("error computing content source's length.");
+        }
+    }
+
+    @Override
+    public B2Part storePart(
+            B2LargeFileStorer largeFileCreationManager,
+            B2UploadListener uploadListener) throws IOException, B2Exception {
+
+        return largeFileCreationManager.uploadPart(partNumber, contentSource, uploadListener);
     }
 
     @Override

@@ -39,6 +39,7 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 
@@ -237,6 +238,9 @@ public interface B2StorageClient extends Closeable {
      * @param fileVersion The B2FileVersion for the large file getting stored.
      *                    This is the return value of startLargeFile().
      * @param contentSource The contentSource to upload.
+     * @param uploadListenerOrNull The object that handles upload progress events.
+     *                             This may be null if you do not need to be notified
+     *                             of progress events.
      * @param executor The executor for uploading parts in parallel. The caller
      *                 retains ownership of the executor and is responsible for
      *                 shutting it down.
@@ -246,6 +250,7 @@ public interface B2StorageClient extends Closeable {
     B2FileVersion storeLargeFileFromLocalContent(
             B2FileVersion fileVersion,
             B2ContentSource contentSource,
+            B2UploadListener uploadListenerOrNull,
             ExecutorService executor) throws B2Exception;
 
     /**
@@ -272,6 +277,9 @@ public interface B2StorageClient extends Closeable {
      *                    This is the return value of startLargeFile().
      * @param partStorers The list of objects that know how to store the part
      *                    they are responsible for.
+     * @param uploadListenerOrNull The object that handles upload progress events.
+     *                             This may be null if you do not need to be notified
+     *                             of progress events.
      * @param executor The executor for uploading parts in parallel. The caller
      *                 retains ownership of the executor and is responsible for
      *                 shutting it down.
@@ -279,7 +287,9 @@ public interface B2StorageClient extends Closeable {
      * @throws B2Exception If there's trouble.
      */
     B2FileVersion storeLargeFile(
-            B2FileVersion fileVersion, List<B2PartStorer> partStorers,
+            B2FileVersion fileVersion,
+            List<B2PartStorer> partStorers,
+            B2UploadListener uploadListenerOrNull,
             ExecutorService executor) throws B2Exception;
 
     /**

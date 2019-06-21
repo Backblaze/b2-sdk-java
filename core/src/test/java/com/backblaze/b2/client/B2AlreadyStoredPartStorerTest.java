@@ -4,8 +4,8 @@
  */
 package com.backblaze.b2.client;
 
-import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import org.junit.Test;
 
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
@@ -15,10 +15,12 @@ import static org.mockito.Mockito.mock;
 
 public class B2AlreadyStoredPartStorerTest {
 
+    private B2UploadListener uploadListener = mock(B2UploadListener.class);
+
     @Test
-    public void testStorePart() throws B2Exception {
+    public void testStorePart() {
         final B2Part part = new B2Part(fileId(1), 2, 10000000, makeSha1(1), 1111);
         final B2AlreadyStoredPartStorer partStorer = new B2AlreadyStoredPartStorer(part);
-        assertEquals(part, partStorer.storePart(mock(B2LargeFileStorer.class)));
+        assertEquals(part, partStorer.storePart(mock(B2LargeFileStorer.class), uploadListener));
     }
 }
