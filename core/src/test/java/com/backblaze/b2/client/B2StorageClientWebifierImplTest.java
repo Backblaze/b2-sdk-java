@@ -15,6 +15,7 @@ import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
+import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2CopyFileRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
@@ -1157,6 +1158,32 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
 
         checkRequestCategory(UPLOADING, w -> w.uploadPart(partUrl, request));
+    }
+
+    @Test
+    public void testCopyPart() throws B2Exception {
+        final B2CopyPartRequest request = B2CopyPartRequest
+                .builder(3, fileId(1), fileId(2))
+                .build();
+        webifier.copyPart(ACCOUNT_AUTH, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_copy_part\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"largeFileId\": \"4_zBlah_0000002\",\n" +
+                "      \"partNumber\": 3,\n" +
+                "      \"range\": null,\n" +
+                "      \"sourceFileId\": \"4_zBlah_0000001\"\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2Part\n"
+        );
     }
 
     @Test

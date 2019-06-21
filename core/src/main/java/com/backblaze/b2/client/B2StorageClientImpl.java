@@ -50,6 +50,7 @@ import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 
@@ -228,6 +229,42 @@ public class B2StorageClientImpl implements B2StorageClient {
         final B2PartSizes partSizes = getPartSizes();
 
         return uploadLargeFileGuts(executor, partSizes, request, contentLength);
+    }
+
+    @Override
+    public B2FileVersion storeLargeFileFromLocalContent(
+            B2FileVersion fileVersion,
+            B2ContentSource contentSource,
+            B2UploadListener uploadListener,
+            ExecutorService executor) throws B2Exception {
+
+        return B2LargeFileStorer.forLocalContent(
+                fileVersion,
+                contentSource,
+                getPartSizes(),
+                accountAuthCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                executor).storeFile(uploadListener);
+    }
+
+    @Override
+    public B2FileVersion storeLargeFile(
+            B2FileVersion fileVersion,
+            List<B2PartStorer> partStorers,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception {
+
+        // Instantiate and return the manager.
+        return new B2LargeFileStorer(
+                fileVersion,
+                partStorers,
+                accountAuthCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                executor).storeFile(uploadListenerOrNull);
     }
 
     private B2FileVersion uploadLargeFileGuts(ExecutorService executor,
