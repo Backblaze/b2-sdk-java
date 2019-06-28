@@ -72,7 +72,7 @@ public class B2LargeFileStorer {
             ExecutorService executor) {
 
         this.fileVersion = fileVersion;
-        this.partStorers = validateAndSortPartStorers(partStorers);
+        this.partStorers = validateAndSortPartStorers(new ArrayList<>(partStorers));
         this.startingBytePositions = computeStartingBytePositions(partStorers);
 
         this.accountAuthCache = accountAuthCache;
