@@ -1334,6 +1334,25 @@ public class B2JsonTest extends B2BaseTest {
         }
     }
 
+    private static class OptionalWithDefaultInvalidValue {
+        @B2Json.optionalWithDefault(defaultValue = "xxx")
+        private final int count;
+
+        @B2Json.constructor(params = "count")
+        private OptionalWithDefaultInvalidValue(int count) {
+            this.count = count;
+        }
+    }
+
+    @Test
+    public void testInvalidValueInOptionalWithDefault() throws B2JsonException {
+        // Any use of the class with B2Json should trigger the exception.  Even
+        // serializing will need to initialize the handler, which should trigger
+        // an error.
+        thrown.expectMessage("error in default value for OptionalWithDefaultInvalidValue.count: xxx");
+        B2Json.get().toJson(new OptionalWithDefaultInvalidValue(0));
+    }
+
     @Test
     public void testVersionRangeBackwards() throws B2JsonException {
         thrown.expectMessage("last version 1 is before first version 2 in class com.backblaze.b2.json.B2JsonTest$VersionRangeBackwardsClass");

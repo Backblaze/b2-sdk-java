@@ -43,9 +43,17 @@ public class B2JsonHandlerMap {
     /**
      * Handlers that need to be initialized.
      *
+     * Handlers are added when they are added to the map, and removed when they are initialized.
+     *
      * Guarded by: this
      */
     private final Stack<B2JsonInitializedTypeHandler> handlersToInitialize = new Stack<>();
+
+    /**
+     * Handlers that need to have their default values checked.  This can only be done after
+     * all handlers are initialized, because the default values may require all of the handlers.
+     */
+    private final Stack<B2JsonInitializedTypeHandler> handlersToCheckDefaultValues = new Stack<>();
 
     /**
      * Sets up a new map.
@@ -89,9 +97,25 @@ public class B2JsonHandlerMap {
      * Gets the handler for a given class at the top level.
      */
     public synchronized <T> B2JsonTypeHandler<T> getHandler(Class<T> clazz) throws B2JsonException {
+
+        // Create any handlers that need to be created.
         B2JsonTypeHandler<T> handler = getUninitializedHandler(clazz);
-        while (!handlersToInitialize.isEmpty()) {
-            handlersToInitialize.pop().initialize(this);
+
+        // If we created some handlers, then we need to initialize them and validate their
+        // default values.
+        //
+        // The reason for validating default values is so that we don't create a handler with
+        // bad defaults, and then not find out until much later when they happen to be used.
+        if (!handlersToInitialize.isEmpty()) {
+            while (!handlersToInitialize.isEmpty()) {
+                final B2JsonInitializedTypeHandler handlerToInitialize = handlersToInitialize.pop();
+                handlerToInitialize.initialize(this);
+                handlersToCheckDefaultValues.push(handlerToInitialize);
+            }
+
+            while (!handlersToCheckDefaultValues.isEmpty()) {
+                handlersToCheckDefaultValues.pop().checkDefaultValues();
+            }
         }
         return handler;
     }
