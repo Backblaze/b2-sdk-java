@@ -43,6 +43,11 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     private final Class<T> clazz;
 
     /**
+     * The union class that this one belongs to, or null if there is not one.
+     */
+    private final Class<?> unionClass;
+
+    /**
      * Non-null iff this class is the member of a union type.
      */
     private final String unionTypeFieldName;
@@ -91,18 +96,21 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
         // Is this a member of a union type?
         {
+            Class<?> unionClass = null;
             String fieldName = null;
             String fieldValue = null;
             for (Class<?> parent = clazz.getSuperclass(); parent != null; parent = parent.getSuperclass()) {
                 if (B2JsonHandlerMap.isUnionBase(parent)) {
+                    unionClass = parent;
+                    fieldName = parent.getAnnotation(B2Json.union.class).typeField();
                     fieldValue = B2JsonUnionBaseHandler.getUnionTypeMap(parent).getTypeNameOrNullForClass(clazz);
                     if (fieldValue == null) {
                         throw new B2JsonException("class " + clazz + " inherits from " + parent + ", but is not in the type map");
                     }
-                    fieldName = parent.getAnnotation(B2Json.union.class).typeField();
                     break;
                 }
             }
+            this.unionClass = unionClass;
             this.unionTypeFieldName = fieldName;
             this.unionTypeFieldValue = fieldValue;
         }
@@ -120,6 +128,13 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     }
 
     protected void initializeImplementation(B2JsonHandlerMap handlerMap) throws B2JsonException {
+
+        // If we're a member of a union, force creation of the union to do checking on it.
+        // Even if the caller is just serializing this subclass, we want to make sure the whole
+        // union is valid.
+        if (unionClass != null) {
+            handlerMap.getUninitializedHandler(unionClass);
+        }
 
         // Get information on all of the fields in the class.
         for (Field field : getObjectFieldsForJson(clazz)) {
@@ -227,15 +242,13 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                             new B2JsonReader(new StringReader(field.defaultValueJsonOrNull)),
                             B2JsonOptions.DEFAULT
                     );
-                }
-                catch (B2JsonException | IOException e) {
+                } catch (B2JsonException | IOException e) {
                     throw new B2JsonException("error in default value for " +
                             clazz.getSimpleName() + "." + field.getName() + ": " +
-                            field.defaultValueJsonOrNull);
+                            e.getMessage());
                 }
             }
         }
-
     }
 
     /**

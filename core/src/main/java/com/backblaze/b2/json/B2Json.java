@@ -463,6 +463,17 @@ public class B2Json {
     }
 
     /**
+     * <p>Class annotation that applies to a class that is a @union.</p>
+     *
+     * <p>The value provided when de-serializing and the type is unknown.</p>
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface defaultForUnknownType {
+        String value();
+    }
+
+    /**
      * Field annotation that says a field is required to be present.
      */
     @Retention(RetentionPolicy.RUNTIME)

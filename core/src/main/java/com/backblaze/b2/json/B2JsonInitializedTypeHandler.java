@@ -15,7 +15,7 @@ import com.backblaze.b2.util.B2Preconditions;
  * the necessary information at hand.  This gets tricky because dependencies between
  * handlers may have loops.
  *
- * The plan is to initialize in two phases:
+ * The plan is to initialize in three phases:
  *
  * First, the constructor, which must not depend on any other handlers, and which
  * must gather all of the information that other handlers will need.
@@ -23,7 +23,10 @@ import com.backblaze.b2.util.B2Preconditions;
  * Second, the initialize() method does any work that needs information from other
  * type handlers.
  *
- * Both phases are protected by the lock on B2JsonHandlerMap, so they don't need to
+ * Third, check the validity of default values, now that all type handlers have
+ * gone through at least the second phase.
+ *
+ * All phases are protected by the lock on B2JsonHandlerMap, so they don't need to
  * lock, and the data they store in the object is guaranteed to be visible without
  * further locking.
  *
