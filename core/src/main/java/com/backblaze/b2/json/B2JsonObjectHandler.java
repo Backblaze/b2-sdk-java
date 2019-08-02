@@ -7,6 +7,7 @@ package com.backblaze.b2.json;
 
 import com.backblaze.b2.json.FieldInfo.FieldRequirement;
 import com.backblaze.b2.util.B2Collections;
+import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -16,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -53,7 +55,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     /**
      * All of the non-static fields of the class, in alphabetical order.
      */
-    private final FieldInfo [] fields;
+    private FieldInfo [] fields;
 
     /**
      * Map from field name to field.
@@ -63,27 +65,27 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     /**
      * The constructor to use.
      */
-    private final Constructor<T> constructor;
+    private Constructor<T> constructor;
 
     /**
      * Number of parameters to constructor.
      */
-    private final int constructorParamCount;
+    private int constructorParamCount;
 
     /**
      * Position of version parameter to constructor.
      */
-    private final Integer versionParamIndexOrNull;
+    private Integer versionParamIndexOrNull;
 
     /**
      * null or a set containing the names of fields to discard during parsing.
      */
-    private final Set<String> fieldsToDiscard;
+    private Set<String> fieldsToDiscard;
 
     /**
      * Sets up a new handler for this class based on reflection for the class.
      */
-    /*package*/ B2JsonObjectHandler(Class<T> clazz, B2JsonHandlerMap handlerMap) throws B2JsonException {
+    /*package*/ B2JsonObjectHandler(Class<T> clazz) throws B2JsonException {
 
         this.clazz = clazz;
 
@@ -103,28 +105,31 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             }
             this.unionTypeFieldName = fieldName;
             this.unionTypeFieldValue = fieldValue;
-
         }
+    }
 
-        // Add the B2JsonObjectHandler for this class into to the handlerMap before descending into the class's
-        // fields, so that if it's encountered recursively (such as in a tree structure), then it's used to
-        // describe the recursion instead of following that recursion forever.. or at least until the stack
-        // overflows.
-        //
-        // See comment on rememberHandler() about thread safety.
-        handlerMap.rememberHandler(clazz, this);
+    /*package*/ static List<Field> getObjectFieldsForJson(Class<?> clazz) throws B2JsonException {
+        final List<Field> result = new ArrayList<>();
+        for (Field field : clazz.getDeclaredFields()) {
+            FieldRequirement requirement = getFieldRequirement(clazz, field);
+            if (!Modifier.isStatic(field.getModifiers()) && requirement != FieldRequirement.IGNORED) {
+                result.add(field);
+            }
+        }
+        return result;
+    }
+
+    protected void initializeImplementation(B2JsonHandlerMap handlerMap) throws B2JsonException {
 
         // Get information on all of the fields in the class.
-        for (Field field : clazz.getDeclaredFields()) {
-            FieldRequirement requirement = getFieldRequirement(field);
-            if (!Modifier.isStatic(field.getModifiers()) && requirement != FieldRequirement.IGNORED) {
-                final B2JsonTypeHandler<?> handler = getFieldHandler(field.getGenericType(), handlerMap);
-                final Object defaultValueOrNull = getDefaultValueOrNull(field, handler);
-                final VersionRange versionRange = getVersionRange(field);
-                final boolean isSensitive = field.getAnnotation(B2Json.sensitive.class) != null;
-                final FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueOrNull, versionRange, isSensitive);
-                fieldMap.put(field.getName(), fieldInfo);
-            }
+        for (Field field : getObjectFieldsForJson(clazz)) {
+            final FieldRequirement requirement = getFieldRequirement(clazz, field);
+            final B2JsonTypeHandler<?> handler = getFieldHandler(field.getGenericType(), handlerMap);
+            final Object defaultValueOrNull = getDefaultValueOrNull(field, handler);
+            final VersionRange versionRange = getVersionRange(field);
+            final boolean isSensitive = field.getAnnotation(B2Json.sensitive.class) != null;
+            final FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueOrNull, versionRange, isSensitive);
+            fieldMap.put(field.getName(), fieldInfo);
         }
         fields = fieldMap.values().toArray(new FieldInfo [fieldMap.size()]);
         Arrays.sort(fields);
@@ -206,13 +211,6 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 }
             }
         }
-    }
-
-    /**
-     * Returns the information about all fields in the object.
-     */
-    /*package*/  Map<String, FieldInfo> getFieldMap() {
-        return fieldMap;
     }
 
     private Object getDefaultValueOrNull(Field field, B2JsonTypeHandler<?> handler) throws B2JsonException {
@@ -309,12 +307,12 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         if (fieldType instanceof Class) {
             final Class fieldClass = (Class) fieldType;
             //noinspection unchecked
-            return handlerMap.getHandler(fieldClass);
+            return handlerMap.getUninitializedHandler(fieldClass);
         }
         throw new B2JsonException("Do not know how to handle: " + fieldType);
     }
 
-    private FieldRequirement getFieldRequirement(Field field) throws B2JsonException {
+    private static FieldRequirement getFieldRequirement(Class<?> clazz, Field field) throws B2JsonException {
 
         // We never handle static fields
         int modifiers = field.getModifiers();
@@ -359,6 +357,9 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      * The type name field for a member of a union type is added alphabetically in sequence, if needed.
      */
     public void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
+
+        B2Preconditions.checkState(isInitialized());
+
         try {
             final int version = options.getVersion();
             boolean typeFieldDone = false;  // whether the type field for a member of a union type has been emitted
@@ -397,6 +398,8 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     }
 
     public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
+
+        B2Preconditions.checkState(isInitialized());
 
         if (fields == null) {
             throw new B2JsonException("B2JsonObjectHandler.deserializes called with null fields");
@@ -449,6 +452,8 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
     public T deserializeFromFieldNameToValueMap(Map<String, Object> fieldNameToValue, B2JsonOptions options) throws B2JsonException {
 
+        B2Preconditions.checkState(isInitialized());
+
         final int version = options.getVersion();
         final Object [] constructorArgs = new Object [fields.length];
 
@@ -480,6 +485,8 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     }
 
     public T deserializeFromUrlParameterMap(Map<String, String> parameterMap, B2JsonOptions options) throws B2JsonException {
+
+        B2Preconditions.checkState(isInitialized());
 
         final int version = options.getVersion();
         final Object [] constructorArgs = new Object [fields.length];
@@ -514,6 +521,9 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     }
 
     private T deserializeFromConstructorArgs(Object[] constructorArgs, int version) throws B2JsonException {
+
+        B2Preconditions.checkState(isInitialized());
+
         if (fields == null) {
             throw new B2JsonException("B2JsonObjectHandler.deserializeFromConstructorArgs called with null fields");
         }

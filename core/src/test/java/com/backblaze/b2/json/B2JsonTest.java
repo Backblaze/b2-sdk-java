@@ -2080,4 +2080,30 @@ public class B2JsonTest extends B2BaseTest {
         }
     }
 
+    @Test
+    public void testRecursiveUnion() {
+        final String json = B2Json.toJsonOrThrowRuntime(new RecursiveUnionNode(new RecursiveUnionNode(null)));
+        B2Json.fromJsonOrThrowRuntime(json, RecursiveUnion.class);
+    }
+
+    @B2Json.union(typeField = "type")
+    private static class RecursiveUnion {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("node", RecursiveUnionNode.class)
+                    .build();
+        }
+    }
+
+    private static class RecursiveUnionNode extends RecursiveUnion {
+
+        @B2Json.optional
+        private final RecursiveUnion recursiveUnion;
+
+        @B2Json.constructor(params = "recursiveUnion")
+        private RecursiveUnionNode(RecursiveUnion recursiveUnion) {
+            this.recursiveUnion = recursiveUnion;
+        }
+    }
 }
