@@ -101,7 +101,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             if (!hasSuperclass(typeClass, clazz)) { // use clazz.isAssignableFrom(typeClass)?
                 throw new B2JsonException(typeClass + " is not a subclass of " + clazz);
             }
-            final B2JsonTypeHandler<?> handler = b2JsonHandlerMap.getHandler(typeClass);
+            final B2JsonTypeHandler<?> handler = b2JsonHandlerMap.getUninitializedHandler(typeClass);
             if (handler instanceof B2JsonObjectHandler) {
                 typeNameToHandler.put(typeName, (B2JsonObjectHandler) handler);
                 classToHandler.put(typeClass, (B2JsonObjectHandler) handler);

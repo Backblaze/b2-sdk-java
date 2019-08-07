@@ -30,6 +30,9 @@ import com.backblaze.b2.util.B2Preconditions;
  * Methods that return data set during initialize() should include this check:
  *
  *     Preconditions.checkState(isInitialized());
+ *
+ * NOTE: adding the initialize() method to BzJsonTypeHandler would change the interface
+ * and break any clients who have written then own handlers.
  */
 public abstract class B2JsonInitializedTypeHandler<T> implements B2JsonTypeHandler<T> {
 
@@ -59,7 +62,6 @@ public abstract class B2JsonInitializedTypeHandler<T> implements B2JsonTypeHandl
 
     /**
      * Has the initialize method run?
-     * @return
      */
     protected boolean isInitialized() {
         return initialized;
