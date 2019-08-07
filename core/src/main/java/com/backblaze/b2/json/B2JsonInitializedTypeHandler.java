@@ -35,7 +35,7 @@ import com.backblaze.b2.util.B2Preconditions;
  *     Preconditions.checkState(isInitialized());
  *
  * NOTE: adding the initialize() method to BzJsonTypeHandler would change the interface
- * and break any clients who have written then own handlers.
+ * and break any clients who have written their own handlers.
  */
 public abstract class B2JsonInitializedTypeHandler<T> implements B2JsonTypeHandler<T> {
 
