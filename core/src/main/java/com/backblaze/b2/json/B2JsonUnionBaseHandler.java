@@ -5,6 +5,8 @@
 
 package com.backblaze.b2.json;
 
+import com.backblaze.b2.util.B2Preconditions;
+
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -37,12 +39,12 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     /**
      * Mapping from type name (in the type name field of a serialized object) to class.
      */
-    private final Map<String, B2JsonObjectHandler<?>> typeNameToHandler;
+    private Map<String, B2JsonObjectHandler<?>> typeNameToHandler;
 
     /**
      * Mapping from registered classes to their handlers.
      */
-    private final Map<Class<?>, B2JsonObjectHandler<?>> classToHandler;
+    private Map<Class<?>, B2JsonObjectHandler<?>> classToHandler;
 
     /**
      * Handlers for all of the fields in all of the subclasses.
@@ -51,10 +53,10 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      * with the same name must be of the same type.  This allows us to de-serialize
      * the fields before we know which subclass they belong to.
      */
-    private final Map<String, B2JsonTypeHandler<?>> fieldNameToHandler;
+    private Map<String, B2JsonTypeHandler<?>> fieldNameToHandler;
 
 
-    /*package*/ B2JsonUnionBaseHandler(Class<T> clazz, B2JsonHandlerMap handlerMap) throws B2JsonException {
+    /*package*/ B2JsonUnionBaseHandler(Class<T> clazz) throws B2JsonException {
 
         this.clazz = clazz;
 
@@ -81,6 +83,12 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         final B2Json.union union = clazz.getAnnotation(B2Json.union.class);
         this.typeNameField = union.typeField();
 
+
+    }
+
+    @Override
+    protected void initializeImplementation(B2JsonHandlerMap b2JsonHandlerMap) throws B2JsonException {
+
         // Get the map of type name to class of all the members of the union.
         final Map<String, Class<?>> typeNameToClass = getUnionTypeMap(clazz).getTypeNameToClass();
 
@@ -93,7 +101,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             if (!hasSuperclass(typeClass, clazz)) { // use clazz.isAssignableFrom(typeClass)?
                 throw new B2JsonException(typeClass + " is not a subclass of " + clazz);
             }
-            final B2JsonTypeHandler<?> handler = handlerMap.getHandler(typeClass);
+            final B2JsonTypeHandler<?> handler = b2JsonHandlerMap.getUninitializedHandler(typeClass);
             if (handler instanceof B2JsonObjectHandler) {
                 typeNameToHandler.put(typeName, (B2JsonObjectHandler) handler);
                 classToHandler.put(typeClass, (B2JsonObjectHandler) handler);
@@ -108,10 +116,9 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         fieldNameToHandler = new HashMap<>();
         final Map<String, String> fieldNameToSourceClassName = new HashMap<>();
         for (Class<?> subclass : typeNameToClass.values()) {
-            B2JsonObjectHandler<?> subclassHandler = (B2JsonObjectHandler<?>) handlerMap.getHandler(subclass);
-            for (FieldInfo fieldInfo : subclassHandler.getFieldMap().values()) {
-                final String fieldName = fieldInfo.getName();
-                final B2JsonTypeHandler handler = fieldInfo.getHandler();
+            for (Field field : B2JsonObjectHandler.getObjectFieldsForJson(subclass)) {
+                final String fieldName = field.getName();
+                final B2JsonTypeHandler handler = b2JsonHandlerMap.getUninitializedHandler(field.getType());
                 if (fieldNameToHandler.containsKey(fieldName)) {
                     // We have seen this field name before.  Throw an error if the type is different
                     // than before.
@@ -205,6 +212,9 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
     @Override
     public void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
+
+        B2Preconditions.checkState(isInitialized());
+
         if (obj.getClass() == clazz) {
             // the union base class is basically "abstract" and can't be serialized.
             throw new B2JsonException("" + clazz + " is a union base class, and cannot be serialized");
@@ -227,6 +237,8 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
     @Override
     public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
+
+        B2Preconditions.checkState(isInitialized());
 
         // Gather the values of all fields present, and also the name of the type of object to create.
         String typeName = null;

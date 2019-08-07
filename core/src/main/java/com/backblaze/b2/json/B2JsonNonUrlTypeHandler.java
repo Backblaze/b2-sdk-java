@@ -8,7 +8,7 @@ package com.backblaze.b2.json;
 /**
  * Base class for handlers that don't support reading URL parameters.
  */
-public abstract class B2JsonNonUrlTypeHandler<T> implements B2JsonTypeHandler<T> {
+public abstract class B2JsonNonUrlTypeHandler<T> extends B2JsonInitializedTypeHandler<T> {
 
     public T deserializeUrlParam(String urlValue) throws B2JsonException {
         throw new B2JsonException("type not supported in URL parameter");

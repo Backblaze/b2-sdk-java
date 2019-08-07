@@ -5,6 +5,8 @@
 
 package com.backblaze.b2.json;
 
+import com.backblaze.b2.util.B2Preconditions;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -14,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 /**
  * Holds a mapping from Class to B2JsonTypeHandler.
@@ -36,6 +39,14 @@ public class B2JsonHandlerMap {
     public B2JsonHandlerMap() {
         this(null);
     }
+
+    /**
+     * Handlers that need to be initialized.
+     *
+     * Guarded by: this
+     */
+    private final Stack<B2JsonInitializedTypeHandler> handlersToInitialize = new Stack<>();
+
     /**
      * Sets up a new map.
      */
@@ -78,8 +89,22 @@ public class B2JsonHandlerMap {
      * Gets the handler for a given class at the top level.
      */
     public synchronized <T> B2JsonTypeHandler<T> getHandler(Class<T> clazz) throws B2JsonException {
+        B2JsonTypeHandler<T> handler = getUninitializedHandler(clazz);
+        while (!handlersToInitialize.isEmpty()) {
+            handlersToInitialize.pop().initialize(this);
+        }
+        return handler;
+    }
 
-        @SuppressWarnings("unchecked")
+    /**
+     * Gets the handler for a given class at the top level.
+     *
+     * The handler MAY NOT BE INITIALIZED.  This method is for use by handlers that need to get
+     * a reference to another handler in their initialize() methods.  You cannot assume that any
+     * fields set by initialize() have been set.
+     */
+    /*package*/ synchronized <T> B2JsonTypeHandler<T> getUninitializedHandler(Class<T> clazz) throws B2JsonException {
+
         B2JsonTypeHandler<T> result = lookupHandler(clazz);
 
         if (result == null) {
@@ -101,11 +126,11 @@ public class B2JsonHandlerMap {
                 result = (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
                 rememberHandler(clazz, result);
             } else if (isUnionBase(clazz)) {
-                result = (B2JsonTypeHandler<T>) new B2JsonUnionBaseHandler(clazz, this);
+                result = (B2JsonTypeHandler<T>) new B2JsonUnionBaseHandler(clazz);
                 rememberHandler(clazz, result);
             } else {
                 //noinspection unchecked
-                result = (B2JsonTypeHandler<T>) new B2JsonObjectHandler(clazz, this);
+                result = (B2JsonTypeHandler<T>) new B2JsonObjectHandler(clazz);
                 rememberHandler(clazz, result);
             }
         }
@@ -168,7 +193,11 @@ public class B2JsonHandlerMap {
      * to B2JsonHandlerMap.getHandler(), which synchronized and keeps anybody
      * else from seeing the B2JsonObjectHandler before it is fully constructed.
      */
-    protected synchronized <T> void rememberHandler(Class<T> clazz, B2JsonTypeHandler<T> handler) {
+    private synchronized <T> void rememberHandler(Class<T> clazz, B2JsonTypeHandler<T> handler) {
+        B2Preconditions.checkState(!map.containsKey(clazz));
         map.put(clazz, handler);
+        if (handler instanceof B2JsonInitializedTypeHandler) {
+            handlersToInitialize.push((B2JsonInitializedTypeHandler)handler);
+        }
     }
 }
