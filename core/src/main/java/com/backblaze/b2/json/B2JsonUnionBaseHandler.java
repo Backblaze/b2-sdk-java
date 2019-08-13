@@ -8,6 +8,7 @@ package com.backblaze.b2.json;
 import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
@@ -35,6 +36,11 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      * The name of the JSON field that holds the type name.
      */
     private final String typeNameField;
+
+    /**
+     * The default value to use when deserializing an object with an unknown type.
+     */
+    private final String defaultValueJsonOrNull;
 
     /**
      * Mapping from type name (in the type name field of a serialized object) to class.
@@ -83,7 +89,14 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         final B2Json.union union = clazz.getAnnotation(B2Json.union.class);
         this.typeNameField = union.typeField();
 
-
+        // Get the default value, if there is one.
+        final B2Json.defaultForUnknownType defaultForUnknownType =
+                clazz.getAnnotation(B2Json.defaultForUnknownType.class);
+        if (defaultForUnknownType == null) {
+            defaultValueJsonOrNull = null;
+        } else {
+            defaultValueJsonOrNull = defaultForUnknownType.value();
+        }
     }
 
     @Override
@@ -137,6 +150,26 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                     fieldNameToHandler.put(fieldName, handler);
                     fieldNameToSourceClassName.put(fieldName, subclass.toString());
                 }
+            }
+        }
+    }
+
+    /**
+     * Check the validity of the default value, if there is one.
+     *
+     * @throws B2JsonException if there is a problem
+     */
+    @Override
+    void checkDefaultValues() throws B2JsonException {
+        if (defaultValueJsonOrNull != null) {
+            try {
+                deserialize(
+                        new B2JsonReader(new StringReader(defaultValueJsonOrNull)),
+                        B2JsonOptions.DEFAULT
+                );
+            } catch (B2JsonException | IOException e) {
+                throw new B2JsonException("error in default value for union " +
+                        clazz.getSimpleName() + ": " + e.getMessage());
             }
         }
     }
@@ -240,6 +273,12 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
         B2Preconditions.checkState(isInitialized());
 
+        // Place to hold the name of one of the unknown fields, if there are any.
+        // We don't want to throw an error about them until we're sure the type is
+        // known.  And we only need the name of one to throw an exception, so there
+        // is no need to keep a list of them.
+        String unknownFieldNameOrNull = null;
+
         // Gather the values of all fields present, and also the name of the type of object to create.
         String typeName = null;
         final Map<String, Object> fieldNameToValue = new HashMap<>();
@@ -252,7 +291,8 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 else {
                     final B2JsonTypeHandler<?> handler = fieldNameToHandler.get(fieldName);
                     if (handler == null) {
-                        throw new B2JsonException("unknown field '" + fieldName + "' in union type " + clazz.getSimpleName());
+                        unknownFieldNameOrNull = fieldName;
+                        in.skipValue();
                     }
                     else {
                         // we allow all fields to be parsed as null here.
@@ -272,9 +312,22 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         // Get the handler for this type.
         final B2JsonObjectHandler<?> handler = typeNameToHandler.get(typeName);
         if (handler == null) {
-            throw new B2JsonException("unknown '" + typeNameField + "' in " + clazz.getSimpleName() + ": '" + typeName + "'");
+            if (defaultValueJsonOrNull == null) {
+                throw new B2JsonException("unknown '" + typeNameField + "' in " + clazz.getSimpleName() + ": '" +
+                        typeName + "'");
+            } else {
+                return deserialize(
+                        new B2JsonReader(new StringReader(defaultValueJsonOrNull)),
+                        B2JsonOptions.DEFAULT
+                );
+            }
         }
 
+        // Throw errors for unknown fields.  (Actually, we'll just throw for one.)
+        if (unknownFieldNameOrNull != null) {
+            throw new B2JsonException("unknown field '" + unknownFieldNameOrNull + "' in union type " + clazz.getSimpleName());
+        }
+        
         // Let the handler build the resulting object.
         //noinspection unchecked
         return (T) handler.deserializeFromFieldNameToValueMap(fieldNameToValue, options);

@@ -43,6 +43,11 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     private final Class<T> clazz;
 
     /**
+     * The union class that this one belongs to, or null if there is not one.
+     */
+    private final Class<?> unionClass;
+
+    /**
      * Non-null iff this class is the member of a union type.
      */
     private final String unionTypeFieldName;
@@ -91,18 +96,21 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
         // Is this a member of a union type?
         {
+            Class<?> unionClass = null;
             String fieldName = null;
             String fieldValue = null;
             for (Class<?> parent = clazz.getSuperclass(); parent != null; parent = parent.getSuperclass()) {
                 if (B2JsonHandlerMap.isUnionBase(parent)) {
+                    unionClass = parent;
+                    fieldName = parent.getAnnotation(B2Json.union.class).typeField();
                     fieldValue = B2JsonUnionBaseHandler.getUnionTypeMap(parent).getTypeNameOrNullForClass(clazz);
                     if (fieldValue == null) {
                         throw new B2JsonException("class " + clazz + " inherits from " + parent + ", but is not in the type map");
                     }
-                    fieldName = parent.getAnnotation(B2Json.union.class).typeField();
                     break;
                 }
             }
+            this.unionClass = unionClass;
             this.unionTypeFieldName = fieldName;
             this.unionTypeFieldValue = fieldValue;
         }
@@ -121,14 +129,21 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
     protected void initializeImplementation(B2JsonHandlerMap handlerMap) throws B2JsonException {
 
+        // If we're a member of a union, force creation of the union to do checking on it.
+        // Even if the caller is just serializing this subclass, we want to make sure the whole
+        // union is valid.
+        if (unionClass != null) {
+            handlerMap.getUninitializedHandler(unionClass);
+        }
+
         // Get information on all of the fields in the class.
         for (Field field : getObjectFieldsForJson(clazz)) {
             final FieldRequirement requirement = getFieldRequirement(clazz, field);
             final B2JsonTypeHandler<?> handler = getUninitializedFieldHandler(field.getGenericType(), handlerMap);
-            final Object defaultValueOrNull = getDefaultValueOrNull(field, handler);
+            final String defaultValueJsonOrNull = getDefaultValueJsonOrNull(field);
             final VersionRange versionRange = getVersionRange(field);
             final boolean isSensitive = field.getAnnotation(B2Json.sensitive.class) != null;
-            final FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueOrNull, versionRange, isSensitive);
+            final FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueJsonOrNull, versionRange, isSensitive);
             fieldMap.put(field.getName(), fieldInfo);
         }
         fields = fieldMap.values().toArray(new FieldInfo [fieldMap.size()]);
@@ -213,20 +228,39 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         }
     }
 
-    private Object getDefaultValueOrNull(Field field, B2JsonTypeHandler<?> handler) throws B2JsonException {
+    /**
+     * Checks the validity of all of the default values for fields with optionalWithDefault.
+     *
+     * @throws B2JsonException if any are bad
+     */
+    @Override
+    void checkDefaultValues() throws B2JsonException {
+        for (FieldInfo field : fieldMap.values()) {
+            if (field.defaultValueJsonOrNull != null) {
+                try {
+                    field.handler.deserialize(
+                            new B2JsonReader(new StringReader(field.defaultValueJsonOrNull)),
+                            B2JsonOptions.DEFAULT
+                    );
+                } catch (B2JsonException | IOException e) {
+                    throw new B2JsonException("error in default value for " +
+                            clazz.getSimpleName() + "." + field.getName() + ": " +
+                            e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the serialized default value for a field, or null if it does not have one.
+     */
+    private String getDefaultValueJsonOrNull(Field field) {
         B2Json.optionalWithDefault optional = field.getAnnotation(B2Json.optionalWithDefault.class);
         if (optional == null) {
             return null;
         }
         else {
-            String jsonOfDefaultValue = optional.defaultValue();
-            try {
-                B2JsonReader reader = new B2JsonReader(new StringReader(jsonOfDefaultValue));
-                return handler.deserialize(reader, B2JsonOptions.DEFAULT);
-            }
-            catch (IOException e) {
-                throw new B2JsonException("error reading default value", e);
-            }
+            return optional.defaultValue();
         }
     }
 
@@ -536,8 +570,23 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 if (fieldInfo.isRequiredAndInVersion(version)) {
                     throw new B2JsonException("required field " + fieldInfo.getName() + " is missing");
                 }
-                if (fieldInfo.defaultValueOrNull != null) {
-                    constructorArgs[index] = fieldInfo.defaultValueOrNull;
+                if (fieldInfo.defaultValueJsonOrNull != null) {
+                    // We do a fresh deserialization of the default value each time, in case it's
+                    // a mutable type such as a List.
+                    try {
+                        constructorArgs[index] =
+                                fieldInfo.handler.deserialize(
+                                        new B2JsonReader(new StringReader(fieldInfo.defaultValueJsonOrNull)),
+                                        B2JsonOptions.DEFAULT
+                                );
+                    } catch (IOException e) {
+                        // This should never happen.  We should have checked default values
+                        // in B2JsonHandlerMap right after initializing the handlers and before
+                        // anybody tried to use them.  OTOH, if de-serializing a default value
+                        // uses the default values in other types, we could hit this while
+                        // checking default values in B2JsonHandlerMap.
+                        throw new B2JsonException(e.getMessage());
+                    }
                 }
                 else {
                     constructorArgs[index] = fieldInfo.handler.defaultValueForOptional();
