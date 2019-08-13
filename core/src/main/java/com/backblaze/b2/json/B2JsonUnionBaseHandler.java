@@ -273,7 +273,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
 
         B2Preconditions.checkState(isInitialized());
 
-        // Place to hold the name of one of the unknow fields, if there are any.
+        // Place to hold the name of one of the unknown fields, if there are any.
         // We don't want to throw an error about them until we're sure the type is
         // known.  And we only need the name of one to throw an exception, so there
         // is no need to keep a list of them.
