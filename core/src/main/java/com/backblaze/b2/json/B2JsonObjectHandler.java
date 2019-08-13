@@ -260,7 +260,10 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         }
     }
 
-    private B2JsonTypeHandler getUninitializedFieldHandler(Type fieldType, B2JsonHandlerMap handlerMap) throws B2JsonException {
+    /**
+     * Returns the type for a field in an object.  Used in this class, and also in B2JsonUnionBaseHandler.
+     */
+    /*package*/ static B2JsonTypeHandler getUninitializedFieldHandler(Type fieldType, B2JsonHandlerMap handlerMap) throws B2JsonException {
         if (fieldType instanceof ParameterizedType) {
             ParameterizedType paramType = (ParameterizedType) fieldType;
             final Class rawType = (Class) paramType.getRawType();

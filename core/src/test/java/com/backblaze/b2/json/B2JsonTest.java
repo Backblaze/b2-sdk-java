@@ -162,6 +162,7 @@ public class B2JsonTest extends B2BaseTest {
         final String json =
                 "{\n" +
                         "  \"a\": 5,\n" +
+                        "  \"b\": null,\n" +
                         "  \"type\": \"a\"\n" +
                         "}";
         checkDeserializeSerialize(json, UnionAZ.class);
@@ -180,10 +181,19 @@ public class B2JsonTest extends B2BaseTest {
     /**
      * Regression test to make sure that when handlers are created from
      * B2JsonUnionHandler they work properly.
+     *
+     * This test makes a new B2Json, and deserializes the union type, so
+     * it's sure that the
      */
     @Test
     public void testUnionCreatesHandlers() throws B2JsonException {
-        (new B2Json()).fromJson("{}", UnionAZ.class);
+        (new B2Json()).fromJson("{\n" +
+                "  \"type\": \"a\",\n" +
+                "  \"a\": 5,\n" +
+                "  \"b\": [10]" +
+                "}",
+                UnionAZ.class
+        );
     }
 
     @Test
@@ -1530,6 +1540,7 @@ public class B2JsonTest extends B2BaseTest {
         final String origJson = "{\n" +
                 "  \"contained\": {\n" +
                 "    \"a\": 1,\n" +
+                "    \"b\": null,\n" +
                 "    \"type\": \"a\"\n" +
                 "  }\n" +
                 "}";
@@ -1568,10 +1579,10 @@ public class B2JsonTest extends B2BaseTest {
         public final int a;
 
         @B2Json.optional
-        public final Set<String> b;
+        public final Set<Integer> b;
 
         @B2Json.constructor(params = "a, b")
-        private SubclassA(int a, Set<String> b) {
+        private SubclassA(int a, Set<Integer> b) {
             this.a = a;
             this.b = b;
         }

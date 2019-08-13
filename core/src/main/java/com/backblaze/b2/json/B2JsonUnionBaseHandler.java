@@ -118,7 +118,11 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         for (Class<?> subclass : typeNameToClass.values()) {
             for (Field field : B2JsonObjectHandler.getObjectFieldsForJson(subclass)) {
                 final String fieldName = field.getName();
-                final B2JsonTypeHandler handler = b2JsonHandlerMap.getUninitializedHandler(field.getType());
+                final B2JsonTypeHandler handler =
+                        B2JsonObjectHandler.getUninitializedFieldHandler(
+                                field.getGenericType(),
+                                b2JsonHandlerMap
+                        );
                 if (fieldNameToHandler.containsKey(fieldName)) {
                     // We have seen this field name before.  Throw an error if the type is different
                     // than before.
