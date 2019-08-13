@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -174,6 +175,15 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"z\": \"hello\"\n" +
                 "}";
         checkDeserializeSerialize(json, UnionAZ.class);
+    }
+
+    /**
+     * Regression test to make sure that when handlers are created from
+     * B2JsonUnionHandler they work properly.
+     */
+    @Test
+    public void testUnionCreatesHandlers() throws B2JsonException {
+        (new B2Json()).fromJson("{}", UnionAZ.class);
     }
 
     @Test
@@ -1557,9 +1567,13 @@ public class B2JsonTest extends B2BaseTest {
         @B2Json.required
         public final int a;
 
-        @B2Json.constructor(params = "a")
-        private SubclassA(int a) {
+        @B2Json.optional
+        public final Set<String> b;
+
+        @B2Json.constructor(params = "a, b")
+        private SubclassA(int a, Set<String> b) {
             this.a = a;
+            this.b = b;
         }
     }
 

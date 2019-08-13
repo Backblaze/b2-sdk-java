@@ -100,7 +100,7 @@ public class B2Json {
      * Initializes a new B2Json object with handlers for all of the
      * classes that are handled specially.
      */
-    private B2Json() {
+    /*testing*/ B2Json() {
         this.handlerMap = new B2JsonHandlerMap();
     }
 
