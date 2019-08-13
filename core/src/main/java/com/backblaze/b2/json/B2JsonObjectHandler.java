@@ -580,6 +580,11 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                                         B2JsonOptions.DEFAULT
                                 );
                     } catch (IOException e) {
+                        // This should never happen.  We should have checked default values
+                        // in B2JsonHandlerMap right after initializing the handlers and before
+                        // anybody tried to use them.  OTOH, if de-serializing a default value
+                        // uses the default values in other types, we could hit this while
+                        // checking default values in B2JsonHandlerMap.
                         throw new B2JsonException(e.getMessage());
                     }
                 }

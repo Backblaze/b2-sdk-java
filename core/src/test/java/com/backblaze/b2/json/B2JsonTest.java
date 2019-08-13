@@ -1529,7 +1529,7 @@ public class B2JsonTest extends B2BaseTest {
 
     @Test
     public void testUnknownFieldInUnion() throws B2JsonException {
-        final String json = "{ \"badField\" : 5 }";
+        final String json = "{ \"badField\" : 5, \"type\": \"a\" }";
         thrown.expectMessage("unknown field 'badField' in union type UnionAZ");
         B2Json.get().fromJson(json, UnionAZ.class);
     }
@@ -1604,6 +1604,10 @@ public class B2JsonTest extends B2BaseTest {
         assertEquals(
                 new UnionWithDefaultClassA(5), // the default value
                 B2Json.get().fromJson("{\"type\": \"unknown\"}", UnionWithDefault.class)
+        );
+        assertEquals(
+                new UnionWithDefaultClassA(5), // the default value
+                B2Json.get().fromJson("{\"type\": \"unknown\", \"unknownField\": 5}", UnionWithDefault.class)
         );
         assertEquals(
                 new UnionWithDefaultClassA(99), // NOT the default value; the value provided
