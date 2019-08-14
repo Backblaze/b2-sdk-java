@@ -14,21 +14,11 @@ import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * (De)serializes Java objects based on field annotations.
@@ -108,23 +98,12 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         }
     }
 
-    /*package*/ static List<Field> getObjectFieldsForJson(Class<?> clazz) throws B2JsonException {
-        final List<Field> result = new ArrayList<>();
-        for (Field field : clazz.getDeclaredFields()) {
-            FieldRequirement requirement = getFieldRequirement(clazz, field);
-            if (!Modifier.isStatic(field.getModifiers()) && requirement != FieldRequirement.IGNORED) {
-                result.add(field);
-            }
-        }
-        return result;
-    }
-
     protected void initializeImplementation(B2JsonHandlerMap handlerMap) throws B2JsonException {
 
         // Get information on all of the fields in the class.
-        for (Field field : getObjectFieldsForJson(clazz)) {
-            final FieldRequirement requirement = getFieldRequirement(clazz, field);
-            final B2JsonTypeHandler<?> handler = getUninitializedFieldHandler(field.getGenericType(), handlerMap);
+        for (Field field : B2JsonHandlerMap.getObjectFieldsForJson(clazz)) {
+            final FieldRequirement requirement = B2JsonHandlerMap.getFieldRequirement(clazz, field);
+            final B2JsonTypeHandler<?> handler = B2JsonHandlerMap.getUninitializedFieldHandler(field.getGenericType(), handlerMap);
             final Object defaultValueOrNull = getDefaultValueOrNull(field, handler);
             final VersionRange versionRange = getVersionRange(field);
             final boolean isSensitive = field.getAnnotation(B2Json.sensitive.class) != null;
@@ -258,94 +237,6 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         else {
             return VersionRange.ALL_VERSIONS;
         }
-    }
-
-    /**
-     * Returns the type for a field in an object.  Used in this class, and also in B2JsonUnionBaseHandler.
-     */
-    /*package*/ static B2JsonTypeHandler getUninitializedFieldHandler(Type fieldType, B2JsonHandlerMap handlerMap) throws B2JsonException {
-        if (fieldType instanceof ParameterizedType) {
-            ParameterizedType paramType = (ParameterizedType) fieldType;
-            final Class rawType = (Class) paramType.getRawType();
-            if (rawType == LinkedHashSet.class) {
-                Type itemType = paramType.getActualTypeArguments()[0];
-                B2JsonTypeHandler<?> itemHandler = getUninitializedFieldHandler(itemType, handlerMap);
-                return new B2JsonLinkedHashSetHandler(itemHandler);
-            }
-            if (rawType == List.class) {
-                Type itemType = paramType.getActualTypeArguments()[0];
-                B2JsonTypeHandler<?> itemHandler = getUninitializedFieldHandler(itemType, handlerMap);
-                return new B2JsonListHandler(itemHandler);
-            }
-            if (rawType == TreeSet.class) {
-                Type itemType = paramType.getActualTypeArguments()[0];
-                B2JsonTypeHandler<?> itemHandler = getUninitializedFieldHandler(itemType, handlerMap);
-                return new B2JsonTreeSetHandler(itemHandler);
-            }
-            if (rawType == Set.class) {
-                Type itemType = paramType.getActualTypeArguments()[0];
-                B2JsonTypeHandler<?> itemHandler = getUninitializedFieldHandler(itemType, handlerMap);
-                return new B2JsonSetHandler(itemHandler);
-            }
-            if (rawType == EnumSet.class) {
-                Type itemType = paramType.getActualTypeArguments()[0];
-                B2JsonTypeHandler<?> itemHandler = getUninitializedFieldHandler(itemType, handlerMap);
-                return new B2JsonEnumSetHandler(itemHandler);
-            }
-            if (rawType == Map.class || rawType == TreeMap.class) {
-                Type keyType = paramType.getActualTypeArguments()[0];
-                Type valueType = paramType.getActualTypeArguments()[1];
-                B2JsonTypeHandler<?> keyHandler = getUninitializedFieldHandler(keyType, handlerMap);
-                B2JsonTypeHandler<?> valueHandler = getUninitializedFieldHandler(valueType, handlerMap);
-                return new B2JsonMapHandler(keyHandler, valueHandler);
-            }
-            if (rawType == ConcurrentMap.class) {
-                Type keyType = paramType.getActualTypeArguments()[0];
-                Type valueType = paramType.getActualTypeArguments()[1];
-                B2JsonTypeHandler<?> keyHandler = getUninitializedFieldHandler(keyType, handlerMap);
-                B2JsonTypeHandler<?> valueHandler = getUninitializedFieldHandler(valueType, handlerMap);
-                return new B2JsonConcurrentMapHandler(keyHandler, valueHandler);
-            }
-        }
-        if (fieldType instanceof Class) {
-            final Class fieldClass = (Class) fieldType;
-            //noinspection unchecked
-            return handlerMap.getUninitializedHandler(fieldClass);
-        }
-        throw new B2JsonException("Do not know how to handle: " + fieldType);
-    }
-
-    private static FieldRequirement getFieldRequirement(Class<?> clazz, Field field) throws B2JsonException {
-
-        // We never handle static fields
-        int modifiers = field.getModifiers();
-        if (Modifier.isStatic(modifiers)) {
-            return FieldRequirement.IGNORED;
-        }
-
-        // Get the annotation to see how we should handle it.
-        FieldRequirement result = null;
-        int count = 0;
-        if (field.getAnnotation(B2Json.required.class) != null) {
-            result = FieldRequirement.REQUIRED;
-            count += 1;
-        }
-        if (field.getAnnotation(B2Json.optional.class) != null) {
-            result = FieldRequirement.OPTIONAL;
-            count += 1;
-        }
-        if (field.getAnnotation(B2Json.optionalWithDefault.class) != null) {
-            result = FieldRequirement.OPTIONAL;
-            count += 1;
-        }
-        if (field.getAnnotation(B2Json.ignored.class) != null) {
-            result = FieldRequirement.IGNORED;
-            count += 1;
-        }
-        if (count != 1) {
-            throw new B2JsonException(clazz.getName() + "." + field.getName() + " should have exactly one annotation: required, optional, optionalWithDefault, or ignored");
-        }
-        return result;
     }
 
     public Class<T> getHandledClass() {

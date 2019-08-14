@@ -116,10 +116,10 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         fieldNameToHandler = new HashMap<>();
         final Map<String, String> fieldNameToSourceClassName = new HashMap<>();
         for (Class<?> subclass : typeNameToClass.values()) {
-            for (Field field : B2JsonObjectHandler.getObjectFieldsForJson(subclass)) {
+            for (Field field : B2JsonHandlerMap.getObjectFieldsForJson(subclass)) {
                 final String fieldName = field.getName();
                 final B2JsonTypeHandler handler =
-                        B2JsonObjectHandler.getUninitializedFieldHandler(
+                        B2JsonHandlerMap.getUninitializedFieldHandler(
                                 field.getGenericType(),
                                 b2JsonHandlerMap
                         );
