@@ -182,8 +182,9 @@ public class B2JsonTest extends B2BaseTest {
      * Regression test to make sure that when handlers are created from
      * B2JsonUnionHandler they work properly.
      *
-     * This test makes a new B2Json, and deserializes the union type, so
-     * it's sure that the
+     * This test makes a new B2Json, and de-serializes the union type, so
+     * it's sure that the B2JsonUnionBaseHandler gets initialized first,
+     * which is what triggered the bug.
      */
     @Test
     public void testUnionCreatesHandlers() throws B2JsonException {
