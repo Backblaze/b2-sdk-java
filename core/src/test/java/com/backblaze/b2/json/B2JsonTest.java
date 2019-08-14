@@ -1354,6 +1354,25 @@ public class B2JsonTest extends B2BaseTest {
         }
     }
 
+    private static class OptionalWithDefaultInvalidValue {
+        @B2Json.optionalWithDefault(defaultValue = "xxx")
+        private final int count;
+
+        @B2Json.constructor(params = "count")
+        private OptionalWithDefaultInvalidValue(int count) {
+            this.count = count;
+        }
+    }
+
+    @Test
+    public void testInvalidValueInOptionalWithDefault() throws B2JsonException {
+        // Any use of the class with B2Json should trigger the exception.  Even
+        // serializing will need to initialize the handler, which should trigger
+        // an error.
+        thrown.expectMessage("error in default value for OptionalWithDefaultInvalidValue.count: Bad number");
+        B2Json.get().toJson(new OptionalWithDefaultInvalidValue(0));
+    }
+
     @Test
     public void testVersionRangeBackwards() throws B2JsonException {
         thrown.expectMessage("last version 1 is before first version 2 in class com.backblaze.b2.json.B2JsonTest$VersionRangeBackwardsClass");
@@ -1530,7 +1549,7 @@ public class B2JsonTest extends B2BaseTest {
 
     @Test
     public void testUnknownFieldInUnion() throws B2JsonException {
-        final String json = "{ \"badField\" : 5 }";
+        final String json = "{ \"badField\" : 5, \"type\": \"a\" }";
         thrown.expectMessage("unknown field 'badField' in union type UnionAZ");
         B2Json.get().fromJson(json, UnionAZ.class);
     }
@@ -1561,6 +1580,84 @@ public class B2JsonTest extends B2BaseTest {
         final ContainsUnion container = new ContainsUnion(unregistered);
         thrown.expectMessage("class com.backblaze.b2.json.B2JsonTest$SubclassUnregistered isn't a registered part of union class com.backblaze.b2.json.B2JsonTest$UnionAZ");
         B2Json.get().toJson(container);
+    }
+
+    @B2Json.union(typeField = "type")
+    @B2Json.defaultForUnknownType(value = "{\"type\": \"a\", \"n\": 5}")
+    private static class UnionWithDefault {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("a", UnionWithDefaultClassA.class)
+                    .build();
+        }
+    }
+
+    private static class UnionWithDefaultClassA extends UnionWithDefault {
+        @B2Json.required
+        private final int n;
+
+        @B2Json.constructor(params = "n")
+        private UnionWithDefaultClassA(int n) {
+            this.n = n;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            UnionWithDefaultClassA that = (UnionWithDefaultClassA) o;
+            return n == that.n;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(n);
+        }
+    }
+
+    @Test
+    public void testUnionWithDefault() throws B2JsonException {
+        assertEquals(
+                new UnionWithDefaultClassA(5), // the default value
+                B2Json.get().fromJson("{\"type\": \"unknown\"}", UnionWithDefault.class)
+        );
+        assertEquals(
+                new UnionWithDefaultClassA(5), // the default value
+                B2Json.get().fromJson("{\"type\": \"unknown\", \"unknownField\": 5}", UnionWithDefault.class)
+        );
+        assertEquals(
+                new UnionWithDefaultClassA(99), // NOT the default value; the value provided
+                B2Json.get().fromJson("{\"type\": \"a\", \"n\": 99}", UnionWithDefault.class)
+        );
+    }
+
+    @B2Json.union(typeField = "type")
+    @B2Json.defaultForUnknownType(value = "{\"type\": \"a\", \"n\": 5}")
+    private static class UnionWithInvalidDefault {
+        public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
+            return B2JsonUnionTypeMap
+                    .builder()
+                    .put("a", UnionWithInvalidDefaultClassA.class)
+                    .build();
+        }
+    }
+
+    private static class UnionWithInvalidDefaultClassA extends UnionWithInvalidDefault {
+        @B2Json.constructor(params = "")
+        UnionWithInvalidDefaultClassA() {}
+    }
+
+    @Test
+    public void testUnionWithInvalidDefault() throws B2JsonException {
+        // The error should be caught when the class is first used, even if the default
+        // isn't used.
+        thrown.expectMessage("error in default value for union UnionWithInvalidDefault: unknown field 'n' in union type UnionWithInvalidDefault");
+        B2Json.get().toJson(new UnionWithInvalidDefaultClassA());
     }
 
     @B2Json.union(typeField = "type")
