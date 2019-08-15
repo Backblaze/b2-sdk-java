@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -161,6 +162,7 @@ public class B2JsonTest extends B2BaseTest {
         final String json =
                 "{\n" +
                         "  \"a\": 5,\n" +
+                        "  \"b\": null,\n" +
                         "  \"type\": \"a\"\n" +
                         "}";
         checkDeserializeSerialize(json, UnionAZ.class);
@@ -174,6 +176,25 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"z\": \"hello\"\n" +
                 "}";
         checkDeserializeSerialize(json, UnionAZ.class);
+    }
+
+    /**
+     * Regression test to make sure that when handlers are created from
+     * B2JsonUnionHandler they work properly.
+     *
+     * This test makes a new B2Json, and de-serializes the union type, so
+     * it's sure that the B2JsonUnionBaseHandler gets initialized first,
+     * which is what triggered the bug.
+     */
+    @Test
+    public void testUnionCreatesHandlers() throws B2JsonException {
+        (new B2Json()).fromJson("{\n" +
+                "  \"type\": \"a\",\n" +
+                "  \"a\": 5,\n" +
+                "  \"b\": [10]" +
+                "}",
+                UnionAZ.class
+        );
     }
 
     @Test
@@ -1539,6 +1560,7 @@ public class B2JsonTest extends B2BaseTest {
         final String origJson = "{\n" +
                 "  \"contained\": {\n" +
                 "    \"a\": 1,\n" +
+                "    \"b\": null,\n" +
                 "    \"type\": \"a\"\n" +
                 "  }\n" +
                 "}";
@@ -1654,9 +1676,13 @@ public class B2JsonTest extends B2BaseTest {
         @B2Json.required
         public final int a;
 
-        @B2Json.constructor(params = "a")
-        private SubclassA(int a) {
+        @B2Json.optional
+        public final Set<Integer> b;
+
+        @B2Json.constructor(params = "a, b")
+        private SubclassA(int a, Set<Integer> b) {
             this.a = a;
+            this.b = b;
         }
     }
 
