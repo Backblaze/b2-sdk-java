@@ -25,7 +25,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
@@ -48,18 +47,27 @@ public class B2JsonHandlerMap {
     // a handler for a class are equivalent.
     private final Map<Class<?>, B2JsonTypeHandler<?>> map = new HashMap<>();
 
+    /**
+     * The getHandler() method is not supposed to be re-entrant.  This flag
+     * is used to check that.
+     *
+     * Guarded by: this
+     */
+    private boolean inGetHandler = false;
+
     public B2JsonHandlerMap() {
         this(null);
     }
 
     /**
      * Handlers that need to be initialized.
-     *
-     * Handlers are added when they are added to the map, and removed when they are initialized.
-     *
+     * <p>
+     * Handlers are added when they are added to the map, and removed once a whole suite
+     * of them has finished initialization.
+     * <p>
      * Guarded by: this
      */
-    private final Stack<B2JsonInitializedTypeHandler> handlersToInitialize = new Stack<>();
+    private final List<B2JsonTypeHandler> handlersAddedToMap = new ArrayList<>();
 
     /**
      * Sets up a new map.
@@ -101,38 +109,74 @@ public class B2JsonHandlerMap {
 
     /**
      * Gets the handler for a given class at the top level.
+     * <p>
+     * This method is called when it's time to (de)serialize some JSON, from the
+     * toJson() and fromJson() methods.  It is not called by other handlers.  When
+     * one handler depends on another, it should call the getUninitializedHandler()
+     * method from its own initialize() method.
+     * <p>
+     * So, this method does NOT need to be re-entrant, and in fact we assume that it's not.
      */
     public synchronized <T> B2JsonTypeHandler<T> getHandler(Class<T> clazz) throws B2JsonException {
 
-        // Create any handlers that need to be created.
-        B2JsonTypeHandler<T> handler = getUninitializedHandler(clazz);
-
-        // If we created some handlers, then we need to initialize them and validate their
-        // default values.
-        //
-        // The reason for validating default values is so that we don't create a handler with
-        // bad defaults, and then not find out until much later when they happen to be used.
-        if (!handlersToInitialize.isEmpty()) {
-
-            // Handlers that need to have their default values checked.  This can only be done after
-            //all handlers are initialized, because the default values may require all of the handlers.
-            final Stack<B2JsonInitializedTypeHandler> handlersToCheckDefaultValues = new Stack<>();
-
-            // Initialize everything we know about.  The initialize() method on a handler may have
-            // the side effect of adding more handlers to `handlersToInitialize`.
-            while (!handlersToInitialize.isEmpty()) {
-                final B2JsonInitializedTypeHandler handlerToInitialize = handlersToInitialize.pop();
-                handlerToInitialize.initialize(this);
-                handlersToCheckDefaultValues.push(handlerToInitialize);
-            }
-
-            // Now that all of the known handlers have been initialized, all the types needed
-            // to deserialize everything are ready to go, and we can check the default values.
-            while (!handlersToCheckDefaultValues.isEmpty()) {
-                handlersToCheckDefaultValues.pop().checkDefaultValues();
+        // Fast path for the case where the handler is already in the map.
+        {
+            final B2JsonTypeHandler<T> existingHandlerOrNull = lookupHandler(clazz);
+            if (existingHandlerOrNull != null) {
+                return existingHandlerOrNull;
             }
         }
-        return handler;
+
+        // This method is NOT re-entrant.  The code that creates and initializes new handlers
+        // should not call this method.
+        B2Preconditions.checkState(!inGetHandler);
+        inGetHandler = true;
+        try {
+            // Create any handlers that need to be created.
+            B2JsonTypeHandler<T> handler = getUninitializedHandler(clazz);
+
+            // Initialize handlers that were created.  Note that initializing a new handler
+            // may result in new handlers being added to handlersAddedToMap, so this loop
+            // needs to be able to handle the list changing as the loop progresses, so we
+            // use an explicit index variable.
+            //
+            //noinspection ForLoopReplaceableByForEach
+            for (int i = 0; i < handlersAddedToMap.size(); i++) {
+                final B2JsonTypeHandler handlerAdded = handlersAddedToMap.get(i);
+                if (handlerAdded instanceof B2JsonInitializedTypeHandler) {
+                    ((B2JsonInitializedTypeHandler) handlerAdded).initialize(this);
+                }
+            }
+
+            // Now that they're all initialized, all the types they depend on are ready to use,
+            // so it's time to check the default values.
+            for (B2JsonTypeHandler handlerAdded : handlersAddedToMap) {
+                if (handlerAdded instanceof B2JsonInitializedTypeHandler) {
+                    ((B2JsonInitializedTypeHandler) handlerAdded).checkDefaultValues();
+                }
+            }
+
+            // Return the handler we found.
+            return handler;
+        }
+        catch (Throwable t) {
+            // Something went wrong, and the handlers are not ready to use, so we'll take them
+            // out of the map.
+            for (B2JsonTypeHandler handlerAdded : handlersAddedToMap) {
+                map.remove(handlerAdded.getHandledClass());
+            }
+
+            // Let the caller know that something went wrong.
+            throw new B2JsonException(t.getMessage());
+        }
+        finally {
+            // Always clear the list of handlers that were added.
+            handlersAddedToMap.clear();
+
+            // And we're no longer in this method.
+            B2Preconditions.checkState(inGetHandler);
+            inGetHandler = false;
+        }
     }
 
     /**
@@ -160,11 +204,13 @@ public class B2JsonHandlerMap {
                 rememberHandler(clazz, result);
             } else if (clazz.isArray()) {
                 final Class eltClazz = clazz.getComponentType();
+                //noinspection unchecked
                 B2JsonTypeHandler eltClazzHandler = getHandler(eltClazz);
                 //noinspection unchecked
                 result = (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
                 rememberHandler(clazz, result);
             } else if (isUnionBase(clazz)) {
+                //noinspection unchecked
                 result = (B2JsonTypeHandler<T>) new B2JsonUnionBaseHandler(clazz);
                 rememberHandler(clazz, result);
             } else {
@@ -346,8 +392,6 @@ public class B2JsonHandlerMap {
     private synchronized <T> void rememberHandler(Class<T> clazz, B2JsonTypeHandler<T> handler) {
         B2Preconditions.checkState(!map.containsKey(clazz));
         map.put(clazz, handler);
-        if (handler instanceof B2JsonInitializedTypeHandler) {
-            handlersToInitialize.push((B2JsonInitializedTypeHandler)handler);
-        }
+        handlersAddedToMap.add(handler);
     }
 }
