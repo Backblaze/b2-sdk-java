@@ -119,7 +119,12 @@ public class B2JsonHandlerMap {
      */
     public synchronized <T> B2JsonTypeHandler<T> getHandler(Class<T> clazz) throws B2JsonException {
 
-        // Fast path for the case where the handler is already in the map.
+        // This method is NOT re-entrant.  The code that creates and initializes new handlers
+        // should not call this method.
+        B2Preconditions.checkState(!inGetHandler);
+        B2Preconditions.checkState(handlersAddedToMap.isEmpty());
+
+        // Fast path (without try/catch/finally) for the case where the handler is already in the map.
         {
             final B2JsonTypeHandler<T> existingHandlerOrNull = lookupHandler(clazz);
             if (existingHandlerOrNull != null) {
@@ -127,9 +132,6 @@ public class B2JsonHandlerMap {
             }
         }
 
-        // This method is NOT re-entrant.  The code that creates and initializes new handlers
-        // should not call this method.
-        B2Preconditions.checkState(!inGetHandler);
         inGetHandler = true;
         try {
             // Create any handlers that need to be created.
@@ -205,7 +207,7 @@ public class B2JsonHandlerMap {
             } else if (clazz.isArray()) {
                 final Class eltClazz = clazz.getComponentType();
                 //noinspection unchecked
-                B2JsonTypeHandler eltClazzHandler = getHandler(eltClazz);
+                B2JsonTypeHandler eltClazzHandler = getUninitializedHandler(eltClazz);
                 //noinspection unchecked
                 result = (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
                 rememberHandler(clazz, result);
