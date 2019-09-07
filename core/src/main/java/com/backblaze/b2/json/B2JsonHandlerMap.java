@@ -121,6 +121,12 @@ public class B2JsonHandlerMap {
 
         // This method is NOT re-entrant.  The code that creates and initializes new handlers
         // should not call this method.
+        //
+        // The reason this code cannot be re-entrant is that it would try to create more
+        // new handlers, which could make it impossible for this method to un-do what it
+        // has done by removing the handlers it had added.  A re-entrant call could
+        // wind up creating dependencies on the classes we temporarily added but wound
+        // up removing.
         B2Preconditions.checkState(!inGetHandler);
         B2Preconditions.checkState(handlersAddedToMap.isEmpty());
 
@@ -133,9 +139,11 @@ public class B2JsonHandlerMap {
         }
 
         inGetHandler = true;
+        final B2JsonTypeHandler<T> handler;
+        final List<B2JsonTypeHandler> handlersToCheckDefaults;
         try {
             // Create any handlers that need to be created.
-            B2JsonTypeHandler<T> handler = getUninitializedHandler(clazz);
+            handler = getUninitializedHandler(clazz);
 
             // Initialize handlers that were created.  Note that initializing a new handler
             // may result in new handlers being added to handlersAddedToMap, so this loop
@@ -150,16 +158,17 @@ public class B2JsonHandlerMap {
                 }
             }
 
-            // Now that they're all initialized, all the types they depend on are ready to use,
-            // so it's time to check the default values.
-            for (B2JsonTypeHandler handlerAdded : handlersAddedToMap) {
-                if (handlerAdded instanceof B2JsonInitializedTypeHandler) {
-                    ((B2JsonInitializedTypeHandler) handlerAdded).checkDefaultValues();
-                }
-            }
-
-            // Return the handler we found.
-            return handler;
+            // NOTE: It is not possible to run the default value checks at this point.
+            // Up until this point we have not had to initialize any of the classes
+            // whose handlers were created and initialized.  (Reflection to see fields
+            // and annotations does not require initializing the class.)
+            //
+            // If we were to check default values, that would create instances, which
+            // would first require initializing the classes.  And classes can have
+            // arbitrary code in their static initializers, which could call B2Json.
+            // Those calls to B2Json could wind up calling getHandler() on more
+            // classes, thus violating the no-re-entry precondition, and they could
+            // wind up trying to use the handlers we're in the process of setting up.
         }
         catch (Throwable t) {
             // Something went wrong, and the handlers are not ready to use, so we'll take them
@@ -172,6 +181,9 @@ public class B2JsonHandlerMap {
             throw new B2JsonException(t.getMessage());
         }
         finally {
+            // Remember the handlers we added so we can check their defaults.
+            handlersToCheckDefaults = new ArrayList<>(handlersAddedToMap);
+
             // Always clear the list of handlers that were added.
             handlersAddedToMap.clear();
 
@@ -179,6 +191,31 @@ public class B2JsonHandlerMap {
             B2Preconditions.checkState(inGetHandler);
             inGetHandler = false;
         }
+
+        // Now we can check default values.
+        //
+        // Note that we have already committed to keeping the handlers we created,
+        // but we can still mark them as having bad defaults.
+        //
+        // This leaves an interval now where other threads could use the handlers, but
+        // might not get told that they are unusable because of bad default values.
+        // What we do guarantee is that the first caller to need the handler (this thread)
+        // will get an error, and that any thread that calls after this method returns
+        // will get an error.
+        try {
+             for (B2JsonTypeHandler<?> handlerToCheck : handlersToCheckDefaults) {
+                 if (handlerToCheck instanceof B2JsonTypeHandlerWithDefaults) {
+                     final B2JsonTypeHandlerWithDefaults handlerWithDefaults =
+                             (B2JsonTypeHandlerWithDefaults) handlerToCheck;
+                     handlerWithDefaults.checkDefaultValuesAndRememberResult();
+                 }
+             }
+        } finally {
+            handlersAddedToMap.clear();
+        }
+
+        // All done.
+        return handler;
     }
 
     /**

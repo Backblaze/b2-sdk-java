@@ -25,7 +25,7 @@ import java.util.Map;
  * type name in the JSON object, and this dispatches to the subclass
  * for that type.
  */
-public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
+public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
 
     /**
      * The class of object we handle.
@@ -164,7 +164,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      * @throws B2JsonException if there is a problem
      */
     @Override
-    void checkDefaultValues() throws B2JsonException {
+    protected void checkDefaultValues() throws B2JsonException {
         if (defaultValueJsonOrNull != null) {
             try {
                 deserialize(
@@ -251,6 +251,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     public void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
 
         B2Preconditions.checkState(isInitialized());
+        throwIfBadDefaultValue();
 
         if (obj.getClass() == clazz) {
             // the union base class is basically "abstract" and can't be serialized.
@@ -272,10 +273,15 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         objHandler.serialize(obj, options, out);
     }
 
+    public T deserializeUrlParam(String urlValue) throws B2JsonException {
+        throw new B2JsonException("type not supported in URL parameter");
+    }
+
     @Override
     public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
 
         B2Preconditions.checkState(isInitialized());
+        throwIfBadDefaultValue();
 
         // Place to hold the name of one of the unknown fields, if there are any.
         // We don't want to throw an error about them until we're sure the type is
@@ -345,5 +351,19 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     @Override
     public boolean isStringInJson() {
         return false;
+    }
+
+    /**
+     * Remembers that the default value is bad.
+     *
+     * We propagate this error to all members of the union, because they
+     * are unusable if the union base cannot be deserialized.
+     */
+    @Override
+    synchronized void setDefaultValueBad(String errorMessage) {
+        super.setDefaultValueBad(errorMessage);
+        for (B2JsonObjectHandler<?> objectHandler : typeNameToHandler.values()) {
+            objectHandler.setDefaultValueBad(errorMessage);
+        }
     }
 }

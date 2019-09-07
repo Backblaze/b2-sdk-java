@@ -2229,4 +2229,33 @@ public class B2JsonTest extends B2BaseTest {
             this.recursiveUnion = recursiveUnion;
         }
     }
+
+    /**
+     * A regression test for a case where a class has a field with a default value,
+     * and the class of the default value has a class initializer.
+     */
+    @Test
+    public void testClassInitializationInDefaultValue() {
+        B2Json.fromJsonOrThrowRuntime("{}", TestClassInit_ClassWithDefaultValue.class);
+    }
+
+    private static class TestClassInit_ClassWithDefaultValue {
+
+        @B2Json.optionalWithDefault(defaultValue = "{}")
+        private final TestClassInit_ClassThatDoesInitializition objThatDoesInit;
+
+        @B2Json.constructor(params = "objThatDoesInit")
+        private TestClassInit_ClassWithDefaultValue(TestClassInit_ClassThatDoesInitializition objThatDoesInit) {
+            this.objThatDoesInit = objThatDoesInit;
+        }
+    }
+
+    private static class TestClassInit_ClassThatDoesInitializition {
+
+        private static TestClassInit_ClassThatDoesInitializition defaultValue =
+                B2Json.fromJsonOrThrowRuntime("{}", TestClassInit_ClassThatDoesInitializition.class);
+
+        @B2Json.constructor(params = "")
+        TestClassInit_ClassThatDoesInitializition() {}
+    }
 }
