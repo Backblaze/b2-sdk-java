@@ -169,6 +169,9 @@ public class B2JsonHandlerMap {
             // Those calls to B2Json could wind up calling getHandler() on more
             // classes, thus violating the no-re-entry precondition, and they could
             // wind up trying to use the handlers we're in the process of setting up.
+
+            // Remember the handlers we added so we can check their defaults.
+            handlersToCheckDefaults = new ArrayList<>(handlersAddedToMap);
         }
         catch (Throwable t) {
             // Something went wrong, and the handlers are not ready to use, so we'll take them
@@ -181,9 +184,6 @@ public class B2JsonHandlerMap {
             throw new B2JsonException(t.getMessage());
         }
         finally {
-            // Remember the handlers we added so we can check their defaults.
-            handlersToCheckDefaults = new ArrayList<>(handlersAddedToMap);
-
             // Always clear the list of handlers that were added.
             handlersAddedToMap.clear();
 
@@ -390,6 +390,9 @@ public class B2JsonHandlerMap {
         // a safer starting point.
         Method method = null;
         try {
+            // Calling the getJsonTypeHandler method will cause the class initializer
+            // to run, which could call B2Json, which could cause problems.
+            // See https://github.com/Backblaze/b2-sdk-java/issues/88
             method = clazz.getDeclaredMethod("getJsonTypeHandler");
             method.setAccessible(true);
             final Object obj = method.invoke(null);
