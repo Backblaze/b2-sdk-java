@@ -322,7 +322,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         }
 
         @Override
-        public InputStream createInputStream() throws IOException {
+        public InputStream createInputStream() throws IOException, B2Exception {
             numCreated.incrementAndGet();
             final InputStream newStream = nested.createInputStream();
             return new InputStream() {
@@ -1411,7 +1411,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         }
 
         @Override
-        public InputStream createInputStream() throws IOException {
+        public InputStream createInputStream() throws IOException, B2Exception {
             return nested.createInputStream();
         }
     }
