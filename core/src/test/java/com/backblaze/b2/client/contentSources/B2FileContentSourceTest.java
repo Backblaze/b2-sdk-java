@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.contentSources;
 
+import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,7 +52,7 @@ public class B2FileContentSourceTest extends B2BaseTest {
     }
 
     @Test
-    public void testCreateInputStreamTriesToOpenTheFile() throws IOException {
+    public void testCreateInputStreamTriesToOpenTheFile() throws IOException, B2Exception {
         thrown.expect(FileNotFoundException.class);
         thrown.expectMessage(file + " (No such file or directory)");
         contentSource.createInputStream();

@@ -5,6 +5,8 @@
 
 package com.backblaze.b2.client.contentSources;
 
+import com.backblaze.b2.client.exceptions.B2Exception;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -55,8 +57,9 @@ public interface B2ContentSource {
      *       each time this is called.
      * @return a new inputStream containing the contents.
      * @throws IOException if there's trouble
+     * @throws B2Exception if there's trouble
      */
-    InputStream createInputStream() throws IOException;
+    InputStream createInputStream() throws IOException, B2Exception;
 
     /**
      * If possible, this returns a NEW input stream for just the specified range of the
