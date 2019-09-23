@@ -2147,6 +2147,53 @@ public class B2JsonTest extends B2BaseTest {
                 B2Json.toJsonOrThrowRuntime(secureContainer, options));
     }
 
+    private static class OmitNullTestClass {
+        @B2Json.optional(omitNull = true)
+        private final String omitNullString;
+
+        @B2Json.optional
+        private final String regularString;
+
+        @B2Json.optional(omitNull = true)
+        private final int omitNullInt;
+
+        @B2Json.optional
+        private final int regularInt;
+
+        @B2Json.constructor(params = "omitNullString, regularString, omitNullInt, regularInt")
+        public OmitNullTestClass(String omitNullString, String regularString, int omitNullInt, int regularInt) {
+            this.omitNullString = omitNullString;
+            this.regularString = regularString;
+            this.omitNullInt = omitNullInt;
+            this.regularInt = regularInt;
+        }
+    }
+
+    @Test public void testOmitNullWithNullInputs() {
+        final OmitNullTestClass object = new OmitNullTestClass(null, null, 0, 0);
+        final String actual = B2Json.toJsonOrThrowRuntime(object);
+
+        // The omitNullString field should not be present in the output
+        assertEquals("{\n" +
+                "  \"omitNullInt\": 0,\n" +
+                "  \"regularInt\": 0,\n" +
+                "  \"regularString\": null\n" +
+                "}", actual);
+    }
+
+    @Test public void testOmitNullWithNonNullInputs() {
+        final OmitNullTestClass object = new OmitNullTestClass("foo", "bar", 1, 1);
+        final String actual = B2Json.toJsonOrThrowRuntime(object);
+
+        // All the fields should be in the output
+        assertEquals("{\n" +
+                "  \"omitNullInt\": 1,\n" +
+                "  \"omitNullString\": \"foo\",\n" +
+                "  \"regularInt\": 1,\n" +
+                "  \"regularString\": \"bar\"\n" +
+                "}", actual);
+    }
+
     /**
      * Because of serialization, the object returned from B2Json will never be the same object as an
      * instantiated one.

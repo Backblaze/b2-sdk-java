@@ -122,7 +122,8 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
             final String defaultValueJsonOrNull = getDefaultValueJsonOrNull(field);
             final VersionRange versionRange = getVersionRange(field);
             final boolean isSensitive = field.getAnnotation(B2Json.sensitive.class) != null;
-            final FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueJsonOrNull, versionRange, isSensitive);
+            final boolean omitNull = omitNull(field);
+            final FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueJsonOrNull, versionRange, isSensitive, omitNull);
             fieldMap.put(field.getName(), fieldInfo);
         }
         fields = fieldMap.values().toArray(new FieldInfo [fieldMap.size()]);
@@ -205,6 +206,22 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                 }
             }
         }
+    }
+
+    /**
+     * Determines whether this field has the omitNull property.
+     * This property can only be set from the 'optional' annotation,
+     * for all others omitNull will return false.
+     * @param field field definition
+     * @return whether the field has the omitNull property
+     */
+    private static boolean omitNull(Field field) {
+        B2Json.optional optionalAnnotation = field.getAnnotation(B2Json.optional.class);
+
+        if (optionalAnnotation != null) {
+            return optionalAnnotation.omitNull();
+        }
+        return false;
     }
 
     /**
@@ -300,16 +317,20 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
                         typeFieldDone = true;
                     }
                     if (fieldInfo.isInVersion(version)) {
-                        out.writeObjectFieldNameAndColon(fieldInfo.getName());
-                        if (fieldInfo.getIsSensitive() && options.getRedactSensitive()) {
-                            out.writeString("***REDACTED***");
-                        } else {
-                            final Object value = fieldInfo.field.get(obj);
-                            if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
-                                throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                        final Object value = fieldInfo.field.get(obj);
+
+                        // Only write the field if the value is not null OR omitNull is not set
+                        if (!fieldInfo.omitNull || value != null) {
+                            out.writeObjectFieldNameAndColon(fieldInfo.getName());
+                            if (fieldInfo.getIsSensitive() && options.getRedactSensitive()) {
+                                out.writeString("***REDACTED***");
+                            } else {
+                                if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
+                                    throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                                }
+                                //noinspection unchecked
+                                B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out, options);
                             }
-                            //noinspection unchecked
-                            B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out, options);
                         }
                     }
                 }
