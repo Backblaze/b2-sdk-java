@@ -80,7 +80,7 @@ public class B2JsonWriter {
         objectOrArrayEmpty = false;
     }
 
-    public void writeString(String value) throws IOException {
+    public void writeString(CharSequence value) throws IOException {
         B2Utf8Util.writeJsonString(value, out);
         objectOrArrayEmpty = false;
     }

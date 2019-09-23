@@ -2229,4 +2229,42 @@ public class B2JsonTest extends B2BaseTest {
             this.recursiveUnion = recursiveUnion;
         }
     }
+
+    private static class CharSquenceTestClass {
+        @B2Json.required
+        CharSequence sequence;
+
+        @B2Json.constructor(params = "sequence")
+        public CharSquenceTestClass(CharSequence sequence) {
+            this.sequence = sequence;
+        }
+    }
+
+    @Test
+    public void testCharSequenceSerialization() {
+        final CharSequence sequence ="foobarbaz".subSequence(3, 6);
+
+        final CharSquenceTestClass obj = new CharSquenceTestClass(sequence);
+
+        final String actual = B2Json.toJsonOrThrowRuntime(obj);
+
+        final String expected = "{\n" +
+                "  \"sequence\": \"bar\"\n" +
+                "}";
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testCharSequenceDeserialization() {
+        final String input = "{\n" +
+                "  \"sequence\": \"bar\"\n" +
+                "}";
+
+        final CharSquenceTestClass obj = B2Json.fromJsonOrThrowRuntime(input, CharSquenceTestClass.class);
+
+        assertEquals("bar", obj.sequence);
+        // the underlying implementation of CharSequence that we deserialize is String
+        assertEquals(String.class, obj.sequence.getClass());
+    }
 }

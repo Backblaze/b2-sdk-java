@@ -94,6 +94,7 @@ public class B2JsonHandlerMap {
         map.put(double.class, new B2JsonDoubleHandler(true));
         map.put(Double.class, new B2JsonDoubleHandler(false));
         map.put(String.class, new B2JsonStringHandler());
+        map.put(CharSequence.class, new B2JsonCharSquenceHandler());
         map.put(boolean[].class, new B2JsonBooleanArrayHandler(map.get(boolean.class)));
         map.put(char[].class, new B2JsonCharArrayHandler(map.get(char.class)));
         map.put(byte[].class, new B2JsonByteArrayHandler(map.get(byte.class)));
