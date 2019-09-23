@@ -39,7 +39,7 @@ public class B2Utf8Util {
      * @throws IOException if there's a problem converting to UTF-8 or writing to out.
      *                     if an exception is thrown, out's state is undefined.
      */
-    public static void writeJsonString(String value,
+    public static void writeJsonString(CharSequence value,
                                        OutputStream out) throws IOException {
         out.write('"');
 
@@ -76,7 +76,7 @@ public class B2Utf8Util {
      * @return the currentIndex, which might've been updated (if c started a surrogate pair)
      * @throws IOException if there's trouble with surrogates or writing the output.
      */
-    private static int doCommonWrite(String value,
+    private static int doCommonWrite(CharSequence value,
                                      int currentIndex,
                                      char c,
                                      OutputStream out) throws IOException {
