@@ -2160,38 +2160,63 @@ public class B2JsonTest extends B2BaseTest {
         @B2Json.optional
         private final int regularInt;
 
-        @B2Json.constructor(params = "omitNullString, regularString, omitNullInt, regularInt")
-        public OmitNullTestClass(String omitNullString, String regularString, int omitNullInt, int regularInt) {
+        @B2Json.optional(omitNull = true)
+        private final Integer omitNullInteger;
+
+        @B2Json.optional
+        private final Integer regularInteger;
+
+        @B2Json.constructor(params = "omitNullString, regularString, omitNullInt, regularInt, omitNullInteger, regularInteger")
+        public OmitNullTestClass(String omitNullString, String regularString, int omitNullInt, int regularInt, Integer omitNullInteger, Integer regularInteger) {
             this.omitNullString = omitNullString;
             this.regularString = regularString;
             this.omitNullInt = omitNullInt;
             this.regularInt = regularInt;
+            this.omitNullInteger = omitNullInteger;
+            this.regularInteger = regularInteger;
         }
     }
 
-    @Test public void testOmitNullWithNullInputs() {
-        final OmitNullTestClass object = new OmitNullTestClass(null, null, 0, 0);
+    @Test
+    public void testOmitNullWithNullInputs() {
+        final OmitNullTestClass object = new OmitNullTestClass(null, null, 0, 0, null, null);
         final String actual = B2Json.toJsonOrThrowRuntime(object);
 
-        // The omitNullString field should not be present in the output
+        // The omitNullString and omitNullInteger fields should not be present in the output
         assertEquals("{\n" +
                 "  \"omitNullInt\": 0,\n" +
                 "  \"regularInt\": 0,\n" +
+                "  \"regularInteger\": null,\n" +
                 "  \"regularString\": null\n" +
                 "}", actual);
     }
 
-    @Test public void testOmitNullWithNonNullInputs() {
-        final OmitNullTestClass object = new OmitNullTestClass("foo", "bar", 1, 1);
+    @Test
+    public void testOmitNullWithNonNullInputs() {
+        final OmitNullTestClass object = new OmitNullTestClass("foo", "bar", 1, 1, 1, 1);
         final String actual = B2Json.toJsonOrThrowRuntime(object);
 
         // All the fields should be in the output
         assertEquals("{\n" +
                 "  \"omitNullInt\": 1,\n" +
+                "  \"omitNullInteger\": 1,\n" +
                 "  \"omitNullString\": \"foo\",\n" +
                 "  \"regularInt\": 1,\n" +
+                "  \"regularInteger\": 1,\n" +
                 "  \"regularString\": \"bar\"\n" +
                 "}", actual);
+    }
+
+    @Test
+    public void testOmitNullCreateFromEmpty() {
+        final OmitNullTestClass actual = B2Json.fromJsonOrThrowRuntime("{}", OmitNullTestClass.class);
+
+        assertNull(actual.omitNullString);
+        assertNull(actual.regularString);
+        assertNull(actual.omitNullInteger);
+        assertNull(actual.regularInteger);
+        assertEquals(0, actual.omitNullInt);
+        assertEquals(0, actual.regularInt);
     }
 
     /**
