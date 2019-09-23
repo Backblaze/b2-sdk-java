@@ -215,11 +215,20 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      * @param field field definition
      * @return whether the field has the omitNull property
      */
-    private static boolean omitNull(Field field) {
-        B2Json.optional optionalAnnotation = field.getAnnotation(B2Json.optional.class);
+    private boolean omitNull(Field field) throws B2JsonException {
+        final B2Json.optional optionalAnnotation = field.getAnnotation(B2Json.optional.class);
 
         if (optionalAnnotation != null) {
-            return optionalAnnotation.omitNull();
+            final boolean omitNull = optionalAnnotation.omitNull();
+            // omitNull can only be set on non-primitive classes
+            if (omitNull && field.getType().isPrimitive()) {
+                final String message = String.format(
+                        "Field %s.%s declared with 'omitNull = true' but is a primitive type",
+                        this.clazz.getSimpleName(),
+                        field.getName());
+                throw new B2JsonException(message);
+            }
+            return omitNull;
         }
         return false;
     }

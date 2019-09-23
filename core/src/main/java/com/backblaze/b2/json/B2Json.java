@@ -484,8 +484,9 @@ public class B2Json {
      * Field annotation that says a field is optional.  The value will
      * always be included, even if it is null, when omitNull is false
      * (default); when omitNull is true and the field value is null,
-     * the value will not be included. Plain data types (e.g. int or
-     * double) will always be included as they are not nullable.
+     * the value will not be included. A B2JsonException is thrown
+     * when omitNull is set to true on a primitive field; primitives
+     * are not nullable objects so omitNull does not apply.
      * When deserializing, null/false/0 will be passed to
      * the constructor if the value is not present in the JSON.
      */

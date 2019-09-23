@@ -2147,6 +2147,16 @@ public class B2JsonTest extends B2BaseTest {
                 B2Json.toJsonOrThrowRuntime(secureContainer, options));
     }
 
+    private static class OmitNullBadTestClass {
+        @B2Json.optional(omitNull = true)
+        private final int omitNullInt;
+
+        @B2Json.constructor(params = "omitNullInt")
+        public OmitNullBadTestClass(int omitNullInt) {
+            this.omitNullInt = omitNullInt;
+        }
+    }
+
     private static class OmitNullTestClass {
         @B2Json.optional(omitNull = true)
         private final String omitNullString;
@@ -2155,23 +2165,15 @@ public class B2JsonTest extends B2BaseTest {
         private final String regularString;
 
         @B2Json.optional(omitNull = true)
-        private final int omitNullInt;
-
-        @B2Json.optional
-        private final int regularInt;
-
-        @B2Json.optional(omitNull = true)
         private final Integer omitNullInteger;
 
         @B2Json.optional
         private final Integer regularInteger;
 
-        @B2Json.constructor(params = "omitNullString, regularString, omitNullInt, regularInt, omitNullInteger, regularInteger")
-        public OmitNullTestClass(String omitNullString, String regularString, int omitNullInt, int regularInt, Integer omitNullInteger, Integer regularInteger) {
+        @B2Json.constructor(params = "omitNullString, regularString, omitNullInteger, regularInteger")
+        public OmitNullTestClass(String omitNullString, String regularString, Integer omitNullInteger, Integer regularInteger) {
             this.omitNullString = omitNullString;
             this.regularString = regularString;
-            this.omitNullInt = omitNullInt;
-            this.regularInt = regularInt;
             this.omitNullInteger = omitNullInteger;
             this.regularInteger = regularInteger;
         }
@@ -2179,13 +2181,11 @@ public class B2JsonTest extends B2BaseTest {
 
     @Test
     public void testOmitNullWithNullInputs() {
-        final OmitNullTestClass object = new OmitNullTestClass(null, null, 0, 0, null, null);
+        final OmitNullTestClass object = new OmitNullTestClass(null, null, null, null);
         final String actual = B2Json.toJsonOrThrowRuntime(object);
 
         // The omitNullString and omitNullInteger fields should not be present in the output
         assertEquals("{\n" +
-                "  \"omitNullInt\": 0,\n" +
-                "  \"regularInt\": 0,\n" +
                 "  \"regularInteger\": null,\n" +
                 "  \"regularString\": null\n" +
                 "}", actual);
@@ -2193,15 +2193,13 @@ public class B2JsonTest extends B2BaseTest {
 
     @Test
     public void testOmitNullWithNonNullInputs() {
-        final OmitNullTestClass object = new OmitNullTestClass("foo", "bar", 1, 1, 1, 1);
+        final OmitNullTestClass object = new OmitNullTestClass("foo", "bar", 1, 1);
         final String actual = B2Json.toJsonOrThrowRuntime(object);
 
         // All the fields should be in the output
         assertEquals("{\n" +
-                "  \"omitNullInt\": 1,\n" +
                 "  \"omitNullInteger\": 1,\n" +
                 "  \"omitNullString\": \"foo\",\n" +
-                "  \"regularInt\": 1,\n" +
                 "  \"regularInteger\": 1,\n" +
                 "  \"regularString\": \"bar\"\n" +
                 "}", actual);
@@ -2215,8 +2213,13 @@ public class B2JsonTest extends B2BaseTest {
         assertNull(actual.regularString);
         assertNull(actual.omitNullInteger);
         assertNull(actual.regularInteger);
-        assertEquals(0, actual.omitNullInt);
-        assertEquals(0, actual.regularInt);
+    }
+
+    @Test
+    public void testOmitNullOnPrimitive() throws B2JsonException {
+        thrown.expectMessage("Field OmitNullBadTestClass.omitNullInt declared with 'omitNull = true' but is a primitive type");
+        final OmitNullBadTestClass bad = new OmitNullBadTestClass(123);
+        B2Json.toJsonOrThrowRuntime(bad);
     }
 
     /**
