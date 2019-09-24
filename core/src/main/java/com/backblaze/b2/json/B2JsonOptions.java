@@ -47,8 +47,7 @@ public class B2JsonOptions {
      *
      * When set, fields marked as @B2Json.sensitive will be redacted from the serialized
      * JSON and replaced with the string value "***REDACTED***"
-     * The output will be valid Json but the structure/ty
-     * pes will not conform to the expected
+     * The output will be valid Json but the structure/types will not conform to the expected
      * output. Use for logging situations where round-tripping the JSON is not required
      */
     private final boolean redactSensitive;

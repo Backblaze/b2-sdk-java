@@ -2386,6 +2386,12 @@ public class B2JsonTest extends B2BaseTest {
         }
     }
 
+    /**
+     * Compact serialization is not an original feature of B2Json and thus
+     * is being explicitly tested here. All the above tests were created
+     * before the compact option became available and thus all implicitly
+     * test the pretty serialization output (which is still the default).
+     */
     @Test
     public void testCompactSerialization() throws B2JsonException {
         // setup my test object
