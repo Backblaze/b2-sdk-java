@@ -39,7 +39,7 @@ public class B2JsonMapHandler extends B2JsonNonUrlTypeHandler<Map> {
             out.startObjectFieldName();
             //noinspection unchecked
             keyHandler.serialize(entry.getKey(), options, out);
-            out.writeText(": ");
+            out.writeFieldNameValueSeparator();
             //noinspection unchecked
             B2JsonUtil.serializeMaybeNull(valueHandler, entry.getValue(), out, options);
         }

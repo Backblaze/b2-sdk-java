@@ -2342,4 +2342,85 @@ public class B2JsonTest extends B2BaseTest {
         // the underlying implementation of CharSequence that we deserialize is String
         assertEquals(String.class, obj.sequence.getClass());
     }
+
+    private static class SerializationTestClass {
+        @B2Json.required
+        final String stringVal;
+
+        @B2Json.required
+        final int intVal;
+
+        @B2Json.required
+        final boolean booleanVal;
+
+        @B2Json.required
+        final Map<String, Integer> mapVal;
+
+        @B2Json.required
+        final List<String> arrayVal;
+
+        @B2Json.constructor(params = "stringVal, intVal, booleanVal, mapVal, arrayVal")
+        public SerializationTestClass(String stringVal, int intVal, boolean booleanVal, Map<String, Integer> mapVal, List<String> arrayVal) {
+            this.stringVal = stringVal;
+            this.intVal = intVal;
+            this.booleanVal = booleanVal;
+            this.mapVal = mapVal;
+            this.arrayVal = arrayVal;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SerializationTestClass that = (SerializationTestClass) o;
+            return intVal == that.intVal &&
+                    booleanVal == that.booleanVal &&
+                    Objects.equals(stringVal, that.stringVal) &&
+                    Objects.equals(mapVal, that.mapVal) &&
+                    Objects.equals(arrayVal, that.arrayVal);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(stringVal, intVal, booleanVal, mapVal, arrayVal);
+        }
+    }
+
+    @Test
+    public void testCompactSerialization() throws B2JsonException {
+        // setup my test object
+        final Map<String, Integer> map = new HashMap<>();
+        map.put("one", 1);
+        map.put("two", 2);
+        map.put("three", 3);
+
+        final List<String> array = new ArrayList<>();
+        array.add("a");
+        array.add("b");
+        array.add("c");
+
+        final SerializationTestClass original = new SerializationTestClass(
+                "original string value",
+                123,
+                true,
+                map,
+                array);
+
+        // convert test object to JSON string
+        final B2JsonOptions options = B2JsonOptions.builder()
+                .setSerializationOption(B2JsonOptions.SerializationOption.COMPACT)
+                .build();
+
+        final String actual = B2Json.get().toJson(original, options);
+
+        final String expected = "{\"arrayVal\":[\"a\",\"b\",\"c\"],\"booleanVal\":true,\"intVal\":123,\"mapVal\":{\"one\":1,\"two\":2,\"three\":3},\"stringVal\":\"original string value\"}";
+
+        assertEquals(expected, actual);
+
+        // Convert JSON string back to SerializationTestClass to ensure that
+        // the produced json can round-trip properly.
+        final SerializationTestClass derived = B2Json.get().fromJson(actual, SerializationTestClass.class);
+
+        assertEquals(original, derived);
+    }
 }
