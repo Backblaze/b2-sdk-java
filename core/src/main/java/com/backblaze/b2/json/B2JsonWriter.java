@@ -11,16 +11,18 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Writes out JSON tokens, formatting them nicely.
+ * Writes out JSON tokens, supports pretty and compact style output.
  */
 public class B2JsonWriter {
     private final OutputStream out;
     private int indentLevel = 0;
     private boolean objectOrArrayEmpty = true;
     private boolean allowNewlines = true;
+    private final B2JsonOptions.SerializationOption serializationOption;
 
-    public B2JsonWriter(OutputStream out) {
+    public B2JsonWriter(OutputStream out, B2JsonOptions options) {
         this.out = out;
+        this.serializationOption = options.getSerializationOption();
     }
 
     public void writeText(String text) throws IOException {
@@ -41,8 +43,14 @@ public class B2JsonWriter {
     public void writeObjectFieldNameAndColon(String name) throws IOException {
         startObjectFieldName();
         writeString(name);
+        writeFieldNameValueSeparator();
+    }
+
+    public void writeFieldNameValueSeparator() throws IOException {
         out.write(':');
-        out.write(' ');
+        if (serializationOption != B2JsonOptions.SerializationOption.COMPACT) {
+            out.write(' ');
+        }
     }
 
     public void startObjectFieldName() throws IOException {
@@ -86,6 +94,10 @@ public class B2JsonWriter {
     }
 
     private void newlineAndIndent() throws IOException {
+        if (serializationOption == B2JsonOptions.SerializationOption.COMPACT) {
+            return;
+        }
+
         if (allowNewlines) {
             out.write('\n');
             for (int i = 0; i < indentLevel; i++) {

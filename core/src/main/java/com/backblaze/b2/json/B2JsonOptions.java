@@ -53,12 +53,29 @@ public class B2JsonOptions {
     private final boolean redactSensitive;
 
     /**
+     * How to format the serialized string
+     *
+     * PRETTY is the default and produces indented, multi-line JSON
+     * COMPACT produces a single line of text with no optional whitespace
+     */
+    public enum SerializationOption {
+        PRETTY,
+        COMPACT
+    }
+
+    /**
+     * How to format the serialized string
+     */
+    private final SerializationOption serializationOption;
+
+    /**
      * Initialize a new B2JsonOptions.
      */
-    private B2JsonOptions(ExtraFieldOption extraFieldOption, int version, boolean redactSensitive) {
+    private B2JsonOptions(ExtraFieldOption extraFieldOption, int version, boolean redactSensitive, SerializationOption serializationOption) {
         this.extraFieldOption = extraFieldOption;
         this.version = version;
         this.redactSensitive = redactSensitive;
+        this.serializationOption = serializationOption;
     }
 
     /**
@@ -82,6 +99,10 @@ public class B2JsonOptions {
         return redactSensitive;
     }
 
+    public SerializationOption getSerializationOption() {
+        return serializationOption;
+    }
+
     /**
      * Returns a new builder for B2JsonOptions.
      */
@@ -97,6 +118,7 @@ public class B2JsonOptions {
         private ExtraFieldOption extraFieldOption = ExtraFieldOption.ERROR;
         private int version = 1;
         private boolean redactSensitive = false;
+        private SerializationOption serializationOption = SerializationOption.PRETTY;
 
         public Builder setExtraFieldOption(ExtraFieldOption extraFieldOption) {
             this.extraFieldOption = extraFieldOption;
@@ -113,8 +135,13 @@ public class B2JsonOptions {
             return this;
         }
 
+        public Builder setSerializationOption(SerializationOption serializationOption) {
+            this.serializationOption = serializationOption;
+            return this;
+        }
+
         public B2JsonOptions build() {
-            return new B2JsonOptions(extraFieldOption, version, redactSensitive);
+            return new B2JsonOptions(extraFieldOption, version, redactSensitive, serializationOption);
         }
     }
 }

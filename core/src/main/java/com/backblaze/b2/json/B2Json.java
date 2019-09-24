@@ -156,7 +156,7 @@ public class B2Json {
         }
         final Class<?> clazz = obj.getClass();
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
-        B2JsonWriter jsonWriter = new B2JsonWriter(out);
+        B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
         //noinspection unchecked
         handler.serialize(obj, options, jsonWriter);
     }
@@ -175,7 +175,7 @@ public class B2Json {
         Class<?> clazz = obj.getClass();
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            B2JsonWriter jsonWriter = new B2JsonWriter(out);
+            B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(obj, options, jsonWriter);
             return out.toString(B2StringUtil.UTF8);
@@ -238,7 +238,7 @@ public class B2Json {
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonMapHandler(keyHandler, valueHandler);
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            B2JsonWriter jsonWriter = new B2JsonWriter(out);
+            B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(map, options, jsonWriter);
             return out.toString(B2StringUtil.UTF8);
@@ -275,7 +275,7 @@ public class B2Json {
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonListHandler(valueHandler);
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            B2JsonWriter jsonWriter = new B2JsonWriter(out);
+            B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(list, options, jsonWriter);
             return out.toString(B2StringUtil.UTF8);
