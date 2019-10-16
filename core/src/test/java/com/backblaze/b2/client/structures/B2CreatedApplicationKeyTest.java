@@ -5,11 +5,12 @@
 
 package com.backblaze.b2.client.structures;
 
+import com.backblaze.b2.util.B2Collections;
 import org.junit.Test;
 
 import java.util.TreeSet;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class B2CreatedApplicationKeyTest {
 
@@ -26,7 +27,8 @@ public class B2CreatedApplicationKeyTest {
                         capabilities,
                         "bucketId",
                         "namePrefix",
-                        12345678L
+                        12345678L,
+                        B2Collections.emptySet()
                 ),
                 new B2CreatedApplicationKey(
 
@@ -37,7 +39,8 @@ public class B2CreatedApplicationKeyTest {
                         capabilities,
                         "bucketId",
                         "namePrefix",
-                        12345678L
+                        12345678L,
+                        B2Collections.emptySet()
                 ).toApplicationKey()
         );
     }

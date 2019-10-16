@@ -9,6 +9,7 @@ import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2ListKeysRequest;
 import com.backblaze.b2.client.structures.B2ListKeysResponse;
+import com.backblaze.b2.util.B2Collections;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -71,7 +72,8 @@ public class B2ListKeysIteratorTest {
                             new TreeSet<>(),
                             "bucketId",
                             "namePrefix",
-                            12345678L
+                            12345678L,
+                            B2Collections.emptySet()
                     )
             );
         }
