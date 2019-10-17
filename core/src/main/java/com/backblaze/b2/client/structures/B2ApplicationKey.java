@@ -37,8 +37,39 @@ public class B2ApplicationKey {
     @B2Json.optional
     private final Long expirationTimestamp;
 
-    @B2Json.required
+    @B2Json.optional
     private final Set<String> options;
+
+    @SuppressWarnings("unused")
+    @B2Json.constructor(
+            params =
+                    "accountId, " +
+                    "applicationKeyId, " +
+                    "keyName, " +
+                    "capabilities, " +
+                    "bucketId, " +
+                    "namePrefix, " +
+                    "expirationTimestamp"
+    )
+    public B2ApplicationKey(String accountId,
+                            String applicationKeyId,
+                            String keyName,
+                            TreeSet<String> capabilities,
+                            String bucketId,
+                            String namePrefix,
+                            Long expirationTimestamp) {
+
+        this(
+                accountId,
+                applicationKeyId,
+                keyName,
+                capabilities,
+                bucketId,
+                namePrefix,
+                expirationTimestamp,
+                null
+        );
+    }
 
     @SuppressWarnings("unused")
     @B2Json.constructor(
@@ -106,7 +137,9 @@ public class B2ApplicationKey {
     }
 
     @SuppressWarnings("unused")
-    public Set<String> getOptions() { return options; }
+    public Set<String> getOptions() {
+        return options;
+    }
 
     @Override
     public boolean equals(Object o) {

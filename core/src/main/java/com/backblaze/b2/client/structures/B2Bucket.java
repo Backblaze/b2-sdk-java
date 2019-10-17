@@ -40,6 +40,29 @@ public class B2Bucket {
     private final int revision;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
+            "bucketInfo,corsRules,lifecycleRules,revision")
+    public B2Bucket(String accountId,
+                    String bucketId,
+                    String bucketName,
+                    String bucketType,
+                    Map<String, String> bucketInfo,
+                    List<B2CorsRule> corsRules,
+                    List<B2LifecycleRule> lifecycleRules,
+                    int revision) {
+        this(
+                accountId,
+                bucketId,
+                bucketName,
+                bucketType,
+                bucketInfo,
+                corsRules,
+                lifecycleRules,
+                null,
+                revision
+        );
+    }
+
+    @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
             "bucketInfo,corsRules,lifecycleRules,options,revision")
     public B2Bucket(String accountId,
                     String bucketId,
@@ -89,7 +112,9 @@ public class B2Bucket {
         return lifecycleRules;
     }
 
-    public Set<String> getOptions() { return options; }
+    public Set<String> getOptions() {
+        return options;
+    }
 
     public int getRevision() {
         return revision;
@@ -104,7 +129,7 @@ public class B2Bucket {
                 (bucketInfo == null ? 0 : bucketInfo.size()) + " infos," +
                 (corsRules == null ? 0 : corsRules.size()) + " corsRules," +
                 (lifecycleRules == null ? 0 : lifecycleRules.size()) + " lifecycleRules," +
-                (options == null ? 0 : options.size()) + " options," +
+                ((options == null || options.size() == 0) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
                 "v" + revision +
                 ')';
     }

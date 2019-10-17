@@ -148,7 +148,6 @@ public class B2TestHelpers {
                 B2Collections.mapOf("color", "blue"),
                 B2Collections.listOf(makeCorsRule()),
                 B2Collections.listOf(makeLifecycleRule(i)),
-                B2Collections.emptySet(),
                 i);
     }
 

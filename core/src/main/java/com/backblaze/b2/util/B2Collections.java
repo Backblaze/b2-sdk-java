@@ -20,7 +20,7 @@ public class B2Collections {
     }
 
     public static <T> Set<T> emptySet() {
-        return Collections.unmodifiableSet(new HashSet<>());
+        return Collections.emptySet();
     }
 
     public static <K,V> Map<K,V> unmodifiableMap(Map<K,V> orig) {

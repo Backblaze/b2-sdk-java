@@ -5,12 +5,14 @@
 
 package com.backblaze.b2.client.structures;
 
-import com.backblaze.b2.util.B2Collections;
 import org.junit.Test;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.TreeSet;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class B2CreatedApplicationKeyTest {
 
@@ -27,8 +29,34 @@ public class B2CreatedApplicationKeyTest {
                         capabilities,
                         "bucketId",
                         "namePrefix",
+                        12345678L
+                ),
+                new B2CreatedApplicationKey(
+
+                        "accountId",
+                        "appKeyId",
+                        "appKeySecret",
+                        "keyName",
+                        capabilities,
+                        "bucketId",
+                        "namePrefix",
+                        12345678L
+                ).toApplicationKey()
+        );
+
+        final Set<String> optionsSet = new HashSet<>();
+        optionsSet.add("myOption1");
+        optionsSet.add("myOption2");
+        assertEquals(
+                new B2ApplicationKey(
+                        "accountId",
+                        "appKeyId",
+                        "keyName",
+                        capabilities,
+                        "bucketId",
+                        "namePrefix",
                         12345678L,
-                        B2Collections.emptySet()
+                        optionsSet
                 ),
                 new B2CreatedApplicationKey(
 
@@ -40,7 +68,31 @@ public class B2CreatedApplicationKeyTest {
                         "bucketId",
                         "namePrefix",
                         12345678L,
-                        B2Collections.emptySet()
+                        optionsSet
+                ).toApplicationKey()
+        );
+
+        assertNotEquals(
+                new B2ApplicationKey(
+                        "accountId",
+                        "appKeyId",
+                        "keyName",
+                        capabilities,
+                        "bucketId",
+                        "namePrefix",
+                        12345678L
+                ),
+                new B2CreatedApplicationKey(
+
+                        "accountId",
+                        "appKeyId",
+                        "appKeySecret",
+                        "keyName",
+                        capabilities,
+                        "bucketId",
+                        "namePrefix",
+                        12345678L,
+                        optionsSet
                 ).toApplicationKey()
         );
     }
