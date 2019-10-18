@@ -5,6 +5,7 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentSources.B2ContentSource;
+import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2InputStreamExcerpt;
 import org.junit.Rule;
@@ -46,7 +47,7 @@ public class B2PartOfContentSourceTest extends B2BaseTest {
     }
 
     @Test
-    public void testCreateInputStream() throws IOException {
+    public void testCreateInputStream() throws IOException, B2Exception {
         final InputStream underlyingStream = new ByteArrayInputStream(new byte[0]);
         when(source.createInputStream()).thenReturn(underlyingStream);
 

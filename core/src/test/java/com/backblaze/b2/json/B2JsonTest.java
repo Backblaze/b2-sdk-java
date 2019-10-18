@@ -2147,6 +2147,81 @@ public class B2JsonTest extends B2BaseTest {
                 B2Json.toJsonOrThrowRuntime(secureContainer, options));
     }
 
+    private static class OmitNullBadTestClass {
+        @B2Json.optional(omitNull = true)
+        private final int omitNullInt;
+
+        @B2Json.constructor(params = "omitNullInt")
+        public OmitNullBadTestClass(int omitNullInt) {
+            this.omitNullInt = omitNullInt;
+        }
+    }
+
+    private static class OmitNullTestClass {
+        @B2Json.optional(omitNull = true)
+        private final String omitNullString;
+
+        @B2Json.optional
+        private final String regularString;
+
+        @B2Json.optional(omitNull = true)
+        private final Integer omitNullInteger;
+
+        @B2Json.optional
+        private final Integer regularInteger;
+
+        @B2Json.constructor(params = "omitNullString, regularString, omitNullInteger, regularInteger")
+        public OmitNullTestClass(String omitNullString, String regularString, Integer omitNullInteger, Integer regularInteger) {
+            this.omitNullString = omitNullString;
+            this.regularString = regularString;
+            this.omitNullInteger = omitNullInteger;
+            this.regularInteger = regularInteger;
+        }
+    }
+
+    @Test
+    public void testOmitNullWithNullInputs() {
+        final OmitNullTestClass object = new OmitNullTestClass(null, null, null, null);
+        final String actual = B2Json.toJsonOrThrowRuntime(object);
+
+        // The omitNullString and omitNullInteger fields should not be present in the output
+        assertEquals("{\n" +
+                "  \"regularInteger\": null,\n" +
+                "  \"regularString\": null\n" +
+                "}", actual);
+    }
+
+    @Test
+    public void testOmitNullWithNonNullInputs() {
+        final OmitNullTestClass object = new OmitNullTestClass("foo", "bar", 1, 1);
+        final String actual = B2Json.toJsonOrThrowRuntime(object);
+
+        // All the fields should be in the output
+        assertEquals("{\n" +
+                "  \"omitNullInteger\": 1,\n" +
+                "  \"omitNullString\": \"foo\",\n" +
+                "  \"regularInteger\": 1,\n" +
+                "  \"regularString\": \"bar\"\n" +
+                "}", actual);
+    }
+
+    @Test
+    public void testOmitNullCreateFromEmpty() {
+        final OmitNullTestClass actual = B2Json.fromJsonOrThrowRuntime("{}", OmitNullTestClass.class);
+
+        assertNull(actual.omitNullString);
+        assertNull(actual.regularString);
+        assertNull(actual.omitNullInteger);
+        assertNull(actual.regularInteger);
+    }
+
+    @Test
+    public void testOmitNullOnPrimitive() throws B2JsonException {
+        thrown.expectMessage("Field OmitNullBadTestClass.omitNullInt declared with 'omitNull = true' but is a primitive type");
+        final OmitNullBadTestClass bad = new OmitNullBadTestClass(123);
+        B2Json.toJsonOrThrowRuntime(bad);
+    }
+
     /**
      * Because of serialization, the object returned from B2Json will never be the same object as an
      * instantiated one.
@@ -2257,5 +2332,130 @@ public class B2JsonTest extends B2BaseTest {
 
         @B2Json.constructor(params = "")
         TestClassInit_ClassThatDoesInitializition() {}
+    }
+
+    private static class CharSquenceTestClass {
+        @B2Json.required
+        CharSequence sequence;
+
+        @B2Json.constructor(params = "sequence")
+        public CharSquenceTestClass(CharSequence sequence) {
+            this.sequence = sequence;
+        }
+    }
+
+    @Test
+    public void testCharSequenceSerialization() {
+        final CharSequence sequence ="foobarbaz".subSequence(3, 6);
+
+        final CharSquenceTestClass obj = new CharSquenceTestClass(sequence);
+
+        final String actual = B2Json.toJsonOrThrowRuntime(obj);
+
+        final String expected = "{\n" +
+                "  \"sequence\": \"bar\"\n" +
+                "}";
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testCharSequenceDeserialization() {
+        final String input = "{\n" +
+                "  \"sequence\": \"bar\"\n" +
+                "}";
+
+        final CharSquenceTestClass obj = B2Json.fromJsonOrThrowRuntime(input, CharSquenceTestClass.class);
+
+        assertEquals("bar", obj.sequence);
+        // the underlying implementation of CharSequence that we deserialize is String
+        assertEquals(String.class, obj.sequence.getClass());
+    }
+
+    private static class SerializationTestClass {
+        @B2Json.required
+        final String stringVal;
+
+        @B2Json.required
+        final int intVal;
+
+        @B2Json.required
+        final boolean booleanVal;
+
+        @B2Json.required
+        final Map<String, Integer> mapVal;
+
+        @B2Json.required
+        final List<String> arrayVal;
+
+        @B2Json.constructor(params = "stringVal, intVal, booleanVal, mapVal, arrayVal")
+        public SerializationTestClass(String stringVal, int intVal, boolean booleanVal, Map<String, Integer> mapVal, List<String> arrayVal) {
+            this.stringVal = stringVal;
+            this.intVal = intVal;
+            this.booleanVal = booleanVal;
+            this.mapVal = mapVal;
+            this.arrayVal = arrayVal;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SerializationTestClass that = (SerializationTestClass) o;
+            return intVal == that.intVal &&
+                    booleanVal == that.booleanVal &&
+                    Objects.equals(stringVal, that.stringVal) &&
+                    Objects.equals(mapVal, that.mapVal) &&
+                    Objects.equals(arrayVal, that.arrayVal);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(stringVal, intVal, booleanVal, mapVal, arrayVal);
+        }
+    }
+
+    /**
+     * Compact serialization is not an original feature of B2Json and thus
+     * is being explicitly tested here. All the above tests were created
+     * before the compact option became available and thus all implicitly
+     * test the pretty serialization output (which is still the default).
+     */
+    @Test
+    public void testCompactSerialization() throws B2JsonException {
+        // setup my test object
+        final Map<String, Integer> map = new HashMap<>();
+        map.put("one", 1);
+        map.put("two", 2);
+        map.put("three", 3);
+
+        final List<String> array = new ArrayList<>();
+        array.add("a");
+        array.add("b");
+        array.add("c");
+
+        final SerializationTestClass original = new SerializationTestClass(
+                "original string value",
+                123,
+                true,
+                map,
+                array);
+
+        // convert test object to JSON string
+        final B2JsonOptions options = B2JsonOptions.builder()
+                .setSerializationOption(B2JsonOptions.SerializationOption.COMPACT)
+                .build();
+
+        final String actual = B2Json.get().toJson(original, options);
+
+        final String expected = "{\"arrayVal\":[\"a\",\"b\",\"c\"],\"booleanVal\":true,\"intVal\":123,\"mapVal\":{\"one\":1,\"two\":2,\"three\":3},\"stringVal\":\"original string value\"}";
+
+        assertEquals(expected, actual);
+
+        // Convert JSON string back to SerializationTestClass to ensure that
+        // the produced json can round-trip properly.
+        final SerializationTestClass derived = B2Json.get().fromJson(actual, SerializationTestClass.class);
+
+        assertEquals(original, derived);
     }
 }

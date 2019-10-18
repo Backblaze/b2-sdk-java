@@ -9,9 +9,11 @@ import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2ApplicationKey;
 import com.backblaze.b2.client.structures.B2ListKeysRequest;
 import com.backblaze.b2.client.structures.B2ListKeysResponse;
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -20,7 +22,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class B2ListKeysIteratorTest {
+public class B2ListKeysIteratorTest extends B2BaseTest {
 
     private final B2StorageClientImpl b2Client = mock(B2StorageClientImpl.class);
 
@@ -71,7 +73,8 @@ public class B2ListKeysIteratorTest {
                             new TreeSet<>(),
                             "bucketId",
                             "namePrefix",
-                            12345678L
+                            12345678L,
+                            Collections.emptySet()
                     )
             );
         }

@@ -5,6 +5,7 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentSources.B2ContentSource;
+import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.util.B2InputStreamExcerpt;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ class B2PartOfContentSource implements B2ContentSource {
     }
 
     @Override
-    public InputStream createInputStream() throws IOException {
+    public InputStream createInputStream() throws IOException, B2Exception {
         return new B2InputStreamExcerpt(source.createInputStream(), start, length);
     }
 

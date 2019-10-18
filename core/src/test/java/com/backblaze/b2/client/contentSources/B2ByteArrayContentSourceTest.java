@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.contentSources;
 
+import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2StringUtil;
 import org.junit.Test;
@@ -22,7 +23,7 @@ public class B2ByteArrayContentSourceTest extends B2BaseTest {
     private static final Long SRC_LAST_MOD_MILLIS = 123456L;
 
     @Test
-    public void testSimple() throws IOException {
+    public void testSimple() throws IOException, B2Exception {
         final B2ContentSource contentSource = B2ByteArrayContentSource.build(sourceBytes);
         assertNull(contentSource.getSha1OrNull());
         assertNull(contentSource.getSrcLastModifiedMillisOrNull());
@@ -33,7 +34,7 @@ public class B2ByteArrayContentSourceTest extends B2BaseTest {
     }
 
     @Test
-    public void testOptionalAttributes() throws IOException {
+    public void testOptionalAttributes() throws IOException, B2Exception {
 
         final B2ContentSource contentSource = B2ByteArrayContentSource
                 .builder(sourceBytes)
@@ -48,10 +49,10 @@ public class B2ByteArrayContentSourceTest extends B2BaseTest {
     }
 
     private interface InputStreamFactory {
-        InputStream create() throws IOException;
+        InputStream create() throws IOException, B2Exception;
     }
 
-    private static byte[] readAllBytes(InputStreamFactory inputStreamFactory) throws IOException {
+    private static byte[] readAllBytes(InputStreamFactory inputStreamFactory) throws IOException, B2Exception {
         try (final InputStream input = inputStreamFactory.create();
              final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             int b;

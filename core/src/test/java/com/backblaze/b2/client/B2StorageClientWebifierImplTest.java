@@ -15,8 +15,8 @@ import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
-import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2CopyFileRequest;
+import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
@@ -322,7 +322,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         }
 
         @Override
-        public InputStream createInputStream() throws IOException {
+        public InputStream createInputStream() throws IOException, B2Exception {
             numCreated.incrementAndGet();
             final InputStream newStream = nested.createInputStream();
             return new InputStream() {
@@ -1411,7 +1411,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         }
 
         @Override
-        public InputStream createInputStream() throws IOException {
+        public InputStream createInputStream() throws IOException, B2Exception {
             return nested.createInputStream();
         }
     }

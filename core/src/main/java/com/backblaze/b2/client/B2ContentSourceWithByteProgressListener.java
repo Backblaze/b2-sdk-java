@@ -5,6 +5,7 @@
 package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.contentSources.B2ContentSource;
+import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2InputStreamWithByteProgressListener;
 import com.backblaze.b2.util.B2Preconditions;
@@ -46,7 +47,7 @@ class B2ContentSourceWithByteProgressListener implements B2ContentSource {
     }
 
     @Override
-    public InputStream createInputStream() throws IOException {
+    public InputStream createInputStream() throws IOException, B2Exception {
         final InputStream inputStream = source.createInputStream();
         return new B2InputStreamWithByteProgressListener(inputStream, listener);
     }

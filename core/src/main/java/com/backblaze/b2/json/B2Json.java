@@ -156,7 +156,7 @@ public class B2Json {
         }
         final Class<?> clazz = obj.getClass();
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
-        B2JsonWriter jsonWriter = new B2JsonWriter(out);
+        B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
         //noinspection unchecked
         handler.serialize(obj, options, jsonWriter);
     }
@@ -175,7 +175,7 @@ public class B2Json {
         Class<?> clazz = obj.getClass();
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            B2JsonWriter jsonWriter = new B2JsonWriter(out);
+            B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(obj, options, jsonWriter);
             return out.toString(B2StringUtil.UTF8);
@@ -238,7 +238,7 @@ public class B2Json {
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonMapHandler(keyHandler, valueHandler);
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            B2JsonWriter jsonWriter = new B2JsonWriter(out);
+            B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(map, options, jsonWriter);
             return out.toString(B2StringUtil.UTF8);
@@ -275,7 +275,7 @@ public class B2Json {
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonListHandler(valueHandler);
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            B2JsonWriter jsonWriter = new B2JsonWriter(out);
+            B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(list, options, jsonWriter);
             return out.toString(B2StringUtil.UTF8);
@@ -482,13 +482,19 @@ public class B2Json {
 
     /**
      * Field annotation that says a field is optional.  The value will
-     * always be included, even if it is null.  When deserializing,
-     * null/false/0 will be passed to the constructor if the value is
-     * not present in the JSON.
+     * always be included, even if it is null, when omitNull is false
+     * (default); when omitNull is true and the field value is null,
+     * the value will not be included. A B2JsonException is thrown
+     * when omitNull is set to true on a primitive field; primitives
+     * are not nullable objects so omitNull does not apply.
+     * When deserializing, null/false/0 will be passed to
+     * the constructor if the value is not present in the JSON.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    public @interface optional {}
+    public @interface optional {
+        boolean omitNull() default false;
+    }
 
     /**
      * Field annotation that says a field is optional.  The value will
