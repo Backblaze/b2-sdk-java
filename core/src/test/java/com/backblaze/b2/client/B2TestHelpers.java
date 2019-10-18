@@ -23,6 +23,8 @@ import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2Sha1;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.backblaze.b2.client.contentSources.B2Headers.CONTENT_LENGTH;
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_ID;
@@ -148,6 +150,7 @@ public class B2TestHelpers {
                 B2Collections.mapOf("color", "blue"),
                 B2Collections.listOf(makeCorsRule()),
                 B2Collections.listOf(makeLifecycleRule(i)),
+                makeBucketOrApplicationKeyOptions(),
                 i);
     }
 
@@ -188,4 +191,10 @@ public class B2TestHelpers {
         return String.format("files/\u81ea\u7531/%04d", i);
     }
 
+    public static Set<String> makeBucketOrApplicationKeyOptions() {
+        final Set<String> optionsSet = new HashSet<>();
+        optionsSet.add("myOption1");
+        optionsSet.add("myOption2");
+        return optionsSet;
+    }
 }

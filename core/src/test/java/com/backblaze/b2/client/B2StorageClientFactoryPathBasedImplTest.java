@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -12,7 +13,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;
 
-public class B2StorageClientFactoryPathBasedImplTest {
+public class B2StorageClientFactoryPathBasedImplTest extends B2BaseTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 

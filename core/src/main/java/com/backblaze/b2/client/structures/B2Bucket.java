@@ -40,29 +40,6 @@ public class B2Bucket {
     private final int revision;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
-            "bucketInfo,corsRules,lifecycleRules,revision")
-    public B2Bucket(String accountId,
-                    String bucketId,
-                    String bucketName,
-                    String bucketType,
-                    Map<String, String> bucketInfo,
-                    List<B2CorsRule> corsRules,
-                    List<B2LifecycleRule> lifecycleRules,
-                    int revision) {
-        this(
-                accountId,
-                bucketId,
-                bucketName,
-                bucketType,
-                bucketInfo,
-                corsRules,
-                lifecycleRules,
-                null,
-                revision
-        );
-    }
-
-    @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
             "bucketInfo,corsRules,lifecycleRules,options,revision")
     public B2Bucket(String accountId,
                     String bucketId,

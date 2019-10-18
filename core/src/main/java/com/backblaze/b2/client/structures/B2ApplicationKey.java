@@ -49,37 +49,6 @@ public class B2ApplicationKey {
                     "capabilities, " +
                     "bucketId, " +
                     "namePrefix, " +
-                    "expirationTimestamp"
-    )
-    public B2ApplicationKey(String accountId,
-                            String applicationKeyId,
-                            String keyName,
-                            TreeSet<String> capabilities,
-                            String bucketId,
-                            String namePrefix,
-                            Long expirationTimestamp) {
-
-        this(
-                accountId,
-                applicationKeyId,
-                keyName,
-                capabilities,
-                bucketId,
-                namePrefix,
-                expirationTimestamp,
-                null
-        );
-    }
-
-    @SuppressWarnings("unused")
-    @B2Json.constructor(
-            params =
-                    "accountId, " +
-                    "applicationKeyId, " +
-                    "keyName, " +
-                    "capabilities, " +
-                    "bucketId, " +
-                    "namePrefix, " +
                     "expirationTimestamp, " +
                     "options"
     )
