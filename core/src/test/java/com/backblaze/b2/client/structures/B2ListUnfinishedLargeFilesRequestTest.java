@@ -4,11 +4,12 @@
 
 package com.backblaze.b2.client.structures;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class B2ListUnfinishedLargeFilesRequestTest {
+public class B2ListUnfinishedLargeFilesRequestTest extends B2BaseTest {
 
     @Test
     public void testBuilderCopies() {

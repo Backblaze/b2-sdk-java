@@ -9,6 +9,7 @@ import com.backblaze.b2.json.B2Json;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class B2Bucket {
     @B2Json.required
@@ -32,12 +33,14 @@ public class B2Bucket {
     @B2Json.optional
     private final List<B2LifecycleRule> lifecycleRules;
 
+    @B2Json.optional
+    private final Set<String> options;
+
     @B2Json.required
     private final int revision;
 
-
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
-            "bucketInfo,corsRules,lifecycleRules,revision")
+            "bucketInfo,corsRules,lifecycleRules,options,revision")
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
@@ -45,6 +48,7 @@ public class B2Bucket {
                     Map<String, String> bucketInfo,
                     List<B2CorsRule> corsRules,
                     List<B2LifecycleRule> lifecycleRules,
+                    Set<String> options,
                     int revision) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -53,6 +57,7 @@ public class B2Bucket {
         this.bucketInfo = bucketInfo;
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
+        this.options = options;
         this.revision = revision;
     }
 
@@ -84,6 +89,10 @@ public class B2Bucket {
         return lifecycleRules;
     }
 
+    public Set<String> getOptions() {
+        return options;
+    }
+
     public int getRevision() {
         return revision;
     }
@@ -97,6 +106,7 @@ public class B2Bucket {
                 (bucketInfo == null ? 0 : bucketInfo.size()) + " infos," +
                 (corsRules == null ? 0 : corsRules.size()) + " corsRules," +
                 (lifecycleRules == null ? 0 : lifecycleRules.size()) + " lifecycleRules," +
+                ((options == null || options.size() == 0) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
                 "v" + revision +
                 ')';
     }
@@ -113,7 +123,8 @@ public class B2Bucket {
                 Objects.equals(getBucketType(), b2Bucket.getBucketType()) &&
                 Objects.equals(getBucketInfo(), b2Bucket.getBucketInfo()) &&
                 Objects.equals(getCorsRules(), b2Bucket.getCorsRules()) &&
-                Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules());
+                Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules()) &&
+                Objects.equals(getOptions(), b2Bucket.getOptions());
     }
 
     @Override
@@ -126,6 +137,7 @@ public class B2Bucket {
                 getBucketInfo(),
                 getCorsRules(),
                 getLifecycleRules(),
+                getOptions(),
                 getRevision());
     }
 }

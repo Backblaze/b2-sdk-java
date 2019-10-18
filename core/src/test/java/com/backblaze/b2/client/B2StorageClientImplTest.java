@@ -179,6 +179,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 null,
                 null,
                 null,
+                Collections.emptySet(),
                 1);
         when(webifier.createBucket(anyObject(), anyObject())).thenReturn(bucket);
 
@@ -221,6 +222,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 bucketInfo,
                 new ArrayList<>(),
                 lifecycleRules,
+                Collections.emptySet(),
                 1);
         B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
         when(webifier.createBucket(ACCOUNT_AUTH, expectedRequest)).thenReturn(bucket);
@@ -241,11 +243,24 @@ public class B2StorageClientImplTest extends B2BaseTest {
         assertEquals(bucket(1), bucket(1));
         //noinspection ResultOfMethodCallIgnored
         bucket.hashCode();
-        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,v1)", bucket.toString());
+        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,0 options,v1)", bucket.toString());
+
+        final B2Bucket bucketWithOptions = new B2Bucket(
+                ACCOUNT_ID,
+                bucketId(1),
+                BUCKET_NAME,
+                BUCKET_TYPE,
+                bucketInfo,
+                new ArrayList<>(),
+                lifecycleRules,
+                B2TestHelpers.makeBucketOrApplicationKeyOptions(),
+                1);
+        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, myOption2] options,v1)",
+                bucketWithOptions.toString());
     }
 
     @Test
-    public void testGetAndIvalidateAccountAuthorization() throws B2Exception {
+    public void testGetAndInvalidateAccountAuthorization() throws B2Exception {
         assertNotNull(client.getAccountAuthorization());
         assertNotNull(client.getAccountAuthorization());
         verify(webifier, times(1)).authorizeAccount(anyObject());
@@ -337,6 +352,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 bucketId(i),
                 BUCKET_NAME,
                 BUCKET_TYPE,
+                null,
                 null,
                 null,
                 null,

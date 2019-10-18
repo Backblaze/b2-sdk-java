@@ -4,6 +4,7 @@
 
 package com.backblaze.b2.json;
 
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -11,9 +12,10 @@ import org.junit.rules.ExpectedException;
 import java.util.HashSet;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
-public class B2JsonHandlerMapTest {
+public class B2JsonHandlerMapTest extends B2BaseTest {
 
     @Rule
     public ExpectedException thrown  = ExpectedException.none();

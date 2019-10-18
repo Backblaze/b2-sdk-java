@@ -8,6 +8,7 @@ package com.backblaze.b2.client.structures;
 import com.backblaze.b2.json.B2Json;
 
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -36,6 +37,9 @@ public class B2ApplicationKey {
     @B2Json.optional
     private final Long expirationTimestamp;
 
+    @B2Json.optional
+    private final Set<String> options;
+
     @SuppressWarnings("unused")
     @B2Json.constructor(
             params =
@@ -45,7 +49,8 @@ public class B2ApplicationKey {
                     "capabilities, " +
                     "bucketId, " +
                     "namePrefix, " +
-                    "expirationTimestamp"
+                    "expirationTimestamp, " +
+                    "options"
     )
     public B2ApplicationKey(String accountId,
                             String applicationKeyId,
@@ -53,7 +58,8 @@ public class B2ApplicationKey {
                             TreeSet<String> capabilities,
                             String bucketId,
                             String namePrefix,
-                            Long expirationTimestamp) {
+                            Long expirationTimestamp,
+                            Set<String> options) {
         
         this.accountId = accountId;
         this.applicationKeyId = applicationKeyId;
@@ -62,6 +68,7 @@ public class B2ApplicationKey {
         this.bucketId = bucketId;
         this.namePrefix = namePrefix;
         this.expirationTimestamp = expirationTimestamp;
+        this.options = options;
     }
 
     public String getAccountId() {
@@ -98,6 +105,11 @@ public class B2ApplicationKey {
         return expirationTimestamp;
     }
 
+    @SuppressWarnings("unused")
+    public Set<String> getOptions() {
+        return options;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -113,12 +125,21 @@ public class B2ApplicationKey {
                 Objects.equals(capabilities, that.capabilities) &&
                 Objects.equals(bucketId, that.bucketId) &&
                 Objects.equals(namePrefix, that.namePrefix) &&
-                Objects.equals(expirationTimestamp, that.expirationTimestamp);
+                Objects.equals(expirationTimestamp, that.expirationTimestamp) &&
+                Objects.equals(options, that.options);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(accountId, applicationKeyId, keyName, capabilities, bucketId, namePrefix, expirationTimestamp);
+        return Objects.hash(
+                accountId,
+                applicationKeyId,
+                keyName,
+                capabilities,
+                bucketId,
+                namePrefix,
+                expirationTimestamp,
+                options);
     }
 }

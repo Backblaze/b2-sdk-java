@@ -15,6 +15,7 @@ import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
+import com.backblaze.b2.util.B2BaseTest;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,7 +49,7 @@ import static org.mockito.Mockito.when;
 /*
  * Copyright 2019, Backblaze, Inc. All rights reserved.
  */
-public class B2LargeFileStorerTest {
+public class B2LargeFileStorerTest extends B2BaseTest {
 
     private static final long FIVE_MEGABYTES = 5000000;
 
