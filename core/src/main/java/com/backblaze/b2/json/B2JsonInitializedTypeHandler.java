@@ -69,9 +69,4 @@ public abstract class B2JsonInitializedTypeHandler<T> implements B2JsonTypeHandl
     protected boolean isInitialized() {
         return initialized;
     }
-
-    /**
-     * Checks that all default values used by this class are valid and can be deserialized.
-     */
-    void checkDefaultValues() throws B2JsonException {}
 }

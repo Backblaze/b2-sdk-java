@@ -25,7 +25,7 @@ import java.util.Set;
  *
  * See doc comment on B2Json for annotation requirements.
  */
-public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
+public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
 
     /**
      * The class of object we handle.
@@ -239,7 +239,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
      * @throws B2JsonException if any are bad
      */
     @Override
-    void checkDefaultValues() throws B2JsonException {
+    protected void checkDefaultValues() throws B2JsonException {
         for (FieldInfo field : fieldMap.values()) {
             if (field.defaultValueJsonOrNull != null) {
                 try {
@@ -313,6 +313,7 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
     public void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
 
         B2Preconditions.checkState(isInitialized());
+        throwIfBadDefaultValue();
 
         try {
             final int version = options.getVersion();
@@ -355,9 +356,14 @@ public class B2JsonObjectHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         }
     }
 
+    public T deserializeUrlParam(String urlValue) throws B2JsonException {
+        throw new B2JsonException("objects not supported in URL parameter");
+    }
+
     public T deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
 
         B2Preconditions.checkState(isInitialized());
+        throwIfBadDefaultValue();
 
         if (fields == null) {
             throw new B2JsonException("B2JsonObjectHandler.deserializes called with null fields");
