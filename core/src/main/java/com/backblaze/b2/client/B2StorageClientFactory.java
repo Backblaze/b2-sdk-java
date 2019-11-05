@@ -6,6 +6,7 @@ package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.credentialsSources.B2Credentials;
 import com.backblaze.b2.client.credentialsSources.B2CredentialsFromEnvironmentSource;
+import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2Allowed;
 
 /**
@@ -58,19 +59,16 @@ public interface B2StorageClientFactory {
         return create(credentials.getApplicationKeyId(), credentials.getApplicationKey(), userAgent);
     }
 
-    default B2StorageClient create(String accountID, String authorizationToken, String apiUrl, String downloadUrl,
-                                   long recommendedPartSize, long absoluteMinimumPartSize, B2Allowed b2Allowed,
+    /**
+     * If we have authenticated via other means, we can provide the complete authorization
+     * @param b2AccountAuthorization complete auth info normally returned by authorize_account
+     * @param userAgent the user agent to use when performing http requests.
+     * @return a new B2StorageClient or throws a RuntimeException if it can't make one.
+     */
+
+    default B2StorageClient create(B2AccountAuthorization b2AccountAuthorization,
                                    String userAgent){
-        final B2AccountAuthorizer accountAuthorizer = new B2AccountAuthorizerV5AuthImpl
-                .Builder()
-                .setAccountID(accountID)
-                .setAuthorizationToken(authorizationToken)
-                .setApiUrl(apiUrl)
-                .setDownloadUrl(downloadUrl)
-                .setRecommendedPartSize(recommendedPartSize)
-                .setAbsoluteMinimumPartSize(absoluteMinimumPartSize)
-                .setB2Allowed(b2Allowed)
-                .build();
+        final B2AccountAuthorizer accountAuthorizer = new B2AccountAuthorizerV5AuthImpl(b2AccountAuthorization);
         final B2ClientConfig config = B2ClientConfig
                 .builder( accountAuthorizer, userAgent)
                 .build();
