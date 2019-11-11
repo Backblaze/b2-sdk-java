@@ -19,7 +19,7 @@ public class B2StorageClientFactoryPathBasedImplTest {
 
 
     @Test
-    public void testDefaultFactory_failsSucceedsTestEnvironmentIncludesUrlBasedImplementation() {
+    public void testDefaultFactory_succeedsTestEnvironmentIncludesUrlBasedImplementation() {
         final B2StorageClientFactory factory = B2StorageClientFactory.createDefaultFactory();
 
         assertNotNull(factory.create("appKeyId", "appKey", "userAgent"));
