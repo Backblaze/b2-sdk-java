@@ -8,7 +8,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 public class TypeResolver {
@@ -59,8 +61,10 @@ public class TypeResolver {
         }
         if (type instanceof ParameterizedType) {
             final ParameterizedType parameterizedType = (ParameterizedType)type;
-            parameterizedType.getRawType();
+
             final Type[] resolvedActualTypeArguments = resolveTypes(parameterizedType.getActualTypeArguments());
+
+            // TODO raw type might need to be resolved as well.
             return new ResolvedParameterizedType(parameterizedType.getRawType(), resolvedActualTypeArguments);
         }
         throw new RuntimeException("Could not resolve type " + type);
@@ -99,6 +103,20 @@ public class TypeResolver {
         public Type getOwnerType() {
             // TODO
             return null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ResolvedParameterizedType that = (ResolvedParameterizedType) o;
+            return Objects.equals(rawType, that.rawType) &&
+                    Arrays.equals(actualTypeArguments, that.actualTypeArguments);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(rawType, actualTypeArguments);
         }
     }
 }

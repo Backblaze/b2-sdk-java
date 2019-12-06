@@ -14,6 +14,7 @@ import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +32,8 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
      * The class of object we handle.
      */
     private final Class<T> clazz;
+
+    private final TypeResolver typeResolver;
 
     /**
      * The union class that this one belongs to, or null if there is not one.
@@ -81,8 +84,12 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
      * Sets up a new handler for this class based on reflection for the class.
      */
     /*package*/ B2JsonObjectHandler(Class<T> clazz) throws B2JsonException {
+        this(clazz, null);
+    }
 
+    /*package*/ B2JsonObjectHandler(Class<T> clazz, Type[] actualParameterizedTypes) throws B2JsonException {
         this.clazz = clazz;
+        this.typeResolver = new TypeResolver(clazz, actualParameterizedTypes);
 
         // Is this a member of a union type?
         {
@@ -118,7 +125,8 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
         // Get information on all of the fields in the class.
         for (Field field : B2JsonHandlerMap.getObjectFieldsForJson(clazz)) {
             final FieldRequirement requirement = B2JsonHandlerMap.getFieldRequirement(clazz, field);
-            final B2JsonTypeHandler<?> handler = B2JsonHandlerMap.getUninitializedFieldHandler(field.getGenericType(), handlerMap);
+            final B2JsonTypeHandler<?> handler = B2JsonHandlerMap.getUninitializedFieldHandler(
+                    typeResolver.resolveType(field.getGenericType()), handlerMap);
             final String defaultValueJsonOrNull = getDefaultValueJsonOrNull(field);
             final VersionRange versionRange = getVersionRange(field);
             final boolean isSensitive = field.getAnnotation(B2Json.sensitive.class) != null;
