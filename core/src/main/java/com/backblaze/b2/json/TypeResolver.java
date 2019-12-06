@@ -5,9 +5,11 @@
 package com.backblaze.b2.json;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
@@ -56,18 +58,30 @@ public class TypeResolver {
         if (type instanceof Class) {
             return type;
         }
+
+        // If we're here, then type needs to be resolved.
+        // If there's no typeMap, then throw, because we cannot resolve anything.
+        if (typeMap == null) {
+            throw new RuntimeException("Cannot resolve type " + type + " - the typeMap is empty");
+        }
+
         if (type instanceof TypeVariable) {
             return typeMap.get(type.getTypeName());
         }
         if (type instanceof ParameterizedType) {
             final ParameterizedType parameterizedType = (ParameterizedType)type;
-
             final Type[] resolvedActualTypeArguments = resolveTypes(parameterizedType.getActualTypeArguments());
-
-            // TODO raw type might need to be resolved as well.
             return new ResolvedParameterizedType(parameterizedType.getRawType(), resolvedActualTypeArguments);
         }
-        throw new RuntimeException("Could not resolve type " + type);
+        if (type instanceof GenericArrayType) {
+            final GenericArrayType genericArrayType = (GenericArrayType)type;
+            final Type resolvedComponentType = resolveType(genericArrayType.getGenericComponentType());
+            return new ResolvedGenericArrayType(resolvedComponentType);
+        }
+        if (type instanceof WildcardType) {
+            throw new RuntimeException("Wildcard types are not supported");
+        }
+        throw new RuntimeException("Do not know how to resolve type " + type.getClass());
     }
 
     private Type[] resolveTypes(Type[] types) {
@@ -77,6 +91,33 @@ public class TypeResolver {
             resolvedTypes[i] = resolveType(types[i]);
         }
         return resolvedTypes;
+    }
+
+    static class ResolvedGenericArrayType implements GenericArrayType {
+
+        private Type genericComponentType;
+
+        public ResolvedGenericArrayType(Type genericComponentType) {
+            this.genericComponentType = genericComponentType;
+        }
+
+        @Override
+        public Type getGenericComponentType() {
+            return genericComponentType;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ResolvedGenericArrayType that = (ResolvedGenericArrayType) o;
+            return Objects.equals(genericComponentType, that.genericComponentType);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(genericComponentType);
+        }
     }
 
     static class ResolvedParameterizedType implements ParameterizedType {
@@ -101,8 +142,8 @@ public class TypeResolver {
 
         @Override
         public Type getOwnerType() {
-            // TODO
-            return null;
+            // TODO implement (if needed)?
+            throw new RuntimeException("this shouldn't be called");
         }
 
         @Override
