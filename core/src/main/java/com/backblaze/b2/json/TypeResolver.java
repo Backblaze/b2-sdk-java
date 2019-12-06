@@ -18,36 +18,40 @@ import java.util.TreeMap;
 public class TypeResolver {
 
     private final Class<?> clazz;
+    private final Type type;
     private final Map<String, Type> typeMap;
 
     public TypeResolver(Class<?> clazz) {
         this(clazz, null);
     }
 
-    public TypeResolver(Class<?> clazz, Type[] actualTypeParameters) {
+    public TypeResolver(Class<?> clazz, Type[] actualTypeArguments) {
         this.clazz = clazz;
-        this.typeMap = buildTypeMap(clazz, actualTypeParameters);
-    }
 
-    private static Map<String, Type> buildTypeMap(Class<?> clazz, Type[] actualTypeParameters) {
-        if (actualTypeParameters == null) {
-            return null;
-        }
+        // If there are no type arguments, then this is just a concrete class.
+        if (actualTypeArguments == null) {
+            this.type = clazz;
+            this.typeMap = null;
+        } else {
+            TypeVariable[] typeParameters = clazz.getTypeParameters();
+            if (typeParameters.length != actualTypeArguments.length) {
+                throw new RuntimeException("actualTypeArguments must be same length as class' type parameters");
+            }
 
-        TypeVariable[] typeParameters = clazz.getTypeParameters();
-        if (typeParameters.length != actualTypeParameters.length) {
-            throw new RuntimeException("typeParameters/actualTypeParameters mismatch");
+            this.type = new ResolvedParameterizedType(clazz, actualTypeArguments);
+            this.typeMap = new TreeMap<>();
+            for (int i = 0; i < typeParameters.length; i++) {
+                typeMap.put(typeParameters[i].getName(), actualTypeArguments[i]);
+            }
         }
-
-        Map<String, Type> typeMap = new TreeMap<>();
-        for (int i = 0; i < typeParameters.length; i++) {
-            typeMap.put(typeParameters[i].getName(), actualTypeParameters[i]);
-        }
-        return typeMap;
     }
 
     public Field[] getDeclaredFields() {
         return clazz.getDeclaredFields();
+    }
+
+    public Type getType() {
+        return type;
     }
 
     public Type resolveType(Field field) {
