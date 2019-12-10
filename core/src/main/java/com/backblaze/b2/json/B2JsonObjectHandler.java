@@ -311,6 +311,10 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
         return clazz;
     }
 
+    public Type getHandledType() {
+        return typeResolver.getType();
+    }
+
     /**
      * Serializes the object, adding all fields to the JSON.
      *

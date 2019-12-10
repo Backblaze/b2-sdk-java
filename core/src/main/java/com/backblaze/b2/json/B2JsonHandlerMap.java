@@ -178,7 +178,7 @@ public class B2JsonHandlerMap {
             // Something went wrong, and the handlers are not ready to use, so we'll take them
             // out of the map.
             for (B2JsonTypeHandler handlerAdded : handlersAddedToMap) {
-                map.remove(handlerAdded.getHandledClass());
+                map.remove(handlerAdded.getHandledType());
             }
 
             // Let the caller know that something went wrong.
@@ -447,9 +447,9 @@ public class B2JsonHandlerMap {
      * else from seeing the B2JsonObjectHandler before it is fully constructed.
      */
     private synchronized <T> void rememberHandler(Class<T> clazz, Type[] actualTypeArguments, B2JsonTypeHandler<T> handler) {
-        B2Preconditions.checkState(!map.containsKey(clazz));
 
         final Type key = makeMapKey(clazz, actualTypeArguments);
+        B2Preconditions.checkState(!map.containsKey(key));
         map.put(key, handler);
         handlersAddedToMap.add(handler);
     }

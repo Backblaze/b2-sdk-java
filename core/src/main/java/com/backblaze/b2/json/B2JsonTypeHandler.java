@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * Interface for (de)serializing one class of object.
@@ -16,6 +17,10 @@ public interface B2JsonTypeHandler<T> {
      * What class does this handle?
      */
     Class<T> getHandledClass();
+
+    default Type getHandledType() {
+        return getHandledClass();
+    }
 
     /**
      * Serialize one object of the class to a JSON output stream.

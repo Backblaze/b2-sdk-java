@@ -63,13 +63,13 @@ public class TypeResolver {
             return type;
         }
 
-        // If we're here, then type needs to be resolved.
-        // If there's no typeMap, then throw, because we cannot resolve anything.
-        if (typeMap == null) {
-            throw new RuntimeException("Cannot resolve type " + type + " - the typeMap is empty");
-        }
 
         if (type instanceof TypeVariable) {
+            // If we're here, then type needs to be resolved.
+            // If there's no typeMap, then throw, because we cannot resolve anything.
+            if (typeMap == null) {
+                throw new RuntimeException("Cannot resolve type " + type + " - the typeMap is empty");
+            }
             return typeMap.get(type.getTypeName());
         }
         if (type instanceof ParameterizedType) {
