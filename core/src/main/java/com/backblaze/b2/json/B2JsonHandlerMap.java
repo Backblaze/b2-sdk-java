@@ -45,7 +45,7 @@ public class B2JsonHandlerMap {
     // we think it's safe to overwrite the entry for a given class because
     // we assume all handlers are stateless and any two instances of
     // a handler for a class are equivalent.
-    private final Map<Class<?>, B2JsonTypeHandler<?>> map = new HashMap<>();
+    private final Map<Type, B2JsonTypeHandler<?>> map = new HashMap<>();
 
     /**
      * The getHandler() method is not supposed to be re-entrant.  This flag
@@ -220,14 +220,26 @@ public class B2JsonHandlerMap {
     }
 
     /**
-     * Gets the handler for a given class at the top level.
+     * Gets the handler for a given type at the top level.
+     *
+     * The type must be resolved. If the type represents a generic class, the type must also
+     * have concrete type arguments. Otherwise this will fail.
      *
      * The handler MAY NOT BE INITIALIZED.  This method is for use by handlers that need to get
      * a reference to another handler in their initialize() methods.  You cannot assume that any
      * fields set by initialize() have been set.
      */
-    /*package*/ synchronized <T> B2JsonTypeHandler<T> getUninitializedHandler(Class<T> clazz) throws B2JsonException {
+    /*package*/ synchronized <T> B2JsonTypeHandler<T> getUninitializedHandler(Type type) throws B2JsonException {
+        // TODO validate the type - make sure it's resolved.
 
+        if (type instanceof Class) {
+            final Class<T> clazz = (Class<T>) type;
+            return getUninitializedHandlerForClass(clazz);
+        }
+        throw new B2JsonException("do not know how to get handler for type " + type.getTypeName());
+    }
+
+    private synchronized <T> B2JsonTypeHandler<T> getUninitializedHandlerForClass(Class<T> clazz) throws B2JsonException {
         B2JsonTypeHandler<T> result = lookupHandler(clazz);
 
         if (result == null) {
