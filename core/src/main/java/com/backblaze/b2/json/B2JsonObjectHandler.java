@@ -118,7 +118,6 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
         // Get information on all of the fields in the class.
         for (Field field : B2JsonHandlerMap.getObjectFieldsForJson(clazz)) {
             final FieldRequirement requirement = B2JsonHandlerMap.getFieldRequirement(clazz, field);
-//            final B2JsonTypeHandler<?> handler = B2JsonHandlerMap.getUninitializedFieldHandler(field.getGenericType(), handlerMap);
             final B2JsonTypeHandler<?> handler = handlerMap.getUninitializedHandler(field.getGenericType());
             final String defaultValueJsonOrNull = getDefaultValueJsonOrNull(field);
             final VersionRange versionRange = getVersionRange(field);
