@@ -132,10 +132,11 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
             for (Field field : B2JsonHandlerMap.getObjectFieldsForJson(subclass)) {
                 final String fieldName = field.getName();
                 final B2JsonTypeHandler handler =
-                        B2JsonHandlerMap.getUninitializedFieldHandler(
-                                field.getGenericType(),
-                                b2JsonHandlerMap
-                        );
+//                        B2JsonHandlerMap.getUninitializedFieldHandler(
+//                                field.getGenericType(),
+//                                b2JsonHandlerMap
+//                        );
+                        b2JsonHandlerMap.getUninitializedHandler(field.getGenericType());
                 if (fieldNameToHandler.containsKey(fieldName)) {
                     // We have seen this field name before.  Throw an error if the type is different
                     // than before.
