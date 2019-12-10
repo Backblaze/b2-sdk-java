@@ -72,7 +72,7 @@ public class B2JsonHandlerMap {
     /**
      * Sets up a new map.
      */
-    private B2JsonHandlerMap(Map<Class<?>, B2JsonTypeHandler<?>> initialMapOrNull) {
+    private B2JsonHandlerMap(Map<Type, B2JsonTypeHandler<?>> initialMapOrNull) {
         // add all built-in handlers.
         map.put(BigDecimal.class, new B2JsonBigDecimalHandler());
         map.put(BigInteger.class, new B2JsonBigIntegerHandler());
@@ -104,7 +104,7 @@ public class B2JsonHandlerMap {
         map.put(double[].class, new B2JsonDoubleArrayHandler(map.get(double.class)));
 
         if (initialMapOrNull != null) {
-            map.putAll(initialMapOrNull);
+            initialMapOrNull.forEach(this::putHandler);
         }
     }
 
@@ -119,7 +119,6 @@ public class B2JsonHandlerMap {
      * So, this method does NOT need to be re-entrant, and in fact we assume that it's not.
      */
     public synchronized <T> B2JsonTypeHandler<T> getHandler(Class<T> clazz) throws B2JsonException {
-
         // This method is NOT re-entrant.  The code that creates and initializes new handlers
         // should not call this method.
         //
@@ -178,7 +177,7 @@ public class B2JsonHandlerMap {
             // Something went wrong, and the handlers are not ready to use, so we'll take them
             // out of the map.
             for (B2JsonTypeHandler handlerAdded : handlersAddedToMap) {
-                map.remove(handlerAdded.getHandledClass());
+                map.remove(handlerAdded.getHandledType());
             }
 
             // Let the caller know that something went wrong.
@@ -422,11 +421,11 @@ public class B2JsonHandlerMap {
         }
     }
 
-    private synchronized <T> B2JsonTypeHandler<T> lookupHandler(Class<T> clazz) {
+    private synchronized <T> B2JsonTypeHandler<T> lookupHandler(Type type) {
         // this is a method to make it easy to synchronize it.  it's private, so
         // i'm hoping the compiler considers inlining it.
         //noinspection unchecked
-        return (B2JsonTypeHandler<T>) map.get(clazz);
+        return (B2JsonTypeHandler<T>) map.get(type);
     }
 
     /**
@@ -440,9 +439,14 @@ public class B2JsonHandlerMap {
      * to B2JsonHandlerMap.getHandler(), which synchronized and keeps anybody
      * else from seeing the B2JsonObjectHandler before it is fully constructed.
      */
-    private synchronized <T> void rememberHandler(Class<T> clazz, B2JsonTypeHandler<T> handler) {
-        B2Preconditions.checkState(!map.containsKey(clazz));
-        map.put(clazz, handler);
+    private synchronized <T> void rememberHandler(Type type, B2JsonTypeHandler<T> handler) {
+        B2Preconditions.checkState(!map.containsKey(type));
+        putHandler(type, handler);
         handlersAddedToMap.add(handler);
+    }
+
+    private synchronized <T> void putHandler(Type type, B2JsonTypeHandler<T> handler) {
+        // TODO validation?
+        map.put(type, handler);
     }
 }
