@@ -232,10 +232,18 @@ public class B2JsonHandlerMap {
     /*package*/ synchronized <T> B2JsonTypeHandler<T> getUninitializedHandler(Type type) throws B2JsonException {
         // TODO validate the type - make sure it's resolved.
 
+        // class Item {
+        //     private int itemNumber;
+        //     private String itemName;
+        // }
         if (type instanceof Class) {
             final Class<T> clazz = (Class<T>) type;
             return getUninitializedHandlerForClass(clazz);
         }
+
+        // class Dataset {
+        //     private List<Double> measurements;
+        // }
         if (type instanceof ParameterizedType) {
             final ParameterizedType parameterizedType = (ParameterizedType) type;
             return getUninitializedHandlerForParameterizedType(parameterizedType);
