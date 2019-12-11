@@ -245,7 +245,9 @@ public class B2JsonHandlerMap {
         // }
         if (type instanceof ParameterizedType) {
             final ParameterizedType parameterizedType = (ParameterizedType) type;
-            return getUninitializedHandlerForParameterizedType(parameterizedType);
+            final B2JsonTypeHandler<T> handler = getUninitializedHandlerForParameterizedType(parameterizedType);
+            handlersAddedToMap.add(handler);
+            return handler;
         }
         throw new B2JsonException("do not know how to get handler for type " + type.getTypeName());
     }
@@ -326,6 +328,16 @@ public class B2JsonHandlerMap {
             B2JsonTypeHandler<?> keyHandler = getUninitializedHandler(keyType);
             B2JsonTypeHandler<?> valueHandler = getUninitializedHandler(valueType);
             return new B2JsonConcurrentMapHandler(keyHandler, valueHandler);
+        }
+        if (parameterizedType instanceof TypeResolver.ResolvedParameterizedType) {
+            final TypeResolver.ResolvedParameterizedType resolvedParameterizedType = (TypeResolver.ResolvedParameterizedType)parameterizedType;
+            final Type resolvedRawType = resolvedParameterizedType.getRawType();
+            if (!(resolvedRawType instanceof Class)) {
+                // Is this even possible??? -_-
+                throw new B2JsonException("do not know how to get handler for parameterized type when the rawType is not a class: " + rawType.getTypeName());
+            }
+            final Class resolvedRawTypeClass = (Class)resolvedRawType;
+            return new B2JsonObjectHandler(resolvedRawTypeClass, resolvedParameterizedType.getActualTypeArguments());
         }
 
         throw new B2JsonException("do not know how to get handler for parameterized type " + parameterizedType.getTypeName());
