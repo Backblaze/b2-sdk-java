@@ -231,61 +231,64 @@ public class B2JsonHandlerMap {
     /*package*/ synchronized <T> B2JsonTypeHandler<T> getUninitializedHandler(Type type) throws B2JsonException {
         // TODO validate the type - make sure it's resolved.
 
-        // class Item {
-        //     private int itemNumber;
-        //     private String itemName;
-        // }
-        if (type instanceof Class) {
-            final Class<T> clazz = (Class<T>) type;
-            return getUninitializedHandlerForClass(clazz);
+        // Check to see if we've already done the work for this type.
+        {
+            final B2JsonTypeHandler<T> handler = lookupHandler(type);
+            if (handler != null) {
+                return handler;
+            }
         }
 
-        // class Dataset {
-        //     private List<Double> measurements;
-        // }
-        if (type instanceof ParameterizedType) {
+        final B2JsonTypeHandler<T> handler;
+        if (type instanceof Class) {
+            // class Item {
+            //     private int itemNumber;
+            //     private String itemName;
+            // }
+            final Class<T> clazz = (Class<T>) type;
+            handler = getUninitializedHandlerForClass(clazz);
+
+        } else if (type instanceof ParameterizedType) {
+            // class Dataset {
+            //     private List<Double> measurements;
+            // }
             final ParameterizedType parameterizedType = (ParameterizedType) type;
-            final B2JsonTypeHandler<T> handler = getUninitializedHandlerForParameterizedType(parameterizedType);
-            handlersAddedToMap.add(handler);
-            return handler;
+            handler = getUninitializedHandlerForParameterizedType(parameterizedType);
+
+        } else {
+            throw new B2JsonException("do not know how to get handler for type " + type.getTypeName());
         }
-        throw new B2JsonException("do not know how to get handler for type " + type.getTypeName());
+        rememberHandler(type, handler);
+        return handler;
     }
 
     private synchronized <T> B2JsonTypeHandler<T> getUninitializedHandlerForClass(Class<T> clazz) throws B2JsonException {
-        B2JsonTypeHandler<T> result = lookupHandler(clazz);
 
-        if (result == null) {
-            // maybe use a custom handler provided by clazz.
-            result = findCustomHandler(clazz);
-            if (result != null) {
-                rememberHandler(clazz, result);
-            }
+        // maybe use a custom handler provided by clazz.
+        B2JsonTypeHandler<T> result = findCustomHandler(clazz);
+        if (result != null) {
+            return result;
         }
 
-        if (result == null) {
-            if (clazz.isEnum()) {
-                result = new B2JsonEnumHandler<>(clazz);
-                rememberHandler(clazz, result);
-            } else if (clazz.isArray()) {
-                final Class eltClazz = clazz.getComponentType();
-                //noinspection unchecked
-                B2JsonTypeHandler eltClazzHandler = getUninitializedHandler(eltClazz);
-                //noinspection unchecked
-                result = (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
-                rememberHandler(clazz, result);
-            } else if (isUnionBase(clazz)) {
-                //noinspection unchecked
-                result = (B2JsonTypeHandler<T>) new B2JsonUnionBaseHandler(clazz);
-                rememberHandler(clazz, result);
-            } else {
-                //noinspection unchecked
-                result = (B2JsonTypeHandler<T>) new B2JsonObjectHandler(clazz);
-                rememberHandler(clazz, result);
-            }
+        if (clazz.isEnum()) {
+            return new B2JsonEnumHandler<>(clazz);
         }
 
-        return result;
+        if (clazz.isArray()) {
+            final Class eltClazz = clazz.getComponentType();
+            //noinspection unchecked
+            B2JsonTypeHandler eltClazzHandler = getUninitializedHandler(eltClazz);
+            //noinspection unchecked
+            return (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
+        }
+
+        if (isUnionBase(clazz)) {
+            //noinspection unchecked
+            return (B2JsonTypeHandler<T>) new B2JsonUnionBaseHandler(clazz);
+        }
+
+        //noinspection unchecked
+        return (B2JsonTypeHandler<T>) new B2JsonObjectHandler(clazz);
     }
 
     private synchronized B2JsonTypeHandler getUninitializedHandlerForParameterizedType(ParameterizedType parameterizedType) throws B2JsonException {
