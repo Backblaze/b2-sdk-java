@@ -27,23 +27,30 @@ public class TypeResolver {
         this(clazz, null);
     }
 
-    public TypeResolver(Class<?> clazz, Type[] actualTypeArguments) {
+    public TypeResolver(Class<?> clazz, Type[] actualTypeArgumentsOrNull) {
+        B2Preconditions.checkArgumentIsNotNull(clazz, "Supplied class must not be null");
+        TypeVariable[] typeParameters = clazz.getTypeParameters();
+        if (typeParameters.length == 0) {
+            B2Preconditions.checkArgument(
+                    actualTypeArgumentsOrNull == null || actualTypeArgumentsOrNull.length == 0,
+                    "Cannot create TypeResolver with type arguments. Class " + clazz.getName() + " has no type parameters");
+        } else {
+            B2Preconditions.checkArgument(
+                    actualTypeArgumentsOrNull != null && typeParameters.length == actualTypeArgumentsOrNull.length,
+                    "actualTypeArguments must be same length as class' type parameters");
+        }
+
         this.clazz = clazz;
 
         // If there are no type arguments, then this is just a concrete class.
-        if (actualTypeArguments == null) {
+        if (typeParameters.length == 0) {
             this.type = clazz;
             this.typeMap = null;
         } else {
-            TypeVariable[] typeParameters = clazz.getTypeParameters();
-            if (typeParameters.length != actualTypeArguments.length) {
-                throw new RuntimeException("actualTypeArguments must be same length as class' type parameters");
-            }
-
-            this.type = new ResolvedParameterizedType(clazz, actualTypeArguments);
+            this.type = new ResolvedParameterizedType(clazz, actualTypeArgumentsOrNull);
             this.typeMap = new TreeMap<>();
             for (int i = 0; i < typeParameters.length; i++) {
-                typeMap.put(typeParameters[i].getName(), actualTypeArguments[i]);
+                typeMap.put(typeParameters[i].getName(), actualTypeArgumentsOrNull[i]);
             }
         }
     }
@@ -71,10 +78,9 @@ public class TypeResolver {
         if (type instanceof TypeVariable) {
             // If we're here, then type needs to be resolved.
             // If there's no typeMap, then throw, because we cannot resolve anything.
-            if (typeMap == null) {
-                throw new RuntimeException("Cannot resolve type " + type + " - the typeMap is empty");
-            }
-            return typeMap.get(type.getTypeName());
+            final String typeName = type.getTypeName();
+            B2Preconditions.checkState(type != null && typeMap.containsKey(typeName));
+            return typeMap.get(typeName);
         }
         if (type instanceof ParameterizedType) {
             final ParameterizedType parameterizedType = (ParameterizedType)type;

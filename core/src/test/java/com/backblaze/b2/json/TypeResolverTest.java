@@ -23,40 +23,60 @@ public class TypeResolverTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private final TypeResolver resolverWithoutActualTypes = new TypeResolver(TestClass.class);
-    private final TypeResolver resolverWithActualTypes = new TypeResolver(
-            TestClass.class,
+    private final TypeResolver resolverWithoutTypeArguments = new TypeResolver(TestClassWithoutTypeArguments.class);
+    private final Field[] declaredFieldsWithoutTypeArguments = TestClassWithoutTypeArguments.class.getDeclaredFields();
+    private final TypeResolver resolverWithTypeArguments = new TypeResolver(
+            TestClassWithTypeArguments.class,
             new Type[]{String.class, Integer.class});
-    private final Field[] declaredFields = TestClass.class.getDeclaredFields();
+    private final Field[] declaredFieldsWithTypeArguments = TestClassWithTypeArguments.class.getDeclaredFields();
 
 
     @Test
     public void testNoActualTypeArguments_resolvePrimitives() {
         // Make sure we can still resolve concrete primitives, they don't have any type parameters.
-        assertEquals(int.class, resolverWithoutActualTypes.resolveType(declaredFields[0]));
+        assertEquals(int.class, resolverWithoutTypeArguments.resolveType(declaredFieldsWithoutTypeArguments[0]));
     }
 
     @Test
-    public void testNoActualTypeArguments_cannotResolveParameterizedTypes() {
+    public void testGetType() {
+        {
+            final Type resolvedType = resolverWithoutTypeArguments.getType();
+            assertTrue(resolvedType instanceof Class);
+            assertEquals(TestClassWithoutTypeArguments.class, resolvedType);
+        }
+
+        {
+            final Type resolvedType = resolverWithTypeArguments.getType();
+            assertTrue(resolvedType instanceof TypeResolver.ResolvedParameterizedType);
+            final ParameterizedType resolvedParameterizedType = (ParameterizedType) resolvedType;
+            assertEquals(TestClassWithTypeArguments.class, resolvedParameterizedType.getRawType());
+            assertArrayEquals(
+                    new Type[] {String.class, Integer.class},
+                    resolvedParameterizedType.getActualTypeArguments());
+        }
+    }
+
+    @Test
+    public void testConstructTypeResolverWithoutTypeArguments_throws() {
         thrown.expect(RuntimeException.class);
-        thrown.expectMessage("Cannot resolve type");
-        resolverWithoutActualTypes.resolveType(declaredFields[1]);
+        thrown.expectMessage("actualTypeArguments must be same length as class' type parameters");
+        new TypeResolver(TestClassWithTypeArguments.class);
     }
 
     @Test
     public void testActualTypeArguments_resolvePrimitives() {
-        assertEquals(int.class, resolverWithActualTypes.resolveType(declaredFields[0]));
+        assertEquals(int.class, resolverWithTypeArguments.resolveType(declaredFieldsWithTypeArguments[0]));
     }
 
     @Test
     public void testActualTypeArguments_resolveTypeVariables() {
-        assertEquals(String.class, resolverWithActualTypes.resolveType(declaredFields[1]));
-        assertEquals(Integer.class, resolverWithActualTypes.resolveType(declaredFields[2]));
+        assertEquals(String.class, resolverWithTypeArguments.resolveType(declaredFieldsWithTypeArguments[1]));
+        assertEquals(Integer.class, resolverWithTypeArguments.resolveType(declaredFieldsWithTypeArguments[2]));
     }
 
     @Test
     public void testActualTypeArguments_resolveParameterizedType_oneType() {
-        final Type resolvedType = resolverWithActualTypes.resolveType(declaredFields[3]);
+        final Type resolvedType = resolverWithTypeArguments.resolveType(declaredFieldsWithTypeArguments[3]);
         assertTrue(resolvedType instanceof ParameterizedType);
         final ParameterizedType resolvedParameterizedType = (ParameterizedType) resolvedType;
         assertEquals(OneParameterizedType.class, resolvedParameterizedType.getRawType());
@@ -65,7 +85,7 @@ public class TypeResolverTest {
 
     @Test
     public void testActualTypeArguments_resolveParameterizedType_twoTypes() {
-        final Type resolvedType = resolverWithActualTypes.resolveType(declaredFields[4]);
+        final Type resolvedType = resolverWithTypeArguments.resolveType(declaredFieldsWithTypeArguments[4]);
         assertTrue(resolvedType instanceof ParameterizedType);
         final ParameterizedType resolvedParameterizedType = (ParameterizedType) resolvedType;
         assertEquals(TwoParameterizedTypes.class, resolvedParameterizedType.getRawType());
@@ -74,7 +94,7 @@ public class TypeResolverTest {
 
     @Test
     public void testActualTypeArguments_resolveParameterizedType_nestedParameterizedTypes() {
-        final Type resolvedType = resolverWithActualTypes.resolveType(declaredFields[5]);
+        final Type resolvedType = resolverWithTypeArguments.resolveType(declaredFieldsWithTypeArguments[5]);
         assertTrue(resolvedType instanceof ParameterizedType);
         final ParameterizedType resolvedParameterizedType = (ParameterizedType) resolvedType;
         assertEquals(OneParameterizedType.class, resolvedParameterizedType.getRawType());
@@ -96,7 +116,7 @@ public class TypeResolverTest {
 
     @Test
     public void testActualTypeTypeArguments_array() {
-        final Type resolvedType = resolverWithActualTypes.resolveType(declaredFields[6]);
+        final Type resolvedType = resolverWithTypeArguments.resolveType(declaredFieldsWithTypeArguments[6]);
         assertTrue(resolvedType instanceof GenericArrayType);
         final GenericArrayType resolvedGenericArrayType = (GenericArrayType) resolvedType;
         assertEquals(String.class, resolvedGenericArrayType.getGenericComponentType());
@@ -104,7 +124,7 @@ public class TypeResolverTest {
 
     @Test
     public void testActualTypeTypeArguments_arrayOfNestedTypes() {
-        final Type resolvedType = resolverWithActualTypes.resolveType(declaredFields[7]);
+        final Type resolvedType = resolverWithTypeArguments.resolveType(declaredFieldsWithTypeArguments[7]);
         assertTrue(resolvedType instanceof GenericArrayType);
         final GenericArrayType resolvedGenericArrayType = (GenericArrayType) resolvedType;
         assertEquals(
@@ -146,15 +166,31 @@ public class TypeResolverTest {
     }
 
     @Test
-    public void testFieldFromDifferentClass_throws() {
+    public void testActualTypeArgumentsWrongLength_throws() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("actualTypeArguments must be same length as class' type parameters");
+        new TypeResolver(TestClassWithTypeArguments.class, new Type[]{});
+    }
+
+    @Test
+    public void testResolveFieldOnClassWithNoTypeArgument_throws() {
+
+    }
+
+    @Test
+    public void testResolveFieldFromDifferentClass_throws() {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("cannot resolve fields from other classes");
-        resolverWithActualTypes.resolveType(EnclosingWithWildcards.class.getDeclaredFields()[0]);
+        resolverWithTypeArguments.resolveType(EnclosingWithWildcards.class.getDeclaredFields()[0]);
     }
 
     // Class definitions below.
 
-    private static class TestClass<T, U> {
+    private static class TestClassWithoutTypeArguments {
+        private int intType;
+    }
+
+    private static class TestClassWithTypeArguments<T, U> {
         private int intType;
         private T tType;
         private U uType;
