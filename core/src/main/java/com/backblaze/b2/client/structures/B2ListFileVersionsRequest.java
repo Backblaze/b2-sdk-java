@@ -121,7 +121,9 @@ public class B2ListFileVersionsRequest {
 
         public Builder setStart(String startFileName, String startFileId) {
             B2Preconditions.checkArgument(startFileName != null);
-            B2Preconditions.checkArgument(startFileId != null);
+            // when "folders" are allowed to be returned from b2_list_file_versions,
+            // sometimes we need to start queries from "folders", which have a fileName
+            // but no fileId.  this means we can't require startFileId to be null.
             this.startFileName = startFileName;
             this.startFileId = startFileId;
             return this;
