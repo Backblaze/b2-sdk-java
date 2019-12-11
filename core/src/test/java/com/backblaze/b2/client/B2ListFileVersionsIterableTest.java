@@ -21,6 +21,7 @@ import static com.backblaze.b2.client.B2TestHelpers.fileName;
 import static com.backblaze.b2.client.B2TestHelpers.makeVersion;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -41,6 +42,7 @@ public class B2ListFileVersionsIterableTest extends B2BaseTest {
 
         // the iterator should be empty.
         final Iterator<B2FileVersion> iter = new B2ListFileVersionsIterable(client, request).iterator();
+        //noinspection SimplifiableJUnitAssertion
         assertTrue(!iter.hasNext());
     }
 
@@ -58,9 +60,10 @@ public class B2ListFileVersionsIterableTest extends B2BaseTest {
         // iter should have two versions.
         final Iterator<B2FileVersion> iter = new B2ListFileVersionsIterable(client, request).iterator();
         assertTrue(iter.hasNext());
-        assertTrue(versions.get(0) == iter.next());
+        assertSame(versions.get(0), iter.next());
         assertTrue(iter.hasNext());
-        assertTrue(versions.get(1) == iter.next());
+        assertSame(versions.get(1), iter.next());
+        //noinspection SimplifiableJUnitAssertion
         assertTrue(!iter.hasNext());
     }
 
@@ -110,18 +113,20 @@ public class B2ListFileVersionsIterableTest extends B2BaseTest {
 
         // first page.
         assertTrue(iter.hasNext());
-        assertTrue(pageOneVersions.get(0) == iter.next());
+        assertSame(pageOneVersions.get(0), iter.next());
         assertTrue(iter.hasNext());
-        assertTrue(pageOneVersions.get(1) == iter.next());
+        assertSame(pageOneVersions.get(1), iter.next());
         assertTrue(iter.hasNext());
 
         // second page
+        //noinspection ConstantConditions
         assertTrue(iter.hasNext());
-        assertTrue(pageTwoVersions.get(0) == iter.next());
+        assertSame(pageTwoVersions.get(0), iter.next());
         assertTrue(iter.hasNext());
-        assertTrue(pageTwoVersions.get(1) == iter.next());
+        assertSame(pageTwoVersions.get(1), iter.next());
         assertTrue(iter.hasNext());
-        assertTrue(pageTwoVersions.get(2) == iter.next());
+        assertSame(pageTwoVersions.get(2), iter.next());
+        //noinspection SimplifiableJUnitAssertion
         assertTrue(!iter.hasNext());
     }
 
@@ -139,9 +144,10 @@ public class B2ListFileVersionsIterableTest extends B2BaseTest {
         // iter should have two versions.
         final Iterator<B2FileVersion> iter = new B2ListFileVersionsIterable(client, request).iterator();
         assertTrue(iter.hasNext());
-        assertTrue(versions.get(0) == iter.next());
+        assertSame(versions.get(0), iter.next());
         assertTrue(iter.hasNext());
-        assertTrue(versions.get(1) == iter.next());
+        assertSame(versions.get(1), iter.next());
+        //noinspection SimplifiableJUnitAssertion
         assertTrue(!iter.hasNext());
     }
 
