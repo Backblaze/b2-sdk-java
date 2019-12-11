@@ -33,7 +33,6 @@ public class TypeResolverTest {
     @Test
     public void testNoActualTypeArguments_resolvePrimitives() {
         // Make sure we can still resolve concrete primitives, they don't have any type parameters.
-        assertEquals(int.class, resolverWithoutActualTypes.resolveType(declaredFields[0].getGenericType()));
         assertEquals(int.class, resolverWithoutActualTypes.resolveType(declaredFields[0]));
     }
 
@@ -46,16 +45,12 @@ public class TypeResolverTest {
 
     @Test
     public void testActualTypeArguments_resolvePrimitives() {
-        assertEquals(int.class, resolverWithActualTypes.resolveType(declaredFields[0].getGenericType()));
         assertEquals(int.class, resolverWithActualTypes.resolveType(declaredFields[0]));
     }
 
     @Test
     public void testActualTypeArguments_resolveTypeVariables() {
-        assertEquals(String.class, resolverWithActualTypes.resolveType(declaredFields[1].getGenericType()));
         assertEquals(String.class, resolverWithActualTypes.resolveType(declaredFields[1]));
-
-        assertEquals(Integer.class, resolverWithActualTypes.resolveType(declaredFields[2].getGenericType()));
         assertEquals(Integer.class, resolverWithActualTypes.resolveType(declaredFields[2]));
     }
 
@@ -147,7 +142,14 @@ public class TypeResolverTest {
 
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("Wildcard types are not supported");
-        resolverWithActualTypes.resolveType(resolverWithWildcards.getDeclaredFields()[0]);
+        resolverWithWildcards.resolveType(resolverWithWildcards.getDeclaredFields()[0]);
+    }
+
+    @Test
+    public void testFieldFromDifferentClass_throws() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("cannot resolve fields from other classes");
+        resolverWithActualTypes.resolveType(EnclosingWithWildcards.class.getDeclaredFields()[0]);
     }
 
     // Class definitions below.

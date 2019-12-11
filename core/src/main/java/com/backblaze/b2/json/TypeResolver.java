@@ -4,6 +4,8 @@
  */
 package com.backblaze.b2.json;
 
+import com.backblaze.b2.util.B2Preconditions;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
@@ -55,14 +57,16 @@ public class TypeResolver {
     }
 
     public Type resolveType(Field field) {
+        B2Preconditions.checkArgument(
+                field.getDeclaringClass().equals(this.clazz),
+                "cannot resolve fields from other classes");
         return resolveType(field.getGenericType());
     }
 
-    public Type resolveType(Type type) {
+    private Type resolveType(Type type) {
         if (type instanceof Class) {
             return type;
         }
-
 
         if (type instanceof TypeVariable) {
             // If we're here, then type needs to be resolved.
