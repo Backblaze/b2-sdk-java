@@ -126,6 +126,27 @@ public class B2ListFileVersionsIterableTest extends B2BaseTest {
     }
 
     @Test
+    public void testOkForNextFileIdToBeNull() throws B2Exception {
+        final B2ListFileVersionsRequest request = B2ListFileVersionsRequest
+                .builder(BUCKET_ID)
+                .build();
+
+        // when asked, return one answer with a few versions and no 'next's.
+        final List<B2FileVersion> versions = B2Collections.listOf(makeVersion(1,1), makeVersion(2, 1));
+        final B2ListFileVersionsResponse smallResponse = new B2ListFileVersionsResponse(versions, fileName(2), null);
+        when(client.listFileVersions(request)).thenReturn(smallResponse);
+
+        // iter should have two versions.
+        final Iterator<B2FileVersion> iter = new B2ListFileVersionsIterable(client, request).iterator();
+        assertTrue(iter.hasNext());
+        assertTrue(versions.get(0) == iter.next());
+        assertTrue(iter.hasNext());
+        assertTrue(versions.get(1) == iter.next());
+        assertTrue(!iter.hasNext());
+    }
+
+
+    @Test
     public void testBuilder() {
         B2ListFileVersionsRequest request = B2ListFileVersionsRequest
                 .builder(BUCKET_ID)
