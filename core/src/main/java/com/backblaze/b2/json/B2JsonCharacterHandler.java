@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * (De)serializes Character objects.
@@ -18,7 +19,7 @@ public class B2JsonCharacterHandler implements B2JsonTypeHandler<Character> {
         this.isPrimitive = isPrimitive;
     }
 
-    public Class<Character> getHandledClass() {
+    public Type getHandledType() {
         return Character.class;
     }
 

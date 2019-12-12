@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * (De)serializes Boolean objects.
@@ -18,7 +19,7 @@ public class B2JsonBooleanHandler implements B2JsonTypeHandler<Boolean> {
         this.isPrimitive = isPrimitive;
     }
 
-    public Class<Boolean> getHandledClass() {
+    public Type getHandledType() {
         return Boolean.class;
     }
 

@@ -15,13 +15,9 @@ public interface B2JsonTypeHandler<T> {
 
     /**
      * What class does this handle?
+     * @return
      */
-    Class<T> getHandledClass();
-
-    default Type getHandledType() {
-        // TODO delete getHandledClass()?
-        return getHandledClass();
-    }
+    Type getHandledType();
 
     /**
      * Serialize one object of the class to a JSON output stream.

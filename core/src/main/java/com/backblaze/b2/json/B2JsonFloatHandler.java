@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * (De)serializes Float objects.
@@ -18,7 +19,7 @@ public class B2JsonFloatHandler implements B2JsonTypeHandler<Float> {
         this.isPrimitive = isPrimitive;
     }
 
-    public Class<Float> getHandledClass() {
+    public Type getHandledType() {
         return Float.class;
     }
 

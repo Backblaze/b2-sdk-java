@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -1224,7 +1225,7 @@ public class B2JsonTest extends B2BaseTest {
         }
 
         private static class JsonHandler implements B2JsonTypeHandler<GoodCustomHandler> {
-            public Class<GoodCustomHandler> getHandledClass() {
+            public Type getHandledType() {
                 return GoodCustomHandler.class;
             }
 
@@ -1484,7 +1485,7 @@ public class B2JsonTest extends B2BaseTest {
 
         public static class JsonHandler implements B2JsonTypeHandler<Letter> {
             @Override
-            public Class<Letter> getHandledClass() {
+            public Type getHandledType() {
                 return Letter.class;
             }
 

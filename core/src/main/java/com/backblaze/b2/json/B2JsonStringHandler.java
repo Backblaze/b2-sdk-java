@@ -6,13 +6,14 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * (De)serializes String objects.
  */
 public class B2JsonStringHandler implements B2JsonTypeHandler<String> {
 
-    public Class<String> getHandledClass() {
+    public Type getHandledType() {
         return String.class;
     }
 

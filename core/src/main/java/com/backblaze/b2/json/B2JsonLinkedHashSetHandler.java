@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.LinkedHashSet;
 
 public class B2JsonLinkedHashSetHandler extends B2JsonNonUrlTypeHandler<LinkedHashSet> {
@@ -15,8 +16,10 @@ public class B2JsonLinkedHashSetHandler extends B2JsonNonUrlTypeHandler<LinkedHa
         this.itemHandler = itemHandler;
     }
 
-    public Class<LinkedHashSet> getHandledClass() {
-        return LinkedHashSet.class;
+    public Type getHandledType() {
+        return new B2TypeResolver.ResolvedParameterizedType(
+                LinkedHashSet.class,
+                new Type[] {itemHandler.getHandledType()});
     }
 
     public void serialize(LinkedHashSet obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {

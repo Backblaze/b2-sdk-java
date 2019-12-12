@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * (De)serializes Integer objects.
@@ -18,7 +19,7 @@ public class B2JsonIntegerHandler implements B2JsonTypeHandler<Integer> {
         this.isPrimitive = isPrimitive;
     }
 
-    public Class<Integer> getHandledClass() {
+    public Type getHandledType() {
         return Integer.class;
     }
 

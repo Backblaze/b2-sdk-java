@@ -15,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -139,8 +140,8 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
                         throw new B2JsonException(
                                 "In union type " + clazz + ", field " + fieldName + " has two different types.  " +
                                         fieldNameToSourceClassName.get(fieldName) + " has " +
-                                        fieldNameToHandler.get(fieldName).getHandledClass() + " and " +
-                                        subclass.toString() + " has " + handler.getHandledClass()
+                                        fieldNameToHandler.get(fieldName).getHandledType() + " and " +
+                                        subclass.toString() + " has " + handler.getHandledType()
                         );
                     }
                 }
@@ -239,7 +240,8 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
     }
 
     @Override
-    public Class<T> getHandledClass() {
+    public Type getHandledType() {
+        // TODO not sure what to do here...
         return clazz;
     }
 

@@ -307,10 +307,6 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
         }
     }
 
-    public Class<T> getHandledClass() {
-        return clazz;
-    }
-
     public Type getHandledType() {
         return typeResolver.getType();
     }

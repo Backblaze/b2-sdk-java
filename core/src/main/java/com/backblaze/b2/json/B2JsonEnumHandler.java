@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 public class B2JsonEnumHandler<T> implements B2JsonTypeHandler<T> {
 
@@ -58,7 +59,7 @@ public class B2JsonEnumHandler<T> implements B2JsonTypeHandler<T> {
         return defaultForInvalid;
     }
 
-    public Class<T> getHandledClass() {
+    public Type getHandledType() {
         return enumClass;
     }
 

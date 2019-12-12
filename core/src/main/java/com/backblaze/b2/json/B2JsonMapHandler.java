@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -17,14 +18,16 @@ public class B2JsonMapHandler extends B2JsonNonUrlTypeHandler<Map> {
 
     public B2JsonMapHandler(B2JsonTypeHandler keyHandler, B2JsonTypeHandler valueHandler) throws B2JsonException {
         if (!keyHandler.isStringInJson()) {
-            throw new B2JsonException("Map key is not a string: " + keyHandler.getHandledClass());
+            throw new B2JsonException("Map key is not a string: " + keyHandler.getHandledType());
         }
         this.keyHandler = keyHandler;
         this.valueHandler = valueHandler;
     }
 
-    public Class<Map> getHandledClass() {
-        return Map.class;
+    public Type getHandledType() {
+        return new B2TypeResolver.ResolvedParameterizedType(
+                Map.class,
+                new Type[] {keyHandler.getHandledType(), valueHandler.getHandledType()});
     }
 
     public void serialize(Map obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {

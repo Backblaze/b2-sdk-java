@@ -9,6 +9,7 @@ import com.backblaze.b2.util.B2DateTimeUtil;
 import com.backblaze.b2.util.B2StringUtil;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.time.LocalDate;
 
 import static com.backblaze.b2.util.B2DateTimeUtil.MAX_DAY;
@@ -20,7 +21,7 @@ import static com.backblaze.b2.util.B2DateTimeUtil.MIN_YEAR;
 
 public class B2JsonLocalDateHandler implements B2JsonTypeHandler<LocalDate> {
 
-    public Class<LocalDate> getHandledClass() {
+    public Type getHandledType() {
         return LocalDate.class;
     }
 
