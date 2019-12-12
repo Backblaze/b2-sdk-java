@@ -79,7 +79,7 @@ public class TypeResolver {
             // If we're here, then type needs to be resolved.
             // If there's no typeMap, then throw, because we cannot resolve anything.
             final String typeName = type.getTypeName();
-            B2Preconditions.checkState(type != null && typeMap.containsKey(typeName));
+            B2Preconditions.checkState(typeMap.containsKey(typeName));
             return typeMap.get(typeName);
         }
         if (type instanceof ParameterizedType) {
@@ -172,7 +172,9 @@ public class TypeResolver {
 
         @Override
         public int hashCode() {
-            return Objects.hash(rawType, actualTypeArguments);
+            int result = Objects.hash(rawType);
+            result = 31 * result + Arrays.hashCode(actualTypeArguments);
+            return result;
         }
     }
 }

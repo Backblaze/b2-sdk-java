@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TypeResolverTest {
@@ -51,7 +52,7 @@ public class TypeResolverTest {
             final ParameterizedType resolvedParameterizedType = (ParameterizedType) resolvedType;
             assertEquals(TestClassWithTypeArguments.class, resolvedParameterizedType.getRawType());
             assertArrayEquals(
-                    new Type[] {String.class, Integer.class},
+                    new Type[]{String.class, Integer.class},
                     resolvedParameterizedType.getActualTypeArguments());
         }
     }
@@ -130,7 +131,7 @@ public class TypeResolverTest {
         assertEquals(
                 new TypeResolver.ResolvedParameterizedType(
                         OneParameterizedType.class,
-                        new Type[] {Integer.class}
+                        new Type[]{Integer.class}
                 ),
                 resolvedGenericArrayType.getGenericComponentType());
     }
@@ -173,15 +174,44 @@ public class TypeResolverTest {
     }
 
     @Test
-    public void testResolveFieldOnClassWithNoTypeArgument_throws() {
-
-    }
-
-    @Test
     public void testResolveFieldFromDifferentClass_throws() {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("cannot resolve fields from other classes");
         resolverWithTypeArguments.resolveType(EnclosingWithWildcards.class.getDeclaredFields()[0]);
+    }
+
+    @Test
+    public void testResolvedTypeEquality() {
+        final TypeResolver.ResolvedParameterizedType resolvedParameterizedType =
+                new TypeResolver.ResolvedParameterizedType(OneParameterizedType.class, new Type[]{Integer.class});
+        final TypeResolver.ResolvedParameterizedType resolvedParameterizedTypeEqual =
+                new TypeResolver.ResolvedParameterizedType(OneParameterizedType.class, new Type[]{Integer.class});
+        final TypeResolver.ResolvedParameterizedType resolvedParameterizedTypeNotEqual1 =
+                new TypeResolver.ResolvedParameterizedType(OneParameterizedType.class, new Type[]{String.class});
+        final TypeResolver.ResolvedParameterizedType resolvedParameterizedTypeNotEqual2 =
+                new TypeResolver.ResolvedParameterizedType(List.class, new Type[]{Integer.class});
+
+        assertEquals(resolvedParameterizedType, resolvedParameterizedTypeEqual);
+        assertEquals(resolvedParameterizedType.hashCode(), resolvedParameterizedTypeEqual.hashCode());
+
+        assertNotEquals(resolvedParameterizedType, resolvedParameterizedTypeNotEqual1);
+        assertNotEquals(resolvedParameterizedType.hashCode(), resolvedParameterizedTypeNotEqual1.hashCode());
+
+        assertNotEquals(resolvedParameterizedType, resolvedParameterizedTypeNotEqual2);
+        assertNotEquals(resolvedParameterizedType.hashCode(), resolvedParameterizedTypeNotEqual2.hashCode());
+
+        final TypeResolver.ResolvedGenericArrayType resolvedGenericArrayType =
+                new TypeResolver.ResolvedGenericArrayType(String.class);
+        final TypeResolver.ResolvedGenericArrayType resolvedGenericArrayTypeEqual =
+                new TypeResolver.ResolvedGenericArrayType(String.class);
+        final TypeResolver.ResolvedGenericArrayType resolvedGenericArrayTypeNotEqual =
+                new TypeResolver.ResolvedGenericArrayType(Integer.class);
+
+        assertEquals(resolvedGenericArrayType, resolvedGenericArrayTypeEqual);
+        assertEquals(resolvedGenericArrayType.hashCode(), resolvedGenericArrayTypeEqual.hashCode());
+
+        assertNotEquals(resolvedGenericArrayType, resolvedGenericArrayTypeNotEqual);
+        assertNotEquals(resolvedGenericArrayType.hashCode(), resolvedGenericArrayTypeNotEqual.hashCode());
     }
 
     // Class definitions below.

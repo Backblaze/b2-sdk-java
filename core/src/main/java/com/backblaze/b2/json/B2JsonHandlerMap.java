@@ -229,7 +229,8 @@ public class B2JsonHandlerMap {
      * fields set by initialize() have been set.
      */
     /*package*/ synchronized <T> B2JsonTypeHandler<T> getUninitializedHandler(Type type) throws B2JsonException {
-        // TODO validate the type - make sure it's resolved.
+        // We do not need to check if the type is resolved here. That will happen as we recurse. If we come across
+        // a field that cannot be resolved, we will throw then.
 
         // Check to see if we've already done the work for this type.
         {
