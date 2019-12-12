@@ -17,6 +17,32 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
+/**
+ * Class used to resolve generic types of a class when supplied with the actual type arguments used to construct an
+ * instance of the class.
+ *
+ * For example, consider the following classes.
+ *
+ * class Item<T> {
+ *     T value;
+ *     List<T> values;
+ * }
+ *
+ * class Enclosing {
+ *     Item<String> stringItem;
+ *     Item<Integer> integerItem;
+ * }
+ *
+ * When considering just Item.class, we do not have enough information to resolve the type for .value and .values.
+ * However, if we are considering Enclosing.class, then even though it has fields that are Item.class instances, we have
+ * the additional context of the type arguments used along with the Item class. This allows us to resolve the types of
+ * Enclosing.class' fields.
+ *
+ * final TypeResolver typeResolver = new TypeResolver(Enclosing.class);
+ * // The following returns ResolvedParameterizedType(Item.class, new Type[]{ String.class });
+ * typeResolver.resolveType(Enclosing.class.getDeclaredFields()[0]);
+ *
+ */
 public class TypeResolver {
 
     private final Class<?> clazz;
@@ -63,6 +89,11 @@ public class TypeResolver {
         return type;
     }
 
+    /**
+     * Resolve the type of the supplied field.
+     *
+     * Will throw if field does not belong to the class this TypeResolver is for.
+     */
     public Type resolveType(Field field) {
         B2Preconditions.checkArgument(
                 field.getDeclaringClass().equals(this.clazz),
@@ -108,6 +139,13 @@ public class TypeResolver {
         return resolvedTypes;
     }
 
+    /**
+     * Class that represents a generic array.
+     *
+     * class Outer<T> {
+     *     T[] genericArray;
+     * }
+     */
     static class ResolvedGenericArrayType implements GenericArrayType {
 
         private Type genericComponentType;
@@ -135,6 +173,14 @@ public class TypeResolver {
         }
     }
 
+    /**
+     * Class that represents a parameterized type.
+     *
+     * class Outer<T> {
+     *     Item<T> parameterizedType1;
+     *     Item<String> parameterizedType2;
+     * }
+     */
     static class ResolvedParameterizedType implements ParameterizedType {
 
         private final Type rawType;
