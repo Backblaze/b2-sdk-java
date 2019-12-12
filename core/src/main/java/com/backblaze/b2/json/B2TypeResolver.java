@@ -23,6 +23,7 @@ import java.util.TreeMap;
  *
  * For example, consider the following classes.
  *
+ * <pre>
  * class Item<T> {
  *     T value;
  *     List<T> values;
@@ -32,6 +33,7 @@ import java.util.TreeMap;
  *     Item<String> stringItem;
  *     Item<Integer> integerItem;
  * }
+ * </pre>
  *
  * When considering just Item.class, we do not have enough information to resolve the type for .value and .values.
  * However, if we are considering Enclosing.class, then even though it has fields that are Item.class instances, we have
