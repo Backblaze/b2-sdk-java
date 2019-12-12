@@ -246,6 +246,7 @@ public class B2JsonHandlerMap {
             //     private int itemNumber;
             //     private String itemName;
             // }
+            //noinspection unchecked
             final Class<T> clazz = (Class<T>) type;
             handler = getUninitializedHandlerForClass(clazz);
 
@@ -254,6 +255,7 @@ public class B2JsonHandlerMap {
             //     private List<Double> measurements;
             // }
             final ParameterizedType parameterizedType = (ParameterizedType) type;
+            //noinspection unchecked
             handler = getUninitializedHandlerForParameterizedType(parameterizedType);
 
         } else {
@@ -277,7 +279,6 @@ public class B2JsonHandlerMap {
 
         if (clazz.isArray()) {
             final Class eltClazz = clazz.getComponentType();
-            //noinspection unchecked
             B2JsonTypeHandler eltClazzHandler = getUninitializedHandler(eltClazz);
             //noinspection unchecked
             return (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
@@ -292,7 +293,9 @@ public class B2JsonHandlerMap {
         return (B2JsonTypeHandler<T>) new B2JsonObjectHandler(clazz);
     }
 
-    private synchronized B2JsonTypeHandler getUninitializedHandlerForParameterizedType(ParameterizedType parameterizedType) throws B2JsonException {
+    private synchronized B2JsonTypeHandler getUninitializedHandlerForParameterizedType(
+            ParameterizedType parameterizedType) throws B2JsonException {
+
         final Type rawType = parameterizedType.getRawType();
         if (rawType.equals(LinkedHashSet.class)) {
             Type itemType = parameterizedType.getActualTypeArguments()[0];
@@ -333,18 +336,12 @@ public class B2JsonHandlerMap {
             B2JsonTypeHandler<?> valueHandler = getUninitializedHandler(valueType);
             return new B2JsonConcurrentMapHandler(keyHandler, valueHandler);
         }
-        if (parameterizedType instanceof TypeResolver.ResolvedParameterizedType) {
-            final TypeResolver.ResolvedParameterizedType resolvedParameterizedType = (TypeResolver.ResolvedParameterizedType)parameterizedType;
-            final Type resolvedRawType = resolvedParameterizedType.getRawType();
-            if (!(resolvedRawType instanceof Class)) {
-                // Is this even possible??? -_-
-                throw new B2JsonException("do not know how to get handler for parameterized type when the rawType is not a class: " + rawType.getTypeName());
-            }
-            final Class resolvedRawTypeClass = (Class)resolvedRawType;
-            return new B2JsonObjectHandler(resolvedRawTypeClass, resolvedParameterizedType.getActualTypeArguments());
-        }
-
-        throw new B2JsonException("do not know how to get handler for parameterized type " + parameterizedType.getTypeName());
+        final Type resolvedRawType = parameterizedType.getRawType();
+        // Not sure if the resolvedRawType can be anything other than a class, but if it's not it's a bug.
+        B2Preconditions.checkArgument(resolvedRawType instanceof Class);
+        final Class resolvedRawTypeClass = (Class) resolvedRawType;
+        //noinspection unchecked
+        return new B2JsonObjectHandler(resolvedRawTypeClass, parameterizedType.getActualTypeArguments());
     }
 
     /**
