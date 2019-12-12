@@ -38,18 +38,18 @@ import java.util.TreeMap;
  * the additional context of the type arguments used along with the Item class. This allows us to resolve the types of
  * Enclosing.class' fields.
  *
- * final TypeResolver typeResolver = new TypeResolver(Enclosing.class);
+ * final B2TypeResolver typeResolver = new B2TypeResolver(Enclosing.class);
  * // The following returns ResolvedParameterizedType(Item.class, new Type[]{ String.class });
  * typeResolver.resolveType(Enclosing.class.getDeclaredFields()[0]);
  *
  */
-public class TypeResolver {
+public class B2TypeResolver {
 
     private final Class<?> clazz;
     private final Type type;
     private final Map<String, Type> typeMap;
 
-    public TypeResolver(Class<?> clazz) {
+    public B2TypeResolver(Class<?> clazz) {
         this(clazz, null);
     }
 
@@ -62,13 +62,13 @@ public class TypeResolver {
      * If clazz is not parameterized, then the code will throw if you supply anything other than null or a 0-length
      * array for actualTypeArguments.
      */
-    public TypeResolver(Class<?> clazz, Type[] actualTypeArgumentsOrNull) {
+    public B2TypeResolver(Class<?> clazz, Type[] actualTypeArgumentsOrNull) {
         B2Preconditions.checkArgumentIsNotNull(clazz, "Supplied class must not be null");
         TypeVariable[] typeParameters = clazz.getTypeParameters();
         if (typeParameters.length == 0) {
             B2Preconditions.checkArgument(
                     actualTypeArgumentsOrNull == null || actualTypeArgumentsOrNull.length == 0,
-                    "Cannot create TypeResolver with type arguments. Class " + clazz.getName() + " has no type parameters");
+                    "Cannot create B2TypeResolver with type arguments. Class " + clazz.getName() + " has no type parameters");
         } else {
             B2Preconditions.checkArgument(
                     actualTypeArgumentsOrNull != null && typeParameters.length == actualTypeArgumentsOrNull.length,
@@ -100,7 +100,7 @@ public class TypeResolver {
     /**
      * Resolve the type of the supplied field.
      *
-     * Will throw if field does not belong to the class this TypeResolver is for.
+     * Will throw if field does not belong to the class this B2TypeResolver is for.
      */
     public Type resolveType(Field field) {
         B2Preconditions.checkArgument(

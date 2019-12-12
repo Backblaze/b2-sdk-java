@@ -32,7 +32,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
      * The class of object we handle.
      */
     private final Class<T> clazz;
-    private final TypeResolver typeResolver;
+    private final B2TypeResolver typeResolver;
 
     /**
      * The union class that this one belongs to, or null if there is not one.
@@ -89,7 +89,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
     /*package*/ B2JsonObjectHandler(Class<T> clazz, Type[] actualTypeArguments) throws B2JsonException {
 
         this.clazz = clazz;
-        this.typeResolver = new TypeResolver(clazz, actualTypeArguments);
+        this.typeResolver = new B2TypeResolver(clazz, actualTypeArguments);
 
         // Is this a member of a union type?
         {

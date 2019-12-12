@@ -19,14 +19,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
-public class TypeResolverTest {
+public class B2TypeResolverTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private final TypeResolver resolverWithoutTypeArguments = new TypeResolver(TestClassWithoutTypeArguments.class);
+    private final B2TypeResolver resolverWithoutTypeArguments = new B2TypeResolver(TestClassWithoutTypeArguments.class);
     private final Field[] declaredFieldsWithoutTypeArguments = TestClassWithoutTypeArguments.class.getDeclaredFields();
-    private final TypeResolver resolverWithTypeArguments = new TypeResolver(
+    private final B2TypeResolver resolverWithTypeArguments = new B2TypeResolver(
             TestClassWithTypeArguments.class,
             new Type[]{String.class, Integer.class});
     private final Field[] declaredFieldsWithTypeArguments = TestClassWithTypeArguments.class.getDeclaredFields();
@@ -48,7 +48,7 @@ public class TypeResolverTest {
 
         {
             final Type resolvedType = resolverWithTypeArguments.getType();
-            assertTrue(resolvedType instanceof TypeResolver.ResolvedParameterizedType);
+            assertTrue(resolvedType instanceof B2TypeResolver.ResolvedParameterizedType);
             final ParameterizedType resolvedParameterizedType = (ParameterizedType) resolvedType;
             assertEquals(TestClassWithTypeArguments.class, resolvedParameterizedType.getRawType());
             assertArrayEquals(
@@ -61,7 +61,7 @@ public class TypeResolverTest {
     public void testConstructTypeResolverWithoutTypeArguments_throws() {
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("actualTypeArguments must be same length as class' type parameters");
-        new TypeResolver(TestClassWithTypeArguments.class);
+        new B2TypeResolver(TestClassWithTypeArguments.class);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class TypeResolverTest {
         assertEquals(OneParameterizedType.class, resolvedParameterizedType.getRawType());
         assertArrayEquals(
                 new Type[]{
-                        new TypeResolver.ResolvedParameterizedType(
+                        new B2TypeResolver.ResolvedParameterizedType(
                                 TwoParameterizedTypes.class,
                                 new Type[]{Integer.class, String.class}
                         )
@@ -109,8 +109,8 @@ public class TypeResolverTest {
 
         final Type[] resolvedActualTypeArguments = resolvedParameterizedType.getActualTypeArguments();
         assertEquals(1, resolvedActualTypeArguments.length);
-        assertTrue(resolvedActualTypeArguments[0] instanceof TypeResolver.ResolvedParameterizedType);
-        final TypeResolver.ResolvedParameterizedType resolvedParameterizedType_nested = (TypeResolver.ResolvedParameterizedType) resolvedActualTypeArguments[0];
+        assertTrue(resolvedActualTypeArguments[0] instanceof B2TypeResolver.ResolvedParameterizedType);
+        final B2TypeResolver.ResolvedParameterizedType resolvedParameterizedType_nested = (B2TypeResolver.ResolvedParameterizedType) resolvedActualTypeArguments[0];
         assertEquals(TwoParameterizedTypes.class, resolvedParameterizedType_nested.getRawType());
         assertArrayEquals(new Type[]{Integer.class, String.class}, resolvedParameterizedType_nested.getActualTypeArguments());
     }
@@ -129,7 +129,7 @@ public class TypeResolverTest {
         assertTrue(resolvedType instanceof GenericArrayType);
         final GenericArrayType resolvedGenericArrayType = (GenericArrayType) resolvedType;
         assertEquals(
-                new TypeResolver.ResolvedParameterizedType(
+                new B2TypeResolver.ResolvedParameterizedType(
                         OneParameterizedType.class,
                         new Type[]{Integer.class}
                 ),
@@ -138,7 +138,7 @@ public class TypeResolverTest {
 
     @Test
     public void testRecursiveGenericClass() {
-        final TypeResolver resolveWithRecursiveGenericClass = new TypeResolver(
+        final B2TypeResolver resolveWithRecursiveGenericClass = new B2TypeResolver(
                 RecursiveClass.class,
                 new Type[]{String.class});
 
@@ -149,7 +149,7 @@ public class TypeResolverTest {
         final Type resolvedField1 = resolveWithRecursiveGenericClass.resolveType(
                 RecursiveClass.class.getDeclaredFields()[1]);
         assertEquals(
-                new TypeResolver.ResolvedParameterizedType(
+                new B2TypeResolver.ResolvedParameterizedType(
                         RecursiveClass.class,
                         new Type[]{String.class}
                 ), resolvedField1);
@@ -157,7 +157,7 @@ public class TypeResolverTest {
 
     @Test
     public void testWildcardTypesNotSupported() {
-        final TypeResolver resolverWithWildcards = new TypeResolver(
+        final B2TypeResolver resolverWithWildcards = new B2TypeResolver(
                 EnclosingWithWildcards.class,
                 new Type[]{String.class});
 
@@ -170,7 +170,7 @@ public class TypeResolverTest {
     public void testActualTypeArgumentsWrongLength_throws() {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("actualTypeArguments must be same length as class' type parameters");
-        new TypeResolver(TestClassWithTypeArguments.class, new Type[]{});
+        new B2TypeResolver(TestClassWithTypeArguments.class, new Type[]{});
     }
 
     @Test
@@ -182,14 +182,14 @@ public class TypeResolverTest {
 
     @Test
     public void testResolvedTypeEquality() {
-        final TypeResolver.ResolvedParameterizedType resolvedParameterizedType =
-                new TypeResolver.ResolvedParameterizedType(OneParameterizedType.class, new Type[]{Integer.class});
-        final TypeResolver.ResolvedParameterizedType resolvedParameterizedTypeEqual =
-                new TypeResolver.ResolvedParameterizedType(OneParameterizedType.class, new Type[]{Integer.class});
-        final TypeResolver.ResolvedParameterizedType resolvedParameterizedTypeNotEqual1 =
-                new TypeResolver.ResolvedParameterizedType(OneParameterizedType.class, new Type[]{String.class});
-        final TypeResolver.ResolvedParameterizedType resolvedParameterizedTypeNotEqual2 =
-                new TypeResolver.ResolvedParameterizedType(List.class, new Type[]{Integer.class});
+        final B2TypeResolver.ResolvedParameterizedType resolvedParameterizedType =
+                new B2TypeResolver.ResolvedParameterizedType(OneParameterizedType.class, new Type[]{Integer.class});
+        final B2TypeResolver.ResolvedParameterizedType resolvedParameterizedTypeEqual =
+                new B2TypeResolver.ResolvedParameterizedType(OneParameterizedType.class, new Type[]{Integer.class});
+        final B2TypeResolver.ResolvedParameterizedType resolvedParameterizedTypeNotEqual1 =
+                new B2TypeResolver.ResolvedParameterizedType(OneParameterizedType.class, new Type[]{String.class});
+        final B2TypeResolver.ResolvedParameterizedType resolvedParameterizedTypeNotEqual2 =
+                new B2TypeResolver.ResolvedParameterizedType(List.class, new Type[]{Integer.class});
 
         assertEquals(resolvedParameterizedType, resolvedParameterizedTypeEqual);
         assertEquals(resolvedParameterizedType.hashCode(), resolvedParameterizedTypeEqual.hashCode());
@@ -200,12 +200,12 @@ public class TypeResolverTest {
         assertNotEquals(resolvedParameterizedType, resolvedParameterizedTypeNotEqual2);
         assertNotEquals(resolvedParameterizedType.hashCode(), resolvedParameterizedTypeNotEqual2.hashCode());
 
-        final TypeResolver.ResolvedGenericArrayType resolvedGenericArrayType =
-                new TypeResolver.ResolvedGenericArrayType(String.class);
-        final TypeResolver.ResolvedGenericArrayType resolvedGenericArrayTypeEqual =
-                new TypeResolver.ResolvedGenericArrayType(String.class);
-        final TypeResolver.ResolvedGenericArrayType resolvedGenericArrayTypeNotEqual =
-                new TypeResolver.ResolvedGenericArrayType(Integer.class);
+        final B2TypeResolver.ResolvedGenericArrayType resolvedGenericArrayType =
+                new B2TypeResolver.ResolvedGenericArrayType(String.class);
+        final B2TypeResolver.ResolvedGenericArrayType resolvedGenericArrayTypeEqual =
+                new B2TypeResolver.ResolvedGenericArrayType(String.class);
+        final B2TypeResolver.ResolvedGenericArrayType resolvedGenericArrayTypeNotEqual =
+                new B2TypeResolver.ResolvedGenericArrayType(Integer.class);
 
         assertEquals(resolvedGenericArrayType, resolvedGenericArrayTypeEqual);
         assertEquals(resolvedGenericArrayType.hashCode(), resolvedGenericArrayTypeEqual.hashCode());
