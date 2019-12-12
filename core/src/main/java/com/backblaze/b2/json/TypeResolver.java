@@ -53,6 +53,15 @@ public class TypeResolver {
         this(clazz, null);
     }
 
+    /**
+     * Creates a type resolver for the supplied class.
+     *
+     * If clazz is a parameterized class, then the code will throw if you do not supply the actual type arguments used
+     * with the class, or the actualTypeArguments is the wrong length for the number of type parameters clazz takes.
+     *
+     * If clazz is not parameterized, then the code will throw if you supply anything other than null or a 0-length
+     * array for actualTypeArguments.
+     */
     public TypeResolver(Class<?> clazz, Type[] actualTypeArgumentsOrNull) {
         B2Preconditions.checkArgumentIsNotNull(clazz, "Supplied class must not be null");
         TypeVariable[] typeParameters = clazz.getTypeParameters();
@@ -67,7 +76,6 @@ public class TypeResolver {
         }
 
         this.clazz = clazz;
-
         // If there are no type arguments, then this is just a concrete class.
         if (typeParameters.length == 0) {
             this.type = clazz;
@@ -81,10 +89,10 @@ public class TypeResolver {
         }
     }
 
-    public Field[] getDeclaredFields() {
-        return clazz.getDeclaredFields();
-    }
-
+    /**
+     * Returns the type this resolver is working over. That is, the class that encloses the fields this object knows
+     * how to resolve.
+     */
     public Type getType() {
         return type;
     }

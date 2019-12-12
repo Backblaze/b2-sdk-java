@@ -143,11 +143,11 @@ public class TypeResolverTest {
                 new Type[]{String.class});
 
         final Type resolvedField0 = resolveWithRecursiveGenericClass.resolveType(
-                resolveWithRecursiveGenericClass.getDeclaredFields()[0]);
+                RecursiveClass.class.getDeclaredFields()[0]);
         assertEquals(String.class, resolvedField0);
 
         final Type resolvedField1 = resolveWithRecursiveGenericClass.resolveType(
-                resolveWithRecursiveGenericClass.getDeclaredFields()[1]);
+                RecursiveClass.class.getDeclaredFields()[1]);
         assertEquals(
                 new TypeResolver.ResolvedParameterizedType(
                         RecursiveClass.class,
@@ -163,7 +163,7 @@ public class TypeResolverTest {
 
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("Wildcard types are not supported");
-        resolverWithWildcards.resolveType(resolverWithWildcards.getDeclaredFields()[0]);
+        resolverWithWildcards.resolveType(EnclosingWithWildcards.class.getDeclaredFields()[0]);
     }
 
     @Test
