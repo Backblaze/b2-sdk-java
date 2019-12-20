@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * (De)serializes Double objects.
@@ -18,7 +19,7 @@ public class B2JsonDoubleHandler implements B2JsonTypeHandler<Double> {
         this.isPrimitive = isPrimitive;
     }
 
-    public Class<Double> getHandledClass() {
+    public Type getHandledType() {
         return Double.class;
     }
 

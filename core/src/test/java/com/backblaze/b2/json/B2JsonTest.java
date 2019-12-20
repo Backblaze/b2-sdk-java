@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -1224,7 +1225,7 @@ public class B2JsonTest extends B2BaseTest {
         }
 
         private static class JsonHandler implements B2JsonTypeHandler<GoodCustomHandler> {
-            public Class<GoodCustomHandler> getHandledClass() {
+            public Type getHandledType() {
                 return GoodCustomHandler.class;
             }
 
@@ -1484,7 +1485,7 @@ public class B2JsonTest extends B2BaseTest {
 
         public static class JsonHandler implements B2JsonTypeHandler<Letter> {
             @Override
-            public Class<Letter> getHandledClass() {
+            public Type getHandledType() {
                 return Letter.class;
             }
 
@@ -2457,5 +2458,82 @@ public class B2JsonTest extends B2BaseTest {
         final SerializationTestClass derived = B2Json.get().fromJson(actual, SerializationTestClass.class);
 
         assertEquals(original, derived);
+    }
+
+    @Test
+    public void testGenerics() throws B2JsonException {
+        final ClassThatUsesGenerics classThatUsesGenerics = new ClassThatUsesGenerics(
+                999,
+                new Item<>("the string"),
+                new Item<>(123),
+                new Item<>(new Item<>(456L))
+        );
+
+        final String expected = "{\n" +
+                "  \"id\": 999,\n" +
+                "  \"integerItem\": {\n" +
+                "    \"value\": 123\n" +
+                "  },\n" +
+                "  \"longItemItem\": {\n" +
+                "    \"value\": {\n" +
+                "      \"value\": 456\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"stringItem\": {\n" +
+                "    \"value\": \"the string\"\n" +
+                "  }\n" +
+                "}";
+        assertEquals(expected, b2Json.toJson(classThatUsesGenerics));
+
+        final ClassThatUsesGenerics classThatUsesGenericsFromJson = b2Json.fromJson(expected, ClassThatUsesGenerics.class);
+
+        assertEquals(999, classThatUsesGenericsFromJson.id);
+        assertEquals("the string", classThatUsesGenericsFromJson.stringItem.value);
+        assertEquals(new Long(456), classThatUsesGenericsFromJson.longItemItem.value.value);
+        assertEquals(new Integer(123), classThatUsesGenericsFromJson.integerItem.value);
+
+    }
+
+    private static class ClassThatUsesGenerics {
+
+        @B2Json.required
+        private int id;
+
+        @B2Json.required
+        private final Item<String> stringItem;
+
+        @B2Json.required
+        private final Item<Integer> integerItem;
+
+        @B2Json.required
+        private final Item<Item<Long>> longItemItem;
+
+        @B2Json.constructor(params = "id, stringItem, integerItem, longItemItem")
+        public ClassThatUsesGenerics(
+                int id,
+                Item<String> stringItem,
+                Item<Integer> integerItem,
+                Item<Item<Long>> longItemItem) {
+
+            this.id = id;
+            this.stringItem = stringItem;
+            this.integerItem = integerItem;
+            this.longItemItem = longItemItem;
+        }
+    }
+
+    private static class Item<T> {
+
+        @B2Json.required
+        private final T value;
+
+        @B2Json.constructor(params = "value")
+        public Item(T value) {
+            this.value = value;
+        }
+
+        public T getValue() {
+            return value;
+        }
     }
 }

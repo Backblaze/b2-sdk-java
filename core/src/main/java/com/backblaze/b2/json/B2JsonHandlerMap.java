@@ -45,7 +45,7 @@ public class B2JsonHandlerMap {
     // we think it's safe to overwrite the entry for a given class because
     // we assume all handlers are stateless and any two instances of
     // a handler for a class are equivalent.
-    private final Map<Class<?>, B2JsonTypeHandler<?>> map = new HashMap<>();
+    private final Map<Type, B2JsonTypeHandler<?>> map = new HashMap<>();
 
     /**
      * The getHandler() method is not supposed to be re-entrant.  This flag
@@ -72,7 +72,7 @@ public class B2JsonHandlerMap {
     /**
      * Sets up a new map.
      */
-    private B2JsonHandlerMap(Map<Class<?>, B2JsonTypeHandler<?>> initialMapOrNull) {
+    private B2JsonHandlerMap(Map<Type, B2JsonTypeHandler<?>> initialMapOrNull) {
         // add all built-in handlers.
         map.put(BigDecimal.class, new B2JsonBigDecimalHandler());
         map.put(BigInteger.class, new B2JsonBigIntegerHandler());
@@ -104,7 +104,7 @@ public class B2JsonHandlerMap {
         map.put(double[].class, new B2JsonDoubleArrayHandler(map.get(double.class)));
 
         if (initialMapOrNull != null) {
-            map.putAll(initialMapOrNull);
+            initialMapOrNull.forEach(this::putHandler);
         }
     }
 
@@ -119,7 +119,6 @@ public class B2JsonHandlerMap {
      * So, this method does NOT need to be re-entrant, and in fact we assume that it's not.
      */
     public synchronized <T> B2JsonTypeHandler<T> getHandler(Class<T> clazz) throws B2JsonException {
-
         // This method is NOT re-entrant.  The code that creates and initializes new handlers
         // should not call this method.
         //
@@ -178,7 +177,7 @@ public class B2JsonHandlerMap {
             // Something went wrong, and the handlers are not ready to use, so we'll take them
             // out of the map.
             for (B2JsonTypeHandler handlerAdded : handlersAddedToMap) {
-                map.remove(handlerAdded.getHandledClass());
+                map.remove(handlerAdded.getHandledType());
             }
 
             // Let the caller know that something went wrong.
@@ -220,108 +219,129 @@ public class B2JsonHandlerMap {
     }
 
     /**
-     * Gets the handler for a given class at the top level.
+     * Gets the handler for a given type at the top level.
+     *
+     * The type must be resolved. If the type represents a generic class, the type must also
+     * have concrete type arguments. Otherwise this will fail.
      *
      * The handler MAY NOT BE INITIALIZED.  This method is for use by handlers that need to get
      * a reference to another handler in their initialize() methods.  You cannot assume that any
      * fields set by initialize() have been set.
      */
-    /*package*/ synchronized <T> B2JsonTypeHandler<T> getUninitializedHandler(Class<T> clazz) throws B2JsonException {
+    /*package*/ synchronized <T> B2JsonTypeHandler<T> getUninitializedHandler(Type type) throws B2JsonException {
+        // We do not need to check if the type is resolved here. That will happen as we recurse. If we come across
+        // a field that cannot be resolved, we will throw then.
 
-        B2JsonTypeHandler<T> result = lookupHandler(clazz);
-
-        if (result == null) {
-            // maybe use a custom handler provided by clazz.
-            result = findCustomHandler(clazz);
-            if (result != null) {
-                rememberHandler(clazz, result);
+        // Check to see if we've already done the work for this type.
+        {
+            final B2JsonTypeHandler<T> handler = lookupHandler(type);
+            if (handler != null) {
+                return handler;
             }
         }
 
-        if (result == null) {
-            if (clazz.isEnum()) {
-                result = new B2JsonEnumHandler<>(clazz);
-                rememberHandler(clazz, result);
-            } else if (clazz.isArray()) {
-                final Class eltClazz = clazz.getComponentType();
-                //noinspection unchecked
-                B2JsonTypeHandler eltClazzHandler = getUninitializedHandler(eltClazz);
-                //noinspection unchecked
-                result = (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
-                rememberHandler(clazz, result);
-            } else if (isUnionBase(clazz)) {
-                //noinspection unchecked
-                result = (B2JsonTypeHandler<T>) new B2JsonUnionBaseHandler(clazz);
-                rememberHandler(clazz, result);
-            } else {
-                //noinspection unchecked
-                result = (B2JsonTypeHandler<T>) new B2JsonObjectHandler(clazz);
-                rememberHandler(clazz, result);
-            }
-        }
+        final B2JsonTypeHandler<T> handler;
+        if (type instanceof Class) {
+            // class Item {
+            //     private int itemNumber;
+            //     private String itemName;
+            // }
+            //noinspection unchecked
+            final Class<T> clazz = (Class<T>) type;
+            handler = getUninitializedHandlerForClass(clazz);
 
-        return result;
+        } else if (type instanceof ParameterizedType) {
+            // class Dataset {
+            //     private List<Double> measurements;
+            // }
+            final ParameterizedType parameterizedType = (ParameterizedType) type;
+            //noinspection unchecked
+            handler = getUninitializedHandlerForParameterizedType(parameterizedType);
+
+        } else {
+            throw new B2JsonException("do not know how to get handler for type " + type.getTypeName());
+        }
+        rememberHandler(type, handler);
+        return handler;
     }
 
-    /**
-     * Returns the type for a field in an object.
-     *
-     * This handles types, such as Set<>, that are not supported as top-level objects by B2Json.
-     *
-     * The handler MAY NOT BE INITIALIZED.  This method is for use by handlers that need to get
-     * a reference to another handler in their initialize() methods.  You cannot assume that any
-     * fields set by initialize() have been set.
-     */
-    /*package*/ static B2JsonTypeHandler getUninitializedFieldHandler(Type fieldType, B2JsonHandlerMap handlerMap) throws B2JsonException {
-        if (fieldType instanceof ParameterizedType) {
-            ParameterizedType paramType = (ParameterizedType) fieldType;
-            final Class rawType = (Class) paramType.getRawType();
-            if (rawType == LinkedHashSet.class) {
-                Type itemType = paramType.getActualTypeArguments()[0];
-                B2JsonTypeHandler<?> itemHandler = getUninitializedFieldHandler(itemType, handlerMap);
-                return new B2JsonLinkedHashSetHandler(itemHandler);
-            }
-            if (rawType == List.class) {
-                Type itemType = paramType.getActualTypeArguments()[0];
-                B2JsonTypeHandler<?> itemHandler = getUninitializedFieldHandler(itemType, handlerMap);
-                return new B2JsonListHandler(itemHandler);
-            }
-            if (rawType == TreeSet.class) {
-                Type itemType = paramType.getActualTypeArguments()[0];
-                B2JsonTypeHandler<?> itemHandler = getUninitializedFieldHandler(itemType, handlerMap);
-                return new B2JsonTreeSetHandler(itemHandler);
-            }
-            if (rawType == Set.class) {
-                Type itemType = paramType.getActualTypeArguments()[0];
-                B2JsonTypeHandler<?> itemHandler = getUninitializedFieldHandler(itemType, handlerMap);
-                return new B2JsonSetHandler(itemHandler);
-            }
-            if (rawType == EnumSet.class) {
-                Type itemType = paramType.getActualTypeArguments()[0];
-                B2JsonTypeHandler<?> itemHandler = getUninitializedFieldHandler(itemType, handlerMap);
-                return new B2JsonEnumSetHandler(itemHandler);
-            }
-            if (rawType == Map.class || rawType == TreeMap.class) {
-                Type keyType = paramType.getActualTypeArguments()[0];
-                Type valueType = paramType.getActualTypeArguments()[1];
-                B2JsonTypeHandler<?> keyHandler = getUninitializedFieldHandler(keyType, handlerMap);
-                B2JsonTypeHandler<?> valueHandler = getUninitializedFieldHandler(valueType, handlerMap);
-                return new B2JsonMapHandler(keyHandler, valueHandler);
-            }
-            if (rawType == ConcurrentMap.class) {
-                Type keyType = paramType.getActualTypeArguments()[0];
-                Type valueType = paramType.getActualTypeArguments()[1];
-                B2JsonTypeHandler<?> keyHandler = getUninitializedFieldHandler(keyType, handlerMap);
-                B2JsonTypeHandler<?> valueHandler = getUninitializedFieldHandler(valueType, handlerMap);
-                return new B2JsonConcurrentMapHandler(keyHandler, valueHandler);
-            }
+    private synchronized <T> B2JsonTypeHandler<T> getUninitializedHandlerForClass(Class<T> clazz) throws B2JsonException {
+
+        // maybe use a custom handler provided by clazz.
+        B2JsonTypeHandler<T> result = findCustomHandler(clazz);
+        if (result != null) {
+            return result;
         }
-        if (fieldType instanceof Class) {
-            final Class fieldClass = (Class) fieldType;
+
+        if (clazz.isEnum()) {
+            return new B2JsonEnumHandler<>(clazz);
+        }
+
+        if (clazz.isArray()) {
+            final Class eltClazz = clazz.getComponentType();
+            B2JsonTypeHandler eltClazzHandler = getUninitializedHandler(eltClazz);
             //noinspection unchecked
-            return handlerMap.getUninitializedHandler(fieldClass);
+            return (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
         }
-        throw new B2JsonException("Do not know how to handle: " + fieldType);
+
+        if (isUnionBase(clazz)) {
+            //noinspection unchecked
+            return (B2JsonTypeHandler<T>) new B2JsonUnionBaseHandler(clazz);
+        }
+
+        //noinspection unchecked
+        return (B2JsonTypeHandler<T>) new B2JsonObjectHandler(clazz);
+    }
+
+    private synchronized B2JsonTypeHandler getUninitializedHandlerForParameterizedType(
+            ParameterizedType parameterizedType) throws B2JsonException {
+
+        final Type rawType = parameterizedType.getRawType();
+        if (rawType.equals(LinkedHashSet.class)) {
+            Type itemType = parameterizedType.getActualTypeArguments()[0];
+            B2JsonTypeHandler<?> itemHandler = getUninitializedHandler(itemType);
+            return new B2JsonLinkedHashSetHandler(itemHandler);
+        }
+        if (rawType.equals(List.class)) {
+            Type itemType = parameterizedType.getActualTypeArguments()[0];
+            B2JsonTypeHandler<?> itemHandler = getUninitializedHandler(itemType);
+            return new B2JsonListHandler(itemHandler);
+        }
+        if (rawType.equals(TreeSet.class)) {
+            Type itemType = parameterizedType.getActualTypeArguments()[0];
+            B2JsonTypeHandler<?> itemHandler = getUninitializedHandler(itemType);
+            return new B2JsonTreeSetHandler(itemHandler);
+        }
+        if (rawType.equals(Set.class)) {
+            Type itemType = parameterizedType.getActualTypeArguments()[0];
+            B2JsonTypeHandler<?> itemHandler = getUninitializedHandler(itemType);
+            return new B2JsonSetHandler(itemHandler);
+        }
+        if (rawType.equals(EnumSet.class)) {
+            Type itemType = parameterizedType.getActualTypeArguments()[0];
+            B2JsonTypeHandler<?> itemHandler = getUninitializedHandler(itemType);
+            return new B2JsonEnumSetHandler(itemHandler);
+        }
+        if (rawType.equals(Map.class) || rawType.equals(TreeMap.class)) {
+            Type keyType = parameterizedType.getActualTypeArguments()[0];
+            Type valueType = parameterizedType.getActualTypeArguments()[1];
+            B2JsonTypeHandler<?> keyHandler = getUninitializedHandler(keyType);
+            B2JsonTypeHandler<?> valueHandler = getUninitializedHandler(valueType);
+            return new B2JsonMapHandler(keyHandler, valueHandler);
+        }
+        if (rawType.equals(ConcurrentMap.class)) {
+            Type keyType = parameterizedType.getActualTypeArguments()[0];
+            Type valueType = parameterizedType.getActualTypeArguments()[1];
+            B2JsonTypeHandler<?> keyHandler = getUninitializedHandler(keyType);
+            B2JsonTypeHandler<?> valueHandler = getUninitializedHandler(valueType);
+            return new B2JsonConcurrentMapHandler(keyHandler, valueHandler);
+        }
+        final Type resolvedRawType = parameterizedType.getRawType();
+        // Not sure if the resolvedRawType can be anything other than a class, but if it's not it's a bug.
+        B2Preconditions.checkArgument(resolvedRawType instanceof Class);
+        final Class resolvedRawTypeClass = (Class) resolvedRawType;
+        //noinspection unchecked
+        return new B2JsonObjectHandler(resolvedRawTypeClass, parameterizedType.getActualTypeArguments());
     }
 
     /**
@@ -414,11 +434,11 @@ public class B2JsonHandlerMap {
         }
     }
 
-    private synchronized <T> B2JsonTypeHandler<T> lookupHandler(Class<T> clazz) {
+    private synchronized <T> B2JsonTypeHandler<T> lookupHandler(Type type) {
         // this is a method to make it easy to synchronize it.  it's private, so
         // i'm hoping the compiler considers inlining it.
         //noinspection unchecked
-        return (B2JsonTypeHandler<T>) map.get(clazz);
+        return (B2JsonTypeHandler<T>) map.get(type);
     }
 
     /**
@@ -432,9 +452,14 @@ public class B2JsonHandlerMap {
      * to B2JsonHandlerMap.getHandler(), which synchronized and keeps anybody
      * else from seeing the B2JsonObjectHandler before it is fully constructed.
      */
-    private synchronized <T> void rememberHandler(Class<T> clazz, B2JsonTypeHandler<T> handler) {
-        B2Preconditions.checkState(!map.containsKey(clazz));
-        map.put(clazz, handler);
+    private synchronized <T> void rememberHandler(Type type, B2JsonTypeHandler<T> handler) {
+        B2Preconditions.checkState(!map.containsKey(type));
+        putHandler(type, handler);
         handlersAddedToMap.add(handler);
+    }
+
+    private synchronized <T> void putHandler(Type type, B2JsonTypeHandler<T> handler) {
+        // TODO validation?
+        map.put(type, handler);
     }
 }

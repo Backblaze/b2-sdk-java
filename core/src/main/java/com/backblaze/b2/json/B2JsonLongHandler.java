@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * (De)serializes Long objects.
@@ -18,7 +19,7 @@ public class B2JsonLongHandler implements B2JsonTypeHandler<Long> {
         this.isPrimitive = isPrimitive;
     }
 
-    public Class<Long> getHandledClass() {
+    public Type getHandledType() {
         return Long.class;
     }
 

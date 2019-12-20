@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,14 +19,16 @@ public class B2JsonConcurrentMapHandler extends B2JsonNonUrlTypeHandler<Concurre
 
     public B2JsonConcurrentMapHandler(B2JsonTypeHandler keyHandler, B2JsonTypeHandler valueHandler) throws B2JsonException {
         if (!keyHandler.isStringInJson()) {
-            throw new B2JsonException("Map key is not a string: " + keyHandler.getHandledClass());
+            throw new B2JsonException("Map key is not a string: " + keyHandler.getHandledType());
         }
         this.keyHandler = keyHandler;
         this.valueHandler = valueHandler;
     }
 
-    public Class<ConcurrentMap> getHandledClass() {
-        return ConcurrentMap.class;
+    public Type getHandledType() {
+        return new B2TypeResolver.ResolvedParameterizedType(
+                ConcurrentMap.class,
+                new Type[] {keyHandler.getHandledType(), valueHandler.getHandledType()});
     }
 
     public void serialize(ConcurrentMap obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {

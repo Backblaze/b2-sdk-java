@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * (De)serializes CharSequence objects
@@ -16,7 +17,7 @@ import java.io.IOException;
 public class B2JsonCharSquenceHandler implements B2JsonTypeHandler<CharSequence> {
 
     @Override
-    public Class<CharSequence> getHandledClass() {
+    public Type getHandledType() {
         return CharSequence.class;
     }
 

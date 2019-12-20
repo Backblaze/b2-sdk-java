@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.math.BigInteger;
 
 /**
@@ -13,7 +14,7 @@ import java.math.BigInteger;
  */
 public class B2JsonBigIntegerHandler implements B2JsonTypeHandler<BigInteger> {
 
-    public Class<BigInteger> getHandledClass() {
+    public Type getHandledType() {
         return BigInteger.class;
     }
 

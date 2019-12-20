@@ -18,7 +18,8 @@ public class B2JsonBooleanArrayHandler extends B2JsonNonUrlTypeHandler<boolean[]
         this.itemHandler = itemHandler;
     }
 
-    public Class<boolean[]> getHandledClass() {
+    @Override
+    public Class<boolean[]> getHandledType() {
         return boolean[].class;
     }
 

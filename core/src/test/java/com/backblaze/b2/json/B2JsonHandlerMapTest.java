@@ -72,7 +72,7 @@ public class B2JsonHandlerMapTest extends B2BaseTest {
     public void testSet() throws B2JsonException {
         final B2JsonHandlerMap handlerMap = new B2JsonHandlerMap();
 
-        thrown.expectMessage("java.util.HashSet.map should have exactly one annotation");
+        thrown.expectMessage("actualTypeArguments must be same length as class' type parameters");
         handlerMap.getHandler(HashSet.class);
     }
 

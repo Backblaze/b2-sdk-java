@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * (De)serializes Byte objects.
@@ -18,7 +19,7 @@ public class B2JsonByteHandler implements B2JsonTypeHandler<Byte> {
         this.isPrimitive = isPrimitive;
     }
 
-    public Class<Byte> getHandledClass() {
+    public Type getHandledType() {
         return Byte.class;
     }
 

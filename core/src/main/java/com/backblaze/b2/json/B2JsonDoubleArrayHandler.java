@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class B2JsonDoubleArrayHandler extends B2JsonNonUrlTypeHandler<double[]> 
         this.itemHandler = itemHandler;
     }
 
-    public Class<double[]> getHandledClass() {
+    public Type getHandledType() {
         return double[].class;
     }
 

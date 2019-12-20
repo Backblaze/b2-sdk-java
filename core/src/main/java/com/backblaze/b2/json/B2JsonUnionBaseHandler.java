@@ -15,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -131,11 +132,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
         for (Class<?> subclass : typeNameToClass.values()) {
             for (Field field : B2JsonHandlerMap.getObjectFieldsForJson(subclass)) {
                 final String fieldName = field.getName();
-                final B2JsonTypeHandler handler =
-                        B2JsonHandlerMap.getUninitializedFieldHandler(
-                                field.getGenericType(),
-                                b2JsonHandlerMap
-                        );
+                final B2JsonTypeHandler handler = b2JsonHandlerMap.getUninitializedHandler(field.getGenericType());
                 if (fieldNameToHandler.containsKey(fieldName)) {
                     // We have seen this field name before.  Throw an error if the type is different
                     // than before.
@@ -143,8 +140,8 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
                         throw new B2JsonException(
                                 "In union type " + clazz + ", field " + fieldName + " has two different types.  " +
                                         fieldNameToSourceClassName.get(fieldName) + " has " +
-                                        fieldNameToHandler.get(fieldName).getHandledClass() + " and " +
-                                        subclass.toString() + " has " + handler.getHandledClass()
+                                        fieldNameToHandler.get(fieldName).getHandledType() + " and " +
+                                        subclass.toString() + " has " + handler.getHandledType()
                         );
                     }
                 }
@@ -243,7 +240,8 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
     }
 
     @Override
-    public Class<T> getHandledClass() {
+    public Type getHandledType() {
+        // TODO not sure what to do here...
         return clazz;
     }
 

@@ -5,7 +5,10 @@
 
 package com.backblaze.b2.json;
 
+import com.backblaze.b2.util.B2Preconditions;
+
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.EnumSet;
 
 
@@ -16,11 +19,17 @@ public class B2JsonEnumSetHandler extends B2JsonNonUrlTypeHandler<EnumSet> {
     private final B2JsonTypeHandler itemHandler;
 
     public B2JsonEnumSetHandler(B2JsonTypeHandler itemHandler) {
+        B2Preconditions.checkArgument(
+                itemHandler.getHandledType() instanceof Class,
+                "itemHandler must handle a class, and no other type");
         this.itemHandler = itemHandler;
     }
 
-    public Class<EnumSet> getHandledClass() {
-        return EnumSet.class;
+    public Type getHandledType() {
+        // TODO would like check from somebody else that this is correct.
+        return new B2TypeResolver.ResolvedParameterizedType(
+                EnumSet.class,
+                new Type[] {itemHandler.getHandledType()});
     }
 
     public void serialize(EnumSet obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
@@ -34,7 +43,9 @@ public class B2JsonEnumSetHandler extends B2JsonNonUrlTypeHandler<EnumSet> {
     }
 
     public EnumSet deserialize(B2JsonReader in, B2JsonOptions options) throws B2JsonException, IOException {
-        EnumSet result = EnumSet.noneOf(itemHandler.getHandledClass());
+        // This cast is safe because of the precondition in the constructor.
+        final Class handledClass = (Class)itemHandler.getHandledType();
+        EnumSet result = EnumSet.noneOf(handledClass);
         if (in.startArrayAndCheckForContents()) {
             do {
                 //noinspection unchecked

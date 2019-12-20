@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.TreeSet;
 
 public class B2JsonTreeSetHandler extends B2JsonNonUrlTypeHandler<TreeSet> {
@@ -15,8 +16,10 @@ public class B2JsonTreeSetHandler extends B2JsonNonUrlTypeHandler<TreeSet> {
         this.itemHandler = itemHandler;
     }
 
-    public Class<TreeSet> getHandledClass() {
-        return TreeSet.class;
+    public Type getHandledType() {
+        return new B2TypeResolver.ResolvedParameterizedType(
+                TreeSet.class,
+                new Type[]{itemHandler.getHandledType()});
     }
 
     public void serialize(TreeSet obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {

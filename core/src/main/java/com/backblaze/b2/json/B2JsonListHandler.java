@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -31,8 +32,10 @@ public class B2JsonListHandler extends B2JsonNonUrlTypeHandler<List> {
         this.itemHandler = itemHandler;
     }
 
-    public Class<List> getHandledClass() {
-        return List.class;
+    public Type getHandledType() {
+        return new B2TypeResolver.ResolvedParameterizedType(
+                List.class,
+                new Type[] {itemHandler.getHandledType()});
     }
 
     public void serialize(List obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {

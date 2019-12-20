@@ -6,6 +6,7 @@
 package com.backblaze.b2.json;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 
 /**
@@ -13,7 +14,7 @@ import java.math.BigDecimal;
  */
 public class B2JsonBigDecimalHandler implements B2JsonTypeHandler<BigDecimal> {
 
-    public Class<BigDecimal> getHandledClass() {
+    public Type getHandledType() {
         return BigDecimal.class;
     }
 

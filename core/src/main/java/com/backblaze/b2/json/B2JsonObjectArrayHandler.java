@@ -7,6 +7,7 @@ package com.backblaze.b2.json;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,8 +24,9 @@ public class B2JsonObjectArrayHandler<T> extends B2JsonNonUrlTypeHandler<T> {
         this.itemHandler = itemHandler;
     }
 
-    public Class<T> getHandledClass() {
-        return arrayClazz;
+    public Type getHandledType() {
+        return new B2TypeResolver.ResolvedParameterizedType(
+                arrayClazz, new Type[] {eltClazz});
     }
 
     public void serialize(T array, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
