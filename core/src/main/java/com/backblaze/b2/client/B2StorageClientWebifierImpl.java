@@ -412,7 +412,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                              B2DownloadByIdRequest request,
                              B2ContentSink handler) throws B2Exception {
         downloadGuts(accountAuth,
-                makeDownloadByIdUrl(accountAuth, request.getFileId(), request.getB2ContentDisposition()),
+                makeDownloadByIdUrl(accountAuth, request.getFileId(), request),
                 request.getRange(),
                 handler);
     }
@@ -420,7 +420,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     @Override
     public String getDownloadByIdUrl(B2AccountAuthorization accountAuth,
                               B2DownloadByIdRequest request) {
-        return makeDownloadByIdUrl(accountAuth, request.getFileId(), request.getB2ContentDisposition());
+        return makeDownloadByIdUrl(accountAuth, request.getFileId(), request);
     }
 
     @Override
@@ -428,7 +428,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                                B2DownloadByNameRequest request,
                                B2ContentSink handler) throws B2Exception {
         downloadGuts(accountAuth,
-                makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request.getB2ContentDisposition()),
+                makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request),
                 request.getRange(),
                 handler);
     }
@@ -436,7 +436,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     @Override
     public String getDownloadByNameUrl(B2AccountAuthorization accountAuth,
                                 B2DownloadByNameRequest request) {
-        return makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request.getB2ContentDisposition());
+        return makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request);
     }
 
     private void downloadGuts(B2AccountAuthorization accountAuth,
@@ -580,14 +580,32 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
     private String makeDownloadByIdUrl(B2AccountAuthorization accountAuth,
                                        String fguid,
-                                       String b2ContentDisposition) {
-        String url = accountAuth.getDownloadUrl();
-        if (!url.endsWith("/")) {
-            url += "/";
+                                       B2DownloadByIdRequest request) {
+        final StringBuilder uriBuilder = new StringBuilder();
+        final String downloadUrl = accountAuth.getDownloadUrl();
+
+        uriBuilder.append(downloadUrl);
+
+        if (!downloadUrl.endsWith("/")) {
+            uriBuilder.append("/");
         }
-        url += API_VERSION_PATH + "b2_download_file_by_id?fileId=" + fguid;
-        url += maybeB2ContentDisposition('&', b2ContentDisposition);
-        return url;
+
+        uriBuilder
+                .append(API_VERSION_PATH)
+                .append("b2_download_file_by_id?fileId=")
+                .append(fguid);
+
+        if (request != null) {
+            int queryparameterCount = 1; // fguid from above
+
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentDisposition", request.getB2ContentDisposition());
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentLanguage", request.getB2ContentLanguage());
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2Expires", request.getB2Expires());
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2CacheControl", request.getB2CacheControl());
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentEncoding", request.getB2ContentEncoding());
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentType", request.getB2ContentType());
+        }
+        return uriBuilder.toString();
     }
 
     private String makeGetFileInfoByNameUrl(B2AccountAuthorization accountAuth,
@@ -599,27 +617,60 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     private String makeDownloadByNameUrl(B2AccountAuthorization accountAuth,
                                          String bucketName,
                                          String fileName,
-                                         String b2ContentDisposition) {
-        String url = accountAuth.getDownloadUrl();
-        if (!url.endsWith("/")) {
-            url += "/";
+                                         B2DownloadByNameRequest request) {
+        final StringBuilder uriBuilder = new StringBuilder();
+        final String downloadUrl = accountAuth.getDownloadUrl();
+
+        uriBuilder.append(downloadUrl);
+
+        if (!downloadUrl.endsWith("/")) {
+            uriBuilder.append("/");
         }
-        url += "file/" + bucketName + "/" + percentEncode(fileName);
-        url += maybeB2ContentDisposition('?', b2ContentDisposition);
-        return url;
+
+        uriBuilder
+                .append("file/")
+                .append(bucketName)
+                .append("/")
+                .append(percentEncode(fileName));
+
+        if (request != null) {
+            int queryparameterCount = 0;
+
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentDisposition", request.getB2ContentDisposition());
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentLanguage", request.getB2ContentLanguage());
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2Expires", request.getB2Expires());
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2CacheControl", request.getB2CacheControl());
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentEncoding", request.getB2ContentEncoding());
+            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentType", request.getB2ContentType());
+        }
+        return uriBuilder.toString();
     }
 
     /**
-     * if b2ContentDisposition isn't null, this will return it in a url query
-     * parameter format prefixed with the given separator.  otherwise, it will
-     * return an empty string.
+     * If argValue isn't null, this will append a query parameter to uri builder
+     * with the prefix '?' when countOfQueryParameters is zero and '&' otherwise
+     * This will return the countOfQueryParameters + 1 if the query parameter was
+     * added to the uri builder and countOfQueryParameters otherwise.
+     *
+     * @param uriBuilder StringBuilder of the URI to append to
+     * @param countOfQueryParameters number of query parameters already added to the URI
+     * @param argName name of query parameter
+     * @param argValue value of query parameter
+     * @return countOfQueryParameters + 1 if a query parameter was added,
+     *         countOfQueryParameters otherwise
      */
-    private String maybeB2ContentDisposition(char separator,
-                                             String b2ContentDisposition) {
-        if (b2ContentDisposition == null) {
-            return "";
-        } else {
-            return separator + "b2ContentDisposition=" + percentEncode(b2ContentDisposition);
+    private int maybeAddQueryParamToUrl(StringBuilder uriBuilder, int countOfQueryParameters, String argName, String argValue) {
+        if (argValue != null) {
+            final char separator = countOfQueryParameters == 0 ? '?' : '&';
+            uriBuilder
+                    .append(separator)
+                    .append(argName)
+                    .append('=')
+                    .append(percentEncode(argValue));
+
+            return countOfQueryParameters + 1;
         }
+
+        return countOfQueryParameters;
     }
 }

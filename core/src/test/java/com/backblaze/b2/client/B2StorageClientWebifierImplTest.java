@@ -797,7 +797,51 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "request:\n" +
                 "    {\n" +
+                "      \"b2CacheControl\": null,\n" +
                 "      \"b2ContentDisposition\": \"attachment; filename=\\\"example file name.txt\\\"\",\n" +
+                "      \"b2ContentEncoding\": null,\n" +
+                "      \"b2ContentLanguage\": null,\n" +
+                "      \"b2ContentType\": null,\n" +
+                "      \"b2Expires\": null,\n" +
+                "      \"bucketId\": \"bucket1\",\n" +
+                "      \"fileNamePrefix\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"validDurationInSeconds\": 123\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2DownloadAuthorization\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.getDownloadAuthorization(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testGetDownloadAuthorizationWithAllOverrides() throws B2Exception {
+        final B2GetDownloadAuthorizationRequest request = B2GetDownloadAuthorizationRequest
+                .builder(bucketId(1), fileName(1), 123)
+                .setB2ContentDisposition("attachment; filename=\"example file name.txt\"")
+                .setB2ContentLanguage("en-us")
+                .setB2Expires("Tue, 01 Jan 2030 01:00:00 GMT")
+                .setB2CacheControl("max-age=100")
+                .setB2ContentEncoding("gzip")
+                .setB2ContentType("text/plain")
+                .build();
+        webifier.getDownloadAuthorization(ACCOUNT_AUTH, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_get_download_authorization\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"b2CacheControl\": \"max-age=100\",\n" +
+                "      \"b2ContentDisposition\": \"attachment; filename=\\\"example file name.txt\\\"\",\n" +
+                "      \"b2ContentEncoding\": \"gzip\",\n" +
+                "      \"b2ContentLanguage\": \"en-us\",\n" +
+                "      \"b2ContentType\": \"text/plain\",\n" +
+                "      \"b2Expires\": \"Tue, 01 Jan 2030 01:00:00 GMT\",\n" +
                 "      \"bucketId\": \"bucket1\",\n" +
                 "      \"fileNamePrefix\": \"files/\u81ea\u7531/0001\",\n" +
                 "      \"validDurationInSeconds\": 123\n" +
@@ -1022,6 +1066,31 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     }
 
     @Test
+    public void testDownloadByIdWithAllOverrides() throws B2Exception {
+        final B2DownloadByIdRequest request = B2DownloadByIdRequest
+                .builder(fileId(1))
+                .setB2ContentDisposition("attachment; filename=\"surprise.txt\"")
+                .setB2ContentLanguage("en-us")
+                .setB2Expires("Tue, 01 Jan 2030 01:00:00 GMT")
+                .setB2CacheControl("max-age=100")
+                .setB2ContentEncoding("gzip")
+                .setB2ContentType("text/plain")
+                .build();
+        webifier.downloadById(ACCOUNT_AUTH, request, noopContentHandler);
+
+        webApiClient.check("getContent.\n" +
+                "url:\n" +
+                "    downloadUrl1/b2api/v2/b2_download_file_by_id?fileId=4_zBlah_0000001&b2ContentDisposition=attachment%3B+filename%3D%22surprise.txt%22&b2ContentLanguage=en-us&b2Expires=Tue%2C+01+Jan+2030+01%3A00%3A00+GMT&b2CacheControl=max-age%3D100&b2ContentEncoding=gzip&b2ContentType=text/plain\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.downloadById(ACCOUNT_AUTH, request, noopContentHandler));
+    }
+
+    @Test
     public void testDownloadByName() throws B2Exception {
         final String expectedUrl = "downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001";
         final B2DownloadByNameRequest request = B2DownloadByNameRequest
@@ -1093,6 +1162,31 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         webApiClient.check("getContent.\n" +
                 "url:\n" +
                 "    downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001?b2ContentDisposition=attachment%3B+filename%3D%22with+space.txt%22\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.downloadByName(ACCOUNT_AUTH, request, noopContentHandler));
+    }
+
+    @Test
+    public void testDownloadByNameWithAllOverrides() throws B2Exception {
+        final B2DownloadByNameRequest request = B2DownloadByNameRequest
+                .builder(bucketName(1), fileName(1))
+                .setB2ContentDisposition("attachment; filename=\"with space.txt\"")
+                .setB2ContentLanguage("en-us")
+                .setB2Expires("Tue, 01 Jan 2030 01:00:00 GMT")
+                .setB2CacheControl("max-age=100")
+                .setB2ContentEncoding("gzip")
+                .setB2ContentType("text/plain")
+                .build();
+        webifier.downloadByName(ACCOUNT_AUTH, request, noopContentHandler);
+
+        webApiClient.check("getContent.\n" +
+                "url:\n" +
+                "    downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001?b2ContentDisposition=attachment%3B+filename%3D%22with+space.txt%22&b2ContentLanguage=en-us&b2Expires=Tue%2C+01+Jan+2030+01%3A00%3A00+GMT&b2CacheControl=max-age%3D100&b2ContentEncoding=gzip&b2ContentType=text/plain\n" +
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
