@@ -412,7 +412,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                              B2DownloadByIdRequest request,
                              B2ContentSink handler) throws B2Exception {
         downloadGuts(accountAuth,
-                makeDownloadByIdUrl(accountAuth, request.getFileId(), request),
+                makeDownloadByIdUrl(accountAuth, request),
                 request.getRange(),
                 handler);
     }
@@ -420,7 +420,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     @Override
     public String getDownloadByIdUrl(B2AccountAuthorization accountAuth,
                               B2DownloadByIdRequest request) {
-        return makeDownloadByIdUrl(accountAuth, request.getFileId(), request);
+        return makeDownloadByIdUrl(accountAuth, request);
     }
 
     @Override
@@ -579,12 +579,9 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     private String makeDownloadByIdUrl(B2AccountAuthorization accountAuth,
-                                       String fguid,
                                        B2DownloadByIdRequest request) {
-        final StringBuilder uriBuilder = new StringBuilder();
         final String downloadUrl = accountAuth.getDownloadUrl();
-
-        uriBuilder.append(downloadUrl);
+        final StringBuilder uriBuilder = new StringBuilder(downloadUrl);
 
         if (!downloadUrl.endsWith("/")) {
             uriBuilder.append("/");
@@ -593,7 +590,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         uriBuilder
                 .append(API_VERSION_PATH)
                 .append("b2_download_file_by_id?fileId=")
-                .append(fguid);
+                .append(request.getFileId());
 
         if (request != null) {
             int queryparameterCount = 1; // fguid from above
@@ -618,10 +615,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                                          String bucketName,
                                          String fileName,
                                          B2DownloadByNameRequest request) {
-        final StringBuilder uriBuilder = new StringBuilder();
         final String downloadUrl = accountAuth.getDownloadUrl();
-
-        uriBuilder.append(downloadUrl);
+        final StringBuilder uriBuilder = new StringBuilder(downloadUrl);
 
         if (!downloadUrl.endsWith("/")) {
             uriBuilder.append("/");
