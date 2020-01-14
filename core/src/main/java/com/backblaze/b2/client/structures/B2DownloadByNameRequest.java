@@ -6,9 +6,12 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.util.B2ByteRange;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
-public class B2DownloadByNameRequest {
+public class B2DownloadByNameRequest implements B2OverrideableHeaders {
     private final String bucketName;
     private final String fileName;
     private final B2ByteRange range;
@@ -54,26 +57,32 @@ public class B2DownloadByNameRequest {
         return range;
     }
 
+    @Override
     public String getB2ContentDisposition() {
         return b2ContentDisposition;
     }
 
+    @Override
     public String getB2ContentLanguage() {
         return b2ContentLanguage;
     }
 
+    @Override
     public String getB2Expires() {
         return b2Expires;
     }
 
+    @Override
     public String getB2CacheControl() {
         return b2CacheControl;
     }
 
+    @Override
     public String getB2ContentEncoding() {
         return b2ContentEncoding;
     }
 
+    @Override
     public String getB2ContentType() {
         return b2ContentType;
     }
@@ -139,6 +148,11 @@ public class B2DownloadByNameRequest {
 
         public Builder setB2Expires(String b2Expires) {
             this.b2Expires = b2Expires;
+            return this;
+        }
+
+        public Builder setB2Expires(LocalDateTime utcExpiration) {
+            this.b2Expires = DateTimeFormatter.RFC_1123_DATE_TIME.format(utcExpiration.atOffset(ZoneOffset.UTC));
             return this;
         }
 

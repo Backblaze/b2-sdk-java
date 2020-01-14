@@ -49,6 +49,7 @@ import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListPartsResponse;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
+import com.backblaze.b2.client.structures.B2OverrideableHeaders;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
@@ -593,14 +594,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 .append(request.getFileId());
 
         if (request != null) {
-            int queryparameterCount = 1; // fguid from above
-
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentDisposition", request.getB2ContentDisposition());
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentLanguage", request.getB2ContentLanguage());
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2Expires", request.getB2Expires());
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2CacheControl", request.getB2CacheControl());
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentEncoding", request.getB2ContentEncoding());
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentType", request.getB2ContentType());
+            maybeAddOverrideHeadersToUrl(uriBuilder, 1, request);
         }
         return uriBuilder.toString();
     }
@@ -629,16 +623,28 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 .append(percentEncode(fileName));
 
         if (request != null) {
-            int queryparameterCount = 0;
-
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentDisposition", request.getB2ContentDisposition());
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentLanguage", request.getB2ContentLanguage());
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2Expires", request.getB2Expires());
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2CacheControl", request.getB2CacheControl());
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentEncoding", request.getB2ContentEncoding());
-            queryparameterCount = maybeAddQueryParamToUrl(uriBuilder, queryparameterCount, "b2ContentType", request.getB2ContentType());
+            maybeAddOverrideHeadersToUrl(uriBuilder, 0, request);
         }
         return uriBuilder.toString();
+    }
+
+    /**
+     * Add query parameters for each overridden header
+     *
+     * @param uriBuilder StringBuilder of the URI to append to
+     * @param countOfQueryParameters number of query parameters already added to the URI
+     * @param overrideableHeaders overridden headers to add to the URI
+     * @return number of query parameters that have been added to the URI (including countOfQueryParameters)
+     */
+    private int maybeAddOverrideHeadersToUrl(StringBuilder uriBuilder, int countOfQueryParameters, B2OverrideableHeaders overrideableHeaders) {
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2ContentDisposition", overrideableHeaders.getB2ContentDisposition());
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2ContentLanguage", overrideableHeaders.getB2ContentLanguage());
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2Expires", overrideableHeaders.getB2Expires());
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2CacheControl", overrideableHeaders.getB2CacheControl());
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2ContentEncoding", overrideableHeaders.getB2ContentEncoding());
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2ContentType", overrideableHeaders.getB2ContentType());
+
+        return countOfQueryParameters;
     }
 
     /**

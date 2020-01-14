@@ -6,6 +6,9 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.json.B2Json;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class B2GetDownloadAuthorizationRequest {
@@ -162,6 +165,11 @@ public class B2GetDownloadAuthorizationRequest {
 
         public Builder setB2Expires(String b2Expires) {
             this.b2Expires = b2Expires;
+            return this;
+        }
+
+        public Builder setB2Expires(LocalDateTime utcExpiration) {
+            this.b2Expires = DateTimeFormatter.RFC_1123_DATE_TIME.format(utcExpiration.atOffset(ZoneOffset.UTC));
             return this;
         }
 

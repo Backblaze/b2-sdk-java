@@ -61,6 +61,7 @@ import org.junit.rules.ExpectedException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -820,7 +821,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 .builder(bucketId(1), fileName(1), 123)
                 .setB2ContentDisposition("attachment; filename=\"example file name.txt\"")
                 .setB2ContentLanguage("en-us")
-                .setB2Expires("Tue, 01 Jan 2030 01:00:00 GMT")
+                .setB2Expires(LocalDateTime.of(2030, 1, 1, 1, 0))
                 .setB2CacheControl("max-age=100")
                 .setB2ContentEncoding("gzip")
                 .setB2ContentType("text/plain")
@@ -841,7 +842,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      \"b2ContentEncoding\": \"gzip\",\n" +
                 "      \"b2ContentLanguage\": \"en-us\",\n" +
                 "      \"b2ContentType\": \"text/plain\",\n" +
-                "      \"b2Expires\": \"Tue, 01 Jan 2030 01:00:00 GMT\",\n" +
+                "      \"b2Expires\": \"Tue, 1 Jan 2030 01:00:00 GMT\",\n" +
                 "      \"bucketId\": \"bucket1\",\n" +
                 "      \"fileNamePrefix\": \"files/\u81ea\u7531/0001\",\n" +
                 "      \"validDurationInSeconds\": 123\n" +
