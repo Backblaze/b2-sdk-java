@@ -23,7 +23,7 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
     private final String b2ContentType;
 
 
-    public B2DownloadByNameRequest(String bucketName,
+    private B2DownloadByNameRequest(String bucketName,
                                    String fileName,
                                    B2ByteRange range,
                                    String b2ContentDisposition,

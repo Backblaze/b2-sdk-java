@@ -21,7 +21,7 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
     private final String b2ContentEncoding;
     private final String b2ContentType;
 
-    public B2DownloadByIdRequest(String fileId,
+    private B2DownloadByIdRequest(String fileId,
                                  B2ByteRange range,
                                  String b2ContentDisposition,
                                  String b2ContentLanguage,
