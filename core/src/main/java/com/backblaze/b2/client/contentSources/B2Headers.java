@@ -148,7 +148,7 @@ public interface B2Headers {
     }
 
     /**
-     * @return the value of the X-Bz-Content-Sha1 header, or null if none.
+     * @return the value of the Content-MD5 header, or null if none.
      * @apiNote We return null here instead of throwing an exception since this is a
      *          an optional header in B2.  Older files will not have it.
      */
