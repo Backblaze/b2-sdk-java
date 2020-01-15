@@ -34,6 +34,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
+import static com.backblaze.b2.client.B2TestHelpers.makeMd5;
 import static com.backblaze.b2.client.B2TestHelpers.makeSha1;
 import static com.backblaze.b2.client.B2TestHelpers.makeVersion;
 import static junit.framework.TestCase.assertEquals;
@@ -62,9 +63,9 @@ public class B2LargeFileStorerTest extends B2BaseTest {
     private final B2FileVersion largeFileVersion = makeVersion(4, 4);
 
     // Set up the parts of the large file.
-    private final B2Part part1 = new B2Part(fileId(1), 1, PART_SIZE_FOR_FIRST_TWO, makeSha1(1), 1111);
-    private final B2Part part2 = new B2Part(fileId(2), 2, PART_SIZE_FOR_FIRST_TWO, makeSha1(2), 2222);
-    private final B2Part part3 = new B2Part(fileId(3), 3, LAST_PART_SIZE, makeSha1(3), 3333);
+    private final B2Part part1 = new B2Part(fileId(1), 1, PART_SIZE_FOR_FIRST_TWO, makeSha1(1), makeMd5(1), 1111);
+    private final B2Part part2 = new B2Part(fileId(2), 2, PART_SIZE_FOR_FIRST_TWO, makeSha1(2), makeMd5(2), 2222);
+    private final B2Part part3 = new B2Part(fileId(3), 3, LAST_PART_SIZE, makeSha1(3), makeMd5(3), 3333);
 
 
     private final B2PartSizes partSizes;

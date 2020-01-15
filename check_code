@@ -37,7 +37,7 @@ IN_LIB_RE = re.compile("/lib/[^/]+$")
 #
 ########################
 
-COPYRIGHT_RE = re.compile("Copyright 20[1-2][0-9], Backblaze Inc. All Rights Reserved.")
+COPYRIGHT_RE = re.compile("Copyright 20[12][0-9], Backblaze Inc. All Rights Reserved.")
 LICENSE_RE = re.compile("License https://www.backblaze.com/using_b2_code.html")
 
 # how many lines at the top of a file should we look at?

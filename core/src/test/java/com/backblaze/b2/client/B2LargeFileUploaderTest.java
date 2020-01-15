@@ -55,6 +55,7 @@ import static com.backblaze.b2.client.B2LargeFileUploaderTest.When.IN_SUBMIT;
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
+import static com.backblaze.b2.client.B2TestHelpers.makeMd5;
 import static com.backblaze.b2.client.B2TestHelpers.makePart;
 import static com.backblaze.b2.client.B2TestHelpers.makeSha1;
 import static com.backblaze.b2.client.B2TestHelpers.makeVersion;
@@ -220,6 +221,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 contentSource.getContentLength(),
                 B2ContentTypes.B2_AUTO,
                 null,
+                null,
                 B2Collections.mapOf(),
                 "upload",
                 123L);
@@ -324,6 +326,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 contentSource.getContentLength(),
                 B2ContentTypes.APPLICATION_OCTET,
                 null, // sha1
+                null, // md5
                 B2Collections.mapOf(),
                 "action",
                 1234
@@ -345,6 +348,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 contentSource.getContentLength(),
                 B2ContentTypes.APPLICATION_OCTET,
                 null, // sha1 of the file (always null for large files.  they use LARGE_FILE_SHA1!)
+                null, // md5 of the file
                 B2Collections.mapOf(B2Headers.LARGE_FILE_SHA1_INFO_NAME, makeSha1(1)),
                 "action",
                 1234
@@ -365,6 +369,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 fileName(2),
                 contentSource.getContentLength(),
                 B2ContentTypes.TEXT_PLAIN,  // this is the mismatch!
+                null,
                 null,
                 B2Collections.mapOf(),
                 "action",
@@ -387,6 +392,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 contentSource.getContentLength(),
                 B2ContentTypes.TEXT_PLAIN,  // this is NOT a mismatch, because request is B2_AUTO.
                 null,
+                null,
                 B2Collections.mapOf(),
                 "action",
                 1234
@@ -407,6 +413,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 fileName(2),
                 contentSource.getContentLength(),
                 B2ContentTypes.APPLICATION_OCTET,
+                null,
                 null,
                 B2Collections.mapOf(),
                 "action",
@@ -441,7 +448,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testOneAlreadyUploadedPartThatMatches_part1() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
-                new B2Part(largeFileId, 1, 1041, makeSha1(1), 1111)
+                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111)
         );
 
         recordingListener.setExpected(
@@ -463,7 +470,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testOneAlreadyUploadedPartThatMatches_part3() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
-                new B2Part(largeFileId, 3, 1042, makeSha1(3), 3333)
+                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333)
         );
 
         recordingListener.setExpected(
@@ -484,9 +491,9 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testThreeAlreadyUploadedParts_allMatch() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf( // out-of-order on purpose.  should still be found.
-                new B2Part(largeFileId, 3, 1042, makeSha1(3), 3333),
-                new B2Part(largeFileId, 2, 1041, makeSha1(2), 2222),
-                new B2Part(largeFileId, 1, 1041, makeSha1(1), 1111)
+                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333),
+                new B2Part(largeFileId, 2, 1041, makeSha1(2), makeMd5(2), 2222),
+                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111)
         );
 
         recordingListener.setExpected(
@@ -505,10 +512,10 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testFourAlreadyUploadedPart_noneMatch() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
-                new B2Part(largeFileId, 6, 1041, makeSha1(1), 1111),  // unneeded part number
-                new B2Part(largeFileId, 2, 6666, makeSha1(2), 2222),  // bad size
-                new B2Part(largeFileId, 3, 1041, makeSha1(3), 3333),  // bad size
-                new B2Part(largeFileId, 4, 1041, makeSha1(4), 1111)   // unneeded part number
+                new B2Part(largeFileId, 6, 1041, makeSha1(1), makeMd5(1), 1111),  // unneeded part number
+                new B2Part(largeFileId, 2, 6666, makeSha1(2), makeMd5(2), 2222),  // bad size
+                new B2Part(largeFileId, 3, 1041, makeSha1(3), makeMd5(3), 3333),  // bad size
+                new B2Part(largeFileId, 4, 1041, makeSha1(4), makeMd5(4), 1111)   // unneeded part number
         );
 
         recordingListener.setExpected(
@@ -539,6 +546,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 fileName(1),
                 contentLen,
                 B2ContentTypes.APPLICATION_OCTET,
+                null,
                 null,
                 B2Collections.mapOf(),
                 "upload",
