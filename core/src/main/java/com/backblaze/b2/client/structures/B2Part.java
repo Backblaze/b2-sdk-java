@@ -22,7 +22,7 @@ public class B2Part {
     @B2Json.optional  // not present in response from b2_upload_part.
     private final long uploadTimestamp;
 
-    @B2Json.constructor(params = "fileId,partNumber,contentLength,contentSha1,uploadTimestamp")
+    @B2Json.constructor(params = "fileId,partNumber,contentLength,contentSha1,contentMd5,uploadTimestamp")
     public B2Part(String fileId,
                   int partNumber,
                   long contentLength,
