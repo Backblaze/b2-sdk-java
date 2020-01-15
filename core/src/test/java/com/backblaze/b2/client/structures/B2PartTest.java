@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.structures;
 
+import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
@@ -13,6 +14,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 public class B2PartTest extends B2BaseTest {
+
     @Test
     public void test() {
         B2Part one = makePart(1);
@@ -27,5 +29,17 @@ public class B2PartTest extends B2BaseTest {
         // for coverage
         //noinspection ResultOfMethodCallIgnored
         one.hashCode();
+    }
+
+    @Test
+    public void testJson() {
+        final B2Part part = makePart(1);
+        assertEquals(
+                part,
+                B2Json.fromJsonOrThrowRuntime(
+                        B2Json.toJsonOrThrowRuntime(part),
+                        B2Part.class
+                )
+        );
     }
 }

@@ -6,6 +6,7 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.client.B2TestHelpers;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
+import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.Test;
@@ -42,6 +43,18 @@ public class B2FileVersionTest extends B2BaseTest {
         checkAction(B2FileVersion.START_ACTION, false, false, true, false);
         checkAction(B2FileVersion.FOLDER_ACTION, false, false, false, true);
         checkAction(null, false, false, false, false);
+    }
+
+    @Test
+    public void testJson() {
+        final B2FileVersion fileVersion = make(1);
+        assertEquals(
+                fileVersion,
+                B2Json.fromJsonOrThrowRuntime(
+                        B2Json.toJsonOrThrowRuntime(fileVersion),
+                        B2FileVersion.class
+                )
+        );
     }
 
     private void checkAction(String action, boolean expectUpload, boolean expectHide, boolean expectStart, boolean expectFolder) {
