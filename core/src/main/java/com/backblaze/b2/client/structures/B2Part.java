@@ -17,6 +17,8 @@ public class B2Part {
     private final long contentLength;
     @B2Json.required
     private final String contentSha1;
+    @B2Json.optional
+    private final String contentMd5;
     @B2Json.optional  // not present in response from b2_upload_part.
     private final long uploadTimestamp;
 
@@ -25,11 +27,13 @@ public class B2Part {
                   int partNumber,
                   long contentLength,
                   String contentSha1,
+                  String contentMd5,
                   long uploadTimestamp) {
         this.fileId = fileId;
         this.partNumber = partNumber;
         this.contentLength = contentLength;
         this.contentSha1 = contentSha1;
+        this.contentMd5 = contentMd5;
         this.uploadTimestamp = uploadTimestamp;
     }
 
@@ -50,6 +54,10 @@ public class B2Part {
         return contentSha1;
     }
 
+    public String getContentMd5() {
+        return contentMd5;
+    }
+
     public long getUploadTimestamp() {
         return uploadTimestamp;
     }
@@ -63,12 +71,13 @@ public class B2Part {
                 getContentLength() == b2Part.getContentLength() &&
                 getUploadTimestamp() == b2Part.getUploadTimestamp() &&
                 Objects.equals(getFileId(), b2Part.getFileId()) &&
-                Objects.equals(getContentSha1(), b2Part.getContentSha1());
+                Objects.equals(getContentSha1(), b2Part.getContentSha1()) &&
+                Objects.equals(getContentMd5(), b2Part.getContentMd5());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getFileId(), getPartNumber(), getContentLength(), getContentSha1(), getUploadTimestamp());
+        return Objects.hash(getFileId(), getPartNumber(), getContentLength(), getContentSha1(), getContentMd5(), getUploadTimestamp());
     }
 
     @Override

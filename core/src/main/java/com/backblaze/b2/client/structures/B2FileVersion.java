@@ -35,6 +35,8 @@ public class B2FileVersion {
     private final String contentType;
     @B2Json.optional // for example, "folder"s don't have contentSha1s nor do largeFiles.
     private final String contentSha1;
+    @B2Json.optional // for example, "folder"s don't have contentMd5s nor do largeFiles.
+    private final String contentMd5;
     @B2Json.optional
     private final Map<String,String> fileInfo;
     @B2Json.optional  // for example, large files don't have action in response from b2_start_large_file.
@@ -43,12 +45,13 @@ public class B2FileVersion {
     private final long uploadTimestamp;
 
     @B2Json.constructor(params = "fileId,fileName,contentLength,contentType," +
-            "contentSha1,fileInfo,action,uploadTimestamp")
+            "contentSha1,contentMd5,fileInfo,action,uploadTimestamp")
     public B2FileVersion(String fileId,
                          String fileName,
                          long contentLength,
                          String contentType,
                          String contentSha1,
+                         String contentMd5,
                          Map<String, String> fileInfo,
                          String action,
                          long uploadTimestamp) {
@@ -57,6 +60,7 @@ public class B2FileVersion {
         this.contentLength = contentLength;
         this.contentType = contentType;
         this.contentSha1 = contentSha1;
+        this.contentMd5 = contentMd5;
         this.fileInfo = fileInfo;
         this.action = action;
         this.uploadTimestamp = uploadTimestamp;
@@ -80,6 +84,10 @@ public class B2FileVersion {
 
     public String getContentSha1() {
         return contentSha1;
+    }
+
+    public String getContentMd5() {
+        return contentMd5;
     }
 
     public String getLargeFileSha1OrNull() {
@@ -121,6 +129,7 @@ public class B2FileVersion {
                 ", contentLength=" + contentLength +
                 ", contentType='" + contentType + '\'' +
                 ", contentSha1='" + contentSha1 + '\'' +
+                ", contentMd5='" + contentMd5 + '\'' +
                 ", action='" + action + '\'' +
                 ", uploadTimestamp=" + uploadTimestamp +
                 ", fileInfo=[" + fileInfo.size() + "]" +
@@ -139,12 +148,13 @@ public class B2FileVersion {
                 Objects.equals(getFileName(), that.getFileName()) &&
                 Objects.equals(getContentType(), that.getContentType()) &&
                 Objects.equals(getContentSha1(), that.getContentSha1()) &&
+                Objects.equals(getContentMd5(), that.getContentMd5()) &&
                 Objects.equals(getFileInfo(), that.getFileInfo()) &&
                 Objects.equals(getAction(), that.getAction());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getFileId(), getFileName(), getContentLength(), getContentType(), getContentSha1(), getFileInfo(), getAction(), getUploadTimestamp());
+        return Objects.hash(getFileId(), getFileName(), getContentLength(), getContentType(), getContentSha1(), getContentMd5(), getFileInfo(), getAction(), getUploadTimestamp());
     }
 }

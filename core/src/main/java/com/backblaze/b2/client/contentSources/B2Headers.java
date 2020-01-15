@@ -49,6 +49,7 @@ public interface B2Headers {
     // some standard headers
     String AUTHORIZATION = "Authorization";
     String CONTENT_LENGTH = "Content-Length";
+    String CONTENT_MD5 = "Content-MD5";
     String CONTENT_TYPE = "Content-Type";
     String RANGE = "Range";                  // for range requests.
     String CONTENT_RANGE = "Content-Range";  // for range responses.
@@ -144,6 +145,15 @@ public interface B2Headers {
      */
     default String getContentSha1OrNull() {
         return getValueOrNull(CONTENT_SHA1);
+    }
+
+    /**
+     * @return the value of the X-Bz-Content-Sha1 header, or null if none.
+     * @apiNote We return null here instead of throwing an exception since this is a
+     *          an optional header in B2.  Older files will not have it.
+     */
+    default String getContentMd5OrNull() {
+        return getValueOrNull(CONTENT_MD5);
     }
 
     /**

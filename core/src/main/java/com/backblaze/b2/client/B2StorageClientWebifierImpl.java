@@ -497,6 +497,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 headers.getContentLength(),
                 headers.getContentType(),
                 headers.getContentSha1OrNull(),    // might be null.
+                headers.getContentMd5OrNull(),    // might be null.
                 headers.getB2FileInfo(),           // might be empty.
                 "upload",
                 headers.getUploadTimestampOrNull()

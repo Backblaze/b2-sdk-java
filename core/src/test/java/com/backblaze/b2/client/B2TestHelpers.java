@@ -20,6 +20,7 @@ import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import com.backblaze.b2.util.B2Clock;
 import com.backblaze.b2.util.B2Collections;
+import com.backblaze.b2.util.B2Md5;
 import com.backblaze.b2.util.B2Sha1;
 
 import java.util.Collections;
@@ -36,6 +37,7 @@ import static com.backblaze.b2.util.B2StringUtil.percentEncode;
 
 public class B2TestHelpers {
     public static final String SAMPLE_SHA1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
+    public static final String SAMPLE_MD5 = "d41d8cd98f00b204e9800998ecf8427e";
 
     /**
      * @return a bucketId based on the provided number.  it's a bogus id, but readable.
@@ -106,6 +108,7 @@ public class B2TestHelpers {
                 iId * 1000,
                 B2ContentTypes.TEXT_PLAIN,
                 SAMPLE_SHA1,
+                SAMPLE_MD5,
                 B2Collections.mapOf(),
                 "upload",
                 B2Clock.get().wallClockMillis());
@@ -118,6 +121,7 @@ public class B2TestHelpers {
                 i,
                 i * 1000,
                 makeSha1(i),
+                makeMd5(i),
                 i);
     }
 
@@ -140,6 +144,16 @@ public class B2TestHelpers {
             copies.append(toCopy);
         }
         return copies.toString().substring(0, B2Sha1.HEX_SHA1_SIZE);
+    }
+
+    // returns a string that's as long as an md5 hex string should be, based on 'i'.
+    public static String makeMd5(int i) {
+        String toCopy = Integer.toString(i);
+        StringBuilder copies = new StringBuilder();
+        while (copies.length() < B2Md5.HEX_MD5_SIZE) {
+            copies.append(toCopy);
+        }
+        return copies.toString().substring(0, B2Md5.HEX_MD5_SIZE);
     }
 
     public static B2Bucket makeBucket(int i) {

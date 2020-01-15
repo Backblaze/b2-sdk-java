@@ -28,7 +28,7 @@ public class B2FileVersionTest extends B2BaseTest {
         assertEquals(one, one);
         assertEquals(one, make(1));
 
-        assertEquals("B2FileVersion{fileId='" + fileId(1) + "', contentLength=1000, contentType='text/plain', contentSha1='" + B2TestHelpers.SAMPLE_SHA1 + "', action='upload', uploadTimestamp=1, fileInfo=[1], fileName='" + fileName(1) + "'}", one.toString());
+        assertEquals("B2FileVersion{fileId='" + fileId(1) + "', contentLength=1000, contentType='text/plain', contentSha1='" + B2TestHelpers.SAMPLE_SHA1 + "', contentMd5='" + B2TestHelpers.SAMPLE_MD5 + "', action='upload', uploadTimestamp=1, fileInfo=[1], fileName='" + fileName(1) + "'}", one.toString());
 
         // just for code coverage.
         //noinspection ResultOfMethodCallIgnored
@@ -52,6 +52,7 @@ public class B2FileVersionTest extends B2BaseTest {
                         0L,
                         "contentType",
                         "contentSha1",
+                        "contentMd5",
                         new HashMap<>(),
                         action,
                         0L
@@ -69,6 +70,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 i * 1000,
                 B2ContentTypes.TEXT_PLAIN,
                 B2TestHelpers.SAMPLE_SHA1,
+                B2TestHelpers.SAMPLE_MD5,
                 B2Collections.mapOf("key" + i, "value" + i),
                 "upload",
                 i);

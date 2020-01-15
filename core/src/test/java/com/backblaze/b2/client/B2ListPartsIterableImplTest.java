@@ -19,6 +19,7 @@ import org.junit.rules.ExpectedException;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.backblaze.b2.client.B2TestHelpers.SAMPLE_MD5;
 import static com.backblaze.b2.client.B2TestHelpers.SAMPLE_SHA1;
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static org.junit.Assert.assertTrue;
@@ -202,6 +203,7 @@ public class B2ListPartsIterableImplTest extends B2BaseTest {
                 i,
                 i * 1000 * 1000,
                 SAMPLE_SHA1,
+                SAMPLE_MD5,
                 i);
     }
 }
