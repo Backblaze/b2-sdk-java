@@ -49,6 +49,7 @@ import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListPartsResponse;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
+import com.backblaze.b2.client.structures.B2OverrideableHeaders;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
@@ -412,7 +413,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                              B2DownloadByIdRequest request,
                              B2ContentSink handler) throws B2Exception {
         downloadGuts(accountAuth,
-                makeDownloadByIdUrl(accountAuth, request.getFileId(), request.getB2ContentDisposition()),
+                makeDownloadByIdUrl(accountAuth, request),
                 request.getRange(),
                 handler);
     }
@@ -420,7 +421,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     @Override
     public String getDownloadByIdUrl(B2AccountAuthorization accountAuth,
                               B2DownloadByIdRequest request) {
-        return makeDownloadByIdUrl(accountAuth, request.getFileId(), request.getB2ContentDisposition());
+        return makeDownloadByIdUrl(accountAuth, request);
     }
 
     @Override
@@ -428,7 +429,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                                B2DownloadByNameRequest request,
                                B2ContentSink handler) throws B2Exception {
         downloadGuts(accountAuth,
-                makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request.getB2ContentDisposition()),
+                makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request),
                 request.getRange(),
                 handler);
     }
@@ -436,7 +437,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     @Override
     public String getDownloadByNameUrl(B2AccountAuthorization accountAuth,
                                 B2DownloadByNameRequest request) {
-        return makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request.getB2ContentDisposition());
+        return makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request);
     }
 
     private void downloadGuts(B2AccountAuthorization accountAuth,
@@ -579,15 +580,23 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     private String makeDownloadByIdUrl(B2AccountAuthorization accountAuth,
-                                       String fguid,
-                                       String b2ContentDisposition) {
-        String url = accountAuth.getDownloadUrl();
-        if (!url.endsWith("/")) {
-            url += "/";
+                                       B2DownloadByIdRequest request) {
+        final String downloadUrl = accountAuth.getDownloadUrl();
+        final StringBuilder uriBuilder = new StringBuilder(downloadUrl);
+
+        if (!downloadUrl.endsWith("/")) {
+            uriBuilder.append("/");
         }
-        url += API_VERSION_PATH + "b2_download_file_by_id?fileId=" + fguid;
-        url += maybeB2ContentDisposition('&', b2ContentDisposition);
-        return url;
+
+        uriBuilder
+                .append(API_VERSION_PATH)
+                .append("b2_download_file_by_id?fileId=")
+                .append(request.getFileId());
+
+        if (request != null) {
+            maybeAddOverrideHeadersToUrl(uriBuilder, 1, request);
+        }
+        return uriBuilder.toString();
     }
 
     private String makeGetFileInfoByNameUrl(B2AccountAuthorization accountAuth,
@@ -599,27 +608,70 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     private String makeDownloadByNameUrl(B2AccountAuthorization accountAuth,
                                          String bucketName,
                                          String fileName,
-                                         String b2ContentDisposition) {
-        String url = accountAuth.getDownloadUrl();
-        if (!url.endsWith("/")) {
-            url += "/";
+                                         B2DownloadByNameRequest request) {
+        final String downloadUrl = accountAuth.getDownloadUrl();
+        final StringBuilder uriBuilder = new StringBuilder(downloadUrl);
+
+        if (!downloadUrl.endsWith("/")) {
+            uriBuilder.append("/");
         }
-        url += "file/" + bucketName + "/" + percentEncode(fileName);
-        url += maybeB2ContentDisposition('?', b2ContentDisposition);
-        return url;
+
+        uriBuilder
+                .append("file/")
+                .append(bucketName)
+                .append("/")
+                .append(percentEncode(fileName));
+
+        if (request != null) {
+            maybeAddOverrideHeadersToUrl(uriBuilder, 0, request);
+        }
+        return uriBuilder.toString();
     }
 
     /**
-     * if b2ContentDisposition isn't null, this will return it in a url query
-     * parameter format prefixed with the given separator.  otherwise, it will
-     * return an empty string.
+     * Add query parameters for each overridden header
+     *
+     * @param uriBuilder StringBuilder of the URI to append to
+     * @param countOfQueryParameters number of query parameters already added to the URI
+     * @param overrideableHeaders overridden headers to add to the URI
+     * @return number of query parameters that have been added to the URI (including countOfQueryParameters)
      */
-    private String maybeB2ContentDisposition(char separator,
-                                             String b2ContentDisposition) {
-        if (b2ContentDisposition == null) {
-            return "";
-        } else {
-            return separator + "b2ContentDisposition=" + percentEncode(b2ContentDisposition);
+    private int maybeAddOverrideHeadersToUrl(StringBuilder uriBuilder, int countOfQueryParameters, B2OverrideableHeaders overrideableHeaders) {
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2ContentDisposition", overrideableHeaders.getB2ContentDisposition());
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2ContentLanguage", overrideableHeaders.getB2ContentLanguage());
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2Expires", overrideableHeaders.getB2Expires());
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2CacheControl", overrideableHeaders.getB2CacheControl());
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2ContentEncoding", overrideableHeaders.getB2ContentEncoding());
+        countOfQueryParameters = maybeAddQueryParamToUrl(uriBuilder, countOfQueryParameters, "b2ContentType", overrideableHeaders.getB2ContentType());
+
+        return countOfQueryParameters;
+    }
+
+    /**
+     * If argValue isn't null, this will append a query parameter to uri builder
+     * with the prefix '?' when countOfQueryParameters is zero and '&' otherwise
+     * This will return the countOfQueryParameters + 1 if the query parameter was
+     * added to the uri builder and countOfQueryParameters otherwise.
+     *
+     * @param uriBuilder StringBuilder of the URI to append to
+     * @param countOfQueryParameters number of query parameters already added to the URI
+     * @param argName name of query parameter
+     * @param argValue value of query parameter
+     * @return countOfQueryParameters + 1 if a query parameter was added,
+     *         countOfQueryParameters otherwise
+     */
+    private int maybeAddQueryParamToUrl(StringBuilder uriBuilder, int countOfQueryParameters, String argName, String argValue) {
+        if (argValue != null) {
+            final char separator = countOfQueryParameters == 0 ? '?' : '&';
+            uriBuilder
+                    .append(separator)
+                    .append(argName)
+                    .append('=')
+                    .append(percentEncode(argValue));
+
+            return countOfQueryParameters + 1;
         }
+
+        return countOfQueryParameters;
     }
 }
