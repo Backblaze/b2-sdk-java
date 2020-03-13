@@ -3,7 +3,8 @@
 ## [Unreleased]
 ### Changed `[Incompatible]`
 * B2Bucket and B2ApplicationKey both have an `options` parameter in the constructor.  These are optional.
-
+* `B2StorageClient.DownloadByName` supports downloading files with looser naming requirements, e.g. names containing double slashes (`//`).
+* Updated to version `4.5.9` of `org.apache.httpcomponents:httpclient`. 
 ## [3.1.0] - 2019-05-16
 ### Added
 * Added `@B2Json.sensitive` annotation to redact fields when B2Json is
