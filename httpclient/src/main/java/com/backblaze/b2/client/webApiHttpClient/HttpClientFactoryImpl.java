@@ -166,6 +166,9 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
                     .setConnectionRequestTimeout(connectionRequestTimeoutSeconds * 1000) // time waiting for cxn from pool
                     .setConnectTimeout(connectTimeoutSeconds * 1000) // time waiting for remote server to connect
                     .setSocketTimeout(socketTimeoutSeconds * 1000) // time waiting for answer after connecting
+                    // don't try to normalize URIs, like convert '//' to '/'; this would change filenames for
+                    // DownloadByName requests
+                    .setNormalizeUri(false)
                     .build();
 
         }
