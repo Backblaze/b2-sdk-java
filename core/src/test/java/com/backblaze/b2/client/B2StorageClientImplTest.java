@@ -77,6 +77,7 @@ import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.client.B2TestHelpers.bucketName;
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
+import static com.backblaze.b2.client.B2TestHelpers.makeMd5;
 import static com.backblaze.b2.client.B2TestHelpers.makePart;
 import static com.backblaze.b2.client.B2TestHelpers.makeSha1;
 import static com.backblaze.b2.client.B2TestHelpers.makeVersion;
@@ -920,6 +921,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 contentLen,
                 B2ContentTypes.TEXT_PLAIN,
                 null,
+                null,
                 B2Collections.mapOf(),
                 "upload",
                 B2Clock.get().wallClockMillis());
@@ -928,8 +930,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
 
         // arrange to find that two parts -- the first and third -- have already been uploaded.
         final List<B2Part> alreadyUploadedParts = listOf(
-                new B2Part(largeFileId, 1, 1041, makeSha1(1), 1111),
-                new B2Part(largeFileId, 3, 1042, makeSha1(3), 3333)
+                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111),
+                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333)
         );
         final B2ListPartsResponse listPartsResponse = new B2ListPartsResponse(alreadyUploadedParts, null);
         when(webifier.listParts(anyObject(), anyObject())).thenReturn(listPartsResponse);

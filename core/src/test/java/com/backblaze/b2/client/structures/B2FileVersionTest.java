@@ -6,6 +6,7 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.client.B2TestHelpers;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
+import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.Test;
@@ -28,7 +29,7 @@ public class B2FileVersionTest extends B2BaseTest {
         assertEquals(one, one);
         assertEquals(one, make(1));
 
-        assertEquals("B2FileVersion{fileId='" + fileId(1) + "', contentLength=1000, contentType='text/plain', contentSha1='" + B2TestHelpers.SAMPLE_SHA1 + "', action='upload', uploadTimestamp=1, fileInfo=[1], fileName='" + fileName(1) + "'}", one.toString());
+        assertEquals("B2FileVersion{fileId='" + fileId(1) + "', contentLength=1000, contentType='text/plain', contentSha1='" + B2TestHelpers.SAMPLE_SHA1 + "', contentMd5='" + B2TestHelpers.SAMPLE_MD5 + "', action='upload', uploadTimestamp=1, fileInfo=[1], fileName='" + fileName(1) + "'}", one.toString());
 
         // just for code coverage.
         //noinspection ResultOfMethodCallIgnored
@@ -44,6 +45,18 @@ public class B2FileVersionTest extends B2BaseTest {
         checkAction(null, false, false, false, false);
     }
 
+    @Test
+    public void testJson() {
+        final B2FileVersion fileVersion = make(1);
+        assertEquals(
+                fileVersion,
+                B2Json.fromJsonOrThrowRuntime(
+                        B2Json.toJsonOrThrowRuntime(fileVersion),
+                        B2FileVersion.class
+                )
+        );
+    }
+
     private void checkAction(String action, boolean expectUpload, boolean expectHide, boolean expectStart, boolean expectFolder) {
         B2FileVersion fileVersion =
                 new B2FileVersion(
@@ -52,6 +65,7 @@ public class B2FileVersionTest extends B2BaseTest {
                         0L,
                         "contentType",
                         "contentSha1",
+                        "contentMd5",
                         new HashMap<>(),
                         action,
                         0L
@@ -69,6 +83,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 i * 1000,
                 B2ContentTypes.TEXT_PLAIN,
                 B2TestHelpers.SAMPLE_SHA1,
+                B2TestHelpers.SAMPLE_MD5,
                 B2Collections.mapOf("key" + i, "value" + i),
                 "upload",
                 i);
