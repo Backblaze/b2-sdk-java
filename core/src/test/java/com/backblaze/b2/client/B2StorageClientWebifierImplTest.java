@@ -1210,6 +1210,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    uploadUrl2\n" +
                 "headers:\n" +
                 "    Authorization: downloadToken2\n" +
+                "    Expect: 100-continue\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: " + SHA1 + "\n" +
                 "    X-Bz-Part-Number: 6\n" +
@@ -1239,6 +1240,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    uploadUrl2\n" +
                 "headers:\n" +
                 "    Authorization: downloadToken2\n" +
+                "    Expect: 100-continue\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: hex_digits_at_end\n" +
                 "    X-Bz-Part-Number: 6\n" +
@@ -1300,6 +1302,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "headers:\n" +
                 "    Authorization: downloadToken1\n" +
                 "    Content-Type: b2/x-auto\n" +
+                "    Expect: 100-continue\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
                 "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
@@ -1350,6 +1353,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "headers:\n" +
                 "    Authorization: downloadToken1\n" +
                 "    Content-Type: b2/x-auto\n" +
+                "    Expect: 100-continue\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: hex_digits_at_end\n" +
                 "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +

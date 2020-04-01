@@ -55,6 +55,7 @@ public interface B2Headers {
     String CONTENT_RANGE = "Content-Range";  // for range responses.
     String RETRY_AFTER = "Retry-After";
     String USER_AGENT = "User-Agent";
+    String EXPECT = "Expect";
 
     /**
      * @return a collection with the names of all the headers in this object.  never null.

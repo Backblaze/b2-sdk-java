@@ -242,6 +242,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             // build the headers.
             final B2HeadersImpl.Builder headersBuilder = B2HeadersImpl
                     .builder()
+                    .set(B2Headers.EXPECT, "100-continue")
                     .set(B2Headers.AUTHORIZATION, uploadUrlResponse.getAuthorizationToken())
                     .set(FILE_NAME, percentEncode(request.getFileName()))
                     .set(B2Headers.CONTENT_TYPE, request.getContentType())
@@ -307,6 +308,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
             final B2HeadersImpl.Builder headersBuilder = B2HeadersImpl
                     .builder()
+                    .set(B2Headers.EXPECT, "100-continue")
                     .set(B2Headers.AUTHORIZATION, uploadPartUrlResponse.getAuthorizationToken())
                     .set(B2Headers.PART_NUMBER, Integer.toString(request.getPartNumber()))
                     .set(B2Headers.CONTENT_SHA1, contentDetails.getContentSha1HeaderValue());
