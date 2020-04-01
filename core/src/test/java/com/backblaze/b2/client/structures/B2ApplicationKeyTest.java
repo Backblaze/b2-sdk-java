@@ -19,6 +19,7 @@ public class B2ApplicationKeyTest extends B2BaseTest {
         final TreeSet<String> capabilities = new TreeSet<>();
         capabilities.add(B2Capabilities.WRITE_FILES);
         capabilities.add(B2Capabilities.READ_FILES);
+        capabilities.add(B2Capabilities.LIST_ALL_BUCKET_NAMES);
         final B2ApplicationKey applicationKey =
                 new B2ApplicationKey(
                         "accountId",
