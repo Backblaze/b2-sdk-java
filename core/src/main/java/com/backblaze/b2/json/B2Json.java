@@ -58,7 +58,7 @@ import java.util.Map;
  *
  * <p>The JSON produced is always "pretty", with newlines and indentation.
  * Field names are always sorted alphabetically.</p>
- * 
+ *
  * <p>B2Json objects are THREAD SAFE.</p>
  */
 public class B2Json {
@@ -78,7 +78,7 @@ public class B2Json {
 
     /**
      * Bit map values for the options parameter to the constructor.
-     *
+     * <p>
      * Deprecated in favor of using B2JsonOptions.
      */
     @Deprecated
@@ -142,7 +142,7 @@ public class B2Json {
     /**
      * Turn an object into JSON, writing the results to given
      * output stream.
-     *
+     * <p>
      * Note that the output stream is NOT closed as a side-effect of calling this.
      * It was a bug that it was being closed in version 1.1.1 and earlier.
      */
@@ -169,15 +169,8 @@ public class B2Json {
     }
 
     public String toJson(Object obj, B2JsonOptions options) throws B2JsonException {
-        if (obj == null) {
-            throw new B2JsonException("top level object must not be null");
-        }
-        Class<?> clazz = obj.getClass();
-        final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
-            //noinspection unchecked
-            handler.serialize(obj, options, jsonWriter);
+            toJson(obj, options, out);
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
@@ -205,9 +198,10 @@ public class B2Json {
      * Parse an assumed JSON string into a defined class.
      * This throws a RuntimeException instead of a B2JsonException,
      * so use it carefully.
-     * @param json JSON String to try and parse
+     *
+     * @param json  JSON String to try and parse
      * @param clazz Class to map the JSON String to.
-     * @param <T> The deserialized object casted to the specific type from clazz
+     * @param <T>   The deserialized object casted to the specific type from clazz
      * @return the object deserialized from the JSON String
      */
     public static <T> T fromJsonOrThrowRuntime(String json, Class<T> clazz) {
@@ -414,7 +408,7 @@ public class B2Json {
 
     /**
      * Parse a URL parameter map as an object of the given class.
-     *
+     * <p>
      * The values in the map are the values that will be used in the
      * object.  The caller is responsible for URL-decoding them
      * before passing them to this method.
@@ -437,8 +431,7 @@ public class B2Json {
         if (!(handler instanceof B2JsonObjectHandler)) {
             throw new B2JsonException("only objects can be deserialized from parameter maps");
         }
-        @SuppressWarnings("unchecked")
-        final B2JsonObjectHandler<T> objectHandler = (B2JsonObjectHandler<T>) handler;
+        @SuppressWarnings("unchecked") final B2JsonObjectHandler<T> objectHandler = (B2JsonObjectHandler<T>) handler;
 
         //noinspection unchecked
         return objectHandler.deserializeFromUrlParameterMap(parameterMap, options);
@@ -478,7 +471,8 @@ public class B2Json {
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    public @interface required {}
+    public @interface required {
+    }
 
     /**
      * Field annotation that says a field is optional.  The value will
@@ -513,7 +507,8 @@ public class B2Json {
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    public @interface ignored {}
+    public @interface ignored {
+    }
 
     /**
      * Annotation that says that a field exists in all versions at or after this one.
@@ -531,6 +526,7 @@ public class B2Json {
     @Target(ElementType.FIELD)
     public @interface versionRange {
         int firstVersion();
+
         int lastVersion();
     }
 
@@ -540,23 +536,24 @@ public class B2Json {
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    public @interface sensitive {}
+    public @interface sensitive {
+    }
 
     /**
      * Constructor annotation saying that this is the constructor B2Json
      * should use.  This constructor must take ALL of the serializable
      * fields as parameters.
-     *
+     * <p>
      * You must provide an "params" parameter that lists the order of
      * the parameters to the constructor.
-     *
+     * <p>
      * If present, the "discards" parameter is a comma-separated list of
      * field names which are allowed to be present in the parsed json,
      * but whose values will be discarded.  The names may be for fields
      * that don't exist or for fields marked @ignored.  This is useful
      * for accepting deprecated fields without having to use
      * ALLOW_EXTRA_FIELDS, which would accept ALL unknown fields.
-     *
+     * <p>
      * When versionParam is non-empty, it is the name of a parameter that
      * is not a field name, and will take the version number being constructed.
      * This should be included for objects that have multiple versions,
@@ -566,7 +563,9 @@ public class B2Json {
     @Target(ElementType.CONSTRUCTOR)
     public @interface constructor {
         String params();
+
         String discards() default "";
+
         String versionParam() default "";
     }
 
@@ -578,14 +577,15 @@ public class B2Json {
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    public @interface defaultForInvalidEnumValue {}
+    public @interface defaultForInvalidEnumValue {
+    }
 
     /**
      * All of the B2Json annotations.
      */
     @SuppressWarnings("unchecked")
     /*package*/ static final Class<? extends Annotation>[] ALL_ANNOTATIONS =
-            new Class[] {
+            new Class[]{
                     union.class,
                     required.class,
                     optional.class,
@@ -599,7 +599,7 @@ public class B2Json {
 
     /**
      * Convert from deprecated options flags to options object.
-     *
+     * <p>
      * Called a lot, so optimized to always return the same objects.
      */
     private static B2JsonOptions optionsFromFlags(int optionFlags) {
@@ -607,8 +607,7 @@ public class B2Json {
         // the logic is simple here.
         if ((optionFlags & B2Json.ALLOW_EXTRA_FIELDS) == 0) {
             return B2JsonOptions.DEFAULT;
-        }
-        else {
+        } else {
             return B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS;
         }
     }
