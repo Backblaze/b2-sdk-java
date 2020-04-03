@@ -169,15 +169,8 @@ public class B2Json {
     }
 
     public String toJson(Object obj, B2JsonOptions options) throws B2JsonException {
-        if (obj == null) {
-            throw new B2JsonException("top level object must not be null");
-        }
-        Class<?> clazz = obj.getClass();
-        final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
-            //noinspection unchecked
-            handler.serialize(obj, options, jsonWriter);
+            toJson(obj, options, out);
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
             throw new RuntimeException("IO exception writing to string");
