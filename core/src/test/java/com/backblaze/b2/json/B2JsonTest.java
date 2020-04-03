@@ -7,6 +7,7 @@ package com.backblaze.b2.json;
 
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Preconditions;
+import com.backblaze.b2.util.B2StringUtil;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -2458,6 +2459,28 @@ public class B2JsonTest extends B2BaseTest {
         final SerializationTestClass derived = B2Json.get().fromJson(actual, SerializationTestClass.class);
 
         assertEquals(original, derived);
+    }
+
+    @Test
+    public void testTopLevelObjectIsParameterizedType() throws NoSuchFieldException, IOException, B2JsonException {
+        final Item<Integer> item = new Item<>(123);
+
+        // Get a reference to a type object that describes an Item<Integer>...
+        final Type type = ClassThatUsesGenerics.class.getDeclaredField("integerItem").getGenericType();
+
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        B2Json.get().toJson(item, B2JsonOptions.DEFAULT, out, type);
+        final String json = out.toString(B2StringUtil.UTF8);
+
+        assertEquals("{\n" +
+                "  \"value\": 123\n" +
+                "}",
+                json);
+
+        // Now try without the type information
+        thrown.expect(B2JsonException.class);
+        thrown.expectMessage("actualTypeArguments must be same length as class' type parameters");
+        B2Json.get().toJson(item, B2JsonOptions.DEFAULT, out);
     }
 
     @Test
