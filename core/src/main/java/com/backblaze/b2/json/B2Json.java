@@ -140,10 +140,17 @@ public class B2Json {
         }
     }
 
+    /**
+     * Turn an object into JSON, writing the results to given output stream.
+     */
     public void toJson(Object obj, OutputStream out) throws IOException, B2JsonException {
         toJson(obj, B2JsonOptions.DEFAULT, out);
     }
 
+    /**
+     * Turn an object into JSON, writing the results to given output stream and
+     * using the supplied options.
+     */
     public void toJson(Object obj, B2JsonOptions options, OutputStream out) throws IOException, B2JsonException {
         toJson(obj, options, out, null);
     }
@@ -157,6 +164,10 @@ public class B2Json {
      * you will need to pass in its type information via objTypeOrNull. This will instruct
      * B2Json to derive the B2JsonTypeHandler from the type information instead of the
      * object's class.
+     *
+     * Getting the Type of obj can be done in at least two ways:
+     * 1. If it is a member of an enclosing class, EnclosingClass.getDeclaredField(...).getGenericType()
+     * 2. By constructing a class that implements Type.
      *
      * Note that the output stream is NOT closed as a side-effect of calling this.
      * It was a bug that it was being closed in version 1.1.1 and earlier.
@@ -346,6 +357,17 @@ public class B2Json {
         return fromJson(in, clazz, optionsFromFlags(optionFlags));
     }
 
+    /**
+     * Parse the bytes from an InputStream as JSON using the supplied options, returning the parsed object.
+     *
+     * The Type parameter will usually be a class, which is straightforward to supply. However,
+     * if you are trying to deserialize a parameterized type (like if obj is a
+     * {@literal List<String>}, then you will need to supply a proper Type instance.
+     *
+     * Getting the Type can be done in at least two ways:
+     * 1. If it is a member of an enclosing class, EnclosingClass.getDeclaredField(...).getGenericType()
+     * 2. By constructing a class that implements Type.
+     */
     public <T> T fromJson(InputStream in, Type type, B2JsonOptions options) throws IOException, B2JsonException {
         B2JsonReader reader = new B2JsonReader(new InputStreamReader(in, "UTF-8"));
         final B2JsonTypeHandler handler = handlerMap.getHandler(type);
