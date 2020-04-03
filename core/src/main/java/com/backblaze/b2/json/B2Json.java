@@ -19,6 +19,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +59,7 @@ import java.util.Map;
  *
  * <p>The JSON produced is always "pretty", with newlines and indentation.
  * Field names are always sorted alphabetically.</p>
- * 
+ *
  * <p>B2Json objects are THREAD SAFE.</p>
  */
 public class B2Json {
@@ -139,23 +140,35 @@ public class B2Json {
         }
     }
 
-    /**
-     * Turn an object into JSON, writing the results to given
-     * output stream.
-     *
-     * Note that the output stream is NOT closed as a side-effect of calling this.
-     * It was a bug that it was being closed in version 1.1.1 and earlier.
-     */
     public void toJson(Object obj, OutputStream out) throws IOException, B2JsonException {
         toJson(obj, B2JsonOptions.DEFAULT, out);
     }
 
     public void toJson(Object obj, B2JsonOptions options, OutputStream out) throws IOException, B2JsonException {
+        toJson(obj, options, out, null);
+    }
+
+    /**
+     * Turn an object into JSON, writing the results to given
+     * output stream.
+     *
+     * objTypeOrNull can be set to null if obj is not a parameterized class. However,
+     * if obj contains type parameters (like if obj is a {@literal List<String>}, then
+     * you will need to pass in its type information via objTypeOrNull. This will instruct
+     * B2Json to derive the B2JsonTypeHandler from the type information instead of the
+     * object's class.
+     *
+     * Note that the output stream is NOT closed as a side-effect of calling this.
+     * It was a bug that it was being closed in version 1.1.1 and earlier.
+     */
+    public void toJson(Object obj, B2JsonOptions options, OutputStream out, Type objTypeOrNull)
+            throws IOException, B2JsonException {
+
         if (obj == null) {
             throw new B2JsonException("top level object must not be null");
         }
-        final Class<?> clazz = obj.getClass();
-        final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
+        final B2JsonTypeHandler handler = objTypeOrNull == null ?
+                handlerMap.getHandler(obj.getClass()) : handlerMap.getHandler(objTypeOrNull);
         B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
         //noinspection unchecked
         handler.serialize(obj, options, jsonWriter);
@@ -333,9 +346,9 @@ public class B2Json {
         return fromJson(in, clazz, optionsFromFlags(optionFlags));
     }
 
-    public <T> T fromJson(InputStream in, Class<T> clazz, B2JsonOptions options) throws IOException, B2JsonException {
+    public <T> T fromJson(InputStream in, Type type, B2JsonOptions options) throws IOException, B2JsonException {
         B2JsonReader reader = new B2JsonReader(new InputStreamReader(in, "UTF-8"));
-        final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
+        final B2JsonTypeHandler handler = handlerMap.getHandler(type);
 
         if (handler == null) {
             throw new B2JsonException("B2Json.fromJson called with handler not in handlerMap");
