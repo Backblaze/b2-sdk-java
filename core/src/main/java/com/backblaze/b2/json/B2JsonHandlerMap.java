@@ -118,7 +118,7 @@ public class B2JsonHandlerMap {
      * <p>
      * So, this method does NOT need to be re-entrant, and in fact we assume that it's not.
      */
-    public synchronized <T> B2JsonTypeHandler<T> getHandler(Class<T> clazz) throws B2JsonException {
+    public synchronized <T> B2JsonTypeHandler<T> getHandler(Type type) throws B2JsonException {
         // This method is NOT re-entrant.  The code that creates and initializes new handlers
         // should not call this method.
         //
@@ -132,7 +132,7 @@ public class B2JsonHandlerMap {
 
         // Fast path (without try/catch/finally) for the case where the handler is already in the map.
         {
-            final B2JsonTypeHandler<T> existingHandlerOrNull = lookupHandler(clazz);
+            final B2JsonTypeHandler<T> existingHandlerOrNull = lookupHandler(type);
             if (existingHandlerOrNull != null) {
                 return existingHandlerOrNull;
             }
@@ -143,7 +143,7 @@ public class B2JsonHandlerMap {
         final List<B2JsonTypeHandler> handlersToCheckDefaults;
         try {
             // Create any handlers that need to be created.
-            handler = getUninitializedHandler(clazz);
+            handler = getUninitializedHandler(type);
 
             // Initialize handlers that were created.  Note that initializing a new handler
             // may result in new handlers being added to handlersAddedToMap, so this loop
