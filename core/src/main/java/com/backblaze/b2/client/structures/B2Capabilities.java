@@ -27,6 +27,7 @@ public interface B2Capabilities {
     String LIST_ALL_BUCKET_NAMES = "listAllBucketNames";
     String WRITE_BUCKETS = "writeBuckets";
     String DELETE_BUCKETS = "deleteBuckets";
+    String READ_BUCKETS = "readBuckets";
 
     String LIST_FILES = "listFiles";
     String READ_FILES = "readFiles";
