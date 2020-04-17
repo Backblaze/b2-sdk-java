@@ -6,6 +6,8 @@ package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.credentialsSources.B2Credentials;
 import com.backblaze.b2.client.credentialsSources.B2CredentialsFromEnvironmentSource;
+import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2Allowed;
 
 /**
  * Implementations of B2StorageClientFactory can create a B2StorageClient from a B2ClientConfig.
@@ -55,5 +57,21 @@ public interface B2StorageClientFactory {
     default B2StorageClient create(String userAgent) {
         final B2Credentials credentials = B2CredentialsFromEnvironmentSource.build().getCredentials();
         return create(credentials.getApplicationKeyId(), credentials.getApplicationKey(), userAgent);
+    }
+
+    /**
+     * If we have authenticated via other means, we can provide the complete authorization
+     * @param b2AccountAuthorization complete auth info normally returned by authorize_account
+     * @param userAgent the user agent to use when performing http requests.
+     * @return a new B2StorageClient or throws a RuntimeException if it can't make one.
+     */
+
+    default B2StorageClient create(B2AccountAuthorization b2AccountAuthorization,
+                                   String userAgent){
+        final B2AccountAuthorizer accountAuthorizer = new B2AccountAuthorizerV5AuthImpl(b2AccountAuthorization);
+        final B2ClientConfig config = B2ClientConfig
+                .builder( accountAuthorizer, userAgent)
+                .build();
+        return create(config);
     }
 }
