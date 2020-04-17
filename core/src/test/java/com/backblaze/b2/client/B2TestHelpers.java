@@ -193,7 +193,7 @@ public class B2TestHelpers {
                 .set(CONTENT_LENGTH, Integer.toString(i))
                 .set(UPLOAD_TIMESTAMP, Integer.toString(i))
                 .set(SRC_LAST_MODIFIED_MILLIS, Integer.toString(i))
-                .set(FILE_INFO_PREFIX + "Color", "gr%C3%BCn")
+                .set(FILE_INFO_PREFIX + "Color-with.special_chars`~!#$%^|\'*&+", "gr%C3%BCn")
                 .build();
     }
 
