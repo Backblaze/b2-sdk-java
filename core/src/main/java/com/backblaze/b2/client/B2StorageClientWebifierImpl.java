@@ -697,8 +697,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
      */
     private void validateFileInfoName(String name) throws B2BadRequestException {
 
-        for (int i = 0; i < name.length(); i++) {
-            if (!isLegalInfoNameCharacter(name.charAt(i))) {
+        for (char c : name.toCharArray()) {
+            if (!isLegalInfoNameCharacter(c)) {
                 throw new B2BadRequestException(B2BadRequestException.DEFAULT_CODE,
                         null,
                         "Illegal file info name: " + name);
