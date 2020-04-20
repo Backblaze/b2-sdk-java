@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2020, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.contentSources;
@@ -190,8 +190,8 @@ public interface B2Headers {
         for (String name : getNames()) {
             if (startsWithIgnoreCase(name, FILE_INFO_PREFIX)) {
                 final String shortName = name.substring(FILE_INFO_PREFIX.length());
-                // XXX the uploader encodes the name.  might as well decode here.
-                info.put(percentDecode(shortName), percentDecode(getValueOrNull(name)));
+                // The uploader no longer encodes the name, so only decode the value
+                info.put(shortName, percentDecode(getValueOrNull(name)));
             }
         }
         return info;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2020, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -9,6 +9,7 @@ import com.backblaze.b2.client.contentSources.B2ByteArrayContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2Headers;
+import com.backblaze.b2.client.exceptions.B2BadRequestException;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
@@ -80,6 +81,7 @@ import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.Request
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.UPLOADING;
 import static com.backblaze.b2.json.B2Json.toJsonOrThrowRuntime;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
@@ -362,7 +364,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     @Test
     public void testDoesntAddExtraSlashAtEndOfMasterUrl() {
         //noinspection ConstantConditions
-        assertTrue(!MASTER_URL.endsWith("/"));
+        assertFalse(MASTER_URL.endsWith("/"));
 
         final B2StorageClientWebifierImpl ifier = new B2StorageClientWebifierImpl(
                 webApiClient,
@@ -370,7 +372,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 MASTER_URL + "/",
                 null);
         assertTrue(ifier.getMasterUrl().endsWith("/"));
-        assertTrue(!ifier.getMasterUrl().endsWith("//"));
+        assertFalse(ifier.getMasterUrl().endsWith("//"));
     }
 
     @Test
@@ -888,7 +890,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
 
         Map<String, String> expectedFileInfo = new HashMap<>();
-        expectedFileInfo.put("Color", "gr\u00fcn");
+        expectedFileInfo.put("Color-with.special_chars`~!#$%^|\'*&+", "gr\u00fcn");
         expectedFileInfo.put("src_last_modified_millis", "1");
 
         assertEquals(fileId(1), version.getFileId());
@@ -1513,5 +1515,15 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         public InputStream createInputStream() throws IOException, B2Exception {
             return nested.createInputStream();
         }
+    }
+
+    @Test
+    public void testValidateFileInfoNameThrowsForIllegalChars() throws B2BadRequestException {
+        final String nameWithIllegalChars = "my-header<>illegalChars()@";
+
+        thrown.expect(B2BadRequestException.class);
+        thrown.expectMessage("Illegal file info name: " + nameWithIllegalChars);
+
+        webifier.validateFileInfoName(nameWithIllegalChars);
     }
 }

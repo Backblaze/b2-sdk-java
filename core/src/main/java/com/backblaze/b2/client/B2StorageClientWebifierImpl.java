@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2020, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -8,6 +8,7 @@ import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.contentSources.B2HeadersImpl;
+import com.backblaze.b2.client.exceptions.B2BadRequestException;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
@@ -261,8 +262,11 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             }
 
             // add any custom file infos.
-            // XXX: really percentEncode the keys?  maybe check for ok characters instead?
-            request.getFileInfo().forEach((k, v) -> headersBuilder.set(B2Headers.FILE_INFO_PREFIX + percentEncode(k), percentEncode(v)));
+            // Only percent encode the values.  Check the keys for legal characters
+            for (Map.Entry<String, String> entry : request.getFileInfo().entrySet()) {
+                validateFileInfoName(entry.getKey());
+                headersBuilder.set(B2Headers.FILE_INFO_PREFIX + entry.getKey(), percentEncode(entry.getValue()));
+            }
 
             final B2ByteProgressListener progressAdapter = new B2UploadProgressAdapter(uploadListener, 0, 1, 0, contentLen);
             final B2ByteProgressFilteringListener progressListener = new B2ByteProgressFilteringListener(progressAdapter);
@@ -676,5 +680,47 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         }
 
         return countOfQueryParameters;
+    }
+
+    /**
+     * Validates whether each char in key is a valid header character according to RFC 7230:
+     * https://tools.ietf.org/html/rfc7230#section-3.2
+     *
+     * @param name The String to validate
+     * @throws B2BadRequestException if any of the characters are not valid
+     */
+    /*testing*/ void validateFileInfoName(String name) throws B2BadRequestException {
+        for (int i = 0; i < name.length(); i++) {
+            if (!isLegalInfoNameCharacter(name.charAt(i))) {
+                throw new B2BadRequestException(B2BadRequestException.DEFAULT_CODE,
+                        null,
+                        "Illegal file info name: " + name);
+            }
+        }
+    }
+
+    private boolean isLegalInfoNameCharacter(char c) {
+        /**
+         * Chars allowed in header as defined by: https://tools.ietf.org/html/rfc7230#section-3.2.6
+         */
+        return
+                ('a' <= c && c <= 'z') ||
+                ('A' <= c && c <= 'Z') ||
+                ('0' <= c && c <= '9') ||
+                c == '-'  ||
+                c == '_'  ||
+                c == '.'  ||
+                c == '!'  ||
+                c == '#'  ||
+                c == '$'  ||
+                c == '%'  ||
+                c == '&'  ||
+                c == '\'' ||
+                c == '*'  ||
+                c == '+'  ||
+                c == '^'  ||
+                c == '`'  ||
+                c == '|'  ||
+                c == '~';
     }
 }
