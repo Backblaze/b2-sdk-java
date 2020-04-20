@@ -700,6 +700,9 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     private boolean isLegalInfoNameCharacter(char c) {
+        /**
+         * Chars allowed in header as defined by: https://tools.ietf.org/html/rfc7230#section-3.2.6
+         */
         return
                 ('a' <= c && c <= 'z') ||
                 ('A' <= c && c <= 'Z') ||
