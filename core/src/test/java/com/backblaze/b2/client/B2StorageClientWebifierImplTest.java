@@ -9,6 +9,7 @@ import com.backblaze.b2.client.contentSources.B2ByteArrayContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2Headers;
+import com.backblaze.b2.client.exceptions.B2BadRequestException;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
@@ -1514,5 +1515,15 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         public InputStream createInputStream() throws IOException, B2Exception {
             return nested.createInputStream();
         }
+    }
+
+    @Test
+    public void testValidateFileInfoNameThrowsForIllegalChars() throws B2BadRequestException {
+        final String nameWithIllegalChars = "my-header<>illegalChars()@";
+
+        thrown.expect(B2BadRequestException.class);
+        thrown.expectMessage("Illegal file info name: " + nameWithIllegalChars);
+
+        webifier.validateFileInfoName(nameWithIllegalChars);
     }
 }

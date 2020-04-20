@@ -96,12 +96,6 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     private final String masterUrl;
     private final B2TestMode testModeOrNull;
 
-    /**
-     * Special chars allowed in header as defined by: https://tools.ietf.org/html/rfc7230#section-3.2.6
-     */
-    private static final char[] HEADER_SPECIAL_CHARS_RFC7230 = new char[] { '!', '#', '$', '%', '&', '\'', '*',
-            '+', '-', '.', '^', '_', '`', '|', '~' };
-
     public B2StorageClientWebifierImpl(B2WebApiClient webApiClient,
                                        String userAgent,
                                        String masterUrl,
@@ -695,10 +689,9 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
      * @param name The String to validate
      * @throws B2BadRequestException if any of the characters are not valid
      */
-    private void validateFileInfoName(String name) throws B2BadRequestException {
-
-        for (char c : name.toCharArray()) {
-            if (!isLegalInfoNameCharacter(c)) {
+    /*testing*/ void validateFileInfoName(String name) throws B2BadRequestException {
+        for (int i = 0; i < name.length(); i++) {
+            if (!isLegalInfoNameCharacter(name.charAt(i))) {
                 throw new B2BadRequestException(B2BadRequestException.DEFAULT_CODE,
                         null,
                         "Illegal file info name: " + name);
@@ -707,19 +700,24 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     private boolean isLegalInfoNameCharacter(char c) {
-        return ('a' <= c && c <= 'z') ||
+        return
+                ('a' <= c && c <= 'z') ||
                 ('A' <= c && c <= 'Z') ||
                 ('0' <= c && c <= '9') ||
-                isRFC7230SpecialChar(c);
-    }
-
-    private boolean isRFC7230SpecialChar(char c) {
-        for (char specialChar : HEADER_SPECIAL_CHARS_RFC7230) {
-            if (c == specialChar) {
-                return true;
-            }
-        }
-
-        return false;
+                c == '-'  ||
+                c == '_'  ||
+                c == '.'  ||
+                c == '!'  ||
+                c == '#'  ||
+                c == '$'  ||
+                c == '%'  ||
+                c == '&'  ||
+                c == '\'' ||
+                c == '*'  ||
+                c == '+'  ||
+                c == '^'  ||
+                c == '`'  ||
+                c == '|'  ||
+                c == '~';
     }
 }
