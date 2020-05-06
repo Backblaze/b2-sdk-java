@@ -52,7 +52,6 @@ NUMBER_OF_LINES_TO_EXAMINE = 10
 LAYERS = [
     'sample',
     'client.webApiHttpClient',
-    'client.okHttpClient',
     'client',
     'client.webApiClients',
     'client.structures',
@@ -70,7 +69,7 @@ PREFIX = 'com.backblaze.b2.'
 
 def handle_args(argv):
     parser = argparse.ArgumentParser(description=USAGE)
-    parser.add_argument('directoriesOrFiles', nargs='*', help='The directories or files to check', default=["src/main"])
+    parser.add_argument('directoriesOrFiles', nargs='*', help='The directories or files to check', default=["core/src/main"])
     parsed_args = parser.parse_args()
     return parsed_args
 

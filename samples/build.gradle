@@ -9,10 +9,9 @@ project.ext {
 
 apply from: '../common.gradle'
 
-// this implementation can use either okhttp or apache httpclient
+// this implementation can use apache httpclient
 dependencies {
     // B2StorageClientFactory determines which one is used depending on
-    // what's in the java classpath at runtime.  for now, build both jars.
+    // what's in the java classpath at runtime.
     compile project(':httpclient')
-    compile project(':okhttp')
 }
