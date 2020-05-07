@@ -24,7 +24,7 @@ repositories {
 }
 
 ext.readVersion = { ->
-    BufferedReader reader = new BufferedReader(new FileReader("core/src/main/resources/b2-sdk-core/version.txt"));
+    BufferedReader reader = new BufferedReader(new FileReader(new File(rootProject.projectDir, "core/src/main/resources/b2-sdk-core/version.txt")))
     String version = reader.readLine().trim()
     if (version.isEmpty()) {
         throw new RuntimeException("version is empty!?")
@@ -71,7 +71,7 @@ artifacts {
 // enough (less than a second) that i'm not going to try to avoid
 // running it.
 task checkCode(type: Exec) {
-    commandLine "python", "../check_code"
+    commandLine "python", "../check_code", "src/main"
 }
 classes.dependsOn checkCode
 
