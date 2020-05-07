@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Changed `[Incompatible]`
+* The deprecated okhttp client was removed.
 * B2Bucket and B2ApplicationKey both have an `options` parameter in the constructor.  These are optional.
 * `B2StorageClient.DownloadByName` supports downloading files with looser naming requirements, e.g. names containing double slashes (`//`).
 * Updated to version `4.5.9` of `org.apache.httpcomponents:httpclient`. 
