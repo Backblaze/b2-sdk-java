@@ -8,6 +8,7 @@ package com.backblaze.b2.json;
 import com.backblaze.b2.util.B2Preconditions;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -258,6 +259,10 @@ public class B2JsonHandlerMap {
             //noinspection unchecked
             handler = getUninitializedHandlerForParameterizedType(parameterizedType);
 
+        } else if (type instanceof GenericArrayType) {
+            final GenericArrayType genericArrayType = (GenericArrayType) type;
+            handler = getUninitializedHandlerForGenericArrayType(genericArrayType);
+
         } else {
             throw new B2JsonException("do not know how to get handler for type " + type.getTypeName());
         }
@@ -342,6 +347,17 @@ public class B2JsonHandlerMap {
         final Class resolvedRawTypeClass = (Class) resolvedRawType;
         //noinspection unchecked
         return new B2JsonObjectHandler(resolvedRawTypeClass, parameterizedType.getActualTypeArguments());
+    }
+
+    private synchronized B2JsonTypeHandler getUninitializedHandlerForGenericArrayType(
+            GenericArrayType genericArrayType) throws B2JsonException {
+
+        // Java does not allow the component type to be a parameterized type. Therefore,
+        // we can get the Class of the generic component Type without losing information.
+        return new B2JsonObjectArrayHandler(
+                genericArrayType.getClass(),
+                genericArrayType.getGenericComponentType().getClass(),
+                getUninitializedHandler(genericArrayType.getGenericComponentType()));
     }
 
     /**
