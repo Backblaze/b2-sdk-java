@@ -2517,6 +2517,34 @@ public class B2JsonTest extends B2BaseTest {
 
     }
 
+    @Test
+    public void testGenericArraySupport() throws B2JsonException {
+        final ClassWithGenericArrays objectWithGenericArrays =
+                new ClassWithGenericArrays(
+                        new ItemArray<>(new Integer[] {0, 1, 2, 3}),
+                        new ItemArray<>(new String[] {"a", "b"}));
+        final String expected = "" +
+                "{\n" +
+                "  \"intArray\": {\n" +
+                "    \"values\": [\n" +
+                "      0,\n" +
+                "      1,\n" +
+                "      2,\n" +
+                "      3\n" +
+                "    ]\n" +
+                "  },\n" +
+                "  \"stringArray\": {\n" +
+                "    \"values\": [\n" +
+                "      \"a\",\n" +
+                "      \"b\"\n" +
+                "    ]\n" +
+                "  }\n" +
+                "}";
+
+        assertEquals(expected, b2Json.toJson(objectWithGenericArrays));
+    }
+
+
     private static class ClassThatUsesGenerics {
 
         @B2Json.required
@@ -2557,6 +2585,32 @@ public class B2JsonTest extends B2BaseTest {
 
         public T getValue() {
             return value;
+        }
+    }
+
+    private static class ClassWithGenericArrays {
+        @B2Json.required
+        private final ItemArray<Integer> intArray;
+
+        @B2Json.required
+        private final ItemArray<String> stringArray;
+
+
+        @B2Json.constructor(params = "intArray, stringArray")
+        public ClassWithGenericArrays(ItemArray<Integer> intArray, ItemArray<String> stringArray) {
+            this.intArray = intArray;
+            this.stringArray = stringArray;
+        }
+    }
+
+    private static class ItemArray<T> {
+
+        @B2Json.required
+        private final T[] values;
+
+        @B2Json.constructor(params = "values")
+        public ItemArray(T[] values) {
+            this.values = values;
         }
     }
 }
