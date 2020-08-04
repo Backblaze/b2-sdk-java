@@ -23,6 +23,13 @@ public class B2ApplicationKeyTest extends B2BaseTest {
         capabilities.add(B2Capabilities.READ_FILES);
         capabilities.add(B2Capabilities.LIST_ALL_BUCKET_NAMES);
         capabilities.add(B2Capabilities.READ_BUCKETS);
+        capabilities.add(B2Capabilities.BYPASS_GOVERNANCE);
+        capabilities.add(B2Capabilities.READ_BUCKET_RETENTIONS);
+        capabilities.add(B2Capabilities.WRITE_BUCKET_RETENTIONS);
+        capabilities.add(B2Capabilities.READ_FILE_RETENTIONS);
+        capabilities.add(B2Capabilities.WRITE_FILE_RETENTIONS);
+        capabilities.add(B2Capabilities.READ_FILE_LEGAL_HOLDS);
+        capabilities.add(B2Capabilities.WRITE_FILE_LEGAL_HOLDS);
         final B2ApplicationKey applicationKey =
                 new B2ApplicationKey(
                         "accountId",
