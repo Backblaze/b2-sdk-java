@@ -55,7 +55,8 @@ public class B2BucketTest extends B2BaseTest {
                 b2CorsRules,
                 lifecycleRules,
                 optionsSet,
-                1);
+                1,
+                false);
         final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
         final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(bucketJson, B2Bucket.class);
         assertEquals(bucket, convertedBucket);
