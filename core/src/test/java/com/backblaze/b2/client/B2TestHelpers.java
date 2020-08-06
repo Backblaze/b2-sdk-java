@@ -166,7 +166,7 @@ public class B2TestHelpers {
                 B2Collections.listOf(makeLifecycleRule(i)),
                 makeBucketOrApplicationKeyOptions(),
                 i,
-                false);
+                null);
     }
 
     public static B2LifecycleRule makeLifecycleRule(int i) {

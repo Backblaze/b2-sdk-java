@@ -39,8 +39,8 @@ public class B2Bucket {
     @B2Json.required
     private final int revision;
 
-    @B2Json.optionalWithDefault(defaultValue = "false")
-    private final boolean isObjectLockEnabled;
+    @B2Json.optional(omitNull = true)
+    private final Boolean isObjectLockEnabled;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
             "bucketInfo,corsRules,lifecycleRules,options,revision,isObjectLockEnabled")
@@ -53,7 +53,7 @@ public class B2Bucket {
                     List<B2LifecycleRule> lifecycleRules,
                     Set<String> options,
                     int revision,
-                    boolean isObjectLockEnabled) {
+                    Boolean isObjectLockEnabled) {
         this.accountId = accountId;
         this.bucketId = bucketId;
         this.bucketName = bucketName;
@@ -102,7 +102,7 @@ public class B2Bucket {
         return revision;
     }
 
-    public boolean isObjectLockEnabled() { return isObjectLockEnabled; }
+    public Boolean isObjectLockEnabled() { return isObjectLockEnabled; }
 
     @Override
     public String toString() {
@@ -114,7 +114,8 @@ public class B2Bucket {
                 (corsRules == null ? 0 : corsRules.size()) + " corsRules," +
                 (lifecycleRules == null ? 0 : lifecycleRules.size()) + " lifecycleRules," +
                 ((options == null || options.isEmpty()) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
-                "v" + revision + "," + (isObjectLockEnabled ? "true" : "false") +
+                "v" + revision + "," +
+                (isObjectLockEnabled == null ? "null" : (isObjectLockEnabled.booleanValue() ? "true" : "false")) +
                 ')';
     }
 
@@ -132,7 +133,7 @@ public class B2Bucket {
                 Objects.equals(getCorsRules(), b2Bucket.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules()) &&
                 Objects.equals(getOptions(), b2Bucket.getOptions()) &&
-                isObjectLockEnabled() == b2Bucket.isObjectLockEnabled();
+                Objects.equals(isObjectLockEnabled(), b2Bucket.isObjectLockEnabled());
     }
 
     @Override

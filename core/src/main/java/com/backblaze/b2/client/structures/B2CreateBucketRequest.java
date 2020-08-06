@@ -13,14 +13,14 @@ public class B2CreateBucketRequest {
     private final Map<String,String> bucketInfo;
     private final List<B2CorsRule> corsRules;
     private final List<B2LifecycleRule> lifecycleRules;
-    private final boolean isObjectLockEnabled;
+    private final Boolean isObjectLockEnabled;
 
     public B2CreateBucketRequest(String bucketName,
                                  String bucketType,
                                  Map<String, String> bucketInfo,
                                  List<B2CorsRule> corsRules,
                                  List<B2LifecycleRule> lifecycleRules,
-                                 boolean isObjectLockEnabled) {
+                                 Boolean isObjectLockEnabled) {
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
@@ -49,7 +49,7 @@ public class B2CreateBucketRequest {
         return lifecycleRules;
     }
 
-    public boolean isObjectLockEnabled() {
+    public Boolean isObjectLockEnabled() {
         return isObjectLockEnabled;
     }
 
@@ -64,7 +64,7 @@ public class B2CreateBucketRequest {
         private Map<String, String> bucketInfo;
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
-        private boolean isObjectLockEnabled;
+        private Boolean isObjectLockEnabled;
 
         Builder(String bucketName,
                 String bucketType) {
@@ -87,13 +87,18 @@ public class B2CreateBucketRequest {
             return this;
         }
 
-        public Builder setObjectLockEnabled(boolean isObjectLockEnabled) {
+        public Builder setObjectLockEnabled(Boolean isObjectLockEnabled) {
             this.isObjectLockEnabled = isObjectLockEnabled;
             return this;
         }
 
         public B2CreateBucketRequest build() {
-            return new B2CreateBucketRequest(bucketName, bucketType, bucketInfo, corsRules, lifecycleRules,
+            return new B2CreateBucketRequest(
+                    bucketName,
+                    bucketType,
+                    bucketInfo,
+                    corsRules,
+                    lifecycleRules,
                     isObjectLockEnabled);
         }
     }

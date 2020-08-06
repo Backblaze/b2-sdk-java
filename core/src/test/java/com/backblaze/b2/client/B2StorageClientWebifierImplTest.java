@@ -435,7 +435,6 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "          \"maxAgeSeconds\": 0\n" +
                 "        }\n" +
                 "      ],\n" +
-                "      \"isObjectLockEnabled\": false,\n" +
                 "      \"lifecycleRules\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
