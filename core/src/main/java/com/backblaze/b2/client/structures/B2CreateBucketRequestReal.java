@@ -37,20 +37,25 @@ public class B2CreateBucketRequestReal {
     @B2Json.optional
     private final List<B2LifecycleRule> lifecycleRules;
 
+    @B2Json.optional(omitNull = true)
+    private final Boolean isObjectLockEnabled;
 
-    @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules")
+
+    @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules,isObjectLockEnabled")
     private B2CreateBucketRequestReal(String accountId,
                                       String bucketName,
                                       String bucketType,
                                       Map<String, String> bucketInfo,
                                       List<B2CorsRule> corsRules,
-                                      List<B2LifecycleRule> lifecycleRules) {
+                                      List<B2LifecycleRule> lifecycleRules,
+                                      Boolean isObjectLockEnabled) {
         this.accountId = accountId;
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
+        this.isObjectLockEnabled = isObjectLockEnabled;
     }
 
     public B2CreateBucketRequestReal(String accountId,
@@ -60,7 +65,8 @@ public class B2CreateBucketRequestReal {
                 mostOfRequest.getBucketType(),
                 mostOfRequest.getBucketInfo(),
                 mostOfRequest.getCorsRules(),
-                mostOfRequest.getLifecycleRules());
+                mostOfRequest.getLifecycleRules(),
+                mostOfRequest.isObjectLockEnabled());
     }
 
     @Override
@@ -73,11 +79,19 @@ public class B2CreateBucketRequestReal {
                 Objects.equals(bucketType, that.bucketType) &&
                 Objects.equals(bucketInfo, that.bucketInfo) &&
                 Objects.equals(corsRules, that.corsRules) &&
-                Objects.equals(lifecycleRules, that.lifecycleRules);
+                Objects.equals(lifecycleRules, that.lifecycleRules) &&
+                Objects.equals(isObjectLockEnabled, that.isObjectLockEnabled);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(accountId, bucketName, bucketType, bucketInfo, corsRules, lifecycleRules);
+        return Objects.hash(
+                accountId,
+                bucketName,
+                bucketType,
+                bucketInfo,
+                corsRules,
+                lifecycleRules,
+                isObjectLockEnabled);
     }
 }

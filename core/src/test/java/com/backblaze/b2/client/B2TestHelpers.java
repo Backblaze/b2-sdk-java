@@ -165,7 +165,8 @@ public class B2TestHelpers {
                 B2Collections.listOf(makeCorsRule()),
                 B2Collections.listOf(makeLifecycleRule(i)),
                 makeBucketOrApplicationKeyOptions(),
-                i);
+                i,
+                null);
     }
 
     public static B2LifecycleRule makeLifecycleRule(int i) {

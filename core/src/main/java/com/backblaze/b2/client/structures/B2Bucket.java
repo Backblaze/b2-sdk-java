@@ -39,8 +39,11 @@ public class B2Bucket {
     @B2Json.required
     private final int revision;
 
+    @B2Json.optional(omitNull = true)
+    private final Boolean isObjectLockEnabled;
+
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
-            "bucketInfo,corsRules,lifecycleRules,options,revision")
+            "bucketInfo,corsRules,lifecycleRules,options,revision,isObjectLockEnabled")
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
@@ -49,7 +52,8 @@ public class B2Bucket {
                     List<B2CorsRule> corsRules,
                     List<B2LifecycleRule> lifecycleRules,
                     Set<String> options,
-                    int revision) {
+                    int revision,
+                    Boolean isObjectLockEnabled) {
         this.accountId = accountId;
         this.bucketId = bucketId;
         this.bucketName = bucketName;
@@ -59,6 +63,7 @@ public class B2Bucket {
         this.lifecycleRules = lifecycleRules;
         this.options = options;
         this.revision = revision;
+        this.isObjectLockEnabled = isObjectLockEnabled;
     }
 
     public String getAccountId() {
@@ -97,6 +102,8 @@ public class B2Bucket {
         return revision;
     }
 
+    public Boolean isObjectLockEnabled() { return isObjectLockEnabled; }
+
     @Override
     public String toString() {
         return "B2Bucket(" +
@@ -106,8 +113,9 @@ public class B2Bucket {
                 (bucketInfo == null ? 0 : bucketInfo.size()) + " infos," +
                 (corsRules == null ? 0 : corsRules.size()) + " corsRules," +
                 (lifecycleRules == null ? 0 : lifecycleRules.size()) + " lifecycleRules," +
-                ((options == null || options.size() == 0) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
-                "v" + revision +
+                ((options == null || options.isEmpty()) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
+                "v" + revision + "," +
+                (isObjectLockEnabled == null ? "null" : (isObjectLockEnabled.booleanValue() ? "true" : "false")) +
                 ')';
     }
 
@@ -124,7 +132,8 @@ public class B2Bucket {
                 Objects.equals(getBucketInfo(), b2Bucket.getBucketInfo()) &&
                 Objects.equals(getCorsRules(), b2Bucket.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules()) &&
-                Objects.equals(getOptions(), b2Bucket.getOptions());
+                Objects.equals(getOptions(), b2Bucket.getOptions()) &&
+                Objects.equals(isObjectLockEnabled(), b2Bucket.isObjectLockEnabled());
     }
 
     @Override
@@ -138,6 +147,7 @@ public class B2Bucket {
                 getCorsRules(),
                 getLifecycleRules(),
                 getOptions(),
-                getRevision());
+                getRevision(),
+                isObjectLockEnabled());
     }
 }
