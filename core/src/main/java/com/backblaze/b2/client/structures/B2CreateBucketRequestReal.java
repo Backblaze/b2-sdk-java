@@ -38,24 +38,24 @@ public class B2CreateBucketRequestReal {
     private final List<B2LifecycleRule> lifecycleRules;
 
     @B2Json.optional(omitNull = true)
-    private final Boolean isObjectLockEnabled;
+    private final Boolean objectLockEnabled;
 
 
-    @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules,isObjectLockEnabled")
+    @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules,objectLockEnabled")
     private B2CreateBucketRequestReal(String accountId,
                                       String bucketName,
                                       String bucketType,
                                       Map<String, String> bucketInfo,
                                       List<B2CorsRule> corsRules,
                                       List<B2LifecycleRule> lifecycleRules,
-                                      Boolean isObjectLockEnabled) {
+                                      Boolean objectLockEnabled) {
         this.accountId = accountId;
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
-        this.isObjectLockEnabled = isObjectLockEnabled;
+        this.objectLockEnabled = objectLockEnabled;
     }
 
     public B2CreateBucketRequestReal(String accountId,
@@ -80,7 +80,7 @@ public class B2CreateBucketRequestReal {
                 Objects.equals(bucketInfo, that.bucketInfo) &&
                 Objects.equals(corsRules, that.corsRules) &&
                 Objects.equals(lifecycleRules, that.lifecycleRules) &&
-                Objects.equals(isObjectLockEnabled, that.isObjectLockEnabled);
+                Objects.equals(objectLockEnabled, that.objectLockEnabled);
     }
 
     @Override
@@ -92,6 +92,6 @@ public class B2CreateBucketRequestReal {
                 bucketInfo,
                 corsRules,
                 lifecycleRules,
-                isObjectLockEnabled);
+                objectLockEnabled);
     }
 }

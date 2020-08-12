@@ -36,14 +36,14 @@ public class B2Bucket {
     @B2Json.optional
     private final Set<String> options;
 
+    @B2Json.optional(omitNull = true)
+    private final Boolean objectLockEnabled;
+
     @B2Json.required
     private final int revision;
 
-    @B2Json.optional(omitNull = true)
-    private final Boolean isObjectLockEnabled;
-
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
-            "bucketInfo,corsRules,lifecycleRules,options,revision,isObjectLockEnabled")
+            "bucketInfo,corsRules,lifecycleRules,options,objectLockEnabled,revision")
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
@@ -52,8 +52,8 @@ public class B2Bucket {
                     List<B2CorsRule> corsRules,
                     List<B2LifecycleRule> lifecycleRules,
                     Set<String> options,
-                    int revision,
-                    Boolean isObjectLockEnabled) {
+                    Boolean objectLockEnabled,
+                    int revision) {
         this.accountId = accountId;
         this.bucketId = bucketId;
         this.bucketName = bucketName;
@@ -62,8 +62,8 @@ public class B2Bucket {
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
         this.options = options;
+        this.objectLockEnabled = objectLockEnabled;
         this.revision = revision;
-        this.isObjectLockEnabled = isObjectLockEnabled;
     }
 
     public String getAccountId() {
@@ -102,7 +102,7 @@ public class B2Bucket {
         return revision;
     }
 
-    public Boolean isObjectLockEnabled() { return isObjectLockEnabled; }
+    public Boolean isObjectLockEnabled() { return objectLockEnabled; }
 
     @Override
     public String toString() {
@@ -115,7 +115,7 @@ public class B2Bucket {
                 (lifecycleRules == null ? 0 : lifecycleRules.size()) + " lifecycleRules," +
                 ((options == null || options.isEmpty()) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
                 "v" + revision + "," +
-                (isObjectLockEnabled == null ? "null" : (isObjectLockEnabled.booleanValue() ? "true" : "false")) +
+                (objectLockEnabled == null ? "null" : (objectLockEnabled.booleanValue() ? "true" : "false")) +
                 ')';
     }
 
