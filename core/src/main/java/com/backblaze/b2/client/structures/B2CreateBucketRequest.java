@@ -13,20 +13,20 @@ public class B2CreateBucketRequest {
     private final Map<String,String> bucketInfo;
     private final List<B2CorsRule> corsRules;
     private final List<B2LifecycleRule> lifecycleRules;
-    private final Boolean isObjectLockEnabled;
+    private final Boolean objectLockEnabled;
 
     public B2CreateBucketRequest(String bucketName,
                                  String bucketType,
                                  Map<String, String> bucketInfo,
                                  List<B2CorsRule> corsRules,
                                  List<B2LifecycleRule> lifecycleRules,
-                                 Boolean isObjectLockEnabled) {
+                                 Boolean objectLockEnabled) {
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
-        this.isObjectLockEnabled = isObjectLockEnabled;
+        this.objectLockEnabled = objectLockEnabled;
     }
 
     public String getBucketName() {
@@ -50,7 +50,7 @@ public class B2CreateBucketRequest {
     }
 
     public Boolean isObjectLockEnabled() {
-        return isObjectLockEnabled;
+        return objectLockEnabled;
     }
 
     public static Builder builder(String bucketName, String bucketType) {
@@ -64,7 +64,7 @@ public class B2CreateBucketRequest {
         private Map<String, String> bucketInfo;
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
-        private Boolean isObjectLockEnabled;
+        private Boolean objectLockEnabled;
 
         Builder(String bucketName,
                 String bucketType) {
@@ -87,8 +87,8 @@ public class B2CreateBucketRequest {
             return this;
         }
 
-        public Builder setObjectLockEnabled(Boolean isObjectLockEnabled) {
-            this.isObjectLockEnabled = isObjectLockEnabled;
+        public Builder setObjectLockEnabled(Boolean objectLockEnabled) {
+            this.objectLockEnabled = objectLockEnabled;
             return this;
         }
 
@@ -99,7 +99,7 @@ public class B2CreateBucketRequest {
                     bucketInfo,
                     corsRules,
                     lifecycleRules,
-                    isObjectLockEnabled);
+                    objectLockEnabled);
         }
     }
 }

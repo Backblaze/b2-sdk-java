@@ -181,8 +181,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 null,
                 null,
                 Collections.emptySet(),
-                1,
-                null);
+                null,
+                1);
         when(webifier.createBucket(anyObject(), anyObject())).thenReturn(bucket);
 
         final B2Bucket response = client.createBucket(BUCKET_NAME, BUCKET_TYPE);
@@ -226,8 +226,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 new ArrayList<>(),
                 lifecycleRules,
                 Collections.emptySet(),
-                1,
-                null);
+                null,
+                1);
         B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
         when(webifier.createBucket(ACCOUNT_AUTH, expectedRequest)).thenReturn(bucket);
 
@@ -258,8 +258,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 new ArrayList<>(),
                 lifecycleRules,
                 B2TestHelpers.makeBucketOrApplicationKeyOptions(),
-                1,
-                false);
+                false,
+                1);
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, myOption2] options,v1,false)",
                 bucketWithOptions.toString());
     }
@@ -361,8 +361,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 null,
                 null,
                 null,
-                2,
-                null);
+                null,
+                2);
     }
 
     @Test
