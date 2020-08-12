@@ -114,8 +114,8 @@ public class B2Bucket {
                 (corsRules == null ? 0 : corsRules.size()) + " corsRules," +
                 (lifecycleRules == null ? 0 : lifecycleRules.size()) + " lifecycleRules," +
                 ((options == null || options.isEmpty()) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
-                "v" + revision + "," +
                 (objectLockEnabled == null ? "null" : (objectLockEnabled.booleanValue() ? "true" : "false")) +
+                "v" + revision + "," +
                 ')';
     }
 
