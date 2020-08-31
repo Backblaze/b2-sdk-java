@@ -37,8 +37,8 @@ public class B2CreateBucketRequestReal {
     @B2Json.optional
     private final List<B2LifecycleRule> lifecycleRules;
 
-    @B2Json.optional(omitNull = true)
-    private final Boolean objectLockEnabled;
+    @B2Json.optional
+    private final boolean objectLockEnabled;
 
 
     @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules,objectLockEnabled")
@@ -48,7 +48,7 @@ public class B2CreateBucketRequestReal {
                                       Map<String, String> bucketInfo,
                                       List<B2CorsRule> corsRules,
                                       List<B2LifecycleRule> lifecycleRules,
-                                      Boolean objectLockEnabled) {
+                                      boolean objectLockEnabled) {
         this.accountId = accountId;
         this.bucketName = bucketName;
         this.bucketType = bucketType;

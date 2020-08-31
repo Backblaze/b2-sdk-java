@@ -13,14 +13,14 @@ public class B2CreateBucketRequest {
     private final Map<String,String> bucketInfo;
     private final List<B2CorsRule> corsRules;
     private final List<B2LifecycleRule> lifecycleRules;
-    private final Boolean objectLockEnabled;
+    private final boolean objectLockEnabled;
 
     public B2CreateBucketRequest(String bucketName,
                                  String bucketType,
                                  Map<String, String> bucketInfo,
                                  List<B2CorsRule> corsRules,
                                  List<B2LifecycleRule> lifecycleRules,
-                                 Boolean objectLockEnabled) {
+                                 boolean objectLockEnabled) {
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
@@ -49,7 +49,7 @@ public class B2CreateBucketRequest {
         return lifecycleRules;
     }
 
-    public Boolean isObjectLockEnabled() {
+    public boolean isObjectLockEnabled() {
         return objectLockEnabled;
     }
 
@@ -64,7 +64,7 @@ public class B2CreateBucketRequest {
         private Map<String, String> bucketInfo;
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
-        private Boolean objectLockEnabled;
+        private boolean objectLockEnabled;
 
         Builder(String bucketName,
                 String bucketType) {
@@ -87,7 +87,7 @@ public class B2CreateBucketRequest {
             return this;
         }
 
-        public Builder setObjectLockEnabled(Boolean objectLockEnabled) {
+        public Builder setObjectLockEnabled(boolean objectLockEnabled) {
             this.objectLockEnabled = objectLockEnabled;
             return this;
         }

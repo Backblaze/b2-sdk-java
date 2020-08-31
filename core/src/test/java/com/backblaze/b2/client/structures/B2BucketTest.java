@@ -61,4 +61,186 @@ public class B2BucketTest extends B2BaseTest {
         final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(bucketJson, B2Bucket.class);
         assertEquals(bucket, convertedBucket);
     }
+
+    @Test
+    public void testJsonRoundTrip() {
+        final B2Bucket bucket = new B2Bucket(
+                ACCOUNT_ID,
+                bucketId(1),
+                BUCKET_NAME,
+                BUCKET_TYPE,
+                bucketInfo,
+                b2CorsRules,
+                lifecycleRules,
+                optionsSet,
+                new B2BucketObjectLockConfiguration(
+                        "enabled",
+                        new B2BucketObjectLockPeriod(7, "days"),
+                        "governance"),
+                1);
+        final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
+        final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(bucketJson, B2Bucket.class);
+        assertEquals(bucket, convertedBucket);
+    }
+
+    @Test
+    public void testMinimumJson() {
+        final String json = "{\n" +
+                "  \"accountId\": \"" + ACCOUNT_ID + "\",\n" +
+                "  \"bucketId\": \"" + bucketId(1) + "\",\n" +
+                "  \"bucketName\": \"" + BUCKET_NAME + "\",\n" +
+                "  \"revision\": 1\n" +
+                "}";
+
+        // Convert from json -> B2Bucket
+        final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(json, B2Bucket.class);
+
+        final B2Bucket bucket = new B2Bucket(
+                ACCOUNT_ID,
+                bucketId(1),
+                BUCKET_NAME,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                1);
+
+        assertEquals(bucket, convertedBucket);
+    }
+
+    @Test
+    public void testFromJson() {
+        final B2Bucket bucket = new B2Bucket(
+                ACCOUNT_ID,
+                bucketId(1),
+                BUCKET_NAME,
+                BUCKET_TYPE,
+                bucketInfo,
+                b2CorsRules,
+                lifecycleRules,
+                optionsSet,
+                new B2BucketObjectLockConfiguration(
+                        "enabled",
+                        new B2BucketObjectLockPeriod(7, "days"),
+                        "governance"),
+                1);
+        // Convert from B2Bucket -> json
+        final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
+
+        final String json =  "{\n" +
+                "  \"accountId\": \"1\",\n" +
+                "  \"bucketId\": \"bucket1\",\n" +
+                "  \"bucketInfo\": {\n" +
+                "    \"one\": \"1\",\n" +
+                "    \"two\": \"2\"\n" +
+                "  },\n" +
+                "  \"bucketName\": \"bucket1\",\n" +
+                "  \"bucketType\": \"allPublic\",\n" +
+                "  \"corsRules\": [\n" +
+                "    {\n" +
+                "      \"allowedHeaders\": null,\n" +
+                "      \"allowedOperations\": [\n" +
+                "        \"b2_download_file_by_id\"\n" +
+                "      ],\n" +
+                "      \"allowedOrigins\": [\n" +
+                "        \"https://something.com\"\n" +
+                "      ],\n" +
+                "      \"corsRuleName\": \"rule-name\",\n" +
+                "      \"exposeHeaders\": null,\n" +
+                "      \"maxAgeSeconds\": 0\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"defaultObjectLockConfiguration\": {\n" +
+                "    \"mode\": \"governance\",\n" +
+                "    \"period\": {\n" +
+                "      \"duration\": 7,\n" +
+                "      \"unit\": \"days\"\n" +
+                "    },\n" +
+                "    \"status\": \"enabled\"\n" +
+                "  },\n" +
+                "  \"lifecycleRules\": [\n" +
+                "    {\n" +
+                "      \"daysFromHidingToDeleting\": null,\n" +
+                "      \"daysFromUploadingToHiding\": null,\n" +
+                "      \"fileNamePrefix\": \"files/\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"options\": [\n" +
+                "    \"myOption1\",\n" +
+                "    \"myOption2\"\n" +
+                "  ],\n" +
+                "  \"revision\": 1\n" +
+                "}";
+
+        // Convert from json -> B2Bucket
+        final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(json, B2Bucket.class);
+
+        // Compare json
+        assertEquals(json, bucketJson);
+    }
+
+
+    @Test
+    public void testFromJsonWithoutObjectLockConfiguration() {
+        final B2Bucket bucket = new B2Bucket(
+                ACCOUNT_ID,
+                bucketId(1),
+                BUCKET_NAME,
+                BUCKET_TYPE,
+                bucketInfo,
+                b2CorsRules,
+                lifecycleRules,
+                optionsSet,
+                null,
+                1);
+        // Convert from B2Bucket -> json
+        final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
+
+        final String json =  "{\n" +
+                "  \"accountId\": \"1\",\n" +
+                "  \"bucketId\": \"bucket1\",\n" +
+                "  \"bucketInfo\": {\n" +
+                "    \"one\": \"1\",\n" +
+                "    \"two\": \"2\"\n" +
+                "  },\n" +
+                "  \"bucketName\": \"bucket1\",\n" +
+                "  \"bucketType\": \"allPublic\",\n" +
+                "  \"corsRules\": [\n" +
+                "    {\n" +
+                "      \"allowedHeaders\": null,\n" +
+                "      \"allowedOperations\": [\n" +
+                "        \"b2_download_file_by_id\"\n" +
+                "      ],\n" +
+                "      \"allowedOrigins\": [\n" +
+                "        \"https://something.com\"\n" +
+                "      ],\n" +
+                "      \"corsRuleName\": \"rule-name\",\n" +
+                "      \"exposeHeaders\": null,\n" +
+                "      \"maxAgeSeconds\": 0\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"defaultObjectLockConfiguration\": null,\n" +
+                "  \"lifecycleRules\": [\n" +
+                "    {\n" +
+                "      \"daysFromHidingToDeleting\": null,\n" +
+                "      \"daysFromUploadingToHiding\": null,\n" +
+                "      \"fileNamePrefix\": \"files/\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"options\": [\n" +
+                "    \"myOption1\",\n" +
+                "    \"myOption2\"\n" +
+                "  ],\n" +
+                "  \"revision\": 1\n" +
+                "}";
+
+        // Convert from json -> B2Bucket
+        final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(json, B2Bucket.class);
+
+        // Compare json
+        assertEquals(json, bucketJson);
+    }
+
 }

@@ -196,7 +196,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                         null,
                         null,
                         null,
-                        null
+                        false
                 )
         );
         verify(webifier, times(1)).createBucket(eq(ACCOUNT_AUTH), eq(expectedRequest));
@@ -247,7 +247,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
         assertEquals(bucket(1), bucket(1));
         //noinspection ResultOfMethodCallIgnored
         bucket.hashCode();
-        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,0 options,v1,null)", bucket.toString());
+        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,0 options," +
+                "null,v1)", bucket.toString());
 
         final B2Bucket bucketWithOptions = new B2Bucket(
                 ACCOUNT_ID,
@@ -258,9 +259,10 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 new ArrayList<>(),
                 lifecycleRules,
                 B2TestHelpers.makeBucketOrApplicationKeyOptions(),
-                false,
+                null,
                 1);
-        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, myOption2] options,v1,false)",
+        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, " +
+                "myOption2] options,null,v1)",
                 bucketWithOptions.toString());
     }
 
