@@ -30,15 +30,20 @@ public class B2UpdateBucketRequest {
     private final List<B2LifecycleRule> lifecycleRules;
 
     @B2Json.optional
+    private final B2BucketObjectLockConfiguration defaultObjectLockConfiguration;
+
+    @B2Json.optional
     private final Integer ifRevisionIs;
 
-    @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,corsRules,lifecycleRules,ifRevisionIs")
+    @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,corsRules,lifecycleRules," +
+            "defaultObjectLockConfiguration,ifRevisionIs")
     private B2UpdateBucketRequest(String accountId,
                                   String bucketId,
                                   String bucketType,
                                   Map<String, String> bucketInfo,
                                   List<B2CorsRule> corsRules,
                                   List<B2LifecycleRule> lifecycleRules,
+                                  B2BucketObjectLockConfiguration defaultObjectLockConfiguration,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -46,6 +51,7 @@ public class B2UpdateBucketRequest {
         this.bucketInfo = bucketInfo;
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
+        this.defaultObjectLockConfiguration = defaultObjectLockConfiguration;
         this.ifRevisionIs = ifRevisionIs;
     }
 
@@ -73,6 +79,9 @@ public class B2UpdateBucketRequest {
         return lifecycleRules;
     }
 
+    public B2BucketObjectLockConfiguration getDefaultObjectLockConfiguration()
+    { return defaultObjectLockConfiguration; };
+
     public Integer getIfRevisionIs() {
         return ifRevisionIs;
     }
@@ -88,6 +97,7 @@ public class B2UpdateBucketRequest {
                 Objects.equals(getBucketInfo(), that.getBucketInfo()) &&
                 Objects.equals(getCorsRules(), that.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), that.getLifecycleRules()) &&
+                Objects.equals(getDefaultObjectLockConfiguration(), that.getDefaultObjectLockConfiguration()) &&
                 Objects.equals(getIfRevisionIs(), that.getIfRevisionIs());
     }
 
@@ -100,6 +110,7 @@ public class B2UpdateBucketRequest {
                 getBucketInfo(),
                 getCorsRules(),
                 getLifecycleRules(),
+                getDefaultObjectLockConfiguration(),
                 getIfRevisionIs());
     }
 
@@ -119,6 +130,7 @@ public class B2UpdateBucketRequest {
         private Map<String, String> bucketInfo;
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
+        private B2BucketObjectLockConfiguration defaultObjectLockConfiguration;
 
 
         private Builder(B2Bucket bucket) {
@@ -147,6 +159,11 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
+        public Builder setDefaultObjectLockConfiguration(
+                B2BucketObjectLockConfiguration defaultObjectLockConfiguration) {
+            this.defaultObjectLockConfiguration = defaultObjectLockConfiguration;
+            return this;
+        }
 
         public B2UpdateBucketRequest build() {
             return new B2UpdateBucketRequest(
@@ -156,6 +173,7 @@ public class B2UpdateBucketRequest {
                     bucketInfo,
                     corsRules,
                     lifecycleRules,
+                    defaultObjectLockConfiguration,
                     ifRevisionIs);
         }
     }

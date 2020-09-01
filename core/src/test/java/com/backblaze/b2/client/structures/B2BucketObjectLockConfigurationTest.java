@@ -12,12 +12,14 @@ public class B2BucketObjectLockConfigurationTest extends TestCase {
 
     @Test
     public void testDefaultConfig() {
-        final String configJson = "{}";
+        final String configJson = "{\n" +
+                "   \"status\": \"disabled\"\n" +
+                "}";
         final B2BucketObjectLockConfiguration convertedConfig = B2Json.fromJsonOrThrowRuntime(
                 configJson,
                 B2BucketObjectLockConfiguration.class);
         final B2BucketObjectLockConfiguration defaultConfig = new B2BucketObjectLockConfiguration(
-                null,null, null);
+                "disabled",null, null);
         assertEquals(defaultConfig, convertedConfig);
     }
 
