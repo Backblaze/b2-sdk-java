@@ -73,9 +73,9 @@ public class B2BucketTest extends B2BaseTest {
                 b2CorsRules,
                 lifecycleRules,
                 optionsSet,
-                new B2BucketObjectLockConfiguration(
+                new B2BucketFileLockConfiguration(
                         "enabled",
-                        new B2BucketObjectLockPeriod(7, "days"),
+                        new B2BucketFileLockPeriod(7, "days"),
                         "governance"),
                 1);
         final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
@@ -121,9 +121,9 @@ public class B2BucketTest extends B2BaseTest {
                 b2CorsRules,
                 lifecycleRules,
                 optionsSet,
-                new B2BucketObjectLockConfiguration(
+                new B2BucketFileLockConfiguration(
                         "enabled",
-                        new B2BucketObjectLockPeriod(7, "days"),
+                        new B2BucketFileLockPeriod(7, "days"),
                         "governance"),
                 1);
         // Convert from B2Bucket -> json
@@ -152,7 +152,7 @@ public class B2BucketTest extends B2BaseTest {
                 "      \"maxAgeSeconds\": 0\n" +
                 "    }\n" +
                 "  ],\n" +
-                "  \"defaultObjectLockConfiguration\": {\n" +
+                "  \"defaultFileLockConfiguration\": {\n" +
                 "    \"mode\": \"governance\",\n" +
                 "    \"period\": {\n" +
                 "      \"duration\": 7,\n" +
@@ -183,7 +183,7 @@ public class B2BucketTest extends B2BaseTest {
 
 
     @Test
-    public void testFromJsonWithoutObjectLockConfiguration() {
+    public void testFromJsonWithoutFileLockConfiguration() {
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
                 bucketId(1),
@@ -221,7 +221,7 @@ public class B2BucketTest extends B2BaseTest {
                 "      \"maxAgeSeconds\": 0\n" +
                 "    }\n" +
                 "  ],\n" +
-                "  \"defaultObjectLockConfiguration\": null,\n" +
+                "  \"defaultFileLockConfiguration\": null,\n" +
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +
                 "      \"daysFromHidingToDeleting\": null,\n" +

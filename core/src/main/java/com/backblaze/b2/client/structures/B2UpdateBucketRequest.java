@@ -30,20 +30,20 @@ public class B2UpdateBucketRequest {
     private final List<B2LifecycleRule> lifecycleRules;
 
     @B2Json.optional
-    private final B2BucketObjectLockConfiguration defaultObjectLockConfiguration;
+    private final B2BucketFileLockConfiguration defaultFileLockConfiguration;
 
     @B2Json.optional
     private final Integer ifRevisionIs;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,corsRules,lifecycleRules," +
-            "defaultObjectLockConfiguration,ifRevisionIs")
+            "defaultFileLockConfiguration,ifRevisionIs")
     private B2UpdateBucketRequest(String accountId,
                                   String bucketId,
                                   String bucketType,
                                   Map<String, String> bucketInfo,
                                   List<B2CorsRule> corsRules,
                                   List<B2LifecycleRule> lifecycleRules,
-                                  B2BucketObjectLockConfiguration defaultObjectLockConfiguration,
+                                  B2BucketFileLockConfiguration defaultFileLockConfiguration,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -51,7 +51,7 @@ public class B2UpdateBucketRequest {
         this.bucketInfo = bucketInfo;
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
-        this.defaultObjectLockConfiguration = defaultObjectLockConfiguration;
+        this.defaultFileLockConfiguration = defaultFileLockConfiguration;
         this.ifRevisionIs = ifRevisionIs;
     }
 
@@ -79,8 +79,8 @@ public class B2UpdateBucketRequest {
         return lifecycleRules;
     }
 
-    public B2BucketObjectLockConfiguration getDefaultObjectLockConfiguration()
-    { return defaultObjectLockConfiguration; };
+    public B2BucketFileLockConfiguration getDefaultFileLockConfiguration()
+    { return defaultFileLockConfiguration; }
 
     public Integer getIfRevisionIs() {
         return ifRevisionIs;
@@ -97,7 +97,7 @@ public class B2UpdateBucketRequest {
                 Objects.equals(getBucketInfo(), that.getBucketInfo()) &&
                 Objects.equals(getCorsRules(), that.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), that.getLifecycleRules()) &&
-                Objects.equals(getDefaultObjectLockConfiguration(), that.getDefaultObjectLockConfiguration()) &&
+                Objects.equals(getDefaultFileLockConfiguration(), that.getDefaultFileLockConfiguration()) &&
                 Objects.equals(getIfRevisionIs(), that.getIfRevisionIs());
     }
 
@@ -110,7 +110,7 @@ public class B2UpdateBucketRequest {
                 getBucketInfo(),
                 getCorsRules(),
                 getLifecycleRules(),
-                getDefaultObjectLockConfiguration(),
+                getDefaultFileLockConfiguration(),
                 getIfRevisionIs());
     }
 
@@ -130,7 +130,7 @@ public class B2UpdateBucketRequest {
         private Map<String, String> bucketInfo;
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
-        private B2BucketObjectLockConfiguration defaultObjectLockConfiguration;
+        private B2BucketFileLockConfiguration defaultFileLockConfiguration;
 
 
         private Builder(B2Bucket bucket) {
@@ -159,9 +159,9 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
-        public Builder setDefaultObjectLockConfiguration(
-                B2BucketObjectLockConfiguration defaultObjectLockConfiguration) {
-            this.defaultObjectLockConfiguration = defaultObjectLockConfiguration;
+        public Builder setDefaultFileLockConfiguration(
+                B2BucketFileLockConfiguration defaultFileLockConfiguration) {
+            this.defaultFileLockConfiguration = defaultFileLockConfiguration;
             return this;
         }
 
@@ -173,7 +173,7 @@ public class B2UpdateBucketRequest {
                     bucketInfo,
                     corsRules,
                     lifecycleRules,
-                    defaultObjectLockConfiguration,
+                    defaultFileLockConfiguration,
                     ifRevisionIs);
         }
     }

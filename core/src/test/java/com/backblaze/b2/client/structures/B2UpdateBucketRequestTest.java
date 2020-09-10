@@ -9,7 +9,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.util.B2Collections.listOf;
@@ -79,9 +78,9 @@ public class B2UpdateBucketRequestTest extends TestCase {
         List<B2LifecycleRule> lifecycleRules = listOf(
                 B2LifecycleRule.builder(FILE_PREFIX).build()
         );
-        B2BucketObjectLockConfiguration defaultObjectLockConfig = new B2BucketObjectLockConfiguration(
+        B2BucketFileLockConfiguration defaultFileLockConfig = new B2BucketFileLockConfiguration(
                 "enabled",
-                new B2BucketObjectLockPeriod(7, "days"),
+                new B2BucketFileLockPeriod(7, "days"),
                 "governance");
 
         final B2UpdateBucketRequest updateRequest = B2UpdateBucketRequest.builder(
@@ -101,7 +100,7 @@ public class B2UpdateBucketRequestTest extends TestCase {
                 .setBucketType(BUCKET_TYPE)
                 .setCorsRules(b2CorsRules)
                 .setLifecycleRules(lifecycleRules)
-                .setDefaultObjectLockConfiguration(defaultObjectLockConfig)
+                .setDefaultFileLockConfiguration(defaultFileLockConfig)
                 .build();
 
         // Convert from B2UpdateBucketRequest -> json
@@ -129,7 +128,7 @@ public class B2UpdateBucketRequestTest extends TestCase {
                 "      \"maxAgeSeconds\": 0\n" +
                 "    }\n" +
                 "  ],\n" +
-                "  \"defaultObjectLockConfiguration\": {\n" +
+                "  \"defaultFileLockConfiguration\": {\n" +
                 "    \"mode\": \"governance\",\n" +
                 "    \"period\": {\n" +
                 "      \"duration\": 7,\n" +

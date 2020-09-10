@@ -37,13 +37,13 @@ public class B2Bucket {
     private final Set<String> options;
 
     @B2Json.optional
-    private final B2BucketObjectLockConfiguration defaultObjectLockConfiguration;
+    private final B2BucketFileLockConfiguration defaultFileLockConfiguration;
 
     @B2Json.required
     private final int revision;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
-            "bucketInfo,corsRules,lifecycleRules,options,defaultObjectLockConfiguration,revision")
+            "bucketInfo,corsRules,lifecycleRules,options,defaultFileLockConfiguration,revision")
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
@@ -52,7 +52,7 @@ public class B2Bucket {
                     List<B2CorsRule> corsRules,
                     List<B2LifecycleRule> lifecycleRules,
                     Set<String> options,
-                    B2BucketObjectLockConfiguration defaultObjectLockConfiguration,
+                    B2BucketFileLockConfiguration defaultFileLockConfiguration,
                     int revision) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -62,7 +62,7 @@ public class B2Bucket {
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
         this.options = options;
-        this.defaultObjectLockConfiguration = defaultObjectLockConfiguration;
+        this.defaultFileLockConfiguration = defaultFileLockConfiguration;
         this.revision = revision;
     }
 
@@ -102,7 +102,7 @@ public class B2Bucket {
         return revision;
     }
 
-    public B2BucketObjectLockConfiguration getDefaultObjectLockConfiguration() { return defaultObjectLockConfiguration; }
+    public B2BucketFileLockConfiguration getDefaultFileLockConfiguration() { return defaultFileLockConfiguration; }
 
     @Override
     public String toString() {
@@ -114,7 +114,7 @@ public class B2Bucket {
                 (corsRules == null ? 0 : corsRules.size()) + " corsRules," +
                 (lifecycleRules == null ? 0 : lifecycleRules.size()) + " lifecycleRules," +
                 ((options == null || options.isEmpty()) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
-                (defaultObjectLockConfiguration == null ? "null" : defaultObjectLockConfiguration.toString()) + "," +
+                (defaultFileLockConfiguration == null ? "null" : defaultFileLockConfiguration.toString()) + "," +
                 "v" + revision +
                 ')';
     }
@@ -133,7 +133,7 @@ public class B2Bucket {
                 Objects.equals(getCorsRules(), b2Bucket.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules()) &&
                 Objects.equals(getOptions(), b2Bucket.getOptions()) &&
-                Objects.equals(getDefaultObjectLockConfiguration(), b2Bucket.getDefaultObjectLockConfiguration());
+                Objects.equals(getDefaultFileLockConfiguration(), b2Bucket.getDefaultFileLockConfiguration());
     }
 
     @Override
@@ -148,6 +148,6 @@ public class B2Bucket {
                 getLifecycleRules(),
                 getOptions(),
                 getRevision(),
-                getDefaultObjectLockConfiguration());
+                getDefaultFileLockConfiguration());
     }
 }

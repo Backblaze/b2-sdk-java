@@ -435,8 +435,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "          \"maxAgeSeconds\": 0\n" +
                 "        }\n" +
                 "      ],\n" +
-                "      \"lifecycleRules\": null,\n" +
-                "      \"objectLockEnabled\": false\n" +
+                "      \"fileLockEnabled\": false,\n" +
+                "      \"lifecycleRules\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2Bucket\n"
@@ -972,7 +972,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "          \"maxAgeSeconds\": 0\n" +
                 "        }\n" +
                 "      ],\n" +
-                "      \"defaultObjectLockConfiguration\": null,\n" +
+                "      \"defaultFileLockConfiguration\": null,\n" +
                 "      \"ifRevisionIs\": 1,\n" +
                 "      \"lifecycleRules\": null\n" +
                 "    }\n" +

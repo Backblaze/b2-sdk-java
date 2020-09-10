@@ -8,44 +8,44 @@ import com.backblaze.b2.json.B2Json;
 
 import java.util.Objects;
 
-public class B2BucketObjectLockConfiguration {
+public class B2BucketFileLockConfiguration {
 
     @B2Json.required
     private final String status;
 
     @B2Json.optional
-    private final B2BucketObjectLockPeriod period;
+    private final B2BucketFileLockPeriod period;
 
     @B2Json.optional
     private final String mode;
 
     @B2Json.constructor(params = "status, period, mode")
-    public B2BucketObjectLockConfiguration(String status,
-                                           B2BucketObjectLockPeriod period,
-                                           String mode) {
+    public B2BucketFileLockConfiguration(String status,
+                                         B2BucketFileLockPeriod period,
+                                         String mode) {
         this.status = status;
         this.period = period;
         this.mode = mode;
     }
 
-    public B2BucketObjectLockConfiguration(String status,
-                                           int duration,
-                                           String unit,
-                                           String mode) {
+    public B2BucketFileLockConfiguration(String status,
+                                         int duration,
+                                         String unit,
+                                         String mode) {
         this.status = status;
-        this.period = new B2BucketObjectLockPeriod(duration, unit);
+        this.period = new B2BucketFileLockPeriod(duration, unit);
         this.mode = mode;
     }
 
-    public B2BucketObjectLockConfiguration(boolean isObjectLockEnabled) {
-        this.status = isObjectLockEnabled ? B2ObjectLockStatus.ENABLED : B2ObjectLockStatus.DISABLED;
+    public B2BucketFileLockConfiguration(boolean isFileLockEnabled) {
+        this.status = isFileLockEnabled ? B2FileLockStatus.ENABLED : B2FileLockStatus.DISABLED;
         this.period = null;
         this.mode = null;
     }
 
     public String getStatus() { return status; }
 
-    public B2BucketObjectLockPeriod getPeriod() { return period; }
+    public B2BucketFileLockPeriod getPeriod() { return period; }
 
     public String getMode() {
         return mode;
@@ -66,7 +66,7 @@ public class B2BucketObjectLockConfiguration {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        B2BucketObjectLockConfiguration lockConfiguration = (B2BucketObjectLockConfiguration) o;
+        B2BucketFileLockConfiguration lockConfiguration = (B2BucketFileLockConfiguration) o;
         return Objects.equals(this.status, lockConfiguration.status) &&
                 Objects.equals(this.mode, lockConfiguration.mode) &&
                 Objects.equals(this.period, lockConfiguration.period);

@@ -8,7 +8,7 @@ package com.backblaze.b2.client.structures;
  * B2ObjectLocPeriodUnit provides constants for a bucket's default retention period
  */
 
-public interface B2ObjectLockPeriodUnit {
+public interface B2FileLockPeriodUnit {
 
     String DAYS = "days";
     String YEARS = "years";

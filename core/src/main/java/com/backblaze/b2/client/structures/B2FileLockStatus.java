@@ -5,17 +5,17 @@
 package com.backblaze.b2.client.structures;
 
 /**
- * B2ObjectLockStatus provides constants for a bucket's default retention status
+ * B2FileLockStatus provides constants for a bucket's default retention status
  */
 @SuppressWarnings("unused")
-public interface B2ObjectLockStatus {
+public interface B2FileLockStatus {
     /**
-     * Object locking is enabled/set and the requester has permissions to read the status
+     * File locking is enabled/set and the requester has permissions to read the status
      */
     String ENABLED = "enabled";
 
     /**
-     * Object locking is disabled/not-set and the requester has permissions to read the status
+     * File locking is disabled/not-set and the requester has permissions to read the status
      */
     String DISABLED = "disabled";
 
