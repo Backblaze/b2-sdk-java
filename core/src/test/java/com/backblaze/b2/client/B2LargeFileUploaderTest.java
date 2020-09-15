@@ -224,7 +224,9 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "upload",
-                123L);
+                123L,
+                null,
+                null);
 
         recordingListener.setExpected(); // no progress because threw before starting uploads.
 
@@ -329,7 +331,9 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null, // md5
                 B2Collections.mapOf(),
                 "action",
-                1234
+                1234,
+                null,
+                null
         );
 
         thrown.expect(B2LocalException.class);
@@ -351,7 +355,9 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null, // md5 of the file
                 B2Collections.mapOf(B2Headers.LARGE_FILE_SHA1_INFO_NAME, makeSha1(1)),
                 "action",
-                1234
+                1234,
+                null,
+                null
         );
 
         thrown.expect(B2LocalException.class);
@@ -373,7 +379,9 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "action",
-                1234
+                1234,
+                null,
+                null
         );
 
         thrown.expect(B2LocalException.class);
@@ -395,7 +403,9 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "action",
-                1234
+                1234,
+                null,
+                null
         );
 
         // shouldn't throw.  :)
@@ -417,7 +427,9 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "action",
-                1234
+                1234,
+                null,
+                null
         );
 
         thrown.expect(B2LocalException.class);
@@ -550,7 +562,9 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "upload",
-                B2Clock.get().wallClockMillis());
+                B2Clock.get().wallClockMillis(),
+                null,
+                null);
 
 
         // arrange to answer get_upload_part_url (which will be called several times, but it's ok to reuse the same value since it's all mocked!)

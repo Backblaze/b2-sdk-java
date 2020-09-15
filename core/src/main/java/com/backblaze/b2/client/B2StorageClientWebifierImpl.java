@@ -30,6 +30,7 @@ import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileLock;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
@@ -496,7 +497,6 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         B2Headers headers = webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(),
                 request.getFileName()), makeHeaders(accountAuth));
 
-
         // b2_download_file_by_name promises most of these will be present, except as noted below,
         return new B2FileVersion(
                 headers.getValueOrNull(FILE_ID),
@@ -507,7 +507,9 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 headers.getContentMd5OrNull(),    // might be null.
                 headers.getB2FileInfo(),           // might be empty.
                 "upload",
-                headers.getUploadTimestampOrNull()
+                headers.getUploadTimestampOrNull(),
+                B2FileLock.getFileLockFromHeadersOrNull(headers), // might be null.
+                headers.getLegalHoldStatusOrNull()  // might be null.
         );
     }
 

@@ -38,7 +38,7 @@ public class B2BucketFileLockConfiguration {
     }
 
     public B2BucketFileLockConfiguration(boolean isFileLockEnabled) {
-        this.status = isFileLockEnabled ? B2FileLockStatus.ENABLED : B2FileLockStatus.DISABLED;
+        this.status = isFileLockEnabled ? B2BucketFileLockStatus.ENABLED : B2BucketFileLockStatus.DISABLED;
         this.period = null;
         this.mode = null;
     }

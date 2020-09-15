@@ -111,7 +111,9 @@ public class B2TestHelpers {
                 SAMPLE_MD5,
                 B2Collections.mapOf(),
                 "upload",
-                B2Clock.get().wallClockMillis());
+                B2Clock.get().wallClockMillis(),
+                null,
+                null);
     }
 
     public static B2Part makePart(int i) {

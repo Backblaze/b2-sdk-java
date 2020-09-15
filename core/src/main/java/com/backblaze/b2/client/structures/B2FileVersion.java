@@ -43,9 +43,13 @@ public class B2FileVersion {
     private final String action;
     @B2Json.required
     private final long uploadTimestamp;
+    @B2Json.optional
+    private final B2FileLock fileLock;
+    @B2Json.optional
+    private final String legalHoldStatus;
 
     @B2Json.constructor(params = "fileId,fileName,contentLength,contentType," +
-            "contentSha1,contentMd5,fileInfo,action,uploadTimestamp")
+            "contentSha1,contentMd5,fileInfo,action,uploadTimestamp,fileLock,legalHoldStatus")
     public B2FileVersion(String fileId,
                          String fileName,
                          long contentLength,
@@ -54,7 +58,9 @@ public class B2FileVersion {
                          String contentMd5,
                          Map<String, String> fileInfo,
                          String action,
-                         long uploadTimestamp) {
+                         long uploadTimestamp,
+                         B2FileLock fileLock,
+                         String legalHoldStatus) {
         this.fileId = fileId;
         this.fileName = fileName;
         this.contentLength = contentLength;
@@ -64,6 +70,8 @@ public class B2FileVersion {
         this.fileInfo = fileInfo;
         this.action = action;
         this.uploadTimestamp = uploadTimestamp;
+        this.fileLock = fileLock;
+        this.legalHoldStatus = legalHoldStatus;
     }
 
     public String getFileId() {
@@ -106,6 +114,10 @@ public class B2FileVersion {
         return uploadTimestamp;
     }
 
+    public B2FileLock getFileLock() { return fileLock; }
+
+    public String getLegalHoldStatus() { return legalHoldStatus; }
+
     public boolean isUpload() {
         return UPLOAD_ACTION.equals(action);
     }
@@ -125,15 +137,17 @@ public class B2FileVersion {
     @Override
     public String toString() {
         return "B2FileVersion{" +
-                "fileId='" + fileId + '\'' +
-                ", contentLength=" + contentLength +
-                ", contentType='" + contentType + '\'' +
-                ", contentSha1='" + contentSha1 + '\'' +
-                ", contentMd5='" + contentMd5 + '\'' +
-                ", action='" + action + '\'' +
-                ", uploadTimestamp=" + uploadTimestamp +
-                ", fileInfo=[" + fileInfo.size() + "]" +
-                ", fileName='" + fileName + '\'' +
+                "fileId='" + fileId + "', " +
+                "contentLength=" + contentLength + ", " +
+                "contentType='" + contentType + "', " +
+                "contentSha1='" + contentSha1 + "', " +
+                "contentMd5='" + contentMd5 + "', " +
+                "action='" + action + "', " +
+                "uploadTimestamp=" + uploadTimestamp + ", " +
+                "fileInfo=[" + (fileInfo != null ? fileInfo.size() : "") + "], " +
+                "fileName='" + fileName + "', " +
+                "fileLock='" + fileLock + "', " +
+                "legalHoldStatus='" + legalHoldStatus + "'" +
                 '}';
     }
 
@@ -150,11 +164,25 @@ public class B2FileVersion {
                 Objects.equals(getContentSha1(), that.getContentSha1()) &&
                 Objects.equals(getContentMd5(), that.getContentMd5()) &&
                 Objects.equals(getFileInfo(), that.getFileInfo()) &&
-                Objects.equals(getAction(), that.getAction());
+                Objects.equals(getAction(), that.getAction()) &&
+                Objects.equals(getFileLock(), that.getFileLock()) &&
+                Objects.equals(getLegalHoldStatus(), that.getLegalHoldStatus());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getFileId(), getFileName(), getContentLength(), getContentType(), getContentSha1(), getContentMd5(), getFileInfo(), getAction(), getUploadTimestamp());
+        return Objects.hash(
+                getFileId(),
+                getFileName(),
+                getContentLength(),
+                getContentType(),
+                getContentSha1(),
+                getContentMd5(),
+                getFileInfo(),
+                getAction(),
+                getUploadTimestamp(),
+                getFileLock(),
+                getLegalHoldStatus()
+        );
     }
 }

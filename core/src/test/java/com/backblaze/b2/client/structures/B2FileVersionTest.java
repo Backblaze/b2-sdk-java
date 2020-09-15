@@ -21,7 +21,7 @@ import static org.junit.Assert.assertNotEquals;
 public class B2FileVersionTest extends B2BaseTest {
 
     @Test
-    public void test() {
+    public void testToString() {
         final B2FileVersion one = make(1);
         final B2FileVersion two = make(2);
 
@@ -29,11 +29,45 @@ public class B2FileVersionTest extends B2BaseTest {
         assertEquals(one, one);
         assertEquals(one, make(1));
 
-        assertEquals("B2FileVersion{fileId='" + fileId(1) + "', contentLength=1000, contentType='text/plain', contentSha1='" + B2TestHelpers.SAMPLE_SHA1 + "', contentMd5='" + B2TestHelpers.SAMPLE_MD5 + "', action='upload', uploadTimestamp=1, fileInfo=[1], fileName='" + fileName(1) + "'}", one.toString());
+        assertEquals(
+                "B2FileVersion{fileId='" + fileId(1) + "', " +
+                        "contentLength=1000, contentType='text/plain', contentSha1='" + B2TestHelpers.SAMPLE_SHA1 + "', " +
+                        "contentMd5='" + B2TestHelpers.SAMPLE_MD5 + "', " +
+                        "action='upload', uploadTimestamp=1, fileInfo=[1], fileName='" + fileName(1) + "', " +
+                        "fileLock='B2FileLock{status='on', mode=governance, retainUntilTimestamp=123456}" + "', " +
+                        "legalHoldStatus='on'}",
+                one.toString());
 
         // just for code coverage.
         //noinspection ResultOfMethodCallIgnored
         one.hashCode();
+    }
+
+    @Test
+    public void testToStringNull() {
+
+        final B2FileVersion one = new B2FileVersion(
+                null,
+                null,
+                0L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                0L,
+                null,
+                null
+        );
+
+        assertEquals(
+                "B2FileVersion{fileId='null', " +
+                        "contentLength=0, contentType='null', contentSha1='null', " +
+                        "contentMd5='null', " +
+                        "action='null', uploadTimestamp=0, fileInfo=[], fileName='null', " +
+                        "fileLock='null', " +
+                        "legalHoldStatus='null'}",
+                one.toString());
     }
 
     @Test
@@ -57,6 +91,31 @@ public class B2FileVersionTest extends B2BaseTest {
         );
     }
 
+    @Test
+    public void testDefaultJson() {
+        final String jsonString = "{\n" +
+                "   \"fileName\": \"file.txt\",\n" +
+                "   \"uploadTimestamp\": 12345\n" +
+                "}";
+        final B2FileVersion converted = B2Json.fromJsonOrThrowRuntime(
+                jsonString,
+                B2FileVersion.class);
+        final B2FileVersion defaultVersion = new B2FileVersion(
+                null,
+                "file.txt",
+                0L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                12345L,
+                null,
+                null);
+        assertEquals(defaultVersion, converted);
+    }
+
+
     private void checkAction(String action, boolean expectUpload, boolean expectHide, boolean expectStart, boolean expectFolder) {
         B2FileVersion fileVersion =
                 new B2FileVersion(
@@ -68,7 +127,9 @@ public class B2FileVersionTest extends B2BaseTest {
                         "contentMd5",
                         new HashMap<>(),
                         action,
-                        0L
+                        0L,
+                        null,
+                        null
                 );
         assertEquals(expectUpload, fileVersion.isUpload());
         assertEquals(expectHide, fileVersion.isHide());
@@ -86,6 +147,8 @@ public class B2FileVersionTest extends B2BaseTest {
                 B2TestHelpers.SAMPLE_MD5,
                 B2Collections.mapOf("key" + i, "value" + i),
                 "upload",
-                i);
+                i,
+                new B2FileLock("on", "governance", 123456L),
+                "on");
     }
 }

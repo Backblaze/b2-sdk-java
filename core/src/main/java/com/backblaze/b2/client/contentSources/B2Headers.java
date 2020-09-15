@@ -57,6 +57,12 @@ public interface B2Headers {
     String USER_AGENT = "User-Agent";
     String EXPECT = "Expect";
 
+    // some headers for File Lock
+    String FILE_LOCK_RETENTION_STATUS = "X-Bz-File-Lock-Retention-Status";
+    String FILE_LOCK_RETENTION_MODE = "X-Bz-File-Lock-Retention-Mode";
+    String FILE_LOCK_RETENTION_RETAIN_UNTIL_TIMESTAMP = "X-Bz-File-Lock-Retention-Retain-Until-Timestamp";
+    String FILE_LOCK_LEGAL_HOLD_STATUS = "X-Bz-File-Lock-Legal-Hold-Status";
+
     /**
      * @return a collection with the names of all the headers in this object.  never null.
      */
@@ -215,4 +221,42 @@ public interface B2Headers {
             return null;
         }
     }
+
+    /**
+     * @return the value of the `X-Bz-File-Lock-Retention-Status` header
+     * @apiNote We return null here because this is a completely optional, non-standard header.
+     */
+    default String getFileLockRetentionStatusOrNull() { return getValueOrNull(FILE_LOCK_RETENTION_STATUS); }
+
+    /**
+     * @return the value of the `X-Bz-File-Lock-Retention-Mode` header
+     * @apiNote We return null here because this is a completely optional, non-standard header.
+     */
+    default String getFileLockRetentionModeOrNull() { return getValueOrNull(FILE_LOCK_RETENTION_MODE); }
+
+    /**
+     * @return the value of the `X-Bz-File-Lock-Retain-Until-Timestamp` header
+     * @throws IllegalStateException if the header can't be parsed as a long.
+     * @apiNote We return null here because this is a completely optional, non-standard header.
+     */
+    default Long getFileLockRetentionRetainUntilTimestampOrNull() {
+        final String str = getValueOrNull(B2Headers.FILE_LOCK_RETENTION_RETAIN_UNTIL_TIMESTAMP);
+        if (str == null) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(str);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException(
+                    "can't parse " + B2Headers.FILE_LOCK_RETENTION_RETAIN_UNTIL_TIMESTAMP +
+                    "'" + str + "' as a long: " + e, e);
+        }
+    }
+
+    /**
+     * @return the value of the `X-Bz-File-Lock-Legal-Hold-Status` header
+     * @apiNote We return null here because this is a completely optional, non-standard header.
+     */
+    default String getLegalHoldStatusOrNull() { return getValueOrNull(FILE_LOCK_LEGAL_HOLD_STATUS); }
 }
