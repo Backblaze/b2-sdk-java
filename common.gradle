@@ -32,7 +32,8 @@ ext.readVersion = { ->
     return version
 }
 
-sourceCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 group = "com.backblaze.b2"
 version = readVersion()
 
