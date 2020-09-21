@@ -78,6 +78,7 @@ public abstract class B2ContentWriter implements B2ContentSink {
 
         // save the content!
         OutputStream out = null;
+        boolean failed = true;
         try {
 
             // copy to the destination.
@@ -91,8 +92,14 @@ public abstract class B2ContentWriter implements B2ContentSink {
             // if possible and requested, verify that the right data made it to the destination.
             maybeVerifySha1FromDestination(expectedSha1OrNull);
 
+            failed = false;
+            succeeded();
         } finally {
             closeQuietly(out);
+
+            if (failed) {
+                failed();
+            }
         }
     }
 
@@ -205,6 +212,25 @@ public abstract class B2ContentWriter implements B2ContentSink {
      * @throws IOException if there's any trouble
      */
     protected abstract InputStream createDestinationInputStream() throws IOException;
+
+    /**
+     * Called when the download succeeded and, to the extent we're able to verify it, the SHA1 matched.
+     *
+     * Called at most once for each time that createDestinationOutputStream() is called.
+     */
+    protected void succeeded() {
+    }
+
+    /**
+     * Called after we've created an output stream, but then the download failed for some reason.
+     * That reason may include errors with the download, or, to the extent we can verify it, an
+     * error with the SHA1 of the written content.
+     *
+     * Called at most once for each time that createDestinationOutputStream() is called.  Called before
+     * an attempt to retry the download (if any).
+     */
+    protected void failed() {
+    }
 
     /**
      * @return the headers from the server, if any.
