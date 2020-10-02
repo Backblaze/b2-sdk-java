@@ -34,6 +34,12 @@ fi
 
 DEST=builds/$ZIP_TO_UPLOAD
 
+if test -z "$B2_UPLOAD_BUCKET"; then
+    # no B2_UPLOAD_BUCKET was defined, so use the default
+    B2_UPLOAD_BUCKET=the-b2-sdk-java
+    echo "B2_UPLOAD_BUCKET not defined, using default bucket $B2_UPLOAD_BUCKET"
+fi
+
 echo authorizing account
 b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
 status=$?
@@ -42,9 +48,8 @@ if test $status != "0"; then
     exit $status
 fi
 
-
-echo uploading $SRC
-b2 upload_file --contentType application/octet the-b2-sdk-java $SRC $DEST
+echo uploading $SRC to bucket: $B2_UPLOAD_BUCKET
+b2 upload_file --contentType application/octet $B2_UPLOAD_BUCKET $SRC $DEST
 status=$?
 if test $status != "0"; then
     echo "failed to upload $SRC to b2"
