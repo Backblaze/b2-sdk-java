@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.webapihttpclient.android.http_client;
 
+import android.util.Log;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.util.B2Preconditions;
 
@@ -25,9 +26,11 @@ import javax.net.ssl.HttpsURLConnection;
  * We really do *not* recommend that in production.
  */
 public class HttpClientFactoryImpl implements HttpClientFactory {
-    private HttpsURLConnection connection;
+    private URLConnection connection;
     private boolean supportInsecureHttp;
     private int connectTimeoutSeconds;
+    private URL url;
+    private final String TAG = "";
 
     private HttpClientFactoryImpl(boolean supportInsecureHttp, int connectTimeoutSeconds) {
         this.supportInsecureHttp = supportInsecureHttp;
@@ -44,14 +47,14 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
     }
 
     /*
-    *
+    * Returns new HTTPClient instance
     * */
     @Override
     public URLConnection create() throws B2Exception, IOException {
         try {
-            final URL url = new URL();
+            final URL url = new URL(this.url);
             if (this.supportInsecureHttp) {
-                connection = (URLConnection) url.openConnection();
+                connection = (HttpsURLConnection) url.openConnection();
             } else {
                 connection = (HttpURLConnection) url.openConnection();
             }
@@ -69,7 +72,9 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
             connection.disconnect();
         } catch (Error e) {
             // restore the interrupt because we're not acting on it here.
-
+            if (e.getMessage() != null) {
+                Log.e(TAG, e.getMessage());
+            }
         }
     }
 

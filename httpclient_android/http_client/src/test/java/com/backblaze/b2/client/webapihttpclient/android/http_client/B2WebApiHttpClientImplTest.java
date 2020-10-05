@@ -12,49 +12,15 @@ import static org.junit.Assert.*;
 public class B2WebApiHttpClientImplTest {
 
     @Test
+    public void B2WebApiHttpClientImpl_build() {
+        final B2WebApiHttpClientImpl factory = B2WebApiHttpClientImpl.build();
+        assertNotNull(factory);
+    }
+
+    @Test
     public void B2WebApiHttpClientImpl_builder() {
-        assertEquals(4, 2 + 2);
-    }
-
-    @Test
-    public void B2WebApiHttpClientImpl_postJsonReturnJson() {
-        assertEquals(4, 2 + 2);
-    }
-
-    @Test
-    public void B2WebApiHttpClientImpl_postDataReturnJson() {
-        assertEquals(4, 2 + 2);
-    }
-
-    @Test
-    public void B2WebApiHttpClientImpl_getContent() {
-        assertEquals(4, 2 + 2);
-    }
-
-    @Test
-    public void B2WebApiHttpClientImpl_head() {
-        assertEquals(4, 2 + 2);
-    }
-
-    @Test
-    public void B2WebApiHttpClientImpl_close() {
-        assertEquals(4, 2 + 2);
-    }
-
-
-    @Test
-    public void B2WebApiHttpClientImpl_Builder() {
-        assertEquals(4, 2 + 2);
-    }
-
-    @Test
-    public void B2WebApiHttpClientImpl_Builder() {
-        assertEquals(4, 2 + 2);
-    }
-
-    @Test
-    public void B2WebApiHttpClientImpl_Builder() {
-        assertEquals(4, 2 + 2);
+        final B2WebApiHttpClientImpl.Builder builder = B2WebApiHttpClientImpl.builder();
+        assertNotNull(builder);
     }
 
 }

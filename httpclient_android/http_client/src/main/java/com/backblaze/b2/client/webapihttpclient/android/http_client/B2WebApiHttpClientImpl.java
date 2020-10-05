@@ -14,14 +14,23 @@ import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.json.B2JsonOptions;
 import com.backblaze.b2.util.B2Preconditions;
+
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
+import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.backblaze.b2.util.B2IoUtils.closeQuietly;
 
@@ -79,18 +88,18 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                            B2Headers headersOrNull,
                            B2ContentSink handler) throws B2Exception {
 
-        HttpGet get = new HttpGet(url);
+        final URL get = new URL(url).openConnection();
+
         if (headersOrNull != null) {
-            get.setHeaders(makeHeaders(headersOrNull));
+            makeHeaders(headersOrNull).forEach((name, value) -> get.setRequestProperty(name, value));
         }
 
-        // todo: urlconnection resposne
-        try (CloseableHttpResponse response = clientFactory.create().execute(get)) {
-            int statusCode = response.getStatusLine().getStatusCode();
-            HttpEntity responseEntity = response.getEntity();
+        URLConnection response = clientFactory.create();
+        try (AutoCloseable conc = () -> response.disconnect()) {
+            int statusCode = response.getResponseCode();
             if (200 <= statusCode && statusCode < 300) {
-                InputStream content = responseEntity.getContent();
-                handler.readContent(makeHeaders(response.getAllHeaders()), content);
+                InputStream content = response.getInputStream();
+                handler.readContent(makeHeaders(response.getHeaderFields()), content);
 
                 // The handler reads the entire contents, but may not make the
                 // additional call to read that hits EOF and returns -1.  That
@@ -103,8 +112,14 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                 //    log.warn("handler did not read full response from " + url);
                 //}
             } else {
-                String responseText = EntityUtils.toString(responseEntity, UTF8);
-                throw extractExceptionFromErrorResponse(response, responseText);
+                BufferedReader input = new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder res = new StringBuilder();
+                String line;
+                while ((line = input.readLine()) != null) {
+                    res.append(line);
+                }
+                input.close();
+                throw extractExceptionFromErrorResponse(response, response.toString());
             }
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
@@ -151,16 +166,6 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     @Override
     public void close() {
         clientFactory.close();
-    }
-
-
-    // URLConnection has no explicit header datatype
-    private B2Headers makeHeaders(String[] allHeaders) {
-        final B2HeadersImpl.Builder builder = B2HeadersImpl.builder();
-        for (Header header : allHeaders) {
-            builder.set(header.getName(), header.getValue());
-        }
-        return builder.build();
     }
 
     private String postJsonAndReturnString(String url,
@@ -235,11 +240,14 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         if (e instanceof SocketException) {
             return new B2NetworkException("socket_exception", null, "socket exception talking to " + url, e);
         }
+        if (e instanceof MalformedURLException) {
+            return new B2ConnectFailedException("malformed_url", null, "malformed for " + url, e);
+        }
 
         return new B2NetworkException("io_exception", null, e + " talking to " + url, e);
     }
 
-    private B2Exception extractExceptionFromErrorResponse(CloseableHttpResponse response,
+    private B2Exception extractExceptionFromErrorResponse(Class<?> response,
                                                           String responseText) {
         // TODO
         // URLConnection uses this
@@ -279,16 +287,17 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         return null;
     }
 
-    private Header[] makeHeaders(B2Headers headersOrNull) {
+    private HashMap<String, String> makeHeaders(B2Headers headersOrNull) {
         if (headersOrNull == null) {
             return null;
         }
         final int headerCount = headersOrNull.getNames().size();
-        final Header[] vHeaders = new Header[headerCount];
+
+        final HashMap<String, String> vHeaders = new HashMap<>();
 
         int iHeader = 0;
         for (String name : headersOrNull.getNames()) {
-            vHeaders[iHeader] = new BasicHeader(name, headersOrNull.getValueOrNull(name));
+            vHeaders.set(name, headersOrNull.getValueOrNull(name));
             iHeader++;
         }
 

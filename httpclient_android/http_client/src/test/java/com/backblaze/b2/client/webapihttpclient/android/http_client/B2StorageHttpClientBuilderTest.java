@@ -21,19 +21,4 @@ public class B2StorageHttpClientBuilderTest {
         assertEquals(4, 2 + 2);
     }
 
-    @Test
-    public void B2StorageHttpClientBuilder_setHttpClientFactoryr() {
-        assertEquals(4, 2 + 2);
-    }
-
-    @Test
-    public void B2StorageHttpClientBuilder_setWebApiClient() {
-        assertEquals(4, 2 + 2);
-    }
-
-    @Test
-    public void B2StorageHttpClientBuilder_setRetryPolicySupplier() {
-        assertEquals(4, 2 + 2);
-    }
-
 }
