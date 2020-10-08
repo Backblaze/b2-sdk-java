@@ -38,6 +38,7 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
     }
 
     @SuppressWarnings("WeakerAccess")
+
     public static HttpClientFactoryImpl build() {
         return builder().build();
     }

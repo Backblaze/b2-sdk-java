@@ -27,10 +27,9 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import static com.backblaze.b2.util.B2IoUtils.closeQuietly;
 
@@ -241,7 +240,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
             return new B2NetworkException("socket_exception", null, "socket exception talking to " + url, e);
         }
         if (e instanceof MalformedURLException) {
-            return new B2ConnectFailedException("malformed_url", null, "malformed for " + url, e);
+            return new B2NotFoundException("malformed_url", null, "malformed for " + url, e);
         }
 
         return new B2NetworkException("io_exception", null, e + " talking to " + url, e);
@@ -274,9 +273,9 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
      * @param response the http response.
      * @return the delay-seconds from a Retry-After header, if any.  otherwise, null.
      */
-    private Integer getRetryAfterSecondsOrNull(CloseableHttpResponse response) {
+    private Integer getRetryAfterSecondsOrNull(URLConnection response) {
         // https://tools.ietf.org/html/rfc7231#section-7.1.3
-        for (Header header : response.getHeaders(B2Headers.RETRY_AFTER)) {
+        for (String header : response.getHeaderFields().get(B2Headers.RETRY_AFTER)) {
             try {
                 return Integer.parseInt(header.getValue(), 10);
             } catch (IllegalArgumentException e) {
