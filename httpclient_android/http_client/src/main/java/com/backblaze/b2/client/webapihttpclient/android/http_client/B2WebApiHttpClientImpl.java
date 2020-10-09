@@ -56,7 +56,11 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                                                           B2Headers headersOrNull,
                                                           Object request,
                                                           Class<ResponseType> responseClass) throws B2Exception {
+
+        // response string
         final String responseString = postJsonAndReturnString(url, headersOrNull, request);
+
+
         try {
             return bzJson.fromJson(responseString, responseClass, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
         } catch (B2JsonException e) {
@@ -87,7 +91,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                            B2Headers headersOrNull,
                            B2ContentSink handler) throws B2Exception {
 
-        final URL get = new URL(url).openConnection();
+        final URL get = new URL(url);
 
         if (headersOrNull != null) {
             makeHeaders(headersOrNull).forEach((name, value) -> get.setRequestProperty(name, value));
@@ -111,7 +115,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                 //    log.warn("handler did not read full response from " + url);
                 //}
             } else {
-                BufferedReader input = new BufferedReader(new InputStreamReader(inputStream));
+                BufferedReader input = new BufferedReader(new InputStreamReader(response));
                 StringBuilder res = new StringBuilder();
                 String line;
                 while ((line = input.readLine()) != null) {
@@ -136,9 +140,10 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     @Override
     public B2Headers head(String url, B2Headers headersOrNull)
             throws B2Exception {
-
+        // TODO: REMOVE
         CloseableHttpResponse response = null;
         try {
+            // TODO: REMOVE
             HttpHead head = new HttpHead(url);
             if (headersOrNull != null) {
                 head.setHeaders(makeHeaders(headersOrNull));
@@ -147,6 +152,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
             response = clientFactory.create().execute(head);
 
             int statusCode = response.getStatusLine().getStatusCode();
+            // TODO: REMOVE
             if (statusCode == HttpStatus.SC_OK) {
                 B2HeadersImpl.Builder builder = B2HeadersImpl.builder();
                 Arrays.stream(response.getAllHeaders()).forEach(header -> builder.set(header.getName(), header.getValue()));
@@ -170,6 +176,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     private String postJsonAndReturnString(String url,
                                            B2Headers headersOrNull,
                                            Object request) throws B2Exception {
+        // TODO: REMOVE
         // TODO: refactor
         ByteArrayEntity requestEntity = parseToByteArrayEntityUsingBzJson(request);
 
@@ -189,24 +196,17 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     private String postAndReturnString(String url, B2Headers headersOrNull, InputStream requestEntity)
             throws B2Exception {
 
-
-        // refactor
-        CloseableHttpResponse response = null;
         try {
-
-
-            HttpPost post = new HttpPost(url);
+            URL post = new URL(url);
             if (headersOrNull != null) {
-                post.setHeaders(makeHeaders(headersOrNull));
-
-
+                makeHeaders(headersOrNull).forEach((name, value) -> post.setRequestProperty(name, value));
             }
             if (requestEntity != null) {
+                // TODO: set body
                 post.setEntity(requestEntity);
             }
-
             response = clientFactory.create().execute(post);
-
+            // TODO: REMOVE
             HttpEntity responseEntity = response.getEntity();
             String responseText = EntityUtils.toString(responseEntity, "UTF-8");
 
@@ -310,6 +310,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
      * @param request the object to be json'ified.
      * @return a new ByteArrayEntity with the json representation of request in it.
      */
+    // TODO: REMOVE
     private static ByteArrayEntity parseToByteArrayEntityUsingBzJson(Object request) throws B2Exception {
         B2Preconditions.checkArgument(request != null);
 
@@ -317,6 +318,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
             B2Json bzJson = B2Json.get();
             String requestJson = bzJson.toJson(request);
             byte[] requestBytes = getUtf8Bytes(requestJson);
+            // TODO: REMOVE
             return new ByteArrayEntity(requestBytes);
         } catch (B2JsonException e) {
             //log.warn("Unable to serialize " + request.getClass() + " using B2Json, was passed in request for " + url, ex);
