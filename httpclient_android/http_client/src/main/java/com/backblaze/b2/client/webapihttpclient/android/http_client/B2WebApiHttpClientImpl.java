@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
@@ -29,7 +30,8 @@ import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import static com.backblaze.b2.util.B2IoUtils.closeQuietly;
 
@@ -57,9 +59,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                                                           Object request,
                                                           Class<ResponseType> responseClass) throws B2Exception {
 
-        // response string
         final String responseString = postJsonAndReturnString(url, headersOrNull, request);
-
 
         try {
             return bzJson.fromJson(responseString, responseClass, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
@@ -75,7 +75,6 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                                                           long contentLength,
                                                           Class<ResponseType> responseClass) throws B2Exception {
         try {
-            // TODO: URLConnection entities
             InputStream requestEntity = inputStream.setFixedLengthStreamingMode(contentLength);
 
             String responseJson = postAndReturnString(url, headersOrNull, requestEntity);
@@ -91,18 +90,22 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                            B2Headers headersOrNull,
                            B2ContentSink handler) throws B2Exception {
 
-        final URL get = new URL(url);
-
+        final URL clientUrl = new URL(url);
+        URLConnection client;
+        if (clientUrl.getProtocol().equals("https")) {
+            client = (HttpsURLConnection) clientUrl.openConnection();
+        } else {
+            client = (HttpURLConnection) clientUrl.openConnection();
+        }
         if (headersOrNull != null) {
             makeHeaders(headersOrNull).forEach((name, value) -> get.setRequestProperty(name, value));
         }
-
-        URLConnection response = clientFactory.create();
-        try (AutoCloseable conc = () -> response.disconnect()) {
-            int statusCode = response.getResponseCode();
+        client.setDoOutput(true);
+        try (AutoCloseable cxn = () -> client.disconnect()) {
+            int statusCode = client.getResponseCode();
             if (200 <= statusCode && statusCode < 300) {
-                InputStream content = response.getInputStream();
-                handler.readContent(makeHeaders(response.getHeaderFields()), content);
+                InputStream content = client.getInputStream();
+                handler.readContent(makeHeaders(client.getHeaderFields()), content);
 
                 // The handler reads the entire contents, but may not make the
                 // additional call to read that hits EOF and returns -1.  That
@@ -115,7 +118,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                 //    log.warn("handler did not read full response from " + url);
                 //}
             } else {
-                BufferedReader input = new BufferedReader(new InputStreamReader(response));
+                BufferedReader input = new BufferedReader(new InputStreamReader(client));
                 StringBuilder res = new StringBuilder();
                 String line;
                 while ((line = input.readLine()) != null) {
@@ -140,22 +143,24 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     @Override
     public B2Headers head(String url, B2Headers headersOrNull)
             throws B2Exception {
-        // TODO: REMOVE
-        CloseableHttpResponse response = null;
         try {
-            // TODO: REMOVE
-            HttpHead head = new HttpHead(url);
+            URL clientUrl = new URL(url);
+            URLConnection head;
+            if (clientUrl.getProtocol().equals("https")) {
+                 head = (HttpsURLConnection) clientUrl.openConnection();
+            } else {
+                head = (HttpURLConnection) clientUrl.openConnection();
+            }
             if (headersOrNull != null) {
-                head.setHeaders(makeHeaders(headersOrNull));
+                makeHeaders(headersOrNull).forEach((name, value) -> head.setRequestProperty(name, value));
             }
 
-            response = clientFactory.create().execute(head);
+            head.setDoOutput(true);
 
-            int statusCode = response.getStatusLine().getStatusCode();
-            // TODO: REMOVE
-            if (statusCode == HttpStatus.SC_OK) {
+            int statusCode = head.getResponseCode();
+            if (statusCode >= 200 && statusCode < 300) {
                 B2HeadersImpl.Builder builder = B2HeadersImpl.builder();
-                Arrays.stream(response.getAllHeaders()).forEach(header -> builder.set(header.getName(), header.getValue()));
+                Arrays.stream(head.getHeaderFields().entrySet().forEach(header -> builder.set(header.getName(), header.getValue())));
                 return builder.build();
             } else {
                 throw B2Exception.create(null, statusCode, null, "");
@@ -176,11 +181,8 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     private String postJsonAndReturnString(String url,
                                            B2Headers headersOrNull,
                                            Object request) throws B2Exception {
-        // TODO: REMOVE
-        // TODO: refactor
-        ByteArrayEntity requestEntity = parseToByteArrayEntityUsingBzJson(request);
-
-        return postAndReturnString(url, headersOrNull, requestEntity);
+        String requestString = parseToStringUsingBzJson(request);
+        return postAndReturnString(url, headersOrNull, requestString);
     }
 
     /**
@@ -193,25 +195,36 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
      * @return the body of the response.
      * @throws B2Exception if there's any trouble
      */
-    private String postAndReturnString(String url, B2Headers headersOrNull, InputStream requestEntity)
+    private String postAndReturnString(String url, B2Headers headersOrNull, String requestString)
             throws B2Exception {
 
         try {
-            URL post = new URL(url);
+            URLConnection post = new URL(url).openConnection();
             if (headersOrNull != null) {
                 makeHeaders(headersOrNull).forEach((name, value) -> post.setRequestProperty(name, value));
             }
-            if (requestEntity != null) {
-                // TODO: set body
-                post.setEntity(requestEntity);
+            if (requestString != null) {
+                post.setDoOutput(true);
+                try(OutputStream os = post.getOutputStream()) {
+                    os.write(requestString, 0, requestString.length);
+                } catch (Exception e) {
+                    //
+                } finally {
+                    os.close();
+                }
             }
-            response = clientFactory.create().execute(post);
-            // TODO: REMOVE
-            HttpEntity responseEntity = response.getEntity();
-            String responseText = EntityUtils.toString(responseEntity, "UTF-8");
 
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode == HttpStatus.SC_OK) {
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(post.getInputStream()))) {
+                String line;
+                StringBuilder responseText = new StringBuilder();
+
+                while ((line = in.readLine()) != null) {
+                    responseText.append(line);
+                }
+            }
+
+            int statusCode = post.getResponseCode();
+            if (statusCode >= 200 && statusCode < 300) {
                 return responseText;
             } else {
                 throw extractExceptionFromErrorResponse(response, responseText);
@@ -224,7 +237,6 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         }
     }
 
-    // TODO: add URLConnection errors
     private B2Exception translateToB2Exception(IOException e, String url) {
         if (e instanceof ConnectException) {
             // java.net base class for HttpHostConnectException.
@@ -248,11 +260,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
 
     private B2Exception extractExceptionFromErrorResponse(Class<?> response,
                                                           String responseText) {
-        // TODO
-        // URLConnection uses this
-        //  final int statusCode = connection.getResponseCode();
         final int statusCode = response.getResponseCode();;
-
         // Try B2 error structure
         try {
             B2ErrorStructure err = B2Json.get().fromJson(responseText, B2ErrorStructure.class);
@@ -310,16 +318,12 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
      * @param request the object to be json'ified.
      * @return a new ByteArrayEntity with the json representation of request in it.
      */
-    // TODO: REMOVE
-    private static ByteArrayEntity parseToByteArrayEntityUsingBzJson(Object request) throws B2Exception {
+    private static String parseToStringUsingBzJson(Object request) throws B2Exception {
         B2Preconditions.checkArgument(request != null);
 
         try {
             B2Json bzJson = B2Json.get();
-            String requestJson = bzJson.toJson(request);
-            byte[] requestBytes = getUtf8Bytes(requestJson);
-            // TODO: REMOVE
-            return new ByteArrayEntity(requestBytes);
+            return bzJson.toJson(request);
         } catch (B2JsonException e) {
             //log.warn("Unable to serialize " + request.getClass() + " using B2Json, was passed in request for " + url, ex);
             throw new B2LocalException("parsing_failed", "B2Json.toJson(" + request.getClass() + ") failed: " + e.getMessage(), e);

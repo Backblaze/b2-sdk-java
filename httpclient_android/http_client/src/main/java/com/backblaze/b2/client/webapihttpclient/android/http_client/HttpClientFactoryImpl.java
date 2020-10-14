@@ -10,6 +10,7 @@ import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import javax.net.ssl.HttpsURLConnection;
@@ -29,8 +30,8 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
     private URLConnection connection;
     private boolean supportInsecureHttp;
     private int connectTimeoutSeconds;
-    private URL url;
-    private final String TAG = "";
+    private String url;
+    private final String TAG = "HTTP_CLIENT";
 
     private HttpClientFactoryImpl(boolean supportInsecureHttp, int connectTimeoutSeconds) {
         this.supportInsecureHttp = supportInsecureHttp;
@@ -51,7 +52,7 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
     * Returns new HTTPClient instance
     * */
     @Override
-    public URLConnection create() throws B2Exception, IOException {
+    public URLConnection create() throws B2Exception, MalformedURLException {
         try {
             final URL url = new URL(this.url);
             if (this.supportInsecureHttp) {
