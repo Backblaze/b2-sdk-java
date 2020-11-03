@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
@@ -327,7 +328,7 @@ public class B2JsonHandlerMap {
             B2JsonTypeHandler<?> itemHandler = getUninitializedHandler(itemType);
             return new B2JsonEnumSetHandler(itemHandler);
         }
-        if (rawType.equals(Map.class) || rawType.equals(TreeMap.class)) {
+        if (rawType.equals(Map.class) || rawType.equals(SortedMap.class) || rawType.equals(TreeMap.class)) {
             Type keyType = parameterizedType.getActualTypeArguments()[0];
             Type valueType = parameterizedType.getActualTypeArguments()[1];
             B2JsonTypeHandler<?> keyHandler = getUninitializedHandler(keyType);

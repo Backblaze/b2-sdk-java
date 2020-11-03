@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -711,6 +712,34 @@ public class B2JsonTest extends B2BaseTest {
                         "  \"treeMap\": null\n" +
                         "}";
         checkDeserializeSerialize(json2, TreeMapHolder.class);
+    }
+
+    private static class SortedMapHolder {
+        @B2Json.optional
+        SortedMap<LocalDate, Integer> sortedMap;
+
+        @B2Json.constructor(params = "sortedMap")
+        public SortedMapHolder(SortedMap<LocalDate, Integer> sortedMap) {
+            this.sortedMap = sortedMap;
+        }
+    }
+
+    @Test
+    public void testSortedMap() throws IOException, B2JsonException {
+        String json1 =
+                "{\n" +
+                        "  \"sortedMap\": {\n" +
+                        "    \"20150101\": 37,\n" +
+                        "    \"20150207\": null\n" +
+                        "  }\n" +
+                        "}" ;
+        checkDeserializeSerialize(json1, SortedMapHolder.class);
+
+        String json2 =
+                "{\n" +
+                        "  \"sortedMap\": null\n" +
+                        "}";
+        checkDeserializeSerialize(json2, SortedMapHolder.class);
     }
 
 
