@@ -216,7 +216,8 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
         // arrange to throw when asked for the sha1.
         when(contentSource.getSha1OrNull()).thenThrow(new IOException("testing"));
 
-        final B2FileVersion version = new B2FileVersion(fileId(1),
+        final B2FileVersion version = new B2FileVersion(
+                fileId(1),
                 fileName(1),
                 contentSource.getContentLength(),
                 B2ContentTypes.B2_AUTO,
@@ -225,6 +226,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 B2Collections.mapOf(),
                 "upload",
                 123L,
+                null,
                 null,
                 null);
 
@@ -333,6 +335,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 "action",
                 1234,
                 null,
+                null,
                 null
         );
 
@@ -356,6 +359,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 B2Collections.mapOf(B2Headers.LARGE_FILE_SHA1_INFO_NAME, makeSha1(1)),
                 "action",
                 1234,
+                null,
                 null,
                 null
         );
@@ -381,6 +385,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 "action",
                 1234,
                 null,
+                null,
                 null
         );
 
@@ -405,6 +410,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 "action",
                 1234,
                 null,
+                null,
                 null
         );
 
@@ -428,6 +434,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 B2Collections.mapOf(),
                 "action",
                 1234,
+                null,
                 null,
                 null
         );
@@ -563,6 +570,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 B2Collections.mapOf(),
                 "upload",
                 B2Clock.get().wallClockMillis(),
+                null,
                 null,
                 null);
 

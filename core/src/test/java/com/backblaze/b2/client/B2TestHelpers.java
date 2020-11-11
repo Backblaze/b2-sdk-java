@@ -103,7 +103,8 @@ public class B2TestHelpers {
 
     public static B2FileVersion makeVersion(int iId,
                                             int iName) {
-        return new B2FileVersion(fileId(iId),
+        return new B2FileVersion(
+                fileId(iId),
                 fileName(iName),
                 iId * 1000,
                 B2ContentTypes.TEXT_PLAIN,
@@ -112,6 +113,7 @@ public class B2TestHelpers {
                 B2Collections.mapOf(),
                 "upload",
                 B2Clock.get().wallClockMillis(),
+                null,
                 null,
                 null);
     }

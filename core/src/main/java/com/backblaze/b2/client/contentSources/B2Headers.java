@@ -63,6 +63,12 @@ public interface B2Headers {
     String FILE_LOCK_RETENTION_RETAIN_UNTIL_TIMESTAMP = "X-Bz-File-Lock-Retention-Retain-Until-Timestamp";
     String FILE_LOCK_LEGAL_HOLD_STATUS = "X-Bz-File-Lock-Legal-Hold-Status";
 
+    // some headers for Server Side Encryption
+    String SERVER_SIDE_ENCRYPTION_HEADER = "X-Bz-Server-Side-Encryption";
+    String SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER = "X-Bz-Server-Side-Encryption-Customer-Algorithm";
+    String SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER = "X-Bz-Server-Side-Encryption-Customer-Key";
+    String SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER = "X-Bz-Server-Side-Encryption-Customer-Key-Md5";
+
     /**
      * @return a collection with the names of all the headers in this object.  never null.
      */
@@ -259,4 +265,16 @@ public interface B2Headers {
      * @apiNote We return null here because this is a completely optional, non-standard header.
      */
     default String getLegalHoldStatusOrNull() { return getValueOrNull(FILE_LOCK_LEGAL_HOLD_STATUS); }
+
+    /**
+     * @return the value of the `X-Bz-Server-Side-Encryption` header
+     * @apiNote We return null here because this is a completely optional, non-standard header.
+     */
+    default String getServerSideEncryptionOrNull() { return getValueOrNull(SERVER_SIDE_ENCRYPTION_HEADER); }
+
+    /**
+     * @return the value of the `X-Bz-Server-Side-Encryption-Customer-Algorithm` header
+     * @apiNote We return null here because this is a completely optional, non-standard header.
+     */
+    default String getCustomerServerSideEncryptionOrNull() { return getValueOrNull(SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER); }
 }

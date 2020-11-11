@@ -35,7 +35,7 @@ public class B2FileVersionTest extends B2BaseTest {
                         "contentMd5='" + B2TestHelpers.SAMPLE_MD5 + "', " +
                         "action='upload', uploadTimestamp=1, fileInfo=[1], fileName='" + fileName(1) + "', " +
                         "fileLock='B2FileLock{status='on', mode=governance, retainUntilTimestamp=123456}" + "', " +
-                        "legalHoldStatus='on'}",
+                        "legalHoldStatus='on', serverSideEncryption='null'}",
                 one.toString());
 
         // just for code coverage.
@@ -57,6 +57,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 null,
                 0L,
                 null,
+                null,
                 null
         );
 
@@ -66,7 +67,7 @@ public class B2FileVersionTest extends B2BaseTest {
                         "contentMd5='null', " +
                         "action='null', uploadTimestamp=0, fileInfo=[], fileName='null', " +
                         "fileLock='null', " +
-                        "legalHoldStatus='null'}",
+                        "legalHoldStatus='null', serverSideEncryption='null'}",
                 one.toString());
     }
 
@@ -111,10 +112,39 @@ public class B2FileVersionTest extends B2BaseTest {
                 null,
                 12345L,
                 null,
+                null,
                 null);
         assertEquals(defaultVersion, converted);
     }
 
+    @Test
+    public void testServerSideEncryption() {
+        final String jsonString = "{\n" +
+                "   \"fileName\": \"file.txt\",\n" +
+                "   \"serverSideEncryption\": {\n" +
+                "      \"algorithm\": \"AES-256\",\n" +
+                "      \"mode\": \"SSE-B2\"\n" +
+                "   },\n" +
+                "   \"uploadTimestamp\": 12345\n" +
+                "}";
+        final B2FileVersion converted = B2Json.fromJsonOrThrowRuntime(
+                jsonString,
+                B2FileVersion.class);
+        final B2FileVersion defaultVersion = new B2FileVersion(
+                null,
+                "file.txt",
+                0L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                12345L,
+                null,
+                null,
+                new B2ServerSideEncryption("SSE-B2", "AES-256"));
+        assertEquals(defaultVersion, converted);
+    }
 
     private void checkAction(String action, boolean expectUpload, boolean expectHide, boolean expectStart, boolean expectFolder) {
         B2FileVersion fileVersion =
@@ -128,6 +158,7 @@ public class B2FileVersionTest extends B2BaseTest {
                         new HashMap<>(),
                         action,
                         0L,
+                        null,
                         null,
                         null
                 );
@@ -149,6 +180,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 "upload",
                 i,
                 new B2FileLock("on", "governance", 123456L),
-                "on");
+                "on",
+                null);
     }
 }

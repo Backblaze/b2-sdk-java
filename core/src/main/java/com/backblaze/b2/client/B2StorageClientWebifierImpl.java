@@ -53,6 +53,7 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2OverrideableHeaders;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2ServerSideEncryption;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
@@ -509,7 +510,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 "upload",
                 headers.getUploadTimestampOrNull(),
                 B2FileLock.getFileLockFromHeadersOrNull(headers), // might be null.
-                headers.getLegalHoldStatusOrNull()  // might be null.
+                headers.getLegalHoldStatusOrNull(),  // might be null.
+                B2ServerSideEncryption.getEncryptionFromHeadersOrNull(headers) // might be null.
         );
     }
 
