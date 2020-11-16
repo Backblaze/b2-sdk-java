@@ -1,10 +1,8 @@
-// DONE
-
 /*
  * Copyright 2020, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
-package com.backblaze.b2.client.webapihttpclient.android.http_client;
+package com.backblaze.b2.client.webApiHttpClient.android.UrlConnection;
 
 import com.backblaze.b2.client.B2ClientConfig;
 import com.backblaze.b2.client.B2StorageClient;

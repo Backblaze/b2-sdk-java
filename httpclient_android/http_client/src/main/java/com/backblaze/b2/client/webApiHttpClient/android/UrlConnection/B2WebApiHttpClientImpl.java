@@ -1,8 +1,8 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2020, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
-package com.backblaze.b2.client.webapihttpclient.android.http_client;
+package com.backblaze.b2.client.webApiHttpClient.android.UrlConnection;
 
 import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.contentSources.B2Headers;
@@ -37,8 +37,6 @@ import static com.backblaze.b2.util.B2IoUtils.closeQuietly;
 
 public class B2WebApiHttpClientImpl implements B2WebApiClient {
     private final static String UTF8 = "UTF-8";
-
-    private final B2Json bzJson = B2Json.get();
     private final HttpClientFactory clientFactory;
 
     private B2WebApiHttpClientImpl(HttpClientFactory clientFactory) {
@@ -62,6 +60,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         final String responseString = postJsonAndReturnString(url, headersOrNull, request);
 
         try {
+            final B2Json bzJson = B2Json.get();
             return bzJson.fromJson(responseString, responseClass, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
         } catch (B2JsonException e) {
             throw new B2LocalException("parsing_failed", "can't convert response from json: " + e.getMessage(), e);
@@ -75,9 +74,8 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                                                           long contentLength,
                                                           Class<ResponseType> responseClass) throws B2Exception {
         try {
-            InputStream requestEntity = inputStream.setFixedLengthStreamingMode(contentLength);
-
-            String responseJson = postAndReturnString(url, headersOrNull, requestEntity);
+            final InputStream requestEntity = inputStream.setFixedLengthStreamingMode(contentLength);
+            final String responseJson = postAndReturnString(url, headersOrNull, requestEntity);
             return B2Json.get().fromJson(responseJson, responseClass, B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
         } catch (B2JsonException e) {
             throw new B2LocalException("parsing_failed", "can't convert response from json: " + e.getMessage(), e);
@@ -91,7 +89,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                            B2ContentSink handler) throws B2Exception {
 
         final URL clientUrl = new URL(url);
-        URLConnection client;
+        final URLConnection client;
         if (clientUrl.getProtocol().equals("https")) {
             client = (HttpsURLConnection) clientUrl.openConnection();
         } else {
@@ -102,9 +100,9 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         }
         client.setDoOutput(true);
         try (AutoCloseable cxn = () -> client.disconnect()) {
-            int statusCode = client.getResponseCode();
+            final int statusCode = client.getResponseCode();
             if (200 <= statusCode && statusCode < 300) {
-                InputStream content = client.getInputStream();
+                final InputStream content = client.getInputStream();
                 handler.readContent(makeHeaders(client.getHeaderFields()), content);
 
                 // The handler reads the entire contents, but may not make the
@@ -118,8 +116,8 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                 //    log.warn("handler did not read full response from " + url);
                 //}
             } else {
-                BufferedReader input = new BufferedReader(new InputStreamReader(client));
-                StringBuilder res = new StringBuilder();
+                final BufferedReader input = new BufferedReader(new InputStreamReader(client));
+                final StringBuilder res = new StringBuilder();
                 String line;
                 while ((line = input.readLine()) != null) {
                     res.append(line);
@@ -144,7 +142,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     public B2Headers head(String url, B2Headers headersOrNull)
             throws B2Exception {
         try {
-            URL clientUrl = new URL(url);
+            final URL clientUrl = new URL(url);
             URLConnection head;
             if (clientUrl.getProtocol().equals("https")) {
                  head = (HttpsURLConnection) clientUrl.openConnection();
@@ -159,7 +157,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
 
             int statusCode = head.getResponseCode();
             if (statusCode >= 200 && statusCode < 300) {
-                B2HeadersImpl.Builder builder = B2HeadersImpl.builder();
+                final B2HeadersImpl.Builder builder = B2HeadersImpl.builder();
                 Arrays.stream(head.getHeaderFields().entrySet().forEach(header -> builder.set(header.getName(), header.getValue())));
                 return builder.build();
             } else {
@@ -204,6 +202,8 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                 makeHeaders(headersOrNull).forEach((name, value) -> post.setRequestProperty(name, value));
             }
             if (requestString != null) {
+                // Sets the URLConnection client request to send
+                // https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html#setDoInput-boolean-
                 post.setDoOutput(true);
                 try(OutputStream os = post.getOutputStream()) {
                     os.write(requestString, 0, requestString.length);
@@ -216,14 +216,14 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
 
             try (BufferedReader in = new BufferedReader(new InputStreamReader(post.getInputStream()))) {
                 String line;
-                StringBuilder responseText = new StringBuilder();
+                final StringBuilder responseText = new StringBuilder();
 
                 while ((line = in.readLine()) != null) {
                     responseText.append(line);
                 }
             }
 
-            int statusCode = post.getResponseCode();
+            final int statusCode = post.getResponseCode();
             if (statusCode >= 200 && statusCode < 300) {
                 return responseText;
             } else {
@@ -263,7 +263,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         final int statusCode = response.getResponseCode();;
         // Try B2 error structure
         try {
-            B2ErrorStructure err = B2Json.get().fromJson(responseText, B2ErrorStructure.class);
+            final B2ErrorStructure err = B2Json.get().fromJson(responseText, B2ErrorStructure.class);
             return B2Exception.create(err.code, err.status, getRetryAfterSecondsOrNull(response), err.message);
         }
         catch (Throwable t) {
@@ -296,19 +296,15 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
 
     private HashMap<String, String> makeHeaders(B2Headers headersOrNull) {
         if (headersOrNull == null) {
-            return null;
+            return new HashMap<>();
         }
-        final int headerCount = headersOrNull.getNames().size();
+        final HashMap<String, String> headers = new HashMap<>();
 
-        final HashMap<String, String> vHeaders = new HashMap<>();
-
-        int iHeader = 0;
         for (String name : headersOrNull.getNames()) {
-            vHeaders.set(name, headersOrNull.getValueOrNull(name));
-            iHeader++;
+            headers.set(name, headersOrNull.getValueOrNull(name));
         }
 
-        return vHeaders;
+        return headers;
     }
 
 
@@ -322,7 +318,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         B2Preconditions.checkArgument(request != null);
 
         try {
-            B2Json bzJson = B2Json.get();
+            final B2Json bzJson = B2Json.get();
             return bzJson.toJson(request);
         } catch (B2JsonException e) {
             //log.warn("Unable to serialize " + request.getClass() + " using B2Json, was passed in request for " + url, ex);

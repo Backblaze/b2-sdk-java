@@ -2,13 +2,12 @@
  * Copyright 2020, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
-package com.backblaze.b2.client.webapihttpclient.android.http_client;
+package com.backblaze.b2.client.webApiHttpClient.android.UrlConnection;
 
 import android.util.Log;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.util.B2Preconditions;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
