@@ -189,7 +189,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
      *
      * @param url the url to post to
      * @param headersOrNull the headers, if any.
-     * @param requestEntity the entity to post.
+     * @param requestString the string to post.
      * @return the body of the response.
      * @throws B2Exception if there's any trouble
      */
@@ -207,6 +207,61 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                 post.setDoOutput(true);
                 try(OutputStream os = post.getOutputStream()) {
                     os.write(requestString, 0, requestString.length);
+                } catch (Exception e) {
+                    //
+                } finally {
+                    os.close();
+                }
+            }
+
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(post.getInputStream()))) {
+                String line;
+                final StringBuilder responseText = new StringBuilder();
+
+                while ((line = in.readLine()) != null) {
+                    responseText.append(line);
+                }
+            }
+
+            final int statusCode = post.getResponseCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                return responseText;
+            } else {
+                throw extractExceptionFromErrorResponse(response, responseText);
+            }
+        } catch (IOException e) {
+            throw translateToB2Exception(e, url);
+        }
+        finally {
+            closeQuietly(response);
+        }
+    }
+
+    /**
+     * POSTs to a web service that returns content, and returns the content
+     * as a single string.
+     *
+     * @param url the url to post to
+     * @param headersOrNull the headers, if any.
+     * @param requestEntity the entity to post.
+     * @return the body of the response.
+     * @throws B2Exception if there's any trouble
+     */
+    private String postAndReturnString(String url, B2Headers headersOrNull, InputStream requestEntity)
+            throws B2Exception {
+
+        try {
+            URLConnection post = new URL(url).openConnection();
+            if (headersOrNull != null) {
+                makeHeaders(headersOrNull).forEach((name, value) -> post.setRequestProperty(name, value));
+            }
+            if (requestString != null) {
+                // Sets the URLConnection client request to send
+                // https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html#setDoInput-boolean-
+                post.setDoOutput(true);
+                try(OutputStream os = post.getOutputStream()) {
+                    final byte[] requestBytes = new byte[requestEntity.available()];
+                    os.write(requestBytes, 0, requestBytes.length);
                 } catch (Exception e) {
                     //
                 } finally {
