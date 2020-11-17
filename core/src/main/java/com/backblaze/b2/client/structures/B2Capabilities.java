@@ -35,6 +35,9 @@ public interface B2Capabilities {
     String WRITE_FILES = "writeFiles";
     String DELETE_FILES = "deleteFiles";
 
+    String READ_BUCKET_ENCRYPTION = "readBucketEncryption";
+    String WRITE_BUCKET_ENCRYPTION = "writeBucketEncryption";
+
     String BYPASS_GOVERNANCE = "bypassGovernance";
     String READ_BUCKET_RETENTIONS = "readBucketRetentions";
     String WRITE_BUCKET_RETENTIONS = "writeBucketRetentions";
