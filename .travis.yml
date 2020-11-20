@@ -16,6 +16,10 @@ env:
     - OUTPUT_DIR=build/outputs
     - OUTPUT_ZIP=b2-sdk-build-${TRAVIS_BUILD_NUMBER}.zip
 
+python:
+  - "3.6"
+  
+
 before_install:
   - pyenv global 3.6
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
