@@ -19,7 +19,7 @@ env:
 before_install:
   - pyenv global 3.6
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
-  - sudo pip install b2
+  - sudo -H pip install b2
 
 script:
   #
