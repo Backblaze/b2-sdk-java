@@ -19,7 +19,8 @@ env:
 before_install:
   - pyenv global 3.6
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
-  - sudo pip install b2
+  - which python
+  - sudo -H pip install b2
 
 script:
   #
@@ -49,7 +50,7 @@ script:
   #
   # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
   #
-
+  - which python
   - ./maybe_upload_build_results $OUTPUT_ZIP
 
   ## list all files to help debug stuff!
