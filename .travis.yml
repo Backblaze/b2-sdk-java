@@ -17,7 +17,7 @@ env:
 
 before_install:
   - ls /usr/bin/pytho*
-  - /usr/bin/python3.5.2 --version
+  - /usr/bin/python3.4 --version
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
   - which python
   - sudo -H pip install b2
@@ -50,7 +50,7 @@ script:
   #
   # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
   #
-  - ./maybe_upload_build_results $OUTPUT_ZIP
+  - /usr/bin/python3.4 ./maybe_upload_build_results $OUTPUT_ZIP
 
   ## list all files to help debug stuff!
   #- find $TRAVIS_BUILD_DIR
