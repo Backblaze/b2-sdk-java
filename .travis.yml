@@ -68,7 +68,7 @@ cache:
 deploy:
   provider: pages
   strategy: git
-  skip_cleanup: true
+  cleanup: false
   token: $GITHUB_TOKEN
   local_dir: core/build/docs/javadoc
   on:
