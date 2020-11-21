@@ -6,7 +6,7 @@
 # see https://blog.travis-ci.com/2017-07-11-trusty-as-default-linux-is-coming
 
 os: linux
-dist: focal
+dist: xenial
 language: java
 jdk:
   - oraclejdk8
@@ -16,6 +16,7 @@ env:
     - OUTPUT_ZIP=b2-sdk-build-${TRAVIS_BUILD_NUMBER}.zip
 
 before_install:
+  - /usr/bin/python3.6 --version
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
   - which python
   - sudo -H pip install b2
