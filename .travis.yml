@@ -16,7 +16,8 @@ env:
     - OUTPUT_ZIP=b2-sdk-build-${TRAVIS_BUILD_NUMBER}.zip
 
 before_install:
-  - /usr/bin/python3.6 --version
+  - ls /usr/bin/pytho*
+  - /usr/bin/python3.5.2 --version
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
   - which python
   - sudo -H pip install b2
