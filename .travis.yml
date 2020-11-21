@@ -6,7 +6,7 @@
 # see https://blog.travis-ci.com/2017-07-11-trusty-as-default-linux-is-coming
 
 os: linux
-dist: xenial
+dist: trusty 
 language: java
 jdk:
   - oraclejdk8
