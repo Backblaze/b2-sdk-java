@@ -4,13 +4,12 @@
 # travis-ci is about to change the default to 'trusty', so let's
 # switch to it on purpose.  we can probably remove in August 2017.
 # see https://blog.travis-ci.com/2017-07-11-trusty-as-default-linux-is-coming
+
+os: linux
 dist: trusty
-
 language: java
-
 jdk:
   - oraclejdk8
-
 env:
   global:
     - OUTPUT_DIR=build/outputs
@@ -20,6 +19,7 @@ before_install:
   - pyenv global 3.6
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
   - which python
+  - pip install -U pip
   - sudo -H pip install b2
 
 script:
@@ -50,6 +50,7 @@ script:
   #
   # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
   #
+  - python --version
   - which python
   - ./maybe_upload_build_results $OUTPUT_ZIP
 
@@ -70,8 +71,9 @@ cache:
 # each jar and only uploading one set of javadocs.
 deploy:
   provider: pages
+  strategy: git
   skip_cleanup: true
-  github_token: $GITHUB_TOKEN
+  token: $GITHUB_TOKEN
   local_dir: core/build/docs/javadoc
   on:
     branch: master
