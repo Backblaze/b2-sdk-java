@@ -16,17 +16,6 @@ env:
     - OUTPUT_ZIP=b2-sdk-build-${TRAVIS_BUILD_NUMBER}.zip
 
 before_install:
-#  - sudo add-apt-repository ppa:deadsnakes/ppa
-#  - sudo apt update
-#  - sudo apt install python3.6
-#  - /usr/bin/python3.6 --version
-  - wget https://www.python.org/ftp/python/3.6.3/Python-3.6.3.tgz
-  - tar -xvf Python-3.6.3.tgz
-  - cd Python-3.6.3
-  - sudo ./configure --enable-optimizations
-  - sudo make -j8
-  - sudo make install
-  - python --version
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
   - sudo -H pip install b2
 
@@ -58,7 +47,7 @@ script:
   #
   # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
   #
-  - /usr/bin/python3.6 ./maybe_upload_build_results $OUTPUT_ZIP
+  - ./maybe_upload_build_results $OUTPUT_ZIP
 
   ## list all files to help debug stuff!
   #- find $TRAVIS_BUILD_DIR
