@@ -46,7 +46,8 @@ script:
 
   #
   # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
-  #
+  # This should be using python 3.4
+  # 
   - ./maybe_upload_build_results $OUTPUT_ZIP
 
   ## list all files to help debug stuff!
