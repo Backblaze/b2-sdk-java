@@ -35,7 +35,7 @@ fi
 DEST=builds/$ZIP_TO_UPLOAD
 
 echo authorizing account
-/usr/bin/python3.4 b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
+b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
 status=$?
 if test $status != "0"; then
     echo "failed to authorize with b2 server"
@@ -44,7 +44,7 @@ fi
 
 
 echo uploading $SRC
-/usr/bin/python3.4 b2 upload_file --contentType application/octet the-b2-sdk-java $SRC $DEST
+b2 upload_file --contentType application/octet the-b2-sdk-java $SRC $DEST
 status=$?
 if test $status != "0"; then
     echo "failed to upload $SRC to b2"
