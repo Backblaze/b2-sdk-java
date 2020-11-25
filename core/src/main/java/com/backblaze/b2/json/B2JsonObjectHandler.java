@@ -16,6 +16,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -382,10 +383,9 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
         final Object [] constructorArgs = new Object [constructorParamCount];
 
         // Read the values that are present in the JSON.
-        long foundFieldBits = 0;
+        final BitSet foundFieldBits = new BitSet();
         if (in == null) {
             throw new B2JsonException("B2JsonObjectHandler.deserialize called with null B2JsonReader");
-
         }
         if (in.startObjectAndCheckForContents()) {
             do {
@@ -399,7 +399,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                     in.skipValue();
                 }
                 else {
-                    if ((foundFieldBits & fieldInfo.bit) != 0) {
+                    if (foundFieldBits.get(fieldInfo.constructorArgIndex)) {
                         throw new B2JsonException("duplicate field: " + fieldInfo.getName());
                     }
                     @SuppressWarnings("unchecked")
@@ -408,7 +408,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                         throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
                     }
                     constructorArgs[fieldInfo.constructorArgIndex] = value;
-                    foundFieldBits |= fieldInfo.bit;
+                    foundFieldBits.set(fieldInfo.constructorArgIndex);
                 }
             } while (in.objectHasMoreFields());
         }
@@ -430,7 +430,6 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
         final Object [] constructorArgs = new Object [fields.length];
 
         // Read the values that are present in the map.
-        long foundFieldBits = 0;
         if (fieldNameToValue == null) {
             throw new B2JsonException("B2JsonObjectHandler.deserializeFromFieldNameToValueMap called with null fieldNameToValue");
 
@@ -450,7 +449,6 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                     throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
                 }
                 constructorArgs[fieldInfo.constructorArgIndex] = value;
-                foundFieldBits |= fieldInfo.bit;
             }
         }
         return deserializeFromConstructorArgs(constructorArgs, version);
@@ -464,7 +462,6 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
         final Object [] constructorArgs = new Object [fields.length];
 
         // Read the values that are present in the parameter map.
-        long foundFieldBits = 0;
         if (parameterMap == null) {
             throw new B2JsonException("B2JsonObjectHandler.deserializeFromUrlParameterMape called with null parameterMap");
 
@@ -486,7 +483,6 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                     throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
                 }
                 constructorArgs[fieldInfo.constructorArgIndex] = value;
-                foundFieldBits |= fieldInfo.bit;
             }
         }
         return deserializeFromConstructorArgs(constructorArgs, version);

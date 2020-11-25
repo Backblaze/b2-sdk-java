@@ -24,7 +24,6 @@ public final class FieldInfo implements Comparable<FieldInfo> {
     public final String defaultValueJsonOrNull;
     public final VersionRange versionRange;
     public int constructorArgIndex;
-    public long bit;
     public final boolean isSensitive;
     public final boolean omitNull;
 
@@ -64,9 +63,7 @@ public final class FieldInfo implements Comparable<FieldInfo> {
     }
 
     public void setConstructorArgIndex(int index) {
-        B2Preconditions.checkArgument(index < 64);
         constructorArgIndex = index;
-        bit = 1L << index;
     }
 
     public boolean isInVersion(int version) {
