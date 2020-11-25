@@ -14,10 +14,11 @@ env:
   global:
     - OUTPUT_DIR=build/outputs
     - OUTPUT_ZIP=b2-sdk-build-${TRAVIS_BUILD_NUMBER}.zip
+    - PYENV_VERSION=3.6
 
 before_install:
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
-  - sudo -H pip install b2
+  - pip3 install b2
 
 script:
   #
