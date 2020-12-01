@@ -32,6 +32,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -2573,6 +2574,223 @@ public class B2JsonTest extends B2BaseTest {
         assertEquals(expected, b2Json.toJson(objectWithGenericArrays));
     }
 
+
+    private static class LotsOfFieldsHolder {
+
+        @B2Json.optionalWithDefault(defaultValue = "\"01\"") final String field01;
+        @B2Json.optionalWithDefault(defaultValue = "\"02\"") final String field02;
+        @B2Json.optionalWithDefault(defaultValue = "\"03\"") final String field03;
+        @B2Json.optionalWithDefault(defaultValue = "\"04\"") final String field04;
+        @B2Json.optionalWithDefault(defaultValue = "\"05\"") final String field05;
+        @B2Json.optionalWithDefault(defaultValue = "\"06\"") final String field06;
+        @B2Json.optionalWithDefault(defaultValue = "\"07\"") final String field07;
+        @B2Json.optionalWithDefault(defaultValue = "\"08\"") final String field08;
+        @B2Json.optionalWithDefault(defaultValue = "\"09\"") final String field09;
+        @B2Json.optionalWithDefault(defaultValue = "\"10\"") final String field10;
+        @B2Json.optionalWithDefault(defaultValue = "\"11\"") final String field11;
+        @B2Json.optionalWithDefault(defaultValue = "\"12\"") final String field12;
+        @B2Json.optionalWithDefault(defaultValue = "\"13\"") final String field13;
+        @B2Json.optionalWithDefault(defaultValue = "\"14\"") final String field14;
+        @B2Json.optionalWithDefault(defaultValue = "\"15\"") final String field15;
+        @B2Json.optionalWithDefault(defaultValue = "\"16\"") final String field16;
+        @B2Json.optionalWithDefault(defaultValue = "\"17\"") final String field17;
+        @B2Json.optionalWithDefault(defaultValue = "\"18\"") final String field18;
+        @B2Json.optionalWithDefault(defaultValue = "\"19\"") final String field19;
+        @B2Json.optionalWithDefault(defaultValue = "\"20\"") final String field20;
+        @B2Json.optionalWithDefault(defaultValue = "\"21\"") final String field21;
+        @B2Json.optionalWithDefault(defaultValue = "\"22\"") final String field22;
+        @B2Json.optionalWithDefault(defaultValue = "\"23\"") final String field23;
+        @B2Json.optionalWithDefault(defaultValue = "\"24\"") final String field24;
+        @B2Json.optionalWithDefault(defaultValue = "\"25\"") final String field25;
+        @B2Json.optionalWithDefault(defaultValue = "\"26\"") final String field26;
+        @B2Json.optionalWithDefault(defaultValue = "\"27\"") final String field27;
+        @B2Json.optionalWithDefault(defaultValue = "\"28\"") final String field28;
+        @B2Json.optionalWithDefault(defaultValue = "\"29\"") final String field29;
+        @B2Json.optionalWithDefault(defaultValue = "\"30\"") final String field30;
+        @B2Json.optionalWithDefault(defaultValue = "\"31\"") final String field31;
+        @B2Json.optionalWithDefault(defaultValue = "\"32\"") final String field32;
+        @B2Json.optionalWithDefault(defaultValue = "\"33\"") final String field33;
+        @B2Json.optionalWithDefault(defaultValue = "\"34\"") final String field34;
+        @B2Json.optionalWithDefault(defaultValue = "\"35\"") final String field35;
+        @B2Json.optionalWithDefault(defaultValue = "\"36\"") final String field36;
+        @B2Json.optionalWithDefault(defaultValue = "\"37\"") final String field37;
+        @B2Json.optionalWithDefault(defaultValue = "\"38\"") final String field38;
+        @B2Json.optionalWithDefault(defaultValue = "\"39\"") final String field39;
+        @B2Json.optionalWithDefault(defaultValue = "\"40\"") final String field40;
+        @B2Json.optionalWithDefault(defaultValue = "\"41\"") final String field41;
+        @B2Json.optionalWithDefault(defaultValue = "\"42\"") final String field42;
+        @B2Json.optionalWithDefault(defaultValue = "\"43\"") final String field43;
+        @B2Json.optionalWithDefault(defaultValue = "\"44\"") final String field44;
+        @B2Json.optionalWithDefault(defaultValue = "\"45\"") final String field45;
+        @B2Json.optionalWithDefault(defaultValue = "\"46\"") final String field46;
+        @B2Json.optionalWithDefault(defaultValue = "\"47\"") final String field47;
+        @B2Json.optionalWithDefault(defaultValue = "\"48\"") final String field48;
+        @B2Json.optionalWithDefault(defaultValue = "\"49\"") final String field49;
+        @B2Json.optionalWithDefault(defaultValue = "\"50\"") final String field50;
+        @B2Json.optionalWithDefault(defaultValue = "\"51\"") final String field51;
+        @B2Json.optionalWithDefault(defaultValue = "\"52\"") final String field52;
+        @B2Json.optionalWithDefault(defaultValue = "\"53\"") final String field53;
+        @B2Json.optionalWithDefault(defaultValue = "\"54\"") final String field54;
+        @B2Json.optionalWithDefault(defaultValue = "\"55\"") final String field55;
+        @B2Json.optionalWithDefault(defaultValue = "\"56\"") final String field56;
+        @B2Json.optionalWithDefault(defaultValue = "\"57\"") final String field57;
+        @B2Json.optionalWithDefault(defaultValue = "\"58\"") final String field58;
+        @B2Json.optionalWithDefault(defaultValue = "\"59\"") final String field59;
+        @B2Json.optionalWithDefault(defaultValue = "\"60\"") final String field60;
+        @B2Json.optionalWithDefault(defaultValue = "\"61\"") final String field61;
+        @B2Json.optionalWithDefault(defaultValue = "\"62\"") final String field62;
+        @B2Json.optionalWithDefault(defaultValue = "\"63\"") final String field63;
+        @B2Json.optionalWithDefault(defaultValue = "\"64\"") final String field64;
+        @B2Json.optionalWithDefault(defaultValue = "\"65\"") final String field65;
+        @B2Json.optionalWithDefault(defaultValue = "\"66\"") final String field66;
+        @B2Json.optionalWithDefault(defaultValue = "\"67\"") final String field67;
+        @B2Json.optionalWithDefault(defaultValue = "\"68\"") final String field68;
+        @B2Json.optionalWithDefault(defaultValue = "\"69\"") final String field69;
+        @B2Json.optionalWithDefault(defaultValue = "\"70\"") final String field70;
+        @B2Json.optionalWithDefault(defaultValue = "\"71\"") final String field71;
+        @B2Json.optionalWithDefault(defaultValue = "\"72\"") final String field72;
+        @B2Json.optionalWithDefault(defaultValue = "\"73\"") final String field73;
+        @B2Json.optionalWithDefault(defaultValue = "\"74\"") final String field74;
+        @B2Json.optionalWithDefault(defaultValue = "\"75\"") final String field75;
+        @B2Json.optionalWithDefault(defaultValue = "\"76\"") final String field76;
+        @B2Json.optionalWithDefault(defaultValue = "\"77\"") final String field77;
+        @B2Json.optionalWithDefault(defaultValue = "\"78\"") final String field78;
+        @B2Json.optionalWithDefault(defaultValue = "\"79\"") final String field79;
+        @B2Json.optionalWithDefault(defaultValue = "\"80\"") final String field80;
+
+        @B2Json.constructor(params =
+                "field01,field02,field03,field04,field05,field06,field07,field08,field09,field10," +
+                "field11,field12,field13,field14,field15,field16,field17,field18,field19,field20," +
+                "field21,field22,field23,field24,field25,field26,field27,field28,field29,field30," +
+                "field31,field32,field33,field34,field35,field36,field37,field38,field39,field40," +
+                "field41,field42,field43,field44,field45,field46,field47,field48,field49,field50," +
+                "field51,field52,field53,field54,field55,field56,field57,field58,field59,field60," +
+                "field61,field62,field63,field64,field65,field66,field67,field68,field69,field70," +
+                "field71,field72,field73,field74,field75,field76,field77,field78,field79,field80"
+        )
+
+        public LotsOfFieldsHolder(
+                String field01, String field02, String field03, String field04, String field05,
+                String field06, String field07, String field08, String field09, String field10,
+                String field11, String field12, String field13, String field14, String field15,
+                String field16, String field17, String field18, String field19, String field20,
+                String field21, String field22, String field23, String field24, String field25,
+                String field26, String field27, String field28, String field29, String field30,
+                String field31, String field32, String field33, String field34, String field35,
+                String field36, String field37, String field38, String field39, String field40,
+                String field41, String field42, String field43, String field44, String field45,
+                String field46, String field47, String field48, String field49, String field50,
+                String field51, String field52, String field53, String field54, String field55,
+                String field56, String field57, String field58, String field59, String field60,
+                String field61, String field62, String field63, String field64, String field65,
+                String field66, String field67, String field68, String field69, String field70,
+                String field71, String field72, String field73, String field74, String field75,
+                String field76, String field77, String field78, String field79, String field80
+        ) {
+            this.field01 = field01;
+            this.field02 = field02;
+            this.field03 = field03;
+            this.field04 = field04;
+            this.field05 = field05;
+            this.field06 = field06;
+            this.field07 = field07;
+            this.field08 = field08;
+            this.field09 = field09;
+            this.field10 = field10;
+            this.field11 = field11;
+            this.field12 = field12;
+            this.field13 = field13;
+            this.field14 = field14;
+            this.field15 = field15;
+            this.field16 = field16;
+            this.field17 = field17;
+            this.field18 = field18;
+            this.field19 = field19;
+            this.field20 = field20;
+            this.field21 = field21;
+            this.field22 = field22;
+            this.field23 = field23;
+            this.field24 = field24;
+            this.field25 = field25;
+            this.field26 = field26;
+            this.field27 = field27;
+            this.field28 = field28;
+            this.field29 = field29;
+            this.field30 = field30;
+            this.field31 = field31;
+            this.field32 = field32;
+            this.field33 = field33;
+            this.field34 = field34;
+            this.field35 = field35;
+            this.field36 = field36;
+            this.field37 = field37;
+            this.field38 = field38;
+            this.field39 = field39;
+            this.field40 = field40;
+            this.field41 = field41;
+            this.field42 = field42;
+            this.field43 = field43;
+            this.field44 = field44;
+            this.field45 = field45;
+            this.field46 = field46;
+            this.field47 = field47;
+            this.field48 = field48;
+            this.field49 = field49;
+            this.field50 = field50;
+            this.field51 = field51;
+            this.field52 = field52;
+            this.field53 = field53;
+            this.field54 = field54;
+            this.field55 = field55;
+            this.field56 = field56;
+            this.field57 = field57;
+            this.field58 = field58;
+            this.field59 = field59;
+            this.field60 = field60;
+            this.field61 = field61;
+            this.field62 = field62;
+            this.field63 = field63;
+            this.field64 = field64;
+            this.field65 = field65;
+            this.field66 = field66;
+            this.field67 = field67;
+            this.field68 = field68;
+            this.field69 = field69;
+            this.field70 = field70;
+            this.field71 = field71;
+            this.field72 = field72;
+            this.field73 = field73;
+            this.field74 = field74;
+            this.field75 = field75;
+            this.field76 = field76;
+            this.field77 = field77;
+            this.field78 = field78;
+            this.field79 = field79;
+            this.field80 = field80;
+        }
+    }
+
+    @Test
+    public void testClassWithLotsOfFields() throws IOException, B2JsonException {
+        final String json1 = "{}";
+        final LotsOfFieldsHolder obj1 = b2Json.fromJson(json1, LotsOfFieldsHolder.class);
+        assertEquals("02", obj1.field02);
+        assertEquals("55", obj1.field55);
+
+        final String json2 = b2Json.toJson(obj1);
+        final String json2noNl = json2.replaceAll("\n", "");
+        for (int i = 1; i <= 80; i++) {
+            final String pattern = String.format("\"field%02d\" *: *\"%02d\"", i, i);
+            assertTrue(Pattern.compile(pattern).matcher(json2).find());
+        }
+
+        checkDeserializeSerialize(json2, LotsOfFieldsHolder.class);
+
+        final String json3 = "{\"field77\":\"b2\"}";
+        final LotsOfFieldsHolder obj3 = b2Json.fromJson(json3, LotsOfFieldsHolder.class);
+        assertEquals("02", obj3.field02);
+        assertEquals("b2", obj3.field77);
+    }
 
     private static class ClassThatUsesGenerics {
 

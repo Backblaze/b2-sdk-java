@@ -25,6 +25,9 @@ if test ! -f $SRC; then
     exit 1
 fi
 
+# verify that b2 works
+b2 version
+
 if test -z "$B2_ACCOUNT_ID" -o -z "$B2_APPLICATION_KEY"; then
     echo "NOT uploading build results because no credentials are provided."
     echo "this probably isn't a backblaze build."
