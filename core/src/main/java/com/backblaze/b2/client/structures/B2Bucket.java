@@ -39,11 +39,14 @@ public class B2Bucket {
     @B2Json.optional
     private final B2BucketFileLockConfiguration defaultFileLockConfiguration;
 
+    @B2Json.optional
+    private final B2ServerSideEncryption defaultServerSideEncryption;
+
     @B2Json.required
     private final int revision;
 
-    @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType," +
-            "bucketInfo,corsRules,lifecycleRules,options,defaultFileLockConfiguration,revision")
+    @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules," +
+            "options,defaultFileLockConfiguration,defaultServerSideEncryption,revision")
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
@@ -53,6 +56,7 @@ public class B2Bucket {
                     List<B2LifecycleRule> lifecycleRules,
                     Set<String> options,
                     B2BucketFileLockConfiguration defaultFileLockConfiguration,
+                    B2ServerSideEncryption defaultServerSideEncryption,
                     int revision) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -63,6 +67,7 @@ public class B2Bucket {
         this.lifecycleRules = lifecycleRules;
         this.options = options;
         this.defaultFileLockConfiguration = defaultFileLockConfiguration;
+        this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.revision = revision;
     }
 
@@ -104,6 +109,10 @@ public class B2Bucket {
 
     public B2BucketFileLockConfiguration getDefaultFileLockConfiguration() { return defaultFileLockConfiguration; }
 
+    public B2ServerSideEncryption getDefaultServerSideEncryption() {
+        return defaultServerSideEncryption;
+    }
+
     @Override
     public String toString() {
         return "B2Bucket(" +
@@ -115,6 +124,7 @@ public class B2Bucket {
                 (lifecycleRules == null ? 0 : lifecycleRules.size()) + " lifecycleRules," +
                 ((options == null || options.isEmpty()) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
                 (defaultFileLockConfiguration == null ? "null" : defaultFileLockConfiguration.toString()) + "," +
+                (defaultServerSideEncryption == null ? "null" : defaultServerSideEncryption.toString()) + "," +
                 "v" + revision +
                 ')';
     }
@@ -133,7 +143,8 @@ public class B2Bucket {
                 Objects.equals(getCorsRules(), b2Bucket.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules()) &&
                 Objects.equals(getOptions(), b2Bucket.getOptions()) &&
-                Objects.equals(getDefaultFileLockConfiguration(), b2Bucket.getDefaultFileLockConfiguration());
+                Objects.equals(getDefaultFileLockConfiguration(), b2Bucket.getDefaultFileLockConfiguration()) &&
+                Objects.equals(getDefaultServerSideEncryption(), b2Bucket.getDefaultServerSideEncryption());
     }
 
     @Override
@@ -148,6 +159,7 @@ public class B2Bucket {
                 getLifecycleRules(),
                 getOptions(),
                 getRevision(),
-                getDefaultFileLockConfiguration());
+                getDefaultFileLockConfiguration(),
+                getDefaultServerSideEncryption());
     }
 }

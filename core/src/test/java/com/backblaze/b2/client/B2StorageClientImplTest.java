@@ -8,50 +8,7 @@ import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.exceptions.B2Exception;
-import com.backblaze.b2.client.structures.B2AccountAuthorization;
-import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
-import com.backblaze.b2.client.structures.B2Bucket;
-import com.backblaze.b2.client.structures.B2BucketTypes;
-import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
-import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
-import com.backblaze.b2.client.structures.B2CopyFileRequest;
-import com.backblaze.b2.client.structures.B2CreateBucketRequest;
-import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
-import com.backblaze.b2.client.structures.B2DeleteBucketRequest;
-import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
-import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
-import com.backblaze.b2.client.structures.B2DeleteFileVersionResponse;
-import com.backblaze.b2.client.structures.B2DownloadAuthorization;
-import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
-import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
-import com.backblaze.b2.client.structures.B2FileVersion;
-import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
-import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
-import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
-import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
-import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
-import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
-import com.backblaze.b2.client.structures.B2HideFileRequest;
-import com.backblaze.b2.client.structures.B2LifecycleRule;
-import com.backblaze.b2.client.structures.B2ListBucketsRequest;
-import com.backblaze.b2.client.structures.B2ListBucketsResponse;
-import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
-import com.backblaze.b2.client.structures.B2ListFileNamesResponse;
-import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
-import com.backblaze.b2.client.structures.B2ListFileVersionsResponse;
-import com.backblaze.b2.client.structures.B2ListPartsRequest;
-import com.backblaze.b2.client.structures.B2ListPartsResponse;
-import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
-import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
-import com.backblaze.b2.client.structures.B2Part;
-import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
-import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
-import com.backblaze.b2.client.structures.B2UploadFileRequest;
-import com.backblaze.b2.client.structures.B2UploadListener;
-import com.backblaze.b2.client.structures.B2UploadPartRequest;
-import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
-import com.backblaze.b2.client.structures.B2UploadProgress;
-import com.backblaze.b2.client.structures.B2UploadUrlResponse;
+import com.backblaze.b2.client.structures.*;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Clock;
@@ -182,6 +139,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 null,
                 Collections.emptySet(),
                 null,
+                null,
                 1);
         when(webifier.createBucket(anyObject(), anyObject())).thenReturn(bucket);
 
@@ -196,8 +154,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
                         null,
                         null,
                         null,
-                        false
-                )
+                        false,
+                        null)
         );
         verify(webifier, times(1)).createBucket(eq(ACCOUNT_AUTH), eq(expectedRequest));
         retryer.assertCallCountIs(2); // auth + createBucket.
@@ -212,10 +170,13 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final List<B2LifecycleRule> lifecycleRules = listOf(
                 B2LifecycleRule.builder(FILE_PREFIX).build()
         );
+        final B2ServerSideEncryption defaultServerSideEncryption =
+                new B2ServerSideEncryption("SSE-B2", "AES256");
         final B2CreateBucketRequest request = B2CreateBucketRequest
                 .builder(BUCKET_NAME, BUCKET_TYPE)
                 .setBucketInfo(bucketInfo)
                 .setLifecycleRules(lifecycleRules)
+                .setDefaultServerSideEncryption(defaultServerSideEncryption)
                 .build();
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
@@ -227,6 +188,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 lifecycleRules,
                 Collections.emptySet(),
                 null,
+                defaultServerSideEncryption,
                 1);
         B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
         when(webifier.createBucket(ACCOUNT_AUTH, expectedRequest)).thenReturn(bucket);
@@ -248,7 +210,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         //noinspection ResultOfMethodCallIgnored
         bucket.hashCode();
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,0 options," +
-                "null,v1)", bucket.toString());
+                "null,B2ServerSideEncryption{mode='SSE-B2', algorithm=AES256},v1)", bucket.toString());
 
         final B2Bucket bucketWithOptions = new B2Bucket(
                 ACCOUNT_ID,
@@ -260,9 +222,10 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 lifecycleRules,
                 B2TestHelpers.makeBucketOrApplicationKeyOptions(),
                 null,
+                defaultServerSideEncryption,
                 1);
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, " +
-                "myOption2] options,null,v1)",
+                "myOption2] options,null,B2ServerSideEncryption{mode='SSE-B2', algorithm=AES256},v1)",
                 bucketWithOptions.toString());
     }
 
@@ -359,6 +322,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 bucketId(i),
                 BUCKET_NAME,
                 BUCKET_TYPE,
+                null,
                 null,
                 null,
                 null,
