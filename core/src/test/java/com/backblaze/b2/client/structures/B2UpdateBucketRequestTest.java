@@ -51,6 +51,7 @@ public class B2UpdateBucketRequestTest extends TestCase {
                 null,
                 null,
                 null,
+                null,
                 1);
         final B2UpdateBucketRequest defaultRequest = B2UpdateBucketRequest.builder(defaultBucket).build();
         assertEquals(defaultRequest, convertedRequest);
@@ -82,25 +83,29 @@ public class B2UpdateBucketRequestTest extends TestCase {
                 "enabled",
                 new B2BucketFileLockPeriod(7, "days"),
                 "governance");
+        B2ServerSideEncryption defaultServerSideEncryption =
+                new B2ServerSideEncryption("SSE-B2", "AES256");
 
         final B2UpdateBucketRequest updateRequest = B2UpdateBucketRequest.builder(
                 new B2Bucket(
-                    ACCOUNT_ID,
-                    bucketId(1),
-                    BUCKET_NAME,
-                    BUCKET_TYPE,
-                    bucketInfo,
-                    b2CorsRules,
-                    lifecycleRules,
-                    null,
-                    null,
-                    1
+                        ACCOUNT_ID,
+                        bucketId(1),
+                        BUCKET_NAME,
+                        BUCKET_TYPE,
+                        bucketInfo,
+                        b2CorsRules,
+                        lifecycleRules,
+                        null,
+                        null,
+                        null,
+                        1
                 ))
                 .setBucketInfo(bucketInfo)
                 .setBucketType(BUCKET_TYPE)
                 .setCorsRules(b2CorsRules)
                 .setLifecycleRules(lifecycleRules)
                 .setDefaultFileLockConfiguration(defaultFileLockConfig)
+                .setDefaultServerSideEncryption(defaultServerSideEncryption)
                 .build();
 
         // Convert from B2UpdateBucketRequest -> json
@@ -136,6 +141,10 @@ public class B2UpdateBucketRequestTest extends TestCase {
                 "    },\n" +
                 "    \"status\": \"enabled\"\n" +
                 "  },\n" +
+                "  \"defaultServerSideEncryption\": {\n" +
+                "    \"algorithm\": \"AES256\",\n" +
+                "    \"mode\": \"SSE-B2\"\n" +
+                "  },\n" +
                 "  \"ifRevisionIs\": 1,\n" +
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +
@@ -163,6 +172,7 @@ public class B2UpdateBucketRequestTest extends TestCase {
                 BUCKET_ID,
                 BUCKET_NAME,
                 BUCKET_TYPE,
+                null,
                 null,
                 null,
                 null,

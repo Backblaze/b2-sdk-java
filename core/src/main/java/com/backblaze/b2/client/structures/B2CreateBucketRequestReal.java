@@ -40,15 +40,19 @@ public class B2CreateBucketRequestReal {
     @B2Json.optional
     private final boolean fileLockEnabled;
 
+    @B2Json.optional
+    private final B2ServerSideEncryption defaultServerSideEncryption;
 
-    @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules,fileLockEnabled")
+    @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules,fileLockEnabled,"+
+            "defaultServerSideEncryption")
     private B2CreateBucketRequestReal(String accountId,
                                       String bucketName,
                                       String bucketType,
                                       Map<String, String> bucketInfo,
                                       List<B2CorsRule> corsRules,
                                       List<B2LifecycleRule> lifecycleRules,
-                                      boolean fileLockEnabled) {
+                                      boolean fileLockEnabled,
+                                      B2ServerSideEncryption defaultServerSideEncryption) {
         this.accountId = accountId;
         this.bucketName = bucketName;
         this.bucketType = bucketType;
@@ -56,6 +60,7 @@ public class B2CreateBucketRequestReal {
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
         this.fileLockEnabled = fileLockEnabled;
+        this.defaultServerSideEncryption = defaultServerSideEncryption;
     }
 
     public B2CreateBucketRequestReal(String accountId,
@@ -66,7 +71,8 @@ public class B2CreateBucketRequestReal {
                 mostOfRequest.getBucketInfo(),
                 mostOfRequest.getCorsRules(),
                 mostOfRequest.getLifecycleRules(),
-                mostOfRequest.isFileLockEnabled());
+                mostOfRequest.isFileLockEnabled(),
+                mostOfRequest.getDefaultServerSideEncryption());
     }
 
     @Override
@@ -80,7 +86,8 @@ public class B2CreateBucketRequestReal {
                 Objects.equals(bucketInfo, that.bucketInfo) &&
                 Objects.equals(corsRules, that.corsRules) &&
                 Objects.equals(lifecycleRules, that.lifecycleRules) &&
-                Objects.equals(fileLockEnabled, that.fileLockEnabled);
+                Objects.equals(fileLockEnabled, that.fileLockEnabled) &&
+                Objects.equals(defaultServerSideEncryption, that.defaultServerSideEncryption);
     }
 
     @Override
@@ -92,6 +99,7 @@ public class B2CreateBucketRequestReal {
                 bucketInfo,
                 corsRules,
                 lifecycleRules,
-                fileLockEnabled);
+                fileLockEnabled,
+                defaultServerSideEncryption);
     }
 }

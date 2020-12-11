@@ -33,10 +33,13 @@ public class B2UpdateBucketRequest {
     private final B2BucketFileLockConfiguration defaultFileLockConfiguration;
 
     @B2Json.optional
+    private final B2ServerSideEncryption defaultServerSideEncryption;
+
+    @B2Json.optional
     private final Integer ifRevisionIs;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,corsRules,lifecycleRules," +
-            "defaultFileLockConfiguration,ifRevisionIs")
+            "defaultFileLockConfiguration,defaultServerSideEncryption,ifRevisionIs")
     private B2UpdateBucketRequest(String accountId,
                                   String bucketId,
                                   String bucketType,
@@ -44,6 +47,7 @@ public class B2UpdateBucketRequest {
                                   List<B2CorsRule> corsRules,
                                   List<B2LifecycleRule> lifecycleRules,
                                   B2BucketFileLockConfiguration defaultFileLockConfiguration,
+                                  B2ServerSideEncryption defaultServerSideEncryption,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -52,6 +56,7 @@ public class B2UpdateBucketRequest {
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
         this.defaultFileLockConfiguration = defaultFileLockConfiguration;
+        this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.ifRevisionIs = ifRevisionIs;
     }
 
@@ -82,6 +87,10 @@ public class B2UpdateBucketRequest {
     public B2BucketFileLockConfiguration getDefaultFileLockConfiguration()
     { return defaultFileLockConfiguration; }
 
+    public B2ServerSideEncryption getDefaultServerSideEncryption() {
+        return defaultServerSideEncryption;
+    }
+
     public Integer getIfRevisionIs() {
         return ifRevisionIs;
     }
@@ -98,6 +107,7 @@ public class B2UpdateBucketRequest {
                 Objects.equals(getCorsRules(), that.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), that.getLifecycleRules()) &&
                 Objects.equals(getDefaultFileLockConfiguration(), that.getDefaultFileLockConfiguration()) &&
+                Objects.equals(getDefaultServerSideEncryption(), that.getDefaultServerSideEncryption()) &&
                 Objects.equals(getIfRevisionIs(), that.getIfRevisionIs());
     }
 
@@ -111,6 +121,7 @@ public class B2UpdateBucketRequest {
                 getCorsRules(),
                 getLifecycleRules(),
                 getDefaultFileLockConfiguration(),
+                getDefaultServerSideEncryption(),
                 getIfRevisionIs());
     }
 
@@ -131,7 +142,7 @@ public class B2UpdateBucketRequest {
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
         private B2BucketFileLockConfiguration defaultFileLockConfiguration;
-
+        private B2ServerSideEncryption defaultServerSideEncryption;
 
         private Builder(B2Bucket bucket) {
             this.accountId = bucket.getAccountId();
@@ -165,6 +176,11 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
+        public Builder setDefaultServerSideEncryption(B2ServerSideEncryption defaultServerSideEncryption) {
+            this.defaultServerSideEncryption = defaultServerSideEncryption;
+            return this;
+        }
+
         public B2UpdateBucketRequest build() {
             return new B2UpdateBucketRequest(
                     accountId,
@@ -174,6 +190,7 @@ public class B2UpdateBucketRequest {
                     corsRules,
                     lifecycleRules,
                     defaultFileLockConfiguration,
+                    defaultServerSideEncryption,
                     ifRevisionIs);
         }
     }
