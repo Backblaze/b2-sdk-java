@@ -44,33 +44,11 @@ public class B2ServerSideEncryptionTest extends B2BaseTest {
     }
 
     @Test
-    public void testMissingAlgorithm() {
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("failed to convert from json: required field algorithm is missing");
-
-        final String jsonString = "{\n" +
-                "   \"mode\": \"SSE-C\"\n" +
-                "}";
-        B2Json.fromJsonOrThrowRuntime(jsonString, B2ServerSideEncryption.class);
-    }
-
-    @Test
     public void testMissingBoth() {
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("failed to convert from json: required field algorithm is missing");
+        thrown.expectMessage("failed to convert from json: required field mode is missing");
 
         final String jsonString = "{\n" +
-                "}";
-        B2Json.fromJsonOrThrowRuntime(jsonString, B2ServerSideEncryption.class);
-    }
-
-    @Test
-    public void testWithNullAlgorithm() {
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("failed to convert from json: required field algorithm cannot be null");
-        final String jsonString = "{\n" +
-                "   \"algorithm\": null,\n" +
-                "   \"mode\": \"SSE-B2\"\n" +
                 "}";
         B2Json.fromJsonOrThrowRuntime(jsonString, B2ServerSideEncryption.class);
     }
@@ -89,7 +67,7 @@ public class B2ServerSideEncryptionTest extends B2BaseTest {
     @Test
     public void testNull() {
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("failed to convert from json: required field algorithm cannot be null");
+        thrown.expectMessage("failed to convert from json: required field mode cannot be null");
         final String jsonString = "{\n" +
                 "   \"algorithm\": null,\n" +
                 "   \"mode\": null\n" +
