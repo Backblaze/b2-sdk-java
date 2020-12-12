@@ -19,7 +19,7 @@ public class B2ServerSideEncryption {
     /**
      * The SSE algorithm, e.g. AES256
      */
-    @B2Json.required
+    @B2Json.optional
     private final String algorithm;
 
     @B2Json.constructor(params = "mode, algorithm")
