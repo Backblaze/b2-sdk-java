@@ -913,6 +913,41 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     }
 
     @Test
+    public void testGetFileInfoByNameWithSseC() throws B2Exception {
+        final B2GetFileInfoByNameRequest request = B2GetFileInfoByNameRequest
+            .builder(bucketName(1), fileName(1))
+            .setSseCustomerAlgorithm("AES256")
+            .setSseCustomerKey("customerKey")
+            .setSseCustomerKeyMd5("customerKeyMd5")
+            .build();
+
+        final B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
+
+        final Map<String, String> expectedFileInfo = new HashMap<>();
+        expectedFileInfo.put("Color-with.special_chars`~!#$%^|\'*&+", "gr\u00fcn");
+        expectedFileInfo.put("src_last_modified_millis", "1");
+
+        assertEquals(fileId(1), version.getFileId());
+        assertEquals(fileName(1), version.getFileName());
+        assertEquals(1L, version.getContentLength());
+        assertEquals(1L, version.getUploadTimestamp());
+        assertEquals(expectedFileInfo, version.getFileInfo());
+        assertEquals(1L, Long.parseLong(version.getFileInfo().get("src_last_modified_millis")));
+
+        webApiClient.check("head.\n" +
+            "url:\n" +
+            "    downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001\n" +
+            "headers:\n" +
+            "    Authorization: accountToken1\n" +
+            "    User-Agent: SecretAgentMan/3.19.28\n" +
+            "    X-Bz-Server-Side-Encryption-Customer-Algorithm: AES256\n" +
+            "    X-Bz-Server-Side-Encryption-Customer-Key: customerKey\n" +
+            "    X-Bz-Server-Side-Encryption-Customer-Key-Md5: customerKeyMd5\n" +
+            "    X-Bz-Test-Mode: force_cap_exceeded\n");
+        checkRequestCategory(OTHER, w -> w.getFileInfoByName(ACCOUNT_AUTH, request));
+    }
+
+    @Test
     public void testHideFile() throws B2Exception {
         final B2HideFileRequest request = B2HideFileRequest
                 .builder(bucketId(1), fileName(1))

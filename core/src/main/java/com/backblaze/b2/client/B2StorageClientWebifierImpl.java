@@ -495,8 +495,22 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     @Override
     public B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth,
                                            B2GetFileInfoByNameRequest request) throws B2Exception {
+        final Map<String, String> extras = new TreeMap<>();
+        if (request.getSseCustomerAlgorithmOrNull() != null) {
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER,
+                request.getSseCustomerAlgorithmOrNull());
+        }
+        if (request.getSseCustomerKeyOrNull() != null) {
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER,
+                request.getSseCustomerKeyOrNull());
+        }
+        if (request.getSseCustomerKeyMd5OrNull() != null) {
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER,
+                request.getSseCustomerKeyMd5OrNull());
+        }
+
         B2Headers headers = webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(),
-                request.getFileName()), makeHeaders(accountAuth));
+                request.getFileName()), makeHeaders(accountAuth, extras));
 
         // b2_download_file_by_name promises most of these will be present, except as noted below,
         return new B2FileVersion(
