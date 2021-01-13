@@ -14,7 +14,7 @@ public class B2CreateBucketRequest {
     private final List<B2CorsRule> corsRules;
     private final List<B2LifecycleRule> lifecycleRules;
     private final boolean fileLockEnabled;
-    private final B2ServerSideEncryption defaultServerSideEncryption;
+    private final B2BucketServerSideEncryption defaultServerSideEncryption;
 
     public B2CreateBucketRequest(String bucketName,
                                  String bucketType,
@@ -22,7 +22,7 @@ public class B2CreateBucketRequest {
                                  List<B2CorsRule> corsRules,
                                  List<B2LifecycleRule> lifecycleRules,
                                  boolean fileLockEnabled,
-                                 B2ServerSideEncryption defaultServerSideEncryption) {
+                                 B2BucketServerSideEncryption defaultServerSideEncryption) {
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
@@ -56,7 +56,7 @@ public class B2CreateBucketRequest {
         return fileLockEnabled;
     }
 
-    public B2ServerSideEncryption getDefaultServerSideEncryption() {
+    public B2BucketServerSideEncryption getDefaultServerSideEncryption() {
         return defaultServerSideEncryption;
     }
 
@@ -72,7 +72,7 @@ public class B2CreateBucketRequest {
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
         private boolean fileLockEnabled;
-        private B2ServerSideEncryption defaultServerSideEncryption;
+        private B2BucketServerSideEncryption defaultServerSideEncryption;
 
         Builder(String bucketName,
                 String bucketType) {
@@ -100,7 +100,7 @@ public class B2CreateBucketRequest {
             return this;
         }
 
-        public Builder setDefaultServerSideEncryption(B2ServerSideEncryption defaultServerSideEncryption) {
+        public Builder setDefaultServerSideEncryption(B2BucketServerSideEncryption defaultServerSideEncryption) {
             this.defaultServerSideEncryption = defaultServerSideEncryption;
             return this;
         }

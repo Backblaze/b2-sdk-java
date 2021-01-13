@@ -122,7 +122,7 @@ public class B2FileVersionTest extends B2BaseTest {
         final String jsonString = "{\n" +
                 "   \"fileName\": \"file.txt\",\n" +
                 "   \"serverSideEncryption\": {\n" +
-                "      \"algorithm\": \"AES-256\",\n" +
+                "      \"algorithm\": \"AES256\",\n" +
                 "      \"mode\": \"SSE-B2\"\n" +
                 "   },\n" +
                 "   \"uploadTimestamp\": 12345\n" +
@@ -142,7 +142,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 12345L,
                 null,
                 null,
-                new B2ServerSideEncryption("SSE-B2", "AES-256"));
+                new B2FileSseForResponse("SSE-B2", "AES256"));
         assertEquals(defaultVersion, converted);
     }
 

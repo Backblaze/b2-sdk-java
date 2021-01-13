@@ -9,7 +9,7 @@ import com.backblaze.b2.json.B2Json;
 
 import java.util.Objects;
 
-public class B2ServerSideEncryption {
+public class B2FileSseForResponse {
     /**
      * The SSE mode, e.g. SSE-B2 or SSE-C
      */
@@ -19,11 +19,11 @@ public class B2ServerSideEncryption {
     /**
      * The SSE algorithm, e.g. AES256
      */
-    @B2Json.optional
+    @B2Json.required
     private final String algorithm;
 
     @B2Json.constructor(params = "mode, algorithm")
-    public B2ServerSideEncryption(String mode, String algorithm) {
+    public B2FileSseForResponse(String mode, String algorithm) {
         this.mode = mode;
         this.algorithm = algorithm;
     }
@@ -34,11 +34,11 @@ public class B2ServerSideEncryption {
 
 
     /**
-     * Construct a B2ServerSideEncryption from B2Headers, or null if the required headers are not present
+     * Construct a B2FileSseForResponse from B2Headers, or null if the required headers are not present
      * @param headers B2Headers
-     * @return a new B2ServerSideEncryption or null
+     * @return a new B2FileSseForResponse or null
      */
-    public static B2ServerSideEncryption getEncryptionFromHeadersOrNull(B2Headers headers) {
+    public static B2FileSseForResponse getEncryptionFromHeadersOrNull(B2Headers headers) {
         if (headers == null) {
             return null;
         }
@@ -46,12 +46,12 @@ public class B2ServerSideEncryption {
         // Check for the "X-Bz-Server-Side-Encryption" header
         final String algorithm = headers.getServerSideEncryptionOrNull();
         if (algorithm != null) {
-            return new B2ServerSideEncryption(B2ServerSideEncryptionMode.SSE_B2, algorithm);
+            return new B2FileSseForResponse(B2ServerSideEncryptionMode.SSE_B2, algorithm);
         }
 
         final String customerAlgorithm = headers.getCustomerServerSideEncryptionOrNull();
         if (customerAlgorithm != null) {
-            return new B2ServerSideEncryption(B2ServerSideEncryptionMode.SSE_C, customerAlgorithm);
+            return new B2FileSseForResponse(B2ServerSideEncryptionMode.SSE_C, customerAlgorithm);
         }
 
         return null;
@@ -65,7 +65,7 @@ public class B2ServerSideEncryption {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        B2ServerSideEncryption that = (B2ServerSideEncryption) o;
+        B2FileSseForResponse that = (B2FileSseForResponse) o;
         return Objects.equals(mode, that.getMode()) &&
                 Objects.equals(algorithm, that.getAlgorithm());
     }
@@ -76,7 +76,7 @@ public class B2ServerSideEncryption {
     }
 
     public String toString() {
-        return "B2ServerSideEncryption{" +
+        return "B2FileSseForResponse{" +
                 "mode='" + mode + "', " +
                 "algorithm=" + algorithm +
                 '}';

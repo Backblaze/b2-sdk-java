@@ -41,7 +41,7 @@ public class B2CreateBucketRequestReal {
     private final boolean fileLockEnabled;
 
     @B2Json.optional
-    private final B2ServerSideEncryption defaultServerSideEncryption;
+    private final B2BucketServerSideEncryption defaultServerSideEncryption;
 
     @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules,fileLockEnabled,"+
             "defaultServerSideEncryption")
@@ -52,7 +52,7 @@ public class B2CreateBucketRequestReal {
                                       List<B2CorsRule> corsRules,
                                       List<B2LifecycleRule> lifecycleRules,
                                       boolean fileLockEnabled,
-                                      B2ServerSideEncryption defaultServerSideEncryption) {
+                                      B2BucketServerSideEncryption defaultServerSideEncryption) {
         this.accountId = accountId;
         this.bucketName = bucketName;
         this.bucketType = bucketType;

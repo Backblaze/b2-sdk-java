@@ -11,19 +11,18 @@ import static org.junit.Assert.assertEquals;
 /*
  * Copyright 2020, Backblaze, Inc. All rights reserved.
  */
-public class B2ServerSideEncryptionTest extends B2BaseTest {
-
+public class B2BucketServerSideEncryptionTest extends B2BaseTest {
     @Test
     public void testDefaultConfig() {
         final String jsonString = "{\n" +
-                "  \"algorithm\": \"AES-256\",\n" +
-                "  \"mode\": \"SSE-C\"\n" +
+                "  \"algorithm\": \"AES256\",\n" +
+                "  \"mode\": \"SSE-B2\"\n" +
                 "}";
-        final B2ServerSideEncryption converted = B2Json.fromJsonOrThrowRuntime(
+        final B2BucketServerSideEncryption converted = B2Json.fromJsonOrThrowRuntime(
                 jsonString,
-                B2ServerSideEncryption.class);
-        final B2ServerSideEncryption defaultConfig = new B2ServerSideEncryption(
-                B2ServerSideEncryptionMode.SSE_C, "AES-256");
+                B2BucketServerSideEncryption.class);
+        final B2BucketServerSideEncryption defaultConfig = new B2BucketServerSideEncryption(
+                B2ServerSideEncryptionMode.SSE_B2, "AES256");
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
@@ -38,9 +37,9 @@ public class B2ServerSideEncryptionTest extends B2BaseTest {
         thrown.expectMessage("failed to convert from json: required field mode is missing");
 
         final String jsonString = "{\n" +
-                "   \"algorithm\": \"AES-256\"\n" +
+                "   \"algorithm\": \"AES256\"\n" +
                 "}";
-        B2Json.fromJsonOrThrowRuntime(jsonString, B2ServerSideEncryption.class);
+        B2Json.fromJsonOrThrowRuntime(jsonString, B2BucketServerSideEncryption.class);
     }
 
     @Test
@@ -50,7 +49,7 @@ public class B2ServerSideEncryptionTest extends B2BaseTest {
 
         final String jsonString = "{\n" +
                 "}";
-        B2Json.fromJsonOrThrowRuntime(jsonString, B2ServerSideEncryption.class);
+        B2Json.fromJsonOrThrowRuntime(jsonString, B2BucketServerSideEncryption.class);
     }
 
     @Test
@@ -58,10 +57,10 @@ public class B2ServerSideEncryptionTest extends B2BaseTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("failed to convert from json: required field mode cannot be null");
         final String jsonString = "{\n" +
-                "   \"algorithm\": \"AES-256\",\n" +
+                "   \"algorithm\": \"AES256\",\n" +
                 "   \"mode\": null\n" +
                 "}";
-        B2Json.fromJsonOrThrowRuntime(jsonString, B2ServerSideEncryption.class);
+        B2Json.fromJsonOrThrowRuntime(jsonString, B2BucketServerSideEncryption.class);
     }
 
     @Test
@@ -72,6 +71,6 @@ public class B2ServerSideEncryptionTest extends B2BaseTest {
                 "   \"algorithm\": null,\n" +
                 "   \"mode\": null\n" +
                 "}";
-        B2Json.fromJsonOrThrowRuntime(jsonString, B2ServerSideEncryption.class);
+        B2Json.fromJsonOrThrowRuntime(jsonString, B2BucketServerSideEncryption.class);
     }
 }

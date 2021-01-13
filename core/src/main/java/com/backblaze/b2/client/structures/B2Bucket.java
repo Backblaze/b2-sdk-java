@@ -40,7 +40,7 @@ public class B2Bucket {
     private final B2BucketFileLockConfiguration defaultFileLockConfiguration;
 
     @B2Json.optional
-    private final B2ServerSideEncryption defaultServerSideEncryption;
+    private final B2BucketServerSideEncryption defaultServerSideEncryption;
 
     @B2Json.required
     private final int revision;
@@ -56,7 +56,7 @@ public class B2Bucket {
                     List<B2LifecycleRule> lifecycleRules,
                     Set<String> options,
                     B2BucketFileLockConfiguration defaultFileLockConfiguration,
-                    B2ServerSideEncryption defaultServerSideEncryption,
+                    B2BucketServerSideEncryption defaultServerSideEncryption,
                     int revision) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -109,7 +109,7 @@ public class B2Bucket {
 
     public B2BucketFileLockConfiguration getDefaultFileLockConfiguration() { return defaultFileLockConfiguration; }
 
-    public B2ServerSideEncryption getDefaultServerSideEncryption() {
+    public B2BucketServerSideEncryption getDefaultServerSideEncryption() {
         return defaultServerSideEncryption;
     }
 
