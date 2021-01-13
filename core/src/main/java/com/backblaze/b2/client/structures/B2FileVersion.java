@@ -48,7 +48,7 @@ public class B2FileVersion {
     @B2Json.optional
     private final String legalHoldStatus;
     @B2Json.optional
-    private final B2ServerSideEncryption serverSideEncryption;
+    private final B2FileSseForResponse serverSideEncryption;
 
     @B2Json.constructor(params = "fileId,fileName,contentLength,contentType," +
             "contentSha1,contentMd5,fileInfo,action,uploadTimestamp,fileLock,legalHoldStatus," +
@@ -64,7 +64,7 @@ public class B2FileVersion {
                          long uploadTimestamp,
                          B2FileLock fileLock,
                          String legalHoldStatus,
-                         B2ServerSideEncryption serverSideEncryption) {
+                         B2FileSseForResponse serverSideEncryption) {
         this.fileId = fileId;
         this.fileName = fileName;
         this.contentLength = contentLength;
@@ -123,7 +123,7 @@ public class B2FileVersion {
 
     public String getLegalHoldStatus() { return legalHoldStatus; }
 
-    public B2ServerSideEncryption getServerSideEncryption() { return serverSideEncryption; }
+    public B2FileSseForResponse getServerSideEncryption() { return serverSideEncryption; }
 
     public boolean isUpload() {
         return UPLOAD_ACTION.equals(action);

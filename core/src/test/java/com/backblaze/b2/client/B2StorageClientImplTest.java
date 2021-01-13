@@ -170,8 +170,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final List<B2LifecycleRule> lifecycleRules = listOf(
                 B2LifecycleRule.builder(FILE_PREFIX).build()
         );
-        final B2ServerSideEncryption defaultServerSideEncryption =
-                new B2ServerSideEncryption("SSE-B2", "AES256");
+        final B2BucketServerSideEncryption defaultServerSideEncryption =
+                new B2BucketServerSideEncryption("SSE-B2", "AES256");
         final B2CreateBucketRequest request = B2CreateBucketRequest
                 .builder(BUCKET_NAME, BUCKET_TYPE)
                 .setBucketInfo(bucketInfo)
@@ -210,7 +210,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         //noinspection ResultOfMethodCallIgnored
         bucket.hashCode();
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,0 options," +
-                "null,B2ServerSideEncryption{mode='SSE-B2', algorithm=AES256},v1)", bucket.toString());
+                "null,B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256},v1)", bucket.toString());
 
         final B2Bucket bucketWithOptions = new B2Bucket(
                 ACCOUNT_ID,
@@ -225,7 +225,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 defaultServerSideEncryption,
                 1);
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, " +
-                "myOption2] options,null,B2ServerSideEncryption{mode='SSE-B2', algorithm=AES256},v1)",
+                "myOption2] options,null,B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256},v1)",
                 bucketWithOptions.toString());
     }
 

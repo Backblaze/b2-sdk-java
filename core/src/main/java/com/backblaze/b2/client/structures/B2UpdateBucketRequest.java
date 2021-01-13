@@ -33,7 +33,7 @@ public class B2UpdateBucketRequest {
     private final B2BucketFileLockConfiguration defaultFileLockConfiguration;
 
     @B2Json.optional
-    private final B2ServerSideEncryption defaultServerSideEncryption;
+    private final B2BucketServerSideEncryption defaultServerSideEncryption;
 
     @B2Json.optional
     private final Integer ifRevisionIs;
@@ -47,7 +47,7 @@ public class B2UpdateBucketRequest {
                                   List<B2CorsRule> corsRules,
                                   List<B2LifecycleRule> lifecycleRules,
                                   B2BucketFileLockConfiguration defaultFileLockConfiguration,
-                                  B2ServerSideEncryption defaultServerSideEncryption,
+                                  B2BucketServerSideEncryption defaultServerSideEncryption,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -87,7 +87,7 @@ public class B2UpdateBucketRequest {
     public B2BucketFileLockConfiguration getDefaultFileLockConfiguration()
     { return defaultFileLockConfiguration; }
 
-    public B2ServerSideEncryption getDefaultServerSideEncryption() {
+    public B2BucketServerSideEncryption getDefaultServerSideEncryption() {
         return defaultServerSideEncryption;
     }
 
@@ -142,7 +142,7 @@ public class B2UpdateBucketRequest {
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
         private B2BucketFileLockConfiguration defaultFileLockConfiguration;
-        private B2ServerSideEncryption defaultServerSideEncryption;
+        private B2BucketServerSideEncryption defaultServerSideEncryption;
 
         private Builder(B2Bucket bucket) {
             this.accountId = bucket.getAccountId();
@@ -176,7 +176,7 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
-        public Builder setDefaultServerSideEncryption(B2ServerSideEncryption defaultServerSideEncryption) {
+        public Builder setDefaultServerSideEncryption(B2BucketServerSideEncryption defaultServerSideEncryption) {
             this.defaultServerSideEncryption = defaultServerSideEncryption;
             return this;
         }
