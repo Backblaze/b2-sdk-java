@@ -23,6 +23,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.NoHttpResponseException;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
@@ -101,6 +102,13 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         if (headersOrNull != null) {
             get.setHeaders(makeHeaders(headersOrNull));
         }
+
+        /* disable content compression so as not to automatically decompress compressed content
+           from the server. In other words, this API simply gives back exactly what was loaded
+         */
+        get.setConfig(RequestConfig.custom()
+                .setContentCompressionEnabled(false)
+                .build());
 
         try (CloseableHttpResponse response = clientFactory.create().execute(get)) {
             int statusCode = response.getStatusLine().getStatusCode();
