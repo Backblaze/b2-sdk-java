@@ -1068,6 +1068,34 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     }
 
     @Test
+    public void testDownloadByIdWithSseC() throws B2Exception {
+        final String expectedUrl = "downloadUrl1/b2api/v2/b2_download_file_by_id?fileId=4_zBlah_0000001";
+        final B2DownloadByIdRequest request = B2DownloadByIdRequest
+                .builder(fileId(1))
+                .setSseCustomerAlgorithm("AES256")
+                .setSseCustomerKey("customerKey")
+                .setSseCustomerKeyMd5("customerKeyMd5")
+                .build();
+        webifier.downloadById(ACCOUNT_AUTH, request, noopContentHandler);
+
+        webApiClient.check("getContent.\n" +
+                "url:\n" +
+                "    " + expectedUrl + "\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Algorithm: AES256\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key: customerKey\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key-Md5: customerKeyMd5\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n"
+        );
+
+        assertEquals(expectedUrl, webifier.getDownloadByIdUrl(ACCOUNT_AUTH, request));
+
+        checkRequestCategory(OTHER, w -> w.downloadById(ACCOUNT_AUTH, request, noopContentHandler));
+    }
+
+    @Test
     public void testDownloadByIdWithRange() throws B2Exception {
         final B2DownloadByIdRequest request = B2DownloadByIdRequest
                 .builder(fileId(1))
@@ -1146,6 +1174,33 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n"
+        );
+        assertEquals(expectedUrl, webifier.getDownloadByNameUrl(ACCOUNT_AUTH, request));
+
+        checkRequestCategory(OTHER, w -> w.downloadByName(ACCOUNT_AUTH, request, noopContentHandler));
+    }
+
+    @Test
+    public void testDownloadByNameWithSseC() throws B2Exception {
+        final String expectedUrl = "downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001";
+        final B2DownloadByNameRequest request = B2DownloadByNameRequest
+                .builder(bucketName(1), fileName(1))
+                .setSseCustomerAlgorithm("AES256")
+                .setSseCustomerKey("customerKey")
+                .setSseCustomerKeyMd5("customerKeyMd5")
+                .build();
+        webifier.downloadByName(ACCOUNT_AUTH, request, noopContentHandler);
+
+        webApiClient.check("getContent.\n" +
+                "url:\n" +
+                "    " + expectedUrl + "\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Algorithm: AES256\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key: customerKey\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key-Md5: customerKeyMd5\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
         assertEquals(expectedUrl, webifier.getDownloadByNameUrl(ACCOUNT_AUTH, request));

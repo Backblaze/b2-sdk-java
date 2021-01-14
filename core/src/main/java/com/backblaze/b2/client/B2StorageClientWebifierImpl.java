@@ -53,7 +53,9 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2OverrideableHeaders;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileSseForResponse;
+import com.backblaze.b2.client.structures.B2ServerSideEncryptionMode;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
@@ -423,6 +425,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         downloadGuts(accountAuth,
                 makeDownloadByIdUrl(accountAuth, request),
                 request.getRange(),
+                request.getServerSideEncryption(),
                 handler);
     }
 
@@ -439,22 +442,30 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         downloadGuts(accountAuth,
                 makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request),
                 request.getRange(),
+                request.getServerSideEncryption(),
                 handler);
     }
 
     @Override
     public String getDownloadByNameUrl(B2AccountAuthorization accountAuth,
-                                B2DownloadByNameRequest request) {
+                                       B2DownloadByNameRequest request) {
         return makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request);
     }
 
     private void downloadGuts(B2AccountAuthorization accountAuth,
                               String url,
                               B2ByteRange rangeOrNull,
+                              B2FileSseForRequest serverSideEncryptionOrNull,
                               B2ContentSink handler) throws B2Exception {
         final Map<String, String> extras = new TreeMap<>();
         if (rangeOrNull != null) {
             extras.put(B2Headers.RANGE, rangeOrNull.toString());
+        }
+        if (serverSideEncryptionOrNull != null) {
+            B2Preconditions.checkArgument(serverSideEncryptionOrNull.getMode().equals(B2ServerSideEncryptionMode.SSE_C));
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER, serverSideEncryptionOrNull.getAlgorithm());
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER, serverSideEncryptionOrNull.getCustomerKey());
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER, serverSideEncryptionOrNull.getCustomerKeyMd5());
         }
         webApiClient.getContent(
                 url,
@@ -606,6 +617,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
     private String makeDownloadByIdUrl(B2AccountAuthorization accountAuth,
                                        B2DownloadByIdRequest request) {
+        B2Preconditions.checkArgumentIsNotNull(request, "request");
         final String downloadUrl = accountAuth.getDownloadUrl();
         final StringBuilder uriBuilder = new StringBuilder(downloadUrl);
 
@@ -618,9 +630,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 .append("b2_download_file_by_id?fileId=")
                 .append(request.getFileId());
 
-        if (request != null) {
-            maybeAddOverrideHeadersToUrl(uriBuilder, 1, request);
-        }
+        maybeAddOverrideHeadersToUrl(uriBuilder, 1, request);
         return uriBuilder.toString();
     }
 
@@ -718,8 +728,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     private boolean isLegalInfoNameCharacter(char c) {
-        /**
-         * Chars allowed in header as defined by: https://tools.ietf.org/html/rfc7230#section-3.2.6
+        /*
+          Chars allowed in header as defined by: https://tools.ietf.org/html/rfc7230#section-3.2.6
          */
         return
                 ('a' <= c && c <= 'z') ||

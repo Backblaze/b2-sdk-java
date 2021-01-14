@@ -6,6 +6,7 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.json.B2Json;
+import com.backblaze.b2.util.B2Preconditions;
 
 import java.util.Objects;
 
@@ -36,6 +37,13 @@ public class B2FileSseForRequest {
 
     @B2Json.constructor(params = "mode, algorithm, customerKey, customerKeyMd5")
     public B2FileSseForRequest(String mode, String algorithm, String customerKeyOrNull, String customerKeyMd5OrNull) {
+        B2Preconditions.checkArgumentIsNotNull(mode, "mode");
+        B2Preconditions.checkArgumentIsNotNull(algorithm, "algorithm");
+        if (mode.equals(B2ServerSideEncryptionMode.SSE_C)) {
+            B2Preconditions.checkArgumentIsNotNull(customerKeyOrNull, "customerKeyOrNull");
+            B2Preconditions.checkArgumentIsNotNull(customerKeyMd5OrNull, "customerKeyMd5OrNull");
+        }
+
         this.mode = mode;
         this.algorithm = algorithm;
         this.customerKey = customerKeyOrNull;
