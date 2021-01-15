@@ -68,7 +68,7 @@ public class B2FileSseForRequest {
     /**
      * Creates and returns a B2FileSseForRequest for SSE-C with algorithm set to AES256 and encryption key as specified.
      * @param customerKey customer encryption key encoded in Base64
-     * @return B2FileSseForRequest with mode=SSE-C and algorithm=AES256 and customer key & MD5 set according to
+     * @return B2FileSseForRequest with mode=SSE-C and algorithm=AES256 and customer key and MD5 set according to
      * input parameter.
      */
     public static B2FileSseForRequest createSseCAes256(String customerKey) {
@@ -81,7 +81,8 @@ public class B2FileSseForRequest {
      * Creates and returns a B2FileSseForRequest for SSE-C with algorithm set to AES256 and key/MD5 as specified.
      * @param customerKey customer encryption key encoded in Base64
      * @param customerKeyMd5 customer encryption key MD5 digest encoded in Base64
-     * @return B2FileSseForRequest with mode=SSE-C and algorithm=AES256 and customer key & MD5 set according to input parameters.
+     * @return B2FileSseForRequest with mode=SSE-C and algorithm=AES256 and customer key and MD5 set according to
+     * input parameters.
      */
     public static B2FileSseForRequest createSseCAes256(String customerKey, String customerKeyMd5) {
         return new B2FileSseForRequest(SSE_C, "AES256", customerKey, customerKeyMd5);
