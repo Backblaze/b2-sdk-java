@@ -140,9 +140,7 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
         private final String bucketName;
         private final String fileName;
         private B2ByteRange range;
-        private String sseCustomerAlgorithm;
-        private String sseCustomerKey;
-        private String sseCustomerKeyMd5;
+        private B2FileSseForRequest serverSideEncryption;
         private String b2ContentDisposition;
         private String b2ContentLanguage;
         private String b2Expires;
@@ -161,18 +159,8 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
             return this;
         }
 
-        public Builder setSseCustomerAlgorithm(String sseCustomerAlgorithm) {
-            this.sseCustomerAlgorithm = sseCustomerAlgorithm;
-            return this;
-        }
-
-        public Builder setSseCustomerKey(String sseCustomerKey) {
-            this.sseCustomerKey = sseCustomerKey;
-            return this;
-        }
-
-        public Builder setSseCustomerKeyMd5(String sseCustomerKeyMd5) {
-            this.sseCustomerKeyMd5 = sseCustomerKeyMd5;
+        public Builder setServerSideEncryption(B2FileSseForRequest serverSideEncryption) {
+            this.serverSideEncryption = serverSideEncryption;
             return this;
         }
 
@@ -212,16 +200,6 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
         }
 
         public B2DownloadByNameRequest build() {
-            final B2FileSseForRequest serverSideEncryption;
-            if (sseCustomerAlgorithm != null || sseCustomerKey != null || sseCustomerKeyMd5 != null) {
-                serverSideEncryption = new B2FileSseForRequest(
-                        B2ServerSideEncryptionMode.SSE_C,
-                        sseCustomerAlgorithm,
-                        sseCustomerKey,
-                        sseCustomerKeyMd5);
-            } else {
-                serverSideEncryption = null;
-            }
             return new B2DownloadByNameRequest(
                     bucketName,
                     fileName,

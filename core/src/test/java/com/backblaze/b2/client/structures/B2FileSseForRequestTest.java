@@ -24,8 +24,7 @@ public class B2FileSseForRequestTest extends B2BaseTest {
         final B2FileSseForRequest converted = B2Json.fromJsonOrThrowRuntime(
                 jsonString,
                 B2FileSseForRequest.class);
-        final B2FileSseForRequest defaultConfig = new B2FileSseForRequest(
-                B2ServerSideEncryptionMode.SSE_B2, "AES256", null, null);
+        final B2FileSseForRequest defaultConfig = B2FileSseForRequest.createSseB2Aes256();
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
@@ -40,13 +39,32 @@ public class B2FileSseForRequestTest extends B2BaseTest {
                 "  \"algorithm\": \"AES256\",\n" +
                 "  \"customerKey\": \"" + key + "\",\n" +
                 "  \"customerKeyMd5\": \"" + keyMd5 + "\",\n" +
-                "  \"mode\": \"SSE-B2\"\n" +
+                "  \"mode\": \"SSE-C\"\n" +
                 "}";
         final B2FileSseForRequest converted = B2Json.fromJsonOrThrowRuntime(
                 jsonString,
                 B2FileSseForRequest.class);
-        final B2FileSseForRequest defaultConfig = new B2FileSseForRequest(
-                B2ServerSideEncryptionMode.SSE_B2, "AES256", key, keyMd5);
+        final B2FileSseForRequest defaultConfig = B2FileSseForRequest.createSseCAes256(key, keyMd5);
+        final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
+        assertEquals(defaultConfig, converted);
+        assertEquals(jsonString, convertedJson);
+    }
+
+    @Test
+    public void testSseCustomerManagedKeyWithCalculatedMd5Config() {
+        final String key = "iLNDwUxG7jW5Dk8K4L5MmtRlFYGtHCPWWYkzpFZ6cb8=";
+        final String expectedKeyMd5 = "uNesypp/GNphraVA9wPL5A==";
+
+        final String jsonString = "{\n" +
+                "  \"algorithm\": \"AES256\",\n" +
+                "  \"customerKey\": \"" + key + "\",\n" +
+                "  \"customerKeyMd5\": \"" + expectedKeyMd5 + "\",\n" +
+                "  \"mode\": \"SSE-C\"\n" +
+                "}";
+        final B2FileSseForRequest converted = B2Json.fromJsonOrThrowRuntime(
+                jsonString,
+                B2FileSseForRequest.class);
+        final B2FileSseForRequest defaultConfig = B2FileSseForRequest.createSseCAes256(key);
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);

@@ -79,6 +79,8 @@ import java.util.TreeMap;
 
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_ID;
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_NAME;
+import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.SSE_B2;
+import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.SSE_C;
 import static com.backblaze.b2.util.B2StringUtil.percentEncode;
 
 public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
@@ -253,6 +255,25 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                     .set(B2Headers.CONTENT_TYPE, request.getContentType())
                     .set(B2Headers.CONTENT_SHA1, contentDetails.getContentSha1HeaderValue());
             setCommonHeaders(headersBuilder);
+
+            if (request.getServerSideEncryption() != null) {
+                switch (request.getServerSideEncryption().getMode()) {
+                    case SSE_B2:
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_HEADER,
+                                request.getServerSideEncryption().getAlgorithm());
+                        break;
+                    case SSE_C:
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER,
+                                request.getServerSideEncryption().getAlgorithm());
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER,
+                                request.getServerSideEncryption().getCustomerKey());
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER,
+                                request.getServerSideEncryption().getCustomerKeyMd5());
+                        break;
+                    default:
+                        throw new B2LocalException("invalid_sse_mode", "invalid SSE mode in uploadFile");
+                }
+            }
 
             // if the source provides a last-modified time, add it.
             final Long lastModMillis;
@@ -462,7 +483,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             extras.put(B2Headers.RANGE, rangeOrNull.toString());
         }
         if (serverSideEncryptionOrNull != null) {
-            B2Preconditions.checkArgument(serverSideEncryptionOrNull.getMode().equals(B2ServerSideEncryptionMode.SSE_C));
+            B2Preconditions.checkArgument(serverSideEncryptionOrNull.getMode().equals(SSE_C));
             extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER, serverSideEncryptionOrNull.getAlgorithm());
             extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER, serverSideEncryptionOrNull.getCustomerKey());
             extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER, serverSideEncryptionOrNull.getCustomerKeyMd5());
@@ -507,17 +528,14 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     public B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth,
                                            B2GetFileInfoByNameRequest request) throws B2Exception {
         final Map<String, String> extras = new TreeMap<>();
-        if (request.getSseCustomerAlgorithmOrNull() != null) {
+        if (request.getServerSideEncryption() != null) {
+            B2Preconditions.checkArgument(request.getServerSideEncryption().getMode().equals(SSE_C));
             extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER,
-                request.getSseCustomerAlgorithmOrNull());
-        }
-        if (request.getSseCustomerKeyOrNull() != null) {
+                request.getServerSideEncryption().getAlgorithm());
             extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER,
-                request.getSseCustomerKeyOrNull());
-        }
-        if (request.getSseCustomerKeyMd5OrNull() != null) {
+                request.getServerSideEncryption().getCustomerKey());
             extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER,
-                request.getSseCustomerKeyMd5OrNull());
+                request.getServerSideEncryption().getCustomerKeyMd5());
         }
 
         B2Headers headers = webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(),

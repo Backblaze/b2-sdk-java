@@ -171,7 +171,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 B2LifecycleRule.builder(FILE_PREFIX).build()
         );
         final B2BucketServerSideEncryption defaultServerSideEncryption =
-                new B2BucketServerSideEncryption("SSE-B2", "AES256");
+                B2BucketServerSideEncryption.createSseB2Aes256();
         final B2CreateBucketRequest request = B2CreateBucketRequest
                 .builder(BUCKET_NAME, BUCKET_TYPE)
                 .setBucketInfo(bucketInfo)

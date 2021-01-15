@@ -55,21 +55,6 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
         return serverSideEncryption;
     }
 
-    @SuppressWarnings("unused")
-    public String getCustomerAlgorithm() {
-        return serverSideEncryption == null ? null : serverSideEncryption.getAlgorithm();
-    }
-
-    @SuppressWarnings("unused")
-    public String getCustomerKey() {
-        return serverSideEncryption == null ? null : serverSideEncryption.getCustomerKey();
-    }
-
-    @SuppressWarnings("unused")
-    public String getCustomerKeyMd5() {
-        return serverSideEncryption == null ? null : serverSideEncryption.getCustomerKeyMd5();
-    }
-
     @Override
     public String getB2ContentDisposition() {
         return b2ContentDisposition;
@@ -128,9 +113,7 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
     public static class Builder {
         private final String fileId;
         private B2ByteRange range;
-        private String sseCustomerAlgorithm;
-        private String sseCustomerKey;
-        private String sseCustomerKeyMd5;
+        private B2FileSseForRequest serverSideEncryption;
         private String b2ContentDisposition;
         private String b2ContentLanguage;
         private String b2Expires;
@@ -143,16 +126,6 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
         }
 
         public B2DownloadByIdRequest build() {
-            final B2FileSseForRequest serverSideEncryption;
-            if (sseCustomerAlgorithm != null || sseCustomerKey != null || sseCustomerKeyMd5 != null) {
-                serverSideEncryption = new B2FileSseForRequest(
-                        B2ServerSideEncryptionMode.SSE_C,
-                        sseCustomerAlgorithm,
-                        sseCustomerKey,
-                        sseCustomerKeyMd5);
-            } else {
-                serverSideEncryption = null;
-            }
             return new B2DownloadByIdRequest(fileId,
                     range,
                     serverSideEncryption,
@@ -169,18 +142,8 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
             return this;
         }
 
-        public Builder setSseCustomerAlgorithm(String sseCustomerAlgorithm) {
-            this.sseCustomerAlgorithm = sseCustomerAlgorithm;
-            return this;
-        }
-
-        public Builder setSseCustomerKey(String sseCustomerKey) {
-            this.sseCustomerKey = sseCustomerKey;
-            return this;
-        }
-
-        public Builder setSseCustomerKeyMd5(String sseCustomerKeyMd5) {
-            this.sseCustomerKeyMd5 = sseCustomerKeyMd5;
+        public Builder setServerSideEncryption(B2FileSseForRequest serverSideEncryption) {
+            this.serverSideEncryption = serverSideEncryption;
             return this;
         }
 

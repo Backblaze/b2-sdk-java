@@ -78,7 +78,7 @@ public class B2BucketTest extends B2BaseTest {
                         "enabled",
                         new B2BucketFileLockPeriod(7, "days"),
                         "governance"),
-                new B2BucketServerSideEncryption("SSE-B2", "AES256"),
+                B2BucketServerSideEncryption.createSseB2Aes256(),
                 1);
         final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
         final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(bucketJson, B2Bucket.class);
@@ -128,7 +128,7 @@ public class B2BucketTest extends B2BaseTest {
                         "enabled",
                         new B2BucketFileLockPeriod(7, "days"),
                         "governance"),
-                new B2BucketServerSideEncryption("SSE-B2", "AES256"),
+                B2BucketServerSideEncryption.createSseB2Aes256(),
                 1);
         // Convert from B2Bucket -> json
         final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);

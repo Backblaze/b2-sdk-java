@@ -11,34 +11,22 @@ import java.util.Objects;
 public class B2GetFileInfoByNameRequest {
     private final String bucketName;
     private final String fileName;
-    private final String sseCustomerAlgorithm;
-    private final String sseCustomerKey;
-    private final String sseCustomerKeyMd5;
+    private final B2FileSseForRequest serverSideEncryption;
 
     public B2GetFileInfoByNameRequest(String bucketName,
                                       String fileName) {
-        this(bucketName, fileName, null, null, null);
+        this(bucketName, fileName, null);
     }
 
     public B2GetFileInfoByNameRequest(String bucketName,
                                       String fileName,
-                                      String sseCustomerAlgorithm,
-                                      String sseCustomerKey,
-                                      String sseCustomerKeyMd5) {
+                                      B2FileSseForRequest serverSideEncryption) {
         B2Preconditions.checkArgument(bucketName != null);
         B2Preconditions.checkArgument(fileName != null);
 
-        if (sseCustomerAlgorithm != null || sseCustomerKey != null || sseCustomerKeyMd5 != null) {
-            B2Preconditions.checkArgument(sseCustomerAlgorithm != null);
-            B2Preconditions.checkArgument(sseCustomerKey != null);
-            B2Preconditions.checkArgument(sseCustomerKeyMd5 != null);
-        }
-
         this.bucketName = bucketName;
         this.fileName = fileName;
-        this.sseCustomerAlgorithm = sseCustomerAlgorithm;
-        this.sseCustomerKey = sseCustomerKey;
-        this.sseCustomerKeyMd5 = sseCustomerKeyMd5;
+        this.serverSideEncryption = serverSideEncryption;
     }
 
     public String getBucketName() {
@@ -49,16 +37,8 @@ public class B2GetFileInfoByNameRequest {
         return fileName;
     }
 
-    public String getSseCustomerAlgorithmOrNull() {
-        return sseCustomerAlgorithm;
-    }
-
-    public String getSseCustomerKeyOrNull() {
-        return sseCustomerKey;
-    }
-
-    public String getSseCustomerKeyMd5OrNull() {
-        return sseCustomerKeyMd5;
+    public B2FileSseForRequest getServerSideEncryption() {
+        return serverSideEncryption;
     }
 
     @Override
@@ -68,18 +48,14 @@ public class B2GetFileInfoByNameRequest {
         B2GetFileInfoByNameRequest that = (B2GetFileInfoByNameRequest) o;
         return Objects.equals(bucketName, that.bucketName) &&
             Objects.equals(fileName, that.fileName) &&
-            Objects.equals(sseCustomerAlgorithm, that.sseCustomerAlgorithm) &&
-            Objects.equals(sseCustomerKey, that.sseCustomerKey) &&
-            Objects.equals(sseCustomerKeyMd5, that.sseCustomerKeyMd5);
+            Objects.equals(serverSideEncryption, that.serverSideEncryption);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(bucketName,
             fileName,
-            sseCustomerAlgorithm,
-            sseCustomerKey,
-            sseCustomerKeyMd5);
+            serverSideEncryption);
     }
 
     public static Builder builder(String bucketName,
@@ -90,10 +66,7 @@ public class B2GetFileInfoByNameRequest {
     public static class Builder {
         private final String bucketName;
         private final String fileName;
-
-        private String sseCustomerAlgorithm;
-        private String sseCustomerKey;
-        private String sseCustomerKeyMd5;
+        private B2FileSseForRequest serverSideEncryption;
 
         private Builder(String bucketName,
                         String fileName) {
@@ -101,18 +74,8 @@ public class B2GetFileInfoByNameRequest {
             this.fileName = fileName;
         }
 
-        public Builder setSseCustomerAlgorithm(String sseCustomerAlgorithm) {
-            this.sseCustomerAlgorithm = sseCustomerAlgorithm;
-            return this;
-        }
-
-        public Builder setSseCustomerKey(String sseCustomerKey) {
-            this.sseCustomerKey = sseCustomerKey;
-            return this;
-        }
-
-        public Builder setSseCustomerKeyMd5(String sseCustomerKeyMd5) {
-            this.sseCustomerKeyMd5 = sseCustomerKeyMd5;
+        public Builder setServerSideEncryption(B2FileSseForRequest serverSideEncryption) {
+            this.serverSideEncryption = serverSideEncryption;
             return this;
         }
 
@@ -120,9 +83,7 @@ public class B2GetFileInfoByNameRequest {
             return new B2GetFileInfoByNameRequest(
                     bucketName,
                     fileName,
-                    sseCustomerAlgorithm,
-                    sseCustomerKey,
-                    sseCustomerKeyMd5);
+                    serverSideEncryption);
         }
     }
 }

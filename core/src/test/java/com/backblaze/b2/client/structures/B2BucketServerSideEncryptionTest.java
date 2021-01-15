@@ -21,8 +21,7 @@ public class B2BucketServerSideEncryptionTest extends B2BaseTest {
         final B2BucketServerSideEncryption converted = B2Json.fromJsonOrThrowRuntime(
                 jsonString,
                 B2BucketServerSideEncryption.class);
-        final B2BucketServerSideEncryption defaultConfig = new B2BucketServerSideEncryption(
-                B2ServerSideEncryptionMode.SSE_B2, "AES256");
+        final B2BucketServerSideEncryption defaultConfig = B2BucketServerSideEncryption.createSseB2Aes256();
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);

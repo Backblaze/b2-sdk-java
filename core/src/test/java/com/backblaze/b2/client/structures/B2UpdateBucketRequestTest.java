@@ -84,7 +84,7 @@ public class B2UpdateBucketRequestTest extends TestCase {
                 new B2BucketFileLockPeriod(7, "days"),
                 "governance");
         B2BucketServerSideEncryption defaultServerSideEncryption =
-                new B2BucketServerSideEncryption("SSE-B2", "AES256");
+                B2BucketServerSideEncryption.createSseB2Aes256();
 
         final B2UpdateBucketRequest updateRequest = B2UpdateBucketRequest.builder(
                 new B2Bucket(

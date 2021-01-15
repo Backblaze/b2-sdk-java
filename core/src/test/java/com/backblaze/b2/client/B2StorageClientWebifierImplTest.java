@@ -24,6 +24,7 @@ import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
@@ -916,9 +917,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     public void testGetFileInfoByNameWithSseC() throws B2Exception {
         final B2GetFileInfoByNameRequest request = B2GetFileInfoByNameRequest
             .builder(bucketName(1), fileName(1))
-            .setSseCustomerAlgorithm("AES256")
-            .setSseCustomerKey("customerKey")
-            .setSseCustomerKeyMd5("customerKeyMd5")
+            .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customerKey", "customerKeyMd5"))
             .build();
 
         final B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
@@ -1072,9 +1071,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         final String expectedUrl = "downloadUrl1/b2api/v2/b2_download_file_by_id?fileId=4_zBlah_0000001";
         final B2DownloadByIdRequest request = B2DownloadByIdRequest
                 .builder(fileId(1))
-                .setSseCustomerAlgorithm("AES256")
-                .setSseCustomerKey("customerKey")
-                .setSseCustomerKeyMd5("customerKeyMd5")
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customerKey", "customerKeyMd5"))
                 .build();
         webifier.downloadById(ACCOUNT_AUTH, request, noopContentHandler);
 
@@ -1186,9 +1183,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         final String expectedUrl = "downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001";
         final B2DownloadByNameRequest request = B2DownloadByNameRequest
                 .builder(bucketName(1), fileName(1))
-                .setSseCustomerAlgorithm("AES256")
-                .setSseCustomerKey("customerKey")
-                .setSseCustomerKeyMd5("customerKeyMd5")
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customerKey", "customerKeyMd5"))
                 .build();
         webifier.downloadByName(ACCOUNT_AUTH, request, noopContentHandler);
 
@@ -1434,6 +1429,42 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     }
 
     @Test
+    public void testUploadFileWithSseC() throws B2Exception {
+        final B2UploadListener listener = mock(B2UploadListener.class);
+
+        final B2UploadFileRequest request = B2UploadFileRequest
+                .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customerKey", "customerKeyMd5"))
+                .setListener(listener)
+                .build();
+        final B2UploadUrlResponse uploadUrl = uploadUrlResponse(bucketId(1), 1);
+        webifier.uploadFile(uploadUrl, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    uploadUrl1\n" +
+                "headers:\n" +
+                "    Authorization: downloadToken1\n" +
+                "    Content-Type: b2/x-auto\n" +
+                "    Expect: 100-continue\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
+                "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
+                "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Algorithm: AES256\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key: customerKey\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key-Md5: customerKeyMd5\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "inputStream:\n" +
+                "    Hello, World!\n" +
+                "contentLength:\n" +
+                "    13\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+    }
+
+        @Test
     public void testUploadFileWithNoSha1InContentSource() throws B2Exception {
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithoutOptionalData)

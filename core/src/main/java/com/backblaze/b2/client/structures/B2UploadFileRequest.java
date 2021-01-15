@@ -13,6 +13,7 @@ public class B2UploadFileRequest {
     private final String bucketId;
     private final String fileName;
     private final String contentType;
+    private final B2FileSseForRequest serverSideEncryption;
     private final B2ContentSource contentSource;
     private final Map<String, String> fileInfo;
     private final B2UploadListener listener;
@@ -21,12 +22,14 @@ public class B2UploadFileRequest {
     private B2UploadFileRequest(String bucketId,
                                 String fileName,
                                 String contentType,
+                                B2FileSseForRequest serverSideEncryption,
                                 Map<String, String> fileInfo,
                                 B2ContentSource contentSource,
                                 B2UploadListener listener) {
         this.bucketId = bucketId;
         this.fileName = fileName;
         this.contentType = contentType;
+        this.serverSideEncryption = serverSideEncryption;
         this.fileInfo = fileInfo;  // make sorted, immutable copyOf?!
         this.contentSource = contentSource;
         this.listener = (listener != null) ? listener : B2UploadListener.noopListener();
@@ -42,6 +45,10 @@ public class B2UploadFileRequest {
 
     public String getContentType() {
         return contentType;
+    }
+
+    public B2FileSseForRequest getServerSideEncryption() {
+        return serverSideEncryption;
     }
 
     public B2ContentSource getContentSource() {
@@ -68,6 +75,7 @@ public class B2UploadFileRequest {
         private String fileName;
         private String contentType;
         private B2ContentSource source;
+        private B2FileSseForRequest serverSideEncryption;
         private Map<String, String> info;
         private B2UploadListener listener;
 
@@ -80,6 +88,11 @@ public class B2UploadFileRequest {
             this.contentType = contentType;
             this.source = source;
             this.info = new TreeMap<>();
+        }
+
+        public Builder setServerSideEncryption(B2FileSseForRequest serverSideEncryption) {
+            this.serverSideEncryption = serverSideEncryption;
+            return this;
         }
 
         public Builder setCustomField(String name, String value) {
@@ -103,6 +116,7 @@ public class B2UploadFileRequest {
             return new B2UploadFileRequest(bucketId,
                     fileName,
                     contentType,
+                    serverSideEncryption,
                     info,
                     source,
                     listener);
