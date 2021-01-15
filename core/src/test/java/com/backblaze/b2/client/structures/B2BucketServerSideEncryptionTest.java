@@ -27,6 +27,21 @@ public class B2BucketServerSideEncryptionTest extends B2BaseTest {
         assertEquals(jsonString, convertedJson);
     }
 
+    @Test
+    public void testSseNoneConfig() {
+        final String jsonString = "{\n" +
+                "  \"algorithm\": null,\n" +
+                "  \"mode\": \"none\"\n" +
+                "}";
+        final B2BucketServerSideEncryption converted = B2Json.fromJsonOrThrowRuntime(
+                jsonString,
+                B2BucketServerSideEncryption.class);
+        final B2BucketServerSideEncryption defaultConfig = B2BucketServerSideEncryption.createSseNone();
+        final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
+        assertEquals(defaultConfig, converted);
+        assertEquals(jsonString, convertedJson);
+    }
+
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 

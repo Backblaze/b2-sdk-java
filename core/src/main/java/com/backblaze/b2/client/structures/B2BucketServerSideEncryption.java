@@ -9,11 +9,12 @@ import com.backblaze.b2.json.B2Json;
 
 import java.util.Objects;
 
+import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.NONE;
 import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.SSE_B2;
 
 public class B2BucketServerSideEncryption {
     /**
-     * The SSE mode, e.g., SSE-B2 (or "unauthorized")
+     * The SSE mode, e.g., SSE-B2 or none (or "unauthorized")
      */
     @B2Json.required
     private final String mode;
@@ -27,6 +28,9 @@ public class B2BucketServerSideEncryption {
     private static final B2BucketServerSideEncryption SSE_B2_AES256 =
             new B2BucketServerSideEncryption(SSE_B2, "AES256");
 
+    private static final B2BucketServerSideEncryption SSE_NONE =
+            new B2BucketServerSideEncryption(NONE, null);
+
     @B2Json.constructor(params = "mode, algorithm")
     private B2BucketServerSideEncryption(String mode, String algorithm) {
         this.mode = mode;
@@ -39,6 +43,14 @@ public class B2BucketServerSideEncryption {
      */
     public static B2BucketServerSideEncryption createSseB2Aes256() {
         return SSE_B2_AES256;
+    }
+
+    /**
+     * Create default bucket server-side encryption configuration with default encryption disabled.
+     * @return default disabled bucket encryption configuration
+     */
+    public static B2BucketServerSideEncryption createSseNone() {
+        return SSE_NONE;
     }
 
     public String getMode() { return mode; }
