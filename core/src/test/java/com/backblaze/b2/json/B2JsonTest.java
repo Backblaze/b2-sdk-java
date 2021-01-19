@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -2790,6 +2791,104 @@ public class B2JsonTest extends B2BaseTest {
         final LotsOfFieldsHolder obj3 = b2Json.fromJson(json3, LotsOfFieldsHolder.class);
         assertEquals("02", obj3.field02);
         assertEquals("b2", obj3.field77);
+    }
+
+    /**
+     * Cannot directly test the case with MAX_ARRAY_SIZE being (Integer.MAX_VALUE - 8)
+     * since the real OutOfMemory error would occur without triggering the intended
+     * IOException ("Requested array size exceeds maximum limit"). This happens even
+     * when heap size is increased to 8GB. This happens probably because the JVM heap
+     * is probably heavily allocated before the OutputStream array size is anywhere
+     * close to half of MAX_ARRAY_SIZE.
+     *
+     * Instead, create a subclass of B2JsonByteArrayOutputStream with lowered
+     * MAX_ARRAY_SIZE (1000) for testing purpose: IOException will then be thrown
+     */
+    private static class B2JsonByteArrayOutputStreamForTest extends B2JsonByteArrayOutputStream {
+        private static final int MAX_ARRAY_SIZE = 1000;
+
+        @Override
+        protected void grow(int minCapacity) throws IOException {
+            // overflow-conscious code
+            int oldCapacity = buf.length;
+            int newCapacity = oldCapacity << 1;
+            if (newCapacity - minCapacity < 0)
+                newCapacity = minCapacity;
+            if (newCapacity - MAX_ARRAY_SIZE > 0) {
+                throw new IOException("Requested array size exceeds maximum limit");
+            }
+            buf = Arrays.copyOf(buf, newCapacity);
+        }
+    }
+
+    /* convenience object for testing IOException("Requested array size exceeds maximum limit") */
+    private static class ObjectWithSomeName {
+       @B2Json.required
+       private final String name;
+
+       @B2Json.constructor(params = "name")
+       public ObjectWithSomeName(String name) {
+           this.name = name;
+       }
+
+       @Override
+       public boolean equals(Object o) {
+           if (this == o) {
+               return true;
+           }
+           if (o == null || getClass() != o.getClass()) {
+               return false;
+           }
+           final ObjectWithSomeName objectWithSomeName = (ObjectWithSomeName) o;
+           return this.name.equals(objectWithSomeName.name);
+       }
+
+       @Override
+       public int hashCode() {
+           return name.hashCode();
+       }
+    }
+
+    @Test
+    public void testObjectWithNameToJson() throws B2JsonException, IOException {
+        // an object not big enough to cause IOException("Requested array size exceeds maximum limit")
+        final StringBuilder smallName = new StringBuilder();
+        for (int i = 0; i < 19; i++) {
+            for (char j = 'A'; j <= 'Z'; j++) {
+                smallName.append(j);
+            }
+        }
+        // the total size of object in bytes is 494; doubling will not cause overflow over 1000
+        final ObjectWithSomeName expectedObjectWithSomeSmallName = new ObjectWithSomeName(smallName.toString());
+        final B2JsonByteArrayOutputStreamForTest b2JsonByteArrayOutputStreamForSmall = new B2JsonByteArrayOutputStreamForTest();
+        B2Json.get().toJson(expectedObjectWithSomeSmallName, b2JsonByteArrayOutputStreamForSmall);
+
+        // rebuild the object based on the Json string
+        final String actualJson = b2JsonByteArrayOutputStreamForSmall.toString();
+        final ObjectWithSomeName actualObjectWithSomeName = B2Json.fromJsonOrThrowRuntime(actualJson, ObjectWithSomeName.class);
+        assertEquals(expectedObjectWithSomeSmallName, actualObjectWithSomeName);
+
+
+        /* an object big enough to cause IOException("Requested array size exceeds maximum limit") */
+        final StringBuilder bigName = new StringBuilder();
+        for (int i = 0; i < 20; i++) {
+            for (char j = 'A'; j <= 'Z'; j++) {
+                bigName.append(j);
+            }
+        }
+
+        String nullJson = null;
+        try {
+            final B2JsonByteArrayOutputStreamForTest b2JsonByteArrayOutputStreamForBig = new B2JsonByteArrayOutputStreamForTest();
+            final ObjectWithSomeName expectedObjectWithSomeBigName = new ObjectWithSomeName(bigName.toString());
+
+            // total size of the object in bytes is 520; doubling capacity will cause overflow over 1000
+            B2Json.get().toJson(expectedObjectWithSomeBigName, b2JsonByteArrayOutputStreamForBig);
+            nullJson = b2JsonByteArrayOutputStreamForBig.toString();
+        } catch (IOException ioException) {
+            assertEquals("Requested array size exceeds maximum limit", ioException.getMessage());
+        }
+        assertNull(nullJson);
     }
 
     private static class ClassThatUsesGenerics {
