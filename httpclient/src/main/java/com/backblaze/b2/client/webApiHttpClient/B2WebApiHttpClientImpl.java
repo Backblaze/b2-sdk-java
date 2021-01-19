@@ -103,10 +103,15 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
             get.setHeaders(makeHeaders(headersOrNull));
         }
 
-        /* disable content compression so as not to automatically decompress compressed content
-           from the server. In other words, this API simply gives back exactly what was uploaded:
-           if a file was originally uploaded in compressed format (e.g. gzip) then the file
-           would be downloaded still in its original format un-decompressed.
+        /* At default HTTP client libraries will automatically decompress compressed content
+           to make it easier for the caller making downloading requests. Most of the time
+           that's helpful, but this works against our API goal: download exactly what was
+           uploaded. So we need to disable this default behavior.
+
+           We achieve this by disabling content compression on HttpGet's request config
+           - setContentCompressionEnabled(false). With this change, if a file was uploaded
+           in a compressed format (e.g. gzip) the file would be downloaded still in its
+           original compressed format.
          */
         get.setConfig(RequestConfig.custom()
                 .setContentCompressionEnabled(false)
