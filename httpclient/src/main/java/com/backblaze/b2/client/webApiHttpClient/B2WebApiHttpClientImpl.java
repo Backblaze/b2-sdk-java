@@ -104,7 +104,9 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         }
 
         /* disable content compression so as not to automatically decompress compressed content
-           from the server. In other words, this API simply gives back exactly what was loaded
+           from the server. In other words, this API simply gives back exactly what was uploaded:
+           if a file was originally uploaded in compressed format (e.g. gzip) then the file
+           would be downloaded still in its original format un-decompressed.
          */
         get.setConfig(RequestConfig.custom()
                 .setContentCompressionEnabled(false)
