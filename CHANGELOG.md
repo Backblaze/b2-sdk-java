@@ -1,7 +1,18 @@
 # Changelog
 
 ## [Unreleased]
+
+## [5.0.0] - 2021-01-20
 ### Changed `[Incompatible]`
+* Disable automatic decompressing compressed content in HTTP client download library
+
+### Added
+* Set gradle targetCompatibility to 1.8
+* Added support for java.util.SortedMap interface
+* Support more than 64 fields per object
+
+### Fixed
+* Fix regular expression that has an unescaped .
 
 ## [4.0.0] - 2020-05-11
 ### Added
