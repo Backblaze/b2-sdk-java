@@ -2,12 +2,32 @@
 
 ## [Unreleased]
 ### Changed `[Incompatible]`
-* The deprecated okhttp client was removed.
+
+## [4.0.0] - 2020-05-11
+### Added
+* Removed the deprecated okhttp client
+* Added 'readBuckets' and 'listAllBucketNames' application key capability names
+* Added the "Expect: 100-continue" header to upload file/part requests
+* Validates file info header name characters against RFC 7230 (https://tools.ietf.org/html/rfc7230#section-3.2)
+* B2Json:
+* Add general generics support to B2Json
+* Allow generic types for top-level objects from select entry points
+* Add support for parameterized classes that contain generic arrays
+* Add support for CharSequence
+* Add an omitNull parameter to @B2Json.optional
+* Disabled URI normalization in Apache HttpClient
+* Extended B2FileVersion and B2Part to include contentMd5
+* Added support to override additional download headers
+* Added optional 'options' parameter in the B2Bucket and B2ApplicationKey constructor
+* Added b2_copy_file support
+* Added progress reporting in the B2LargeFileStorer
+* Updated to version `4.5.9` of `org.apache.httpcomponents:httpclient`
 * B2Bucket and B2ApplicationKey both have an `options` parameter in the constructor.  These are optional.
 * `B2StorageClient.DownloadByName` supports downloading files with looser naming requirements, e.g. names containing double slashes (`//`).
-* Updated to version `4.5.9` of `org.apache.httpcomponents:httpclient`. 
-* When uploading files, the characters in the fileInfo header names are now validated against the list of 
-  acceptable characters in RFC 7230 `https://tools.ietf.org/html/rfc7230#section-3.2`
+
+### Fixed
+* See the closed issues for a complete list
+
 ## [3.1.0] - 2019-05-16
 ### Added
 * Added `@B2Json.sensitive` annotation to redact fields when B2Json is
