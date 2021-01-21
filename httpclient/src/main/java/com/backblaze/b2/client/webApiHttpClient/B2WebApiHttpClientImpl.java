@@ -103,7 +103,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
             get.setHeaders(makeHeaders(headersOrNull));
         }
 
-        /* At default HTTP client libraries will automatically decompress compressed content
+        /* By default, HTTP client libraries will automatically decompress compressed content
            to make it easier for the caller making downloading requests. Most of the time
            that's helpful, but this works against our API goal: download exactly what was
            uploaded. So we need to disable this default behavior.
