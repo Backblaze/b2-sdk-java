@@ -12,102 +12,97 @@ import java.util.Arrays;
 /**
  * A B2Json version of ByteArrayOutputStream that throws IOException (as opposed to OutOfMemoryError)
  * when new capacity would be over the maximum limit (Integer.MAX_VALUE - 8). Everything else works
- * the same way as the ByteArrayOutputStream from the standard Java version.
+ * about the same way as the ByteArrayOutputStream from the standard Java version.
  *
  * THREAD-SAFE
  */
 public class B2JsonByteArrayOutputStream extends OutputStream {
 
     /**
-     * The maximum size of array to allocate. Reserve some header words
-     * in an array. Attempts to allocate larger arrays will result in
-     * IOException: Requested array size exceeds maximum limit.
+     * The maximum array size to allocate (leave some space for array
+     * overhead). Will throw IOException: "Requested array size exceeds
+     * maximum limit" if the new capacity would be over this threshold.
+     *
      */
-    private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+    private static final int maxCapacity = Integer.MAX_VALUE - 8;
 
-    /* The buffer where data are stored */
-    protected byte[] buf;
+    /* The output buffer to store bytes */
+    protected byte[] outputBuffer;
 
-    /* The number of valid bytes in the buffer */
+    /* The number of bytes in the buffer */
     protected int count;
 
     /**
-     * Creates a new byte array output stream. The buffer capacity is
-     * initially 32 bytes, though its size increases if necessary.
+     * Creates a new byte array output stream with initial capacity
+     * set to 64 bytes
      */
     public B2JsonByteArrayOutputStream() {
-        this(32);
+        // init streamBuffer to have 64-byte capacity to start
+        outputBuffer = new byte[64];
     }
 
     /**
-     * Creates a new byte array output stream, with a buffer capacity of
-     * the specified size, in bytes.
+     * returns the max capacity
      *
-     * @param size the initial size.
-     * @exception IllegalArgumentException if size is negative.
+     * @return maxCapacity
      */
-    public B2JsonByteArrayOutputStream(int size) {
-        if (size < 0) {
-            throw new IllegalArgumentException("Negative initial size: " + size);
-        }
-        buf = new byte[size];
+    protected int getMaxCapacity() {
+        return maxCapacity;
     }
 
     /**
-     * Increases the capacity if necessary to ensure that it can hold
-     * at least the number of elements specified by the minimum
-     * capacity argument.
+     * Checks the capacity if necessary to ensure that it can store
+     * at least the number of bytes specified by the minimum capacity
      *
      * @param minCapacity the desired minimum capacity
-     * @throws IOException if the minimum capacity would be over MAX_ARRAY_SIZE
+     * @throws IOException if the minimum capacity would be over maxCapacity
      */
-    private void ensureCapacity(int minCapacity) throws IOException {
+    private void checkCapacity(int minCapacity) throws IOException {
         // overflow-conscious code
-        if (minCapacity - buf.length > 0) {
-            grow(minCapacity);
+        if (minCapacity - outputBuffer.length > 0) {
+            expandCapacity(minCapacity);
         }
     }
 
     /**
-     * Increases the capacity to ensure that it can hold at least the
-     * number of elements specified by the minimum capacity argument.
+     * Expands the capacity to ensure that it can store at least the
+     * number of elements specified by the minimum capacity
      *
      * @param minCapacity the desired minimum capacity
-     * @throws IOException if new capacity would grow over MAX_ARRAY_SIZE
+     * @throws IOException if new capacity would grow over maxCapacity
      */
-    protected void grow(int minCapacity) throws IOException {
-        // overflow-conscious code
-        final int oldCapacity = buf.length;
+    private void expandCapacity(int minCapacity) throws IOException {
+        final int oldCapacity = outputBuffer.length;
 
         // double the current capacity
-        int newCapacity = oldCapacity << 1;
+        int newCapacity = oldCapacity * 2;
         if (newCapacity - minCapacity < 0) {
             newCapacity = minCapacity;
         }
 
         // throws if the new capacity will be over the specified limit
-        if (newCapacity - MAX_ARRAY_SIZE > 0) {
+        if (newCapacity - getMaxCapacity() > 0) {
             throw new IOException("Requested array size exceeds maximum limit");
         }
 
-        buf = Arrays.copyOf(buf, newCapacity);
+        outputBuffer = Arrays.copyOf(outputBuffer, newCapacity);
     }
 
     /**
-     * Writes the specified byte to this byte array output stream.
+     * Writes the specified byte to this {@code B2JsonByteArrayOutputStream}
      *
      * @param b the byte to be written.
-     * @throws IOException if new capacity would grow over MAX_ARRAY_SIZE
+     * @throws IOException if new capacity would grow over maxCapacity
      */
     public synchronized void write(int b) throws IOException {
-        ensureCapacity(count + 1);
-        buf[count] = (byte) b;
+        checkCapacity(count + 1);
+        outputBuffer[count] = (byte) b;
         count += 1;
     }
 
     /**
      * Writes len bytes from the specified byte array
-     * starting at offset off to this byte array output stream.
+     * starting at offset off to this {@code B2JsonByteArrayOutputStream}
      *
      * @param b the data.
      * @param off the start offset in the data.
@@ -119,33 +114,11 @@ public class B2JsonByteArrayOutputStream extends OutputStream {
                 ((off + len) - b.length > 0)) {
             throw new IndexOutOfBoundsException();
         }
-        ensureCapacity(count + len);
+        checkCapacity(count + len);
 
         // copy the len bytes from b into this array
-        System.arraycopy(b, off, buf, count, len);
+        System.arraycopy(b, off, outputBuffer, count, len);
         count += len;
-    }
-
-    /**
-     * Writes the complete contents of this byte array output stream to
-     * the specified output stream argument, as if by calling the output
-     * stream's write method using <code>out.write(buf, 0, count)</code>.
-     *
-     * @param out the output stream to which to write the data.
-     * @exception IOException if an I/O error occurs.
-     */
-    public synchronized void writeTo(OutputStream out) throws IOException {
-        out.write(buf, 0, count);
-    }
-
-    /**
-     * Resets the count field of this byte array output stream to zero,
-     * so that all currently accumulated output in the output stream is
-     * discarded. The output stream can be used again, reusing the already
-     * allocated buffer space.
-     */
-    public synchronized void reset() {
-        count = 0;
     }
 
     /**
@@ -156,7 +129,7 @@ public class B2JsonByteArrayOutputStream extends OutputStream {
      * @return the current contents of this output stream, as a byte array.
      */
     public synchronized byte[] toByteArray() {
-        return Arrays.copyOf(buf, count);
+        return Arrays.copyOf(outputBuffer, count);
     }
 
     /**
@@ -184,7 +157,7 @@ public class B2JsonByteArrayOutputStream extends OutputStream {
      * @return String decoded from the buffer's contents.
      */
     public synchronized String toString() {
-        return new String(buf, 0, count);
+        return new String(outputBuffer, 0, count);
     }
 
     /**
@@ -206,7 +179,7 @@ public class B2JsonByteArrayOutputStream extends OutputStream {
      */
     public synchronized String toString(String charsetName)
             throws UnsupportedEncodingException {
-        return new String(buf, 0, count, charsetName);
+        return new String(outputBuffer, 0, count, charsetName);
     }
 
     /**

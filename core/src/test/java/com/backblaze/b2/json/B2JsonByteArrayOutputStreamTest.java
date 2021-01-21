@@ -22,28 +22,18 @@ public class B2JsonByteArrayOutputStreamTest {
     /**
      * Cannot directly test the case with MAX_ARRAY_SIZE being (Integer.MAX_VALUE - 8)
      * since the real OutOfMemory error would occur without triggering the intended
-     * IOException ("Requested array size exceeds maximum limit"). This happens even
-     * when heap size is increased to 8GB. This happens probably because the JVM heap
-     * is probably heavily allocated before the OutputStream array size is anywhere
-     * close to half of MAX_ARRAY_SIZE.
+     * IOException ("Requested array size exceeds maximum limit"). This happens during
+     * unit tests and git builds.
      *
      * Instead, create a subclass of B2JsonByteArrayOutputStream with lowered
      * MAX_ARRAY_SIZE (1000) for testing purpose: IOException will then be thrown
      */
     static class B2JsonByteArrayOutputStreamForTest extends B2JsonByteArrayOutputStream {
-        private static final int MAX_ARRAY_SIZE = 1000;
+        private static final int maxCapacity = 1000;
 
         @Override
-        protected void grow(int minCapacity) throws IOException {
-            // overflow-conscious code
-            int oldCapacity = buf.length;
-            int newCapacity = oldCapacity << 1;
-            if (newCapacity - minCapacity < 0)
-                newCapacity = minCapacity;
-            if (newCapacity - MAX_ARRAY_SIZE > 0) {
-                throw new IOException("Requested array size exceeds maximum limit");
-            }
-            buf = Arrays.copyOf(buf, newCapacity);
+        protected int getMaxCapacity() {
+            return maxCapacity;
         }
     }
 

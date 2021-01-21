@@ -23,7 +23,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -2802,57 +2801,16 @@ public class B2JsonTest extends B2BaseTest {
        public ObjectWithSomeName(String name) {
            this.name = name;
        }
-
-       @Override
-       public boolean equals(Object o) {
-           if (this == o) {
-               return true;
-           }
-           if (o == null || getClass() != o.getClass()) {
-               return false;
-           }
-           final ObjectWithSomeName objectWithSomeName = (ObjectWithSomeName) o;
-           return this.name.equals(objectWithSomeName.name);
-       }
-
-       @Override
-       public int hashCode() {
-           return name.hashCode();
-       }
     }
 
     @Test
-    public void testObjectWithNameToJson() throws B2JsonException, IOException {
-        // an object not big enough to cause IOException("Requested array size exceeds maximum limit")
-        final StringBuilder smallName = new StringBuilder();
-        for (int i = 0; i < 19; i++) {
-            for (char j = 'A'; j <= 'Z'; j++) {
-                smallName.append(j);
-            }
-        }
-        // the total size of object in bytes is 494; doubling will not cause overflow over 1000
-        final ObjectWithSomeName expectedObjectWithSomeSmallName = new ObjectWithSomeName(smallName.toString());
-        final B2JsonByteArrayOutputStreamTest.B2JsonByteArrayOutputStreamForTest b2JsonByteArrayOutputStreamForSmall = new B2JsonByteArrayOutputStreamTest.B2JsonByteArrayOutputStreamForTest();
-        B2Json.get().toJson(expectedObjectWithSomeSmallName, b2JsonByteArrayOutputStreamForSmall);
-
-        // rebuild the object based on the Json string
-        final String actualJson = b2JsonByteArrayOutputStreamForSmall.toString();
-        final ObjectWithSomeName actualObjectWithSomeName = B2Json.fromJsonOrThrowRuntime(actualJson, ObjectWithSomeName.class);
-        assertEquals(expectedObjectWithSomeSmallName, actualObjectWithSomeName);
-
-
-        /* an object big enough to cause IOException("Requested array size exceeds maximum limit") */
-        final StringBuilder bigName = new StringBuilder();
-        for (int i = 0; i < 20; i++) {
-            for (char j = 'A'; j <= 'Z'; j++) {
-                bigName.append(j);
-            }
-        }
-
+    public void testObjectWithNameToJson() throws B2JsonException {
         String nullJson = null;
         try {
             final B2JsonByteArrayOutputStreamTest.B2JsonByteArrayOutputStreamForTest b2JsonByteArrayOutputStreamForBig = new B2JsonByteArrayOutputStreamTest.B2JsonByteArrayOutputStreamForTest();
-            final ObjectWithSomeName expectedObjectWithSomeBigName = new ObjectWithSomeName(bigName.toString());
+            /* an object big enough to cause IOException("Requested array size exceeds maximum limit") */
+            final String objectName = makeNameStringWithLength(501);
+            final ObjectWithSomeName expectedObjectWithSomeBigName = new ObjectWithSomeName(objectName);
 
             // total size of the object in bytes is 520; doubling capacity will cause overflow over 1000
             B2Json.get().toJson(expectedObjectWithSomeBigName, b2JsonByteArrayOutputStreamForBig);
@@ -2861,6 +2819,15 @@ public class B2JsonTest extends B2BaseTest {
             assertEquals("Requested array size exceeds maximum limit", ioException.getMessage());
         }
         assertNull(nullJson);
+    }
+
+    private String makeNameStringWithLength(int length) {
+        final StringBuilder name = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            // name string pattern - 'ABC...ZABC...Z...'
+            name.append((char)(i%26 + 'A'));
+        }
+        return name.toString();
     }
 
     private static class ClassThatUsesGenerics {
