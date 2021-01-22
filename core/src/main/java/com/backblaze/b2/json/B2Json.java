@@ -133,7 +133,7 @@ public class B2Json {
             /* B2Json version of ByteArrayOutputStream that throws IOException if its capacity
                would grow over the max limit (Integer.MAX_VALUE - 8)
              */
-            final B2JsonByteArrayOutputStream out = new B2JsonByteArrayOutputStream();
+            final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream();
             toJson(obj, options, out);
             out.write('\n');
             return out.toByteArray();
@@ -201,7 +201,7 @@ public class B2Json {
     }
 
     public String toJson(Object obj, B2JsonOptions options) throws B2JsonException {
-        try (final B2JsonByteArrayOutputStream out = new B2JsonByteArrayOutputStream()) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream()) {
             toJson(obj, options, out);
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
@@ -262,7 +262,7 @@ public class B2Json {
         final B2JsonTypeHandler keyHandler = handlerMap.getHandler(keyClass);
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonMapHandler(keyHandler, valueHandler);
-        try (final B2JsonByteArrayOutputStream out = new B2JsonByteArrayOutputStream()) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(map, options, jsonWriter);
@@ -299,7 +299,7 @@ public class B2Json {
         }
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonListHandler(valueHandler);
-        try (final B2JsonByteArrayOutputStream out = new B2JsonByteArrayOutputStream()) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream()) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(list, options, jsonWriter);

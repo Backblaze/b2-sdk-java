@@ -2807,7 +2807,7 @@ public class B2JsonTest extends B2BaseTest {
     public void testObjectWithNameToJson() throws B2JsonException {
         String nullJson = null;
         try {
-            final B2JsonByteArrayOutputStreamTest.B2JsonByteArrayOutputStreamForTest b2JsonByteArrayOutputStreamForBig = new B2JsonByteArrayOutputStreamTest.B2JsonByteArrayOutputStreamForTest();
+            final B2JsonBoundedByteArrayOutputStreamTest.B2JsonBoundedByteArrayOutputStreamForTest b2JsonByteArrayOutputStreamForBig = new B2JsonBoundedByteArrayOutputStreamTest.B2JsonBoundedByteArrayOutputStreamForTest();
             /* an object big enough to cause IOException("Requested array size exceeds maximum limit") */
             final String objectName = makeNameStringWithLength(501);
             final ObjectWithSomeName expectedObjectWithSomeBigName = new ObjectWithSomeName(objectName);

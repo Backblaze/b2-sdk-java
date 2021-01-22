@@ -9,7 +9,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import static junit.framework.Assert.assertNull;
 import static junit.framework.TestCase.assertEquals;
@@ -17,7 +16,7 @@ import static junit.framework.TestCase.assertEquals;
 /**
  * Unit test for B2JsonByteArrayOutputStream
  */
-public class B2JsonByteArrayOutputStreamTest {
+public class B2JsonBoundedByteArrayOutputStreamTest {
 
     /**
      * Cannot directly test the case with MAX_ARRAY_SIZE being (Integer.MAX_VALUE - 8)
@@ -28,12 +27,12 @@ public class B2JsonByteArrayOutputStreamTest {
      * Instead, create a subclass of B2JsonByteArrayOutputStream with lowered
      * MAX_ARRAY_SIZE (1000) for testing purpose: IOException will then be thrown
      */
-    static class B2JsonByteArrayOutputStreamForTest extends B2JsonByteArrayOutputStream {
-        private static final int maxCapacity = 1000;
+    static class B2JsonBoundedByteArrayOutputStreamForTest extends B2JsonBoundedByteArrayOutputStream {
+        private static final int MAX_CAPACITY = 1000;
 
         @Override
         protected int getMaxCapacity() {
-            return maxCapacity;
+            return MAX_CAPACITY;
         }
     }
 
@@ -42,7 +41,7 @@ public class B2JsonByteArrayOutputStreamTest {
 
     @Test
     public void testRequestedArraySizeOverTheMaxLimit() throws IOException {
-        final B2JsonByteArrayOutputStreamForTest b2JsonByteArrayOutputStreamForTest = new B2JsonByteArrayOutputStreamForTest();
+        final B2JsonBoundedByteArrayOutputStreamForTest b2JsonByteArrayOutputStreamForTest = new B2JsonBoundedByteArrayOutputStreamForTest();
 
         // write an array of 501 bytes to the b2JsonByteArrayOutputStreamForTest first
         b2JsonByteArrayOutputStreamForTest.write(makeByteArrayFilledWith1(501), 0, 501);
