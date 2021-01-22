@@ -11,18 +11,20 @@ import java.util.Arrays;
 
 /**
  * A B2Json implementation of OutputStream that
- * - stores output content in a byte array
- * - expands capacity to hold new content
+ * - stores stream content in a byte array
+ * - expands capacity when needed (typically doubles)
  * - has a max capacity threshold
  * - throws IOException if the threshold is reached
  *
  * THREAD-SAFE
  */
 public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
+    private static final int INITIAL_CAPACITY = 64;
+
     // byte array to hold output content
     private byte[] output;
 
-    // the current number of bytes
+    // the current number of bytes written so far
     private int size;
 
     // maximum capacity the output array is allowed to grow to
@@ -30,51 +32,53 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
 
     public B2JsonBoundedByteArrayOutputStream() {
         // initialize the outputBuffer to 64 bytes
-        this.output = new byte[64];
+        this.output = new byte[INITIAL_CAPACITY];
         this.size = 0;
     }
 
     /**
      * writes one byte into the output array
      *
-     * @param b one byte
+     * @param i one byte
      * @throws IOException if new expanded capacity is over
      *                     the MAX_CAPACITY
      */
     @Override
-    public synchronized void write(int b) throws IOException {
-        // check if we need to expand the current capacity
+    public synchronized void write(int i) throws IOException {
+        // expand capacity if necessary
         if (size + 1 > output.length) {
-            expandCurrentCapacity(size + 1);
+            final int newCapacity = expandCapacity(size + 1);
+
+            // allocate a new byte array with old content copied
+            output = Arrays.copyOf(output, newCapacity);
         }
 
-        // store the byte and increment size
-        output[size] = (byte) b;
+        output[size] = (byte) i;
         size++;
     }
 
     /**
      * writes an array of bytes into the output array
      *
-     * @param b input array of bytes
-     * @param off offset for the input array
-     * @param len number of bytes to write
+     * @param bytes input array of bytes
+     * @param offset offset for the input array
+     * @param length number of bytes to write
      * @throws IOException if new expanded capacity is over
      *                     the MAX_CAPACITY
      */
     @Override
-    public synchronized void write(byte[] b, int off, int len) throws IOException {
-        // validate the parameters
-        validateParameters(b, off, len);
+    public synchronized void write(byte[] bytes, int offset, int length) throws IOException {
+        // expand capacity if necessary
+        if (size + length > output.length) {
+            final int newCapacity = expandCapacity(size + length);
 
-        // check if we need to expand the current capacity
-        if (size + len > output.length) {
-            expandCurrentCapacity(size + len);
+            // allocate a new byte array with old content copied
+            output = Arrays.copyOf(output, newCapacity);
         }
 
         // append the new content to the output, and increment size
-        System.arraycopy(output, size, b, off, len);
-        size += len;
+        System.arraycopy(output, size, bytes, offset, length);
+        size += length;
     }
 
     /**
@@ -109,38 +113,25 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
     }
 
     /**
-     * expands the current capacity and create
+     * expands the current capacity to meet the least required capacity
      *
-     * @param neededCapacity the needed capacity to hold all content
-     * @throws IOException if new expanded capacity is over
-     *                     the MAX_CAPACITY
+     * @param  leastCapacityRequired the least required capacity to hold all content
+     * @return the new capacity
+     * @throws IOException if new expanded capacity is over the MAX_CAPACITY
      */
-    private void expandCurrentCapacity(int neededCapacity) throws IOException {
+    private int expandCapacity(int leastCapacityRequired) throws IOException {
+        // double current capacity
         int newCapacity = output.length * 2;
 
-        // is this new capacity enough to hold the new content
-        if (newCapacity < neededCapacity) {
-            newCapacity = neededCapacity;
+        // is this new capacity enough to meet leastCapacityRequired
+        if (newCapacity <  leastCapacityRequired) {
+            newCapacity =  leastCapacityRequired;
         }
 
-        // check if we had hit the max capacity limit
+        // throw if we had hit the max capacity limit
         if (newCapacity > getMaxCapacity()) {
             throw new IOException("Requested array size exceeds maximum limit");
         }
-
-         /* for new capacity we need to:
-            - allocate a new byte array
-            - copy the original content to the new array
-            - use the new array as the output byte array
-          */
-        output = Arrays.copyOf(output, newCapacity);
-    }
-
-    /* validates the parameters of write */
-    private void validateParameters(byte[] b, int off, int len) {
-        if ((off < 0) || (off > b.length) || (len < 0) ||
-                ((off + len) - b.length > 0)) {
-            throw new IllegalArgumentException();
-        }
+        return newCapacity;
     }
 }
