@@ -16,7 +16,14 @@ import java.util.Arrays;
  * - stores stream content in a byte array
  * - expands capacity when needed (typically doubles)
  * - has an upper bound limit on output array size (max capacity)
- * - throws IOException if the max capacity threshold is crossed
+ * - throws IOException if the max capacity threshold is crossed.
+ *
+ *   The last behavior is different from standard Java ByteArrayOutputStream
+ *   Implementation where an OutOfMemoryError would be thrown. OutOfMemoryError
+ *   is typically interpreted as JVM running out of heap space, and JVM could be
+ *   killed if configured so. This may not be desired for Java applications
+ *   configured with heap space much larger than 2 GB, and such applications may
+ *   want to continue to run after catching this array size threshold-crossing error.
  *
  * THREAD-SAFE
  */
