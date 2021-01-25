@@ -142,7 +142,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 12345L,
                 null,
                 null,
-                new B2FileSseForResponse("SSE-B2", "AES256"));
+                new B2FileSseForResponse("SSE-B2", "AES256", null));
         assertEquals(defaultVersion, converted);
     }
 
@@ -172,7 +172,7 @@ public class B2FileVersionTest extends B2BaseTest {
         return new B2FileVersion(
                 fileId(i),
                 fileName(i),
-                i * 1000,
+                i * 1000L,
                 B2ContentTypes.TEXT_PLAIN,
                 B2TestHelpers.SAMPLE_SHA1,
                 B2TestHelpers.SAMPLE_MD5,

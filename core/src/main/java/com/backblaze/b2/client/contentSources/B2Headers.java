@@ -276,5 +276,11 @@ public interface B2Headers {
      * @return the value of the `X-Bz-Server-Side-Encryption-Customer-Algorithm` header
      * @apiNote We return null here because this is a completely optional, non-standard header.
      */
-    default String getCustomerServerSideEncryptionOrNull() { return getValueOrNull(SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER); }
+    default String getSseCustomerAlgorithmOrNull() { return getValueOrNull(SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER); }
+
+    /**
+     * @return the value of the `X-Bz-Server-Side-Encryption-Customer-Key-Md5` header
+     * @apiNote We return null here because this is a completely optional, non-standard header.
+     */
+    default String getSseCustomerKeyMd5OrNull() { return getValueOrNull(SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER); }
 }

@@ -22,16 +22,24 @@ public class B2FileSseForResponse {
     @B2Json.required
     private final String algorithm;
 
-    @B2Json.constructor(params = "mode, algorithm")
-    public B2FileSseForResponse(String mode, String algorithm) {
+    /**
+     * The Base64-encoded customer key MD5 for SSE-C requests
+     */
+    @B2Json.optional (omitNull = true)
+    private final String customerKeyMd5;
+
+    @B2Json.constructor(params = "mode, algorithm, customerKeyMd5")
+    public B2FileSseForResponse(String mode, String algorithm, String customerKeyMd5) {
         this.mode = mode;
         this.algorithm = algorithm;
+        this.customerKeyMd5 = customerKeyMd5;
     }
 
     public String getMode() { return mode; }
 
     public String getAlgorithm() { return algorithm; }
 
+    public String getCustomerKeyMd5() { return customerKeyMd5; }
 
     /**
      * Construct a B2FileSseForResponse from B2Headers, or null if the required headers are not present
@@ -46,12 +54,15 @@ public class B2FileSseForResponse {
         // Check for the "X-Bz-Server-Side-Encryption" header
         final String algorithm = headers.getServerSideEncryptionOrNull();
         if (algorithm != null) {
-            return new B2FileSseForResponse(B2ServerSideEncryptionMode.SSE_B2, algorithm);
+            return new B2FileSseForResponse(B2ServerSideEncryptionMode.SSE_B2, algorithm, null);
         }
 
-        final String customerAlgorithm = headers.getCustomerServerSideEncryptionOrNull();
+        final String customerAlgorithm = headers.getSseCustomerAlgorithmOrNull();
         if (customerAlgorithm != null) {
-            return new B2FileSseForResponse(B2ServerSideEncryptionMode.SSE_C, customerAlgorithm);
+            return new B2FileSseForResponse(
+                    B2ServerSideEncryptionMode.SSE_C,
+                    customerAlgorithm,
+                    headers.getSseCustomerKeyMd5OrNull()); // may be null for API calls that don't require key/MD5
         }
 
         return null;
@@ -67,18 +78,20 @@ public class B2FileSseForResponse {
         }
         B2FileSseForResponse that = (B2FileSseForResponse) o;
         return Objects.equals(mode, that.getMode()) &&
-                Objects.equals(algorithm, that.getAlgorithm());
+                Objects.equals(algorithm, that.getAlgorithm()) &&
+                Objects.equals(customerKeyMd5, that.getCustomerKeyMd5());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(mode, algorithm);
+        return Objects.hash(mode, algorithm, customerKeyMd5);
     }
 
     public String toString() {
         return "B2FileSseForResponse{" +
                 "mode='" + mode + "', " +
-                "algorithm=" + algorithm +
-                '}';
+                "algorithm=" + algorithm + ", " +
+                "customerKeyMd5=" + customerKeyMd5 +
+                "}";
     }
 }

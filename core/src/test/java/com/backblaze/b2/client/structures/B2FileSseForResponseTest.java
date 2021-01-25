@@ -14,7 +14,40 @@ import static org.junit.Assert.assertEquals;
 public class B2FileSseForResponseTest extends B2BaseTest {
 
     @Test
-    public void testDefaultConfig() {
+    public void testSseB2DefaultConfig() {
+        final String jsonString = "{\n" +
+                "  \"algorithm\": \"AES256\",\n" +
+                "  \"mode\": \"SSE-B2\"\n" +
+                "}";
+        final B2FileSseForResponse converted = B2Json.fromJsonOrThrowRuntime(
+                jsonString,
+                B2FileSseForResponse.class);
+        final B2FileSseForResponse defaultConfig = new B2FileSseForResponse(
+                B2ServerSideEncryptionMode.SSE_B2, "AES256", null);
+        final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
+        assertEquals(defaultConfig, converted);
+        assertEquals(jsonString, convertedJson);
+    }
+
+    @Test
+    public void testSseCWithKeyMd5Config() {
+        final String jsonString = "{\n" +
+                "  \"algorithm\": \"AES256\",\n" +
+                "  \"customerKeyMd5\": \"key MD5 string\",\n" +
+                "  \"mode\": \"SSE-C\"\n" +
+                "}";
+        final B2FileSseForResponse converted = B2Json.fromJsonOrThrowRuntime(
+                jsonString,
+                B2FileSseForResponse.class);
+        final B2FileSseForResponse defaultConfig = new B2FileSseForResponse(
+                B2ServerSideEncryptionMode.SSE_C, "AES256", "key MD5 string");
+        final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
+        assertEquals(defaultConfig, converted);
+        assertEquals(jsonString, convertedJson);
+    }
+
+    @Test
+    public void testSseCWithoutKeyMd5Config() {
         final String jsonString = "{\n" +
                 "  \"algorithm\": \"AES256\",\n" +
                 "  \"mode\": \"SSE-C\"\n" +
@@ -23,7 +56,7 @@ public class B2FileSseForResponseTest extends B2BaseTest {
                 jsonString,
                 B2FileSseForResponse.class);
         final B2FileSseForResponse defaultConfig = new B2FileSseForResponse(
-                B2ServerSideEncryptionMode.SSE_C, "AES256");
+                B2ServerSideEncryptionMode.SSE_C, "AES256", null);
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
