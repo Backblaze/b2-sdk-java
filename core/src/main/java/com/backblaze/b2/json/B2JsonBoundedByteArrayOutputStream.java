@@ -4,6 +4,8 @@
  */
 package com.backblaze.b2.json;
 
+import com.backblaze.b2.util.B2Preconditions;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -13,13 +15,16 @@ import java.util.Arrays;
  * A B2Json implementation of OutputStream that
  * - stores stream content in a byte array
  * - expands capacity when needed (typically doubles)
- * - has a max capacity threshold
- * - throws IOException if the threshold is reached
+ * - has an upper bound limit on output array size (max capacity)
+ * - throws IOException if the max capacity threshold is crossed
  *
  * THREAD-SAFE
  */
 public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
     private static final int INITIAL_CAPACITY = 64;
+
+    // slightly less than Integer.MAX_VALUE to be conservative
+    private static final int SYSTEM_MAX_CAPACITY = Integer.MAX_VALUE - 8;
 
     // byte array to hold output content
     private byte[] output;
@@ -28,30 +33,33 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
     private int size;
 
     // maximum capacity the output array is allowed to grow to
-    private static final int MAX_CAPACITY = Integer.MAX_VALUE - 8;
+    private final int maxCapacity;
 
-    public B2JsonBoundedByteArrayOutputStream() {
-        // initialize the outputBuffer to 64 bytes
-        this.output = new byte[INITIAL_CAPACITY];
+    public B2JsonBoundedByteArrayOutputStream(int maxCapacity) {
+        /* explicitly say the maxCapacity must be in the the range [64, Integer.MAX_VALUE - 8].
+           maxCapacity has to be no less than initial capacity (64)
+         */
+        B2Preconditions.checkArgument(maxCapacity >= 64, "maxCapacity must not be less than " + INITIAL_CAPACITY);
+        B2Preconditions.checkArgument(maxCapacity <= SYSTEM_MAX_CAPACITY, "maxCapacity must not be bigger than " + SYSTEM_MAX_CAPACITY);
+
+        this.maxCapacity = maxCapacity;
         this.size = 0;
+
+        // initialize the output array to 64 bytes
+        this.output = new byte[INITIAL_CAPACITY];
     }
 
     /**
      * writes one byte into the output array
      *
      * @param i one byte
-     * @throws IOException if new expanded capacity is over
-     *                     the MAX_CAPACITY
+     * @throws IOException if expanding capacity would cross
+     *                     the maxCapacity threshold
      */
     @Override
     public synchronized void write(int i) throws IOException {
-        // expand capacity if necessary
-        if (size + 1 > output.length) {
-            final int newCapacity = expandCapacity(size + 1);
-
-            // allocate a new byte array with old content copied
-            output = Arrays.copyOf(output, newCapacity);
-        }
+        // check and expand capacity if needed
+        checkCapacity(size + 1);
 
         output[size] = (byte) i;
         size++;
@@ -63,26 +71,22 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
      * @param bytes input array of bytes
      * @param offset offset for the input array
      * @param length number of bytes to write
-     * @throws IOException if new expanded capacity is over
-     *                     the MAX_CAPACITY
+     * @throws IOException if expanding capacity would cross
+     *                     the maxCapacity threshold
      */
     @Override
     public synchronized void write(byte[] bytes, int offset, int length) throws IOException {
-        // expand capacity if necessary
-        if (size + length > output.length) {
-            final int newCapacity = expandCapacity(size + length);
+        final int newSize = size + length;
+        // check and expand capacity if needed
+        checkCapacity(newSize);
 
-            // allocate a new byte array with old content copied
-            output = Arrays.copyOf(output, newCapacity);
-        }
-
-        // append the new content to the output, and increment size
-        System.arraycopy(output, size, bytes, offset, length);
-        size += length;
+        // append the new content to the output, and reset size
+        System.arraycopy(bytes, offset, output, size, length);
+        size = newSize;
     }
 
     /**
-     * Constructs a new String by decoding the specified array of bytes
+     * makes a new String by decoding the bytes in output array
      * using the specified charset.
      *
      * @param charsetName the charset to be used in decoding
@@ -94,7 +98,7 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
     }
 
     /**
-     * returns a copy of output byte array
+     * returns a copy of the output byte array
      *
      * @return a copy of output buffer
      */
@@ -104,32 +108,54 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
     }
 
     /**
-     * returns the max capacity threshold
+     * returns the max capacity of output array
      *
-     * @return MAX_CAPACITY
+     * @return the max capacity
      */
-    protected int getMaxCapacity() {
-        return MAX_CAPACITY;
+    public int getMaxCapacity() {
+        return this.maxCapacity;
     }
 
     /**
-     * expands the current capacity to meet the least required capacity
+     * returns the current output array size
+     *
+     * @return output output array size
+     */
+    public int getSize() {
+        return this.size;
+    }
+
+    /**
+     * checks and expands capacity if needed
+     *
+     * @param leastRequiredCapacity the lease capacity required
+     * @throws IOException if expanding capacity would cross the max capacity threshold
+     */
+    private void checkCapacity(int leastRequiredCapacity) throws IOException {
+        // expand capacity if necessary
+        if (leastRequiredCapacity > output.length) {
+            final int newCapacity = expandCapacity(leastRequiredCapacity);
+
+            // allocate a new byte array with old content copied
+            output = Arrays.copyOf(output, newCapacity);
+        }
+    }
+
+    /**
+     * determines a new capacity to meet the least required capacity
      *
      * @param  leastCapacityRequired the least required capacity to hold all content
      * @return the new capacity
-     * @throws IOException if new expanded capacity is over the MAX_CAPACITY
+     * @throws IOException if newly expanded capacity is bigger than the maxCapacity
      */
     private int expandCapacity(int leastCapacityRequired) throws IOException {
-        // double current capacity
         int newCapacity = output.length * 2;
 
-        // is this new capacity enough to meet leastCapacityRequired
-        if (newCapacity <  leastCapacityRequired) {
-            newCapacity =  leastCapacityRequired;
-        }
+        // in case newCapacity is still not enough
+        newCapacity = Math.max(newCapacity, leastCapacityRequired);
 
         // throw if we had hit the max capacity limit
-        if (newCapacity > getMaxCapacity()) {
+        if (newCapacity > maxCapacity) {
             throw new IOException("Requested array size exceeds maximum limit");
         }
         return newCapacity;

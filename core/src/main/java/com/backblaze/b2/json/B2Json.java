@@ -90,6 +90,11 @@ public class B2Json {
     private final B2JsonHandlerMap handlerMap;
 
     /**
+     * default max capacity for B2JsonBoundedByteArrayOutputStream
+     */
+    private static final int DEFAULT_MAX_CAPACITY_FOR_OUTPUTSTREAM = Integer.MAX_VALUE - 8;
+
+    /**
      * @return A shared instance.
      */
     public static B2Json get() {
@@ -130,10 +135,7 @@ public class B2Json {
 
     public byte[] toJsonUtf8BytesWithNewline(Object obj, B2JsonOptions options) throws B2JsonException {
         try {
-            /* B2Json version of ByteArrayOutputStream that throws IOException if its capacity
-               would grow over the max limit (Integer.MAX_VALUE - 8)
-             */
-            final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream();
+            final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(DEFAULT_MAX_CAPACITY_FOR_OUTPUTSTREAM);
             toJson(obj, options, out);
             out.write('\n');
             return out.toByteArray();
@@ -144,20 +146,16 @@ public class B2Json {
 
     /**
      * Turn an object into JSON, writing the results to given output stream.
-     *
-     * (package access for testing)
      */
-    void toJson(Object obj, OutputStream out) throws IOException, B2JsonException {
+    public void toJson(Object obj, OutputStream out) throws IOException, B2JsonException {
         toJson(obj, B2JsonOptions.DEFAULT, out);
     }
 
     /**
      * Turn an object into JSON, writing the results to given output stream and
      * using the supplied options.
-     *
-     * (package access for testing)
      */
-    void toJson(Object obj, B2JsonOptions options, OutputStream out) throws IOException, B2JsonException {
+    public void toJson(Object obj, B2JsonOptions options, OutputStream out) throws IOException, B2JsonException {
         toJson(obj, options, out, null);
     }
 
@@ -177,10 +175,8 @@ public class B2Json {
      *
      * Note that the output stream is NOT closed as a side-effect of calling this.
      * It was a bug that it was being closed in version 1.1.1 and earlier.
-     *
-     * (package access for testing)
      */
-    void toJson(Object obj, B2JsonOptions options, OutputStream out, Type objTypeOrNull)
+    public void toJson(Object obj, B2JsonOptions options, OutputStream out, Type objTypeOrNull)
             throws IOException, B2JsonException {
 
         if (obj == null) {
@@ -201,7 +197,7 @@ public class B2Json {
     }
 
     public String toJson(Object obj, B2JsonOptions options) throws B2JsonException {
-        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream()) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(DEFAULT_MAX_CAPACITY_FOR_OUTPUTSTREAM)) {
             toJson(obj, options, out);
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
@@ -262,7 +258,7 @@ public class B2Json {
         final B2JsonTypeHandler keyHandler = handlerMap.getHandler(keyClass);
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonMapHandler(keyHandler, valueHandler);
-        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream()) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(DEFAULT_MAX_CAPACITY_FOR_OUTPUTSTREAM)) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(map, options, jsonWriter);
@@ -299,7 +295,7 @@ public class B2Json {
         }
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonListHandler(valueHandler);
-        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream()) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(DEFAULT_MAX_CAPACITY_FOR_OUTPUTSTREAM)) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(list, options, jsonWriter);

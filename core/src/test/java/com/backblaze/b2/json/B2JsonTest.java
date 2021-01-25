@@ -2792,7 +2792,7 @@ public class B2JsonTest extends B2BaseTest {
         assertEquals("b2", obj3.field77);
     }
 
-    /* convenience object for testing IOException("Requested array size exceeds maximum limit") */
+    /* A convenience Json object for testing IOException("Requested array size exceeds maximum limit") */
     private static class ObjectWithSomeName {
        @B2Json.required
        private final String name;
@@ -2805,20 +2805,19 @@ public class B2JsonTest extends B2BaseTest {
 
     @Test
     public void testObjectWithNameToJson() throws B2JsonException {
-        String nullJson = null;
+        String shouldBeNullJson = null;
         try {
-            final B2JsonBoundedByteArrayOutputStreamTest.B2JsonBoundedByteArrayOutputStreamForTest b2JsonByteArrayOutputStreamForBig = new B2JsonBoundedByteArrayOutputStreamTest.B2JsonBoundedByteArrayOutputStreamForTest();
-            /* an object big enough to cause IOException("Requested array size exceeds maximum limit") */
-            final String objectName = makeNameStringWithLength(501);
-            final ObjectWithSomeName expectedObjectWithSomeBigName = new ObjectWithSomeName(objectName);
+            final B2JsonBoundedByteArrayOutputStream b2JsonByteArrayOutputStream = new B2JsonBoundedByteArrayOutputStream(1024);
+            final ObjectWithSomeName expectedObjectWithSomeBigName = new ObjectWithSomeName(makeNameStringWithLength(1024));
 
-            // total size of the object in bytes is 520; doubling capacity will cause overflow over 1000
-            B2Json.get().toJson(expectedObjectWithSomeBigName, b2JsonByteArrayOutputStreamForBig);
-            nullJson = b2JsonByteArrayOutputStreamForBig.toString();
+            // due to overhead, the actual size of serialized bytes is bigger than 1024
+            // and expanding capacity at some point causes IOException
+            B2Json.get().toJson(expectedObjectWithSomeBigName, b2JsonByteArrayOutputStream);
+            shouldBeNullJson = b2JsonByteArrayOutputStream.toString();
         } catch (IOException ioException) {
             assertEquals("Requested array size exceeds maximum limit", ioException.getMessage());
         }
-        assertNull(nullJson);
+        assertNull(shouldBeNullJson);
     }
 
     private String makeNameStringWithLength(int length) {
