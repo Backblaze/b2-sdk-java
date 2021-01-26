@@ -275,6 +275,20 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 }
             }
 
+            if (request.getLegalHoldStatus() != null) {
+                headersBuilder.set(B2Headers.FILE_LOCK_LEGAL_HOLD_STATUS,
+                        request.getLegalHoldStatus());
+            }
+
+            if (request.getFileLock() != null) {
+                headersBuilder.set(B2Headers.FILE_LOCK_RETENTION_STATUS,
+                        request.getFileLock().getStatus());
+                headersBuilder.set(B2Headers.FILE_LOCK_RETENTION_MODE,
+                        request.getFileLock().getMode());
+                headersBuilder.set(B2Headers.FILE_LOCK_RETENTION_RETAIN_UNTIL_TIMESTAMP,
+                        request.getFileLock().getRetainUntilTimestamp().toString());
+            }
+
             // if the source provides a last-modified time, add it.
             final Long lastModMillis;
             try {
