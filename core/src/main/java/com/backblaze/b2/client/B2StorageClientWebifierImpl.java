@@ -357,6 +357,16 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                     .set(B2Headers.CONTENT_SHA1, contentDetails.getContentSha1HeaderValue());
             setCommonHeaders(headersBuilder);
 
+            if (request.getServerSideEncryption() != null) {
+                B2Preconditions.checkArgument(request.getServerSideEncryption().getMode().equals(SSE_C));
+                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER,
+                        request.getServerSideEncryption().getAlgorithm());
+                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER,
+                        request.getServerSideEncryption().getCustomerKey());
+                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER,
+                        request.getServerSideEncryption().getCustomerKeyMd5());
+            }
+
             try {
                 return webApiClient.postDataReturnJson(
                         uploadPartUrlResponse.getUploadUrl(),

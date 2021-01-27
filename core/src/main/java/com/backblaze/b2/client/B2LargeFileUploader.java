@@ -9,9 +9,11 @@ import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2LocalException;
+import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2ServerSideEncryptionMode;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
@@ -134,6 +136,7 @@ class B2LargeFileUploader {
         // LARGE_FILE_SHA1 is a bit "special" since the SDK quietly adds it for the user.
         // we've checked LARGE_FILE_SHA1 above, so here, remove it and check any other entries against the request.
         final Map<String,String> infos = new TreeMap<>();
+        //noinspection CollectionAddAllCanBeReplacedWithConstructor
         infos.putAll(largeFileVersion.getFileInfo());
         infos.remove(B2Headers.LARGE_FILE_SHA1);
         throwIfMismatch("fileInfo", toString(request.getFileInfo()), toString(infos));
@@ -287,8 +290,17 @@ class B2LargeFileUploader {
                         }
                         source = new B2ContentSourceWithByteProgressListener(source, progressListener);
 
+                        // if original upload request includes SSE-C parameters, than we need to include those in
+                        // each uploadPart request as well
+                        final B2FileSseForRequest uploadFileSse = request.getServerSideEncryption();
+                        final B2FileSseForRequest uploadPartSse =
+                                (uploadFileSse != null && uploadFileSse.getMode().equals(B2ServerSideEncryptionMode.SSE_C))
+                                        ? uploadFileSse
+                                        : null;
+
                         final B2UploadPartRequest partRequest = B2UploadPartRequest
                                 .builder(partSpec.partNumber, source)
+                                .setServerSideEncryption(uploadPartSse)
                                 .build();
 
                         final B2Part part = webifier.uploadPart(uploadPartUrlResponse, partRequest);

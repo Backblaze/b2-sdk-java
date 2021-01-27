@@ -67,8 +67,8 @@ public class B2TestHelpers {
                 "accountToken" + i,
                 "apiUrl" + i,
                 "downloadUrl" + i,
-                i * 1000,
-                i * 100,
+                i * 1000L,
+                i * 100L,
                 new B2Allowed(B2Collections.listOf(B2Capabilities.LIST_FILES), null, null, ""));
     }
 
@@ -106,7 +106,7 @@ public class B2TestHelpers {
         return new B2FileVersion(
                 fileId(iId),
                 fileName(iName),
-                iId * 1000,
+                iId * 1000L,
                 B2ContentTypes.TEXT_PLAIN,
                 SAMPLE_SHA1,
                 SAMPLE_MD5,
@@ -123,7 +123,7 @@ public class B2TestHelpers {
         return new B2Part(
                 fileId(i),
                 i,
-                i * 1000,
+                i * 1000L,
                 makeSha1(i),
                 makeMd5(i),
                 i);
@@ -147,7 +147,7 @@ public class B2TestHelpers {
         while (copies.length() < B2Sha1.HEX_SHA1_SIZE) {
             copies.append(toCopy);
         }
-        return copies.toString().substring(0, B2Sha1.HEX_SHA1_SIZE);
+        return copies.substring(0, B2Sha1.HEX_SHA1_SIZE);
     }
 
     // returns a string that's as long as an md5 hex string should be, based on 'i'.
@@ -157,7 +157,7 @@ public class B2TestHelpers {
         while (copies.length() < B2Md5.HEX_MD5_SIZE) {
             copies.append(toCopy);
         }
-        return copies.toString().substring(0, B2Md5.HEX_MD5_SIZE);
+        return copies.substring(0, B2Md5.HEX_MD5_SIZE);
     }
 
     public static B2Bucket makeBucket(int i) {
@@ -199,7 +199,7 @@ public class B2TestHelpers {
                 .set(CONTENT_LENGTH, Integer.toString(i))
                 .set(UPLOAD_TIMESTAMP, Integer.toString(i))
                 .set(SRC_LAST_MODIFIED_MILLIS, Integer.toString(i))
-                .set(FILE_INFO_PREFIX + "Color-with.special_chars`~!#$%^|\'*&+", "gr%C3%BCn")
+                .set(FILE_INFO_PREFIX + "Color-with.special_chars`~!#$%^|\\'*&+", "gr%C3%BCn")
                 .build();
     }
 

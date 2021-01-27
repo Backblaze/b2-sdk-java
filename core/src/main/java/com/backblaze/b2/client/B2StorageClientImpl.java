@@ -25,6 +25,7 @@ import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
@@ -48,6 +49,7 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
+import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
@@ -238,8 +240,18 @@ public class B2StorageClientImpl implements B2StorageClient {
             B2UploadListener uploadListener,
             ExecutorService executor) throws B2Exception {
 
+        return storeLargeFileFromLocalContent(B2StoreLargeFileRequest.builder(fileVersion).build(), contentSource, uploadListener, executor);
+    }
+
+    @Override
+    public B2FileVersion storeLargeFileFromLocalContent(
+            B2StoreLargeFileRequest storeLargeFileRequest,
+            B2ContentSource contentSource,
+            B2UploadListener uploadListener,
+            ExecutorService executor) throws B2Exception {
+
         return B2LargeFileStorer.forLocalContent(
-                fileVersion,
+                storeLargeFileRequest,
                 contentSource,
                 getPartSizes(),
                 accountAuthCache,
@@ -255,10 +267,19 @@ public class B2StorageClientImpl implements B2StorageClient {
             List<B2PartStorer> partStorers,
             B2UploadListener uploadListenerOrNull,
             ExecutorService executor) throws B2Exception {
+        return storeLargeFile(B2StoreLargeFileRequest.builder(fileVersion).build(), partStorers, uploadListenerOrNull, executor);
+    }
+
+    @Override
+    public B2FileVersion storeLargeFile(
+            B2StoreLargeFileRequest storeLargeFileRequest,
+            List<B2PartStorer> partStorers,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception {
 
         // Instantiate and return the manager.
         return new B2LargeFileStorer(
-                fileVersion,
+                storeLargeFileRequest,
                 partStorers,
                 accountAuthCache,
                 webifier,

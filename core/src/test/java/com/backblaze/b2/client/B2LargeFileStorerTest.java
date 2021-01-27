@@ -8,9 +8,11 @@ import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2InternalErrorException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
@@ -100,7 +102,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
 
     public List<B2PartStorer> createB2LargeFileStorerAndGetSortedPartStorers(List<B2PartStorer> outOfOrderPartStorers) {
         return new B2LargeFileStorer(
-                largeFileVersion,
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
                 outOfOrderPartStorers,
                 authCache,
                 webifier,
@@ -150,7 +152,6 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         createB2LargeFileStorerAndGetSortedPartStorers(partStorers);
     }
 
-
     private B2LargeFileStorer createFromLocalContent() throws B2Exception {
         final B2ContentSource contentSource = new TestContentSource(0, FILE_SIZE);
 
@@ -180,7 +181,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
                 new B2UploadingPartStorer(4, createContentSourceWithSize(900)));
 
         return new B2LargeFileStorer(
-                largeFileVersion,
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
                 partStorers,
                 authCache,
                 webifier,
@@ -238,7 +239,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         partStorers.add(new B2AlreadyStoredPartStorer(part3));
 
         final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                largeFileVersion,
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
                 partStorers,
                 authCache,
                 webifier,
@@ -352,6 +353,15 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         } catch (Exception e) {
            fail("should have thrown B2InternalErrorException");
         }
+    }
+
+    @Test
+    public void testStoreLargeFileRequest_withSseB2_throwsIllegalArgumentException() {
+        thrown.expect(IllegalArgumentException.class);
+
+        B2StoreLargeFileRequest.builder(largeFileVersion)
+                .setServerSideEncryption(B2FileSseForRequest.createSseB2Aes256())
+                .build();
     }
 
     @Test

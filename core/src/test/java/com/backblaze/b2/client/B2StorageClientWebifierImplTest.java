@@ -634,7 +634,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      \"fileInfo\": {\n" +
                 "        \"color\": \"blue\"\n" +
                 "      },\n" +
-                "      \"fileName\": \"files/\u81ea\u7531/0001\"\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"serverSideEncryption\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2FileVersion\n"
@@ -670,7 +671,51 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "        \"color\": \"blue\",\n" +
                 "        \"large_file_sha1\": \"" + sha1 + "\"\n" +
                 "      },\n" +
-                "      \"fileName\": \"files/\u81ea\u7531/0001\"\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"serverSideEncryption\": null\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.startLargeFile(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testStartLargeFile_withSseC() throws B2Exception, IOException {
+        final String sha1 = contentSourceWithSha1.getSha1OrNull();
+        final B2UploadFileRequest uploadRequest = B2UploadFileRequest
+                .builder(bucketId(1), fileName(1), B2ContentTypes.TEXT_PLAIN, contentSourceWithSha1)
+                .setCustomField("color", "blue")
+                .setCustomField(B2Headers.LARGE_FILE_SHA1_INFO_NAME, sha1)
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customer-key", "customer-key-md5"))
+                .build();
+        final B2StartLargeFileRequest request = B2StartLargeFileRequest
+                .buildFrom(uploadRequest);
+        webifier.startLargeFile(ACCOUNT_AUTH, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_start_large_file\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"bucketId\": \"bucket1\",\n" +
+                "      \"contentType\": \"text/plain\",\n" +
+                "      \"fileInfo\": {\n" +
+                "        \"color\": \"blue\",\n" +
+                "        \"large_file_sha1\": \"" + sha1 + "\"\n" +
+                "      },\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"serverSideEncryption\": {\n" +
+                        "        \"algorithm\": \"AES256\",\n" +
+                        "        \"customerKey\": \"customer-key\",\n" +
+                        "        \"customerKeyMd5\": \"customer-key-md5\",\n" +
+                        "        \"mode\": \"SSE-C\"\n" +
+                        "      }\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2FileVersion\n"
@@ -895,7 +940,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
 
         Map<String, String> expectedFileInfo = new HashMap<>();
-        expectedFileInfo.put("Color-with.special_chars`~!#$%^|\'*&+", "gr\u00fcn");
+        expectedFileInfo.put("Color-with.special_chars`~!#$%^|\\'*&+", "gr\u00fcn");
         expectedFileInfo.put("src_last_modified_millis", "1");
 
         assertEquals(fileId(1), version.getFileId());
@@ -925,7 +970,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         final B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
 
         final Map<String, String> expectedFileInfo = new HashMap<>();
-        expectedFileInfo.put("Color-with.special_chars`~!#$%^|\'*&+", "gr\u00fcn");
+        expectedFileInfo.put("Color-with.special_chars`~!#$%^|\\'*&+", "gr\u00fcn");
         expectedFileInfo.put("src_last_modified_millis", "1");
 
         assertEquals(fileId(1), version.getFileId());
@@ -1307,6 +1352,49 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: " + SHA1 + "\n" +
                 "    X-Bz-Part-Number: 6\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "inputStream:\n" +
+                "    Hello, World!\n" +
+                "contentLength:\n" +
+                "    13\n" +
+                "responseClass:\n" +
+                "    B2Part\n"
+        );
+
+
+        checkRequestCategory(UPLOADING, w -> w.uploadPart(partUrl, request));
+    }
+
+    @Test
+    public void testUploadPartRequest_withSseB2_throwsIllegalArgumentException() {
+        thrown.expect(IllegalArgumentException.class);
+
+        B2UploadPartRequest.builder(6, contentSourceWithSha1)
+                .setServerSideEncryption(B2FileSseForRequest.createSseB2Aes256())
+                .build();
+    }
+
+    @Test
+    public void testUploadPart_withSseC() throws B2Exception {
+        final B2UploadPartRequest request = B2UploadPartRequest
+                .builder(6, contentSourceWithSha1)
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customer-key", "customer-key-md5"))
+                .build();
+        final B2UploadPartUrlResponse partUrl = uploadPartUrlResponse(1,2);
+        webifier.uploadPart(partUrl, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    uploadUrl2\n" +
+                "headers:\n" +
+                "    Authorization: downloadToken2\n" +
+                "    Expect: 100-continue\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Content-Sha1: " + SHA1 + "\n" +
+                "    X-Bz-Part-Number: 6\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Algorithm: AES256\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key: customer-key\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key-Md5: customer-key-md5\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "inputStream:\n" +
                 "    Hello, World!\n" +

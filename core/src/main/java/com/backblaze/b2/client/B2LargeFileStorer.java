@@ -9,9 +9,11 @@ import com.backblaze.b2.client.exceptions.B2CannotComputeException;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.structures.B2CopyPartRequest;
+import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
@@ -19,6 +21,7 @@ import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.util.B2ByteProgressListener;
 import com.backblaze.b2.util.B2ByteRange;
+import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +31,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
+
+import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.SSE_C;
 
 /**
  * A class for handling the creation of large files.
@@ -42,6 +47,13 @@ public class B2LargeFileStorer {
      * The B2FileVersion for the large file that is being created.
      */
     private final B2FileVersion fileVersion;
+
+    /**
+     * The B2FileSseForRequest for the large file that is being created.
+     * This contains the SSE-C parameters for SSE-C uploads and is null
+     * otherwise.
+     */
+    private final B2FileSseForRequest serverSideEncryptionOrNull;
 
     /**
      * The parts that need to be stored before finishing the large file.
@@ -63,15 +75,17 @@ public class B2LargeFileStorer {
     private final ExecutorService executor;
 
     B2LargeFileStorer(
-            B2FileVersion fileVersion,
+            B2StoreLargeFileRequest storeLargeFileRequest,
             List<B2PartStorer> partStorers,
             B2AccountAuthorizationCache accountAuthCache,
             B2StorageClientWebifier webifier,
             B2Retryer retryer,
             Supplier<B2RetryPolicy> retryPolicySupplier,
             ExecutorService executor) {
+        B2Preconditions.checkArgumentIsNotNull(storeLargeFileRequest, "storeLargeFileRequest");
 
-        this.fileVersion = fileVersion;
+        this.fileVersion = storeLargeFileRequest.getFileVersion();
+        this.serverSideEncryptionOrNull = storeLargeFileRequest.getServerSideEncryption();
         this.partStorers = validateAndSortPartStorers(new ArrayList<>(partStorers));
         this.startingBytePositions = computeStartingBytePositions(partStorers);
 
@@ -134,7 +148,6 @@ public class B2LargeFileStorer {
     long getStartByteOrUnknown(int partNumber) {
         return startingBytePositions.get(partNumber - 1);
     }
-
     public static B2LargeFileStorer forLocalContent(
             B2FileVersion largeFileVersion,
             B2ContentSource contentSource,
@@ -144,6 +157,27 @@ public class B2LargeFileStorer {
             B2Retryer retryer,
             Supplier<B2RetryPolicy> retryPolicySupplier,
             ExecutorService executor) throws B2Exception {
+        return forLocalContent(
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
+                contentSource,
+                partSizes,
+                accountAuthCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                executor);
+    }
+
+    public static B2LargeFileStorer forLocalContent(
+            B2StoreLargeFileRequest storeLargeFileRequest,
+            B2ContentSource contentSource,
+            B2PartSizes partSizes,
+            B2AccountAuthorizationCache accountAuthCache,
+            B2StorageClientWebifier webifier,
+            B2Retryer retryer,
+            Supplier<B2RetryPolicy> retryPolicySupplier,
+            ExecutorService executor) throws B2Exception {
+        B2Preconditions.checkArgumentIsNotNull(storeLargeFileRequest, "storeLargeFileRequest");
 
         // Convert the contentSource into a list of B2PartStorer objects.
         final List<B2PartStorer> partContentSources = new ArrayList<>();
@@ -160,7 +194,7 @@ public class B2LargeFileStorer {
 
         // Instantiate and return the manager.
         return new B2LargeFileStorer(
-                largeFileVersion,
+                storeLargeFileRequest,
                 partContentSources,
                 accountAuthCache,
                 webifier,
@@ -279,6 +313,7 @@ public class B2LargeFileStorer {
                                 new B2ContentSourceWithByteProgressListener(contentSource, progressListener);
                         final B2UploadPartRequest uploadPartRequest = B2UploadPartRequest
                                 .builder(partNumber, contentSourceThatReportsProgress)
+                                .setServerSideEncryption(serverSideEncryptionOrNull)
                                 .build();
 
                         updateProgress(
