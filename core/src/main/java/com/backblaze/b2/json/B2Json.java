@@ -22,6 +22,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
+import static com.backblaze.b2.json.B2JsonBoundedByteArrayOutputStream.SYSTEM_MAX_CAPACITY;
+
 /**
  * <p>JSON (de)serialization of Java objects.</p>
  *
@@ -90,11 +92,6 @@ public class B2Json {
     private final B2JsonHandlerMap handlerMap;
 
     /**
-     * default max capacity for B2JsonBoundedByteArrayOutputStream
-     */
-    private static final int DEFAULT_MAX_CAPACITY_FOR_OUTPUTSTREAM = Integer.MAX_VALUE - 8;
-
-    /**
      * @return A shared instance.
      */
     public static B2Json get() {
@@ -135,7 +132,7 @@ public class B2Json {
 
     public byte[] toJsonUtf8BytesWithNewline(Object obj, B2JsonOptions options) throws B2JsonException {
         try {
-            final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(DEFAULT_MAX_CAPACITY_FOR_OUTPUTSTREAM);
+            final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(SYSTEM_MAX_CAPACITY);
             toJson(obj, options, out);
             out.write('\n');
             return out.toByteArray();
@@ -197,7 +194,7 @@ public class B2Json {
     }
 
     public String toJson(Object obj, B2JsonOptions options) throws B2JsonException {
-        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(DEFAULT_MAX_CAPACITY_FOR_OUTPUTSTREAM)) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(SYSTEM_MAX_CAPACITY)) {
             toJson(obj, options, out);
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
@@ -258,7 +255,7 @@ public class B2Json {
         final B2JsonTypeHandler keyHandler = handlerMap.getHandler(keyClass);
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonMapHandler(keyHandler, valueHandler);
-        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(DEFAULT_MAX_CAPACITY_FOR_OUTPUTSTREAM)) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(SYSTEM_MAX_CAPACITY)) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(map, options, jsonWriter);
@@ -295,7 +292,7 @@ public class B2Json {
         }
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonListHandler(valueHandler);
-        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(DEFAULT_MAX_CAPACITY_FOR_OUTPUTSTREAM)) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(SYSTEM_MAX_CAPACITY)) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(list, options, jsonWriter);

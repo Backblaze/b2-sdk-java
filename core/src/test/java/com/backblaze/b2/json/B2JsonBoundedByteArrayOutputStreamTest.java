@@ -12,6 +12,7 @@ import org.junit.rules.ExpectedException;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static com.backblaze.b2.json.B2JsonBoundedByteArrayOutputStream.SYSTEM_MAX_CAPACITY;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNull;
@@ -34,30 +35,42 @@ public class B2JsonBoundedByteArrayOutputStreamTest {
 
     @Test
     public void testWriteOneByte() throws IOException {
-        final B2JsonBoundedByteArrayOutputStream b2JsonByteArrayOutputStream = new B2JsonBoundedByteArrayOutputStream(2048);
+        final B2JsonBoundedByteArrayOutputStream b2JsonByteArrayOutputStream2Bytes = new B2JsonBoundedByteArrayOutputStream(2048);
 
-        b2JsonByteArrayOutputStream.write('A');
-        assertArrayEquals(new byte[]{'A'}, b2JsonByteArrayOutputStream.toByteArray());
-        assertEquals(1, b2JsonByteArrayOutputStream.getSize());
+        // write a couple of bytes for simple tests
+        b2JsonByteArrayOutputStream2Bytes.write('A');
+        assertArrayEquals(new byte[]{'A'}, b2JsonByteArrayOutputStream2Bytes.toByteArray());
+        assertEquals(1, b2JsonByteArrayOutputStream2Bytes.getSize());
 
-        b2JsonByteArrayOutputStream.write('B');
-        assertArrayEquals(new byte[] {'A', 'B'}, b2JsonByteArrayOutputStream.toByteArray());
-        assertEquals(2, b2JsonByteArrayOutputStream.getSize());
+        b2JsonByteArrayOutputStream2Bytes.write('B');
+        assertArrayEquals(new byte[] {'A', 'B'}, b2JsonByteArrayOutputStream2Bytes.toByteArray());
+        assertEquals(2, b2JsonByteArrayOutputStream2Bytes.getSize());
 
         // create the actual bytes array to compare to the expected bytes later
-        final byte[] actualAllBytes = new byte[2048];
-        actualAllBytes[0] = 'A';
-        actualAllBytes[1] = 'B';
+        final byte[] actual2048Bytes = new byte[2048];
+        final B2JsonBoundedByteArrayOutputStream b2JsonByteArrayOutputStream = new B2JsonBoundedByteArrayOutputStream(2048);
 
-        // continue writing one byte at a time to fill up to maxCapacity
-        for (int i = 2; i < 2048; i++) {
+        // write one byte at a time continuously up to the maxCapacity
+        for (int i = 0; i < 2048; i++) {
             b2JsonByteArrayOutputStream.write(i);
-            actualAllBytes[i] = (byte)i;
+            actual2048Bytes[i] = (byte)i;
         }
 
         // OutputStream's array size and content should match actualAllBytes array
-        assertArrayEquals(actualAllBytes, b2JsonByteArrayOutputStream.toByteArray());
+        assertArrayEquals(actual2048Bytes, b2JsonByteArrayOutputStream.toByteArray());
         assertEquals(2048, b2JsonByteArrayOutputStream.getSize());
+
+        // if the max capacity is not a power of 2 we can only write up to
+        // the largest power of 2 that is less than the max capacity
+        final B2JsonBoundedByteArrayOutputStream b2JsonByteArrayOutputStreamToFail = new B2JsonBoundedByteArrayOutputStream(4000);
+        try {
+            for (int i = 0; i < 4000; i++) {
+                b2JsonByteArrayOutputStreamToFail.write(i);
+            }
+        } catch (IOException ioException) {
+            assertEquals("Requested array size exceeds maximum limit", ioException.getMessage());
+        }
+        assertEquals(2048, b2JsonByteArrayOutputStreamToFail.getSize());
     }
 
     @Test
@@ -98,6 +111,15 @@ public class B2JsonBoundedByteArrayOutputStreamTest {
 
     @Test
     public void testCapacityExpansion() throws IOException {
+        // max capacity being 0, cannot write, no expansion at all
+        final B2JsonBoundedByteArrayOutputStream cannotWriteToOutputStream = new B2JsonBoundedByteArrayOutputStream(0);
+        try {
+            cannotWriteToOutputStream.write('1');
+        } catch (IOException ioException) {
+            assertEquals("Requested array size exceeds maximum limit", ioException.getMessage());
+        }
+        assertEquals(0, cannotWriteToOutputStream.getSize());
+
         final B2JsonBoundedByteArrayOutputStream b2JsonByteArrayOutputStream = new B2JsonBoundedByteArrayOutputStream(256);
 
         // write an array of bytes with length matching the initial capacity
@@ -128,21 +150,36 @@ public class B2JsonBoundedByteArrayOutputStreamTest {
         // writing a single byte more triggers a threshold exception
         try {
             b2JsonByteArrayOutputStream.write('1');
-        } catch (IOException ioException) {
+        } catch (IOException ioException) { // maximum limit imposed by maxCapacity
             assertEquals("Requested array size exceeds maximum limit", ioException.getMessage());
         }
 
         // output array size should remain the same as the one from last successful write: 256
         assertEquals(actualYetMoreExpandedArrayBytes.length, b2JsonByteArrayOutputStream.getSize());
-    }
+
+        // catch the IOException where needed capacity integer overflows
+        // (note the message included a word 'system')
+        final byte[] halfMaxSizeByteArray = new byte[Integer.MAX_VALUE/2];
+        final B2JsonBoundedByteArrayOutputStream outputStreamMax = new B2JsonBoundedByteArrayOutputStream(SYSTEM_MAX_CAPACITY);
+        outputStreamMax.write(halfMaxSizeByteArray);
+
+        // allocate an array of size just over half of Integer.MAX_VALUE
+        final byte[] anotherHalfMaxSizeByteArray = new byte[Integer.MAX_VALUE/2 + 2];
+        try {
+            outputStreamMax.write(anotherHalfMaxSizeByteArray);
+        } catch (IOException ioException) { // system maximum limit
+            assertEquals("Requested array size exceeds system maximum limit", ioException.getMessage());
+        }
+        assertEquals(Integer.MAX_VALUE/2, outputStreamMax.getSize());
+}
 
     @Test
     public void testInvalidMaxCapacityParameters() {
         B2JsonBoundedByteArrayOutputStream b2JsonBoundedByteArrayOutputStream = null;
         try {
-            b2JsonBoundedByteArrayOutputStream = new B2JsonBoundedByteArrayOutputStream(32);
+            b2JsonBoundedByteArrayOutputStream = new B2JsonBoundedByteArrayOutputStream(-1);
         } catch (IllegalArgumentException illegalArgumentException) {
-            assertEquals("maxCapacity must not be less than 64", illegalArgumentException.getMessage());
+            assertEquals("maxCapacity must not be negative.", illegalArgumentException.getMessage());
         }
         assertNull(b2JsonBoundedByteArrayOutputStream);
 
@@ -164,7 +201,7 @@ public class B2JsonBoundedByteArrayOutputStreamTest {
     private byte[] makeByteArraysFilledWithValue(int count, int value) {
         final byte[] largeBuf = new byte[count];
         for (int i = 0; i < count; i++) {
-            largeBuf[i] = (byte)value;
+            largeBuf[i] = (byte) value;
         }
         return largeBuf;
     }

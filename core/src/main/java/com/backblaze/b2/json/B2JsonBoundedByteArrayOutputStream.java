@@ -23,15 +23,18 @@ import java.util.Arrays;
  *   is typically interpreted as JVM running out of heap space, and JVM could be
  *   killed if configured so. This may not be desired for Java applications
  *   configured with heap space much larger than 2 GB, and such applications may
- *   want to continue to run after catching this array size threshold-crossing error.
+ *   want to continue to run after catching this threshold-crossing exception.
  *
  * THREAD-SAFE
  */
 public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
-    private static final int INITIAL_CAPACITY = 64;
 
-    // slightly less than Integer.MAX_VALUE to be conservative
-    private static final int SYSTEM_MAX_CAPACITY = Integer.MAX_VALUE - 8;
+    /* The theoretical array size limit is Integer.MAX_VALUE but practically JVM
+     * implementations have a slightly lowered size to give some leeway for various
+     * overheads. Some references here:
+     * https://stackoverflow.com/questions/3038392/do-java-arrays-have-a-maximum-size
+     */
+    public static final int SYSTEM_MAX_CAPACITY = Integer.MAX_VALUE - 8;
 
     // byte array to hold output content
     private byte[] output;
@@ -43,17 +46,17 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
     private final int maxCapacity;
 
     public B2JsonBoundedByteArrayOutputStream(int maxCapacity) {
-        /* explicitly say the maxCapacity must be in the the range [64, Integer.MAX_VALUE - 8].
-           maxCapacity has to be no less than initial capacity (64)
-         */
-        B2Preconditions.checkArgument(maxCapacity >= 64, "maxCapacity must not be less than " + INITIAL_CAPACITY);
+        /* ensure the maxCapacity is in the the range [0, Integer.MAX_VALUE - 8] */
+        B2Preconditions.checkArgument(maxCapacity >= 0, "maxCapacity must not be negative.");
         B2Preconditions.checkArgument(maxCapacity <= SYSTEM_MAX_CAPACITY, "maxCapacity must not be bigger than " + SYSTEM_MAX_CAPACITY);
 
         this.maxCapacity = maxCapacity;
         this.size = 0;
 
-        // initialize the output array to 64 bytes
-        this.output = new byte[INITIAL_CAPACITY];
+        // initialize with the lesser of 64 and maxCapacity, expand later if needed
+        // keep initial capacity an internal detail (not exposed)
+        final int initialCapacity = Math.min(64, maxCapacity);
+        this.output = new byte[initialCapacity];
     }
 
     /**
@@ -65,7 +68,7 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
      */
     @Override
     public synchronized void write(int i) throws IOException {
-        // check and expand capacity if needed
+        // check and expand capacity if needed, handle potential overflow in checkCapacity()
         checkCapacity(size + 1);
 
         output[size] = (byte) i;
@@ -83,8 +86,9 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
      */
     @Override
     public synchronized void write(byte[] bytes, int offset, int length) throws IOException {
+        // note: newSize could be negative due to overflow, check it in checkCapacity()
         final int newSize = size + length;
-        // check and expand capacity if needed
+
         checkCapacity(newSize);
 
         // append the new content to the output, and reset size
@@ -139,6 +143,12 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
      * @throws IOException if expanding capacity would cross the max capacity threshold
      */
     private void checkCapacity(int leastRequiredCapacity) throws IOException {
+        // integer overflow case: definitely cannot allocate such large array
+        // this exception is about system allowed limit for an array
+        if (leastRequiredCapacity < 0) {
+            throw new IOException("Requested array size exceeds system maximum limit");
+        }
+
         // expand capacity if necessary
         if (leastRequiredCapacity > output.length) {
             final int newCapacity = expandCapacity(leastRequiredCapacity);
@@ -161,7 +171,7 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
         // in case newCapacity is still not enough
         newCapacity = Math.max(newCapacity, leastCapacityRequired);
 
-        // throw if we had hit the max capacity limit
+        // throw if we are over the max capacity limit
         if (newCapacity > maxCapacity) {
             throw new IOException("Requested array size exceeds maximum limit");
         }
