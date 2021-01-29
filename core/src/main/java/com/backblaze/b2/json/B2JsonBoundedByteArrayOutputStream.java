@@ -69,7 +69,7 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
     @Override
     public synchronized void write(int i) throws IOException {
         // check and expand capacity if needed, handle potential overflow in checkCapacity()
-        checkCapacity(size + 1);
+        checkCapacity(1);
 
         output[size] = (byte) i;
         size++;
@@ -86,14 +86,13 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
      */
     @Override
     public synchronized void write(byte[] bytes, int offset, int length) throws IOException {
-        // note: newSize could be negative due to overflow, check it in checkCapacity()
-        final int newSize = size + length;
+        validateParameters(bytes, offset, length);
 
-        checkCapacity(newSize);
+        checkCapacity(length);
 
         // append the new content to the output, and reset size
         System.arraycopy(bytes, offset, output, size, length);
-        size = newSize;
+        size += length;
     }
 
     /**
@@ -139,15 +138,17 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
     /**
      * checks and expands capacity if needed
      *
-     * @param leastRequiredCapacity the lease capacity required
+     * @param length the new input byte length
      * @throws IOException if expanding capacity would cross the max capacity threshold
      */
-    private void checkCapacity(int leastRequiredCapacity) throws IOException {
-        // integer overflow case: definitely cannot allocate such large array
-        // this exception is about system allowed limit for an array
-        if (leastRequiredCapacity < 0) {
-            throw new IOException("Requested array size exceeds system maximum limit");
+    private void checkCapacity(int length) throws IOException {
+        boolean willOverflow = (maxCapacity - size < length);
+
+        if (willOverflow) {
+            throw new IOException("Requested array size exceeds maximum limit");
         }
+
+        final int leastRequiredCapacity = size + length;
 
         // expand capacity if necessary
         if (leastRequiredCapacity > output.length) {
@@ -163,18 +164,22 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
      *
      * @param  leastCapacityRequired the least required capacity to hold all content
      * @return the new capacity
-     * @throws IOException if newly expanded capacity is bigger than the maxCapacity
      */
-    private int expandCapacity(int leastCapacityRequired) throws IOException {
+    private int expandCapacity(int leastCapacityRequired) {
         int newCapacity = output.length * 2;
 
         // in case newCapacity is still not enough
         newCapacity = Math.max(newCapacity, leastCapacityRequired);
 
-        // throw if we are over the max capacity limit
-        if (newCapacity > maxCapacity) {
-            throw new IOException("Requested array size exceeds maximum limit");
-        }
+        newCapacity = Math.min(newCapacity, maxCapacity);
+
         return newCapacity;
+    }
+
+    private void validateParameters(byte[] bytes, int offset, int len) {
+        if ((offset < 0) || (offset > bytes.length) || (len < 0) ||
+                ((offset + len) - bytes.length > 0)) {
+            throw new IndexOutOfBoundsException(String.format("offset: %d, len: %d", offset, len));
+        }
     }
 }

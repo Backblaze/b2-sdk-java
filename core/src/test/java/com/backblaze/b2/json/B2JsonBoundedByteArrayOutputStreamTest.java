@@ -60,17 +60,6 @@ public class B2JsonBoundedByteArrayOutputStreamTest {
         assertArrayEquals(actual2048Bytes, b2JsonByteArrayOutputStream.toByteArray());
         assertEquals(2048, b2JsonByteArrayOutputStream.getSize());
 
-        // if the max capacity is not a power of 2 we can only write up to
-        // the largest power of 2 that is less than the max capacity
-        final B2JsonBoundedByteArrayOutputStream b2JsonByteArrayOutputStreamToFail = new B2JsonBoundedByteArrayOutputStream(4000);
-        try {
-            for (int i = 0; i < 4000; i++) {
-                b2JsonByteArrayOutputStreamToFail.write(i);
-            }
-        } catch (IOException ioException) {
-            assertEquals("Requested array size exceeds maximum limit", ioException.getMessage());
-        }
-        assertEquals(2048, b2JsonByteArrayOutputStreamToFail.getSize());
     }
 
     @Test
@@ -91,6 +80,14 @@ public class B2JsonBoundedByteArrayOutputStreamTest {
         final byte[] endBytes = new byte[] {'l', 'e', 't', ' ', 'u', 's', ' ', 'c', 'o', 'd', 'e', '!' };
         b2JsonByteArrayOutputStream1.write(endBytes, 0, endBytes.length);
         assertArrayEquals(appendOneByteArrayToTheOtherByteArray(startBytes, endBytes), b2JsonByteArrayOutputStream1.toByteArray());
+        assertEquals(24, b2JsonByteArrayOutputStream1.getSize());
+
+        // catch invalid parameters for byte array input
+        try {
+            b2JsonByteArrayOutputStream1.write(endBytes, -1, startBytes.length);
+        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+            assertEquals(String.format("offset: %d, len: %d", -1, startBytes.length), indexOutOfBoundsException.getMessage());
+        }
         assertEquals(24, b2JsonByteArrayOutputStream1.getSize());
 
         // create an OutputStream that will take one block of bytes of maxCapacity size
@@ -156,6 +153,13 @@ public class B2JsonBoundedByteArrayOutputStreamTest {
 
         // output array size should remain the same as the one from last successful write: 256
         assertEquals(actualYetMoreExpandedArrayBytes.length, b2JsonByteArrayOutputStream.getSize());
+
+        // the max capacity is not a power of 2: we can expand and write up to maxCapacity
+        final B2JsonBoundedByteArrayOutputStream b2JsonByteArrayOutputStreamToFail = new B2JsonBoundedByteArrayOutputStream(4888);
+        for (int i = 0; i < 4888; i++) {
+            b2JsonByteArrayOutputStreamToFail.write(i);
+        }
+        assertEquals(4888, b2JsonByteArrayOutputStreamToFail.getSize());
 
         // Ideally we'd like to include tests to catch the IOException where needed capacity
         // integer overflows. Such tests passed on local IDEA environment but failed on
