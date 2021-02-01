@@ -138,17 +138,17 @@ public class B2JsonBoundedByteArrayOutputStream extends OutputStream {
     /**
      * checks and expands capacity if needed
      *
-     * @param length the new input byte length
+     * @param additionalCapacityNeeded the additional capacity needed
      * @throws IOException if expanding capacity would cross the max capacity threshold
      */
-    private void checkCapacity(int length) throws IOException {
-        boolean willOverflow = (maxCapacity - size < length);
+    private void checkCapacity(int additionalCapacityNeeded) throws IOException {
+        boolean willOverflow = (maxCapacity - size < additionalCapacityNeeded);
 
         if (willOverflow) {
             throw new IOException("Requested array size exceeds maximum limit");
         }
 
-        final int leastRequiredCapacity = size + length;
+        final int leastRequiredCapacity = size + additionalCapacityNeeded;
 
         // expand capacity if necessary
         if (leastRequiredCapacity > output.length) {
