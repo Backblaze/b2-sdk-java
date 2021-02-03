@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ## [5.0.0] - 2021-01-20
+### Added
+* added an asynchronous large file upload method `B2StorageClient.storeLargeFileFromLocalContentAsync`
 ### Changed `[Incompatible]`
 * Disable automatic decompressing compressed content in HTTP client download library
 
