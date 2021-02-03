@@ -8,6 +8,7 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.util.B2ByteRange;
+import com.backblaze.b2.util.B2Preconditions;
 
 import java.util.Map;
 import java.util.Objects;
@@ -38,7 +39,14 @@ public class B2CopyFileRequest {
     @B2Json.optional
     private final Map<String, String> fileInfo;
 
-    @B2Json.constructor(params = "sourceFileId, destinationBucketId, fileName, range, metadataDirective, contentType, fileInfo")
+    @B2Json.optional
+    private final B2FileSseForRequest sourceServerSideEncryption;
+
+    @B2Json.optional
+    private final B2FileSseForRequest destinationServerSideEncryption;
+
+    @B2Json.constructor(params = "sourceFileId, destinationBucketId, fileName, range, metadataDirective, contentType, "+
+            "fileInfo, sourceServerSideEncryption, destinationServerSideEncryption")
     private B2CopyFileRequest(
             String sourceFileId,
             String destinationBucketId,
@@ -46,8 +54,9 @@ public class B2CopyFileRequest {
             String range,
             String metadataDirective,
             String contentType,
-            Map<String, String> fileInfo) {
-
+            Map<String, String> fileInfo,
+            B2FileSseForRequest sourceServerSideEncryption,
+            B2FileSseForRequest destinationServerSideEncryption) {
         this.sourceFileId = sourceFileId;
         this.destinationBucketId = destinationBucketId;
         this.fileName = fileName;
@@ -55,6 +64,8 @@ public class B2CopyFileRequest {
         this.metadataDirective = metadataDirective;
         this.contentType = contentType;
         this.fileInfo = fileInfo;
+        this.sourceServerSideEncryption = sourceServerSideEncryption;
+        this.destinationServerSideEncryption = destinationServerSideEncryption;
     }
 
     public String getSourceFileId() {
@@ -85,6 +96,14 @@ public class B2CopyFileRequest {
         return fileInfo;
     }
 
+    public B2FileSseForRequest getSourceServerSideEncryption() {
+        return sourceServerSideEncryption;
+    }
+
+    public B2FileSseForRequest getDestinationServerSideEncryption() {
+        return destinationServerSideEncryption;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -94,14 +113,16 @@ public class B2CopyFileRequest {
                 Objects.equals(destinationBucketId, that.destinationBucketId) &&
                 Objects.equals(fileName, that.fileName) &&
                 Objects.equals(range, that.range) &&
-                metadataDirective == that.metadataDirective &&
+                Objects.equals(metadataDirective, that.metadataDirective) &&
                 Objects.equals(contentType, that.contentType) &&
-                Objects.equals(fileInfo, that.fileInfo);
+                Objects.equals(fileInfo, that.fileInfo) &&
+                Objects.equals(sourceServerSideEncryption, that.sourceServerSideEncryption) &&
+                Objects.equals(destinationServerSideEncryption, that.destinationServerSideEncryption);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sourceFileId, destinationBucketId, fileName, range, metadataDirective, contentType, fileInfo);
+        return Objects.hash(sourceFileId, destinationBucketId, fileName, range, metadataDirective, contentType, fileInfo, sourceServerSideEncryption, destinationServerSideEncryption);
     }
 
     public static Builder builder(String sourceFileId, String fileName) {
@@ -116,6 +137,8 @@ public class B2CopyFileRequest {
         private String metadataDirective;
         private String contentType;
         private Map<String, String> fileInfo;
+        private B2FileSseForRequest sourceServerSideEncryption;
+        private B2FileSseForRequest destinationServerSideEncryption;
 
         public Builder(String sourceFileId, String fileName) {
             this.sourceFileId = sourceFileId;
@@ -147,6 +170,16 @@ public class B2CopyFileRequest {
             return this;
         }
 
+        public Builder setSourceServerSideEncryption(B2FileSseForRequest sourceServerSideEncryption) {
+            this.sourceServerSideEncryption = sourceServerSideEncryption;
+            return this;
+        }
+
+        public Builder setDestinationServerSideEncryption(B2FileSseForRequest destinationServerSideEncryption) {
+            this.destinationServerSideEncryption = destinationServerSideEncryption;
+            return this;
+        }
+
         public B2CopyFileRequest build() {
             return new B2CopyFileRequest(
                     sourceFileId,
@@ -155,7 +188,9 @@ public class B2CopyFileRequest {
                     range == null ? null : range.toString(),
                     metadataDirective,
                     contentType,
-                    fileInfo);
+                    fileInfo,
+                    sourceServerSideEncryption,
+                    destinationServerSideEncryption);
         }
     }
 

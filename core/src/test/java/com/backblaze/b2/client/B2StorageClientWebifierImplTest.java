@@ -1440,8 +1440,13 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
     @Test
     public void testCopyPart() throws B2Exception {
+        final String sourceKey = "iLNDwUxG7jW5Dk8K4L5MmtRlFYGtHCPWWYkzpFZ6cb8=";
+        final String destinationKey = "hIoRG+b7TqbVdXxBb66XkD2F1xnquDx1JLjP0vcryIM=";
+
         final B2CopyPartRequest request = B2CopyPartRequest
                 .builder(3, fileId(1), fileId(2))
+                .setSourceServerSideEncryption(B2FileSseForRequest.createSseCAes256(sourceKey))
+                .setDestinationServerSideEncryption(B2FileSseForRequest.createSseCAes256(destinationKey))
                 .build();
         webifier.copyPart(ACCOUNT_AUTH, request);
 
@@ -1454,10 +1459,22 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "request:\n" +
                 "    {\n" +
+                "      \"destinationServerSideEncryption\": {\n" +
+                "        \"algorithm\": \"AES256\",\n" +
+                "        \"customerKey\": \"hIoRG+b7TqbVdXxBb66XkD2F1xnquDx1JLjP0vcryIM=\",\n" +
+                "        \"customerKeyMd5\": \"F13Y6Zu3HEuFE+e+53QWzA==\",\n" +
+                "        \"mode\": \"SSE-C\"\n" +
+                "      },\n" +
                 "      \"largeFileId\": \"4_zBlah_0000002\",\n" +
                 "      \"partNumber\": 3,\n" +
                 "      \"range\": null,\n" +
-                "      \"sourceFileId\": \"4_zBlah_0000001\"\n" +
+                "      \"sourceFileId\": \"4_zBlah_0000001\",\n" +
+                "      \"sourceServerSideEncryption\": {\n" +
+                "        \"algorithm\": \"AES256\",\n" +
+                "        \"customerKey\": \"iLNDwUxG7jW5Dk8K4L5MmtRlFYGtHCPWWYkzpFZ6cb8=\",\n" +
+                "        \"customerKeyMd5\": \"uNesypp/GNphraVA9wPL5A==\",\n" +
+                "        \"mode\": \"SSE-C\"\n" +
+                "      }\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2Part\n"
@@ -1655,12 +1672,17 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
     @Test
     public void testCopyFile() throws B2Exception {
+        final String sourceKey = "hIoRG+b7TqbVdXxBb66XkD2F1xnquDx1JLjP0vcryIM=";
+        final String destinationKey = "iLNDwUxG7jW5Dk8K4L5MmtRlFYGtHCPWWYkzpFZ6cb8=";
+
         final B2CopyFileRequest request = B2CopyFileRequest
                 .builder(fileId(1), fileName(2))
                 .setDestinationBucketId(bucketId(3))
                 .setContentType("b2/x-auto")
                 .setMetadataDirective(B2CopyFileRequest.COPY_METADATA_DIRECTIVE)
                 .setRange(B2ByteRange.between(10, 100))
+                .setSourceServerSideEncryption(B2FileSseForRequest.createSseCAes256(sourceKey))
+                .setDestinationServerSideEncryption(B2FileSseForRequest.createSseCAes256(destinationKey))
                 .build();
         webifier.copyFile(ACCOUNT_AUTH, request);
 
@@ -1675,11 +1697,23 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    {\n" +
                 "      \"contentType\": \"b2/x-auto\",\n" +
                 "      \"destinationBucketId\": \"bucket3\",\n" +
+                "      \"destinationServerSideEncryption\": {\n" +
+                "        \"algorithm\": \"AES256\",\n" +
+                "        \"customerKey\": \"iLNDwUxG7jW5Dk8K4L5MmtRlFYGtHCPWWYkzpFZ6cb8=\",\n" +
+                "        \"customerKeyMd5\": \"uNesypp/GNphraVA9wPL5A==\",\n" +
+                "        \"mode\": \"SSE-C\"\n" +
+                "      },\n" +
                 "      \"fileInfo\": null,\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0002\",\n" +
                 "      \"metadataDirective\": \"COPY\",\n" +
                 "      \"range\": \"bytes=10-100\",\n" +
-                "      \"sourceFileId\": \"4_zBlah_0000001\"\n" +
+                "      \"sourceFileId\": \"4_zBlah_0000001\",\n" +
+                "      \"sourceServerSideEncryption\": {\n" +
+                "        \"algorithm\": \"AES256\",\n" +
+                "        \"customerKey\": \"hIoRG+b7TqbVdXxBb66XkD2F1xnquDx1JLjP0vcryIM=\",\n" +
+                "        \"customerKeyMd5\": \"F13Y6Zu3HEuFE+e+53QWzA==\",\n" +
+                "        \"mode\": \"SSE-C\"\n" +
+                "      }\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2FileVersion\n"
