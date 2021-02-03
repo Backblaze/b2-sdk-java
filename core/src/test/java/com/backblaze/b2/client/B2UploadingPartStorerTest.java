@@ -19,6 +19,7 @@ import static com.backblaze.b2.client.B2TestHelpers.makeSha1;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,10 +40,11 @@ public class B2UploadingPartStorerTest extends B2BaseTest {
         final B2ContentSource contentSource = mock(B2ContentSource.class);
         final B2UploadingPartStorer partStorer = new B2UploadingPartStorer(PART_NUMBER, contentSource);
         final B2LargeFileStorer largeFileStorer = mock(B2LargeFileStorer.class);
+        final B2CancellationToken cancellationToken = new B2CancellationToken();
 
         when(largeFileStorer.uploadPart(anyInt(), anyObject(), anyObject())).thenReturn(part);
 
-        assertEquals(part, partStorer.storePart(largeFileStorer, uploadListener));
-        verify(largeFileStorer).uploadPart(2, contentSource, uploadListener);
+        assertEquals(part, partStorer.storePart(largeFileStorer, uploadListener, cancellationToken));
+        verify(largeFileStorer).uploadPart(eq(2), anyObject(), eq(uploadListener));
     }
 }

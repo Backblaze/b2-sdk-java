@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -54,6 +56,8 @@ public class B2LargeFileStorer {
      * parts that come after a copied part.
      */
     private final List<Long> startingBytePositions;
+
+    final B2CancellationToken cancellationToken = new B2CancellationToken();
 
     private final B2AccountAuthorizationCache accountAuthCache;
     private final B2UploadPartUrlCache uploadPartUrlCache;
@@ -179,16 +183,128 @@ public class B2LargeFileStorer {
 
         final List<Future<B2Part>> partFutures = new ArrayList<>();
 
+        final B2CancellationToken cancellationToken = new B2CancellationToken();
         // Store each part in parallel.
         for (final B2PartStorer partStorer : partStorers) {
-            partFutures.add(executor.submit(() -> partStorer.storePart(this, uploadListener)));
+            partFutures.add(executor.submit(() -> partStorer.storePart(this, uploadListener, cancellationToken)));
         }
 
         return finishLargeFileFromB2PartFutures(fileVersion, partFutures);
     }
 
+    /**
+     * Stores the file asynchronously and returns a CompletionFuture to manage the task.
+     *
+     * The returned future can be cancelled, and that will attempt to abort any already started
+     * uploads by causing them to fail.
+     *
+     * Cancelling after the b2_finish_large_file API call has been started will result in the
+     * future being cancelled, but the API call can still succeed. There is no way to tell from
+     * the future whether this is the case. The caller is responsible for checking and calling
+     * B2StorageClient.cancelLargeFile.
+     *
+     * @param uploadListenerOrNull upload listener
+     * @return CompletableFuture that returns the finished file's B2FileVersion
+     */
+    CompletableFuture<B2FileVersion> storeFileAsync(B2UploadListener uploadListenerOrNull) {
+        final B2UploadListener uploadListener;
+        if (uploadListenerOrNull == null) {
+            uploadListener = B2UploadListener.noopListener();
+        } else {
+            uploadListener = uploadListenerOrNull;
+        }
+
+        final List<CompletableFuture<B2Part>> completableFutures = new ArrayList<>();
+
+        // Store each part in parallel.
+        for (final B2PartStorer partStorer : partStorers) {
+            CompletableFuture<B2Part> future = CompletableFuture.supplyAsync(
+                    adaptB2Supplier(() -> partStorer.storePart(this, uploadListener, cancellationToken)),
+                            executor);
+
+            completableFutures.add(future);
+        }
+
+        // future that tracks when all the parts are stored
+        final CompletableFuture<Void> allPartsCompletedFuture = CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0]));
+
+        final List<Future<B2Part>> partFutures = new ArrayList<>(completableFutures);
+
+        // this is the future to return to the caller
+        final CompletableFuture<B2FileVersion> retval = allPartsCompletedFuture
+                .thenApplyAsync((voidParam) -> finishLargeFileFromB2PartFuturesInCompletionStage(fileVersion, partFutures), executor);
+
+        // The caller can call cancel on the future that we give them, but that will only
+        // stop futures chained to the end of this future from running; it does not stop
+        // processing the parts that may be uploading currently. So we add our own handler
+        // to detect this and cancel any remaining part uploads so they don't start, and
+        // flag the cancellation token to try to fail any in-progress uploads.
+        retval.whenComplete((result, error) -> {
+            if (error != null) {
+                completableFutures.forEach(x -> x.cancel(true));
+                cancellationToken.cancelIfError(error);
+            }
+        });
+
+        return retval;
+    }
+
+    /**
+     * Adapts finishLargeFileFromB2PartFutures to be used in completion stages. These
+     * functions cannot return B2Exceptions, so those must be caught here and converted
+     * to CompletionExceptions.
+     *
+     * @param largeFileVersion
+     * @param partFutures
+     * @return
+     */
+    private B2FileVersion finishLargeFileFromB2PartFuturesInCompletionStage(B2FileVersion largeFileVersion,
+                                                                            List<Future<B2Part>> partFutures) {
+        return callSupplierAndConvertErrorsForCompletableFutures(
+                () -> finishLargeFileFromB2PartFutures(largeFileVersion, partFutures));
+    }
+
+    /**
+     * Supplier interface that throws B2Exception or IOException
+     * @param <Type> return type
+     */
+    private interface B2Supplier<Type> {
+        Type get() throws B2Exception, IOException;
+    }
+
+    /**
+     * Calls the supplier and converts B2Exception or IOException into CompletionException to be
+     * suitable for use in CompletionStages
+     * @param supplier supplier function can throw B2Exception or IOException
+     * @param <Type> type the supplier returns
+     * @return result of the supplier function
+     */
+    <Type> Type callSupplierAndConvertErrorsForCompletableFutures(B2Supplier<Type> supplier) {
+        try {
+            return supplier.get();
+        } catch (IOException | B2Exception error) {
+            throw new CompletionException(error);
+        }
+    }
+
+    /**
+     *
+     * @param supplier converts a supplier that can throw B2Exception or IOException into a
+     *                 Supplier instance that does not; these exceptions will be converted into
+     *                 CompletionExceptions instead.
+     *
+     *                 The resulting supplier is suitable to use in CompletionStages
+     * @param <Type> return type of the supplier
+     * @return supplier
+     */
+    private <Type> Supplier<Type> adaptB2Supplier(B2Supplier<Type> supplier) {
+        return () -> callSupplierAndConvertErrorsForCompletableFutures(supplier);
+    }
+
     private B2FileVersion finishLargeFileFromB2PartFutures(B2FileVersion largeFileVersion,
                                                            List<Future<B2Part>> partFutures) throws B2Exception {
+
+        cancellationToken.throwIfCancelled();
 
         final List<String> partSha1s = new ArrayList<>();
         try {
@@ -329,7 +445,8 @@ public class B2LargeFileStorer {
             int partNumber,
             String sourceFileId,
             B2ByteRange byteRangeOrNull,
-            B2UploadListener uploadListener) throws B2Exception {
+            B2UploadListener uploadListener,
+            B2CancellationToken cancellationToken) throws B2Exception {
 
         updateProgress(
                 uploadListener,
@@ -348,6 +465,8 @@ public class B2LargeFileStorer {
                     "b2_copy_part",
                     accountAuthCache,
                     () -> {
+                        cancellationToken.throwIfCancelled();
+
                         updateProgress(
                                 uploadListener,
                                 partNumber,
