@@ -99,31 +99,33 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
             makeHeaders(headersOrNull).forEach((name, value) -> get.setRequestProperty(name, value));
         }
         client.setDoOutput(true);
+        // Autoclosable lambda used here to all the URLConnection client to close
         try (AutoCloseable cxn = () -> client.disconnect()) {
             final int statusCode = client.getResponseCode();
-            if (200 <= statusCode && statusCode < 300) {
-                final InputStream content = client.getInputStream();
-                handler.readContent(makeHeaders(client.getHeaderFields()), content);
 
-                // The handler reads the entire contents, but may not make the
-                // additional call to read that hits EOF and returns -1.  That
-                // last step is necessary for the HTTP library to reuse the
-                // connection.  So don't remove this call to read(), even if
-                // the logging proves unnecessary.
-                //noinspection ResultOfMethodCallIgnored
-                content.read();
-                //if (content.read() != -1) {
-                //    log.warn("handler did not read full response from " + url);
-                //}
+
+
+            if (200 <= statusCode && statusCode < 300) {
+                final DataInputStream contentStream = new DataInputStream(client.getInputStream());
+                String contentString;
+
+                while ((String contentLine = contentStream.readLine()) != null) {
+                    System.out.println(inputLine);
+                }
+
+
+                final InputStream content = client.getInputStream();
+                handler.readContent(makeHeaders(client.getHeaderField()), content);
+
             } else {
-                final BufferedReader input = new BufferedReader(new InputStreamReader(client));
-                final StringBuilder res = new StringBuilder();
+                final BufferedReader input = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                final StringBuilder response = new StringBuilder();
                 String line;
                 while ((line = input.readLine()) != null) {
                     res.append(line);
                 }
                 input.close();
-                throw extractExceptionFromErrorResponse(response, response.toString());
+                throw extractExceptionFromErrorResponse(client, response.toString());
             }
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
@@ -248,7 +250,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
      * @throws B2Exception if there's any trouble
      */
     private String postAndReturnString(String url, B2Headers headersOrNull, InputStream requestEntity)
-            throws B2Exception {
+            throws Exception {
 
         try {
             URLConnection post = new URL(url).openConnection();
@@ -269,20 +271,18 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
                 }
             }
 
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(post.getInputStream()))) {
-                String line;
-                final StringBuilder responseText = new StringBuilder();
-
-                while ((line = in.readLine()) != null) {
-                    responseText.append(line);
-                }
-            }
-
             final int statusCode = post.getResponseCode();
             if (statusCode >= 200 && statusCode < 300) {
-                return responseText;
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(post.getInputStream()))) {
+                    String line;
+                    final StringBuilder responseText = new StringBuilder();
+
+                    while ((line = in.readLine()) != null) {
+                        responseText.append(line);
+                    }
+                }
             } else {
-                throw extractExceptionFromErrorResponse(response, responseText);
+                throw new Exception(response, responseText);
             }
         } catch (IOException e) {
             throw translateToB2Exception(e, url);
