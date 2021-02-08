@@ -30,12 +30,9 @@ class B2CancellationToken {
     }
 
     /**
-     * Sets the cancelled state, will throw if already cancelled
-     * @throws B2Exception if previously cancelled
+     * Sets the cancelled state
      */
-    void cancel() throws B2Exception {
-        throwIfCancelled();
-
+    void cancel() {
         cancelled.set(true);
     }
 
@@ -45,11 +42,5 @@ class B2CancellationToken {
      */
     boolean isCancelled() {
         return cancelled.get();
-    }
-
-    void cancelIfError(Throwable error) {
-        if (!isCancelled() && error != null) {
-            cancelled.set(true);
-        }
     }
 }

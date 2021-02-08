@@ -57,7 +57,10 @@ public class B2LargeFileStorer {
      */
     private final List<Long> startingBytePositions;
 
-    final B2CancellationToken cancellationToken = new B2CancellationToken();
+    /**
+     * The cancellation token used to abort uploads in progress.
+     */
+    private final B2CancellationToken cancellationToken = new B2CancellationToken();
 
     private final B2AccountAuthorizationCache accountAuthCache;
     private final B2UploadPartUrlCache uploadPartUrlCache;
@@ -193,7 +196,7 @@ public class B2LargeFileStorer {
     }
 
     /**
-     * Stores the file asynchronously and returns a CompletionFuture to manage the task.
+     * Stores the file asynchronously and returns a CompletableFuture to manage the task.
      *
      * The returned future can be cancelled, and that will attempt to abort any already started
      * uploads by causing them to fail.
@@ -242,7 +245,7 @@ public class B2LargeFileStorer {
         retval.whenComplete((result, error) -> {
             if (error != null) {
                 completableFutures.forEach(x -> x.cancel(true));
-                cancellationToken.cancelIfError(error);
+                cancellationToken.cancel();
             }
         });
 

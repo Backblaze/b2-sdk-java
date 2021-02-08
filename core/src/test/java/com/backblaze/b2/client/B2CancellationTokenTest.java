@@ -34,17 +34,15 @@ public class B2CancellationTokenTest {
     }
 
     @Test
-    public void testCancelWillThrowIfCalledTwice() throws B2Exception {
-        cancellationToken.cancel();
-
-        thrown.expect(B2LocalException.class);
-        cancellationToken.cancel();
-    }
-
-    @Test
-    public void testIsCancelled() throws B2Exception {
+    public void testCancel() {
+        // initial state
         Assert.assertFalse(cancellationToken.isCancelled());
 
+        cancellationToken.cancel();
+
+        Assert.assertTrue(cancellationToken.isCancelled());
+
+        // can cancel again
         cancellationToken.cancel();
 
         Assert.assertTrue(cancellationToken.isCancelled());
