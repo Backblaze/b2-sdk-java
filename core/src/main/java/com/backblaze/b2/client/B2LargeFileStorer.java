@@ -186,7 +186,6 @@ public class B2LargeFileStorer {
 
         final List<Future<B2Part>> partFutures = new ArrayList<>();
 
-        final B2CancellationToken cancellationToken = new B2CancellationToken();
         // Store each part in parallel.
         for (final B2PartStorer partStorer : partStorers) {
             partFutures.add(executor.submit(() -> partStorer.storePart(this, uploadListener, cancellationToken)));
