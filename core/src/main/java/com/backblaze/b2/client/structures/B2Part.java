@@ -21,20 +21,24 @@ public class B2Part {
     private final String contentMd5;
     @B2Json.optional  // not present in response from b2_upload_part.
     private final long uploadTimestamp;
+    @B2Json.optional
+    private final B2FileSseForResponse serverSideEncryption;
 
-    @B2Json.constructor(params = "fileId,partNumber,contentLength,contentSha1,contentMd5,uploadTimestamp")
+    @B2Json.constructor(params = "fileId,partNumber,contentLength,contentSha1,contentMd5,uploadTimestamp,serverSideEncryption")
     public B2Part(String fileId,
                   int partNumber,
                   long contentLength,
                   String contentSha1,
                   String contentMd5,
-                  long uploadTimestamp) {
+                  long uploadTimestamp,
+                  B2FileSseForResponse serverSideEncryption) {
         this.fileId = fileId;
         this.partNumber = partNumber;
         this.contentLength = contentLength;
         this.contentSha1 = contentSha1;
         this.contentMd5 = contentMd5;
         this.uploadTimestamp = uploadTimestamp;
+        this.serverSideEncryption = serverSideEncryption;
     }
 
 
@@ -62,6 +66,10 @@ public class B2Part {
         return uploadTimestamp;
     }
 
+    public B2FileSseForResponse getServerSideEncryption() {
+        return serverSideEncryption;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -72,12 +80,13 @@ public class B2Part {
                 getUploadTimestamp() == b2Part.getUploadTimestamp() &&
                 Objects.equals(getFileId(), b2Part.getFileId()) &&
                 Objects.equals(getContentSha1(), b2Part.getContentSha1()) &&
-                Objects.equals(getContentMd5(), b2Part.getContentMd5());
+                Objects.equals(getContentMd5(), b2Part.getContentMd5()) &&
+                Objects.equals(getServerSideEncryption(), b2Part.getServerSideEncryption());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getFileId(), getPartNumber(), getContentLength(), getContentSha1(), getContentMd5(), getUploadTimestamp());
+        return Objects.hash(getFileId(), getPartNumber(), getContentLength(), getContentSha1(), getContentMd5(), getUploadTimestamp(), getServerSideEncryption());
     }
 
     @Override
@@ -88,6 +97,7 @@ public class B2Part {
                 ", contentLength=" + contentLength +
                 ", contentSha1='" + contentSha1 + '\'' +
                 ", uploadTimestamp=" + uploadTimestamp +
+                ", serverSideEncryption=" + serverSideEncryption +
                 '}';
     }
 }

@@ -467,7 +467,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testOneAlreadyUploadedPartThatMatches_part1() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
-                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111)
+                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111, null)
         );
 
         recordingListener.setExpected(
@@ -489,7 +489,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testOneAlreadyUploadedPartThatMatches_part3() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
-                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333)
+                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333, null)
         );
 
         recordingListener.setExpected(
@@ -510,9 +510,9 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testThreeAlreadyUploadedParts_allMatch() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf( // out-of-order on purpose.  should still be found.
-                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333),
-                new B2Part(largeFileId, 2, 1041, makeSha1(2), makeMd5(2), 2222),
-                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111)
+                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333, null),
+                new B2Part(largeFileId, 2, 1041, makeSha1(2), makeMd5(2), 2222, null),
+                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111, null)
         );
 
         recordingListener.setExpected(
@@ -531,10 +531,10 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testFourAlreadyUploadedPart_noneMatch() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
-                new B2Part(largeFileId, 6, 1041, makeSha1(1), makeMd5(1), 1111),  // unneeded part number
-                new B2Part(largeFileId, 2, 6666, makeSha1(2), makeMd5(2), 2222),  // bad size
-                new B2Part(largeFileId, 3, 1041, makeSha1(3), makeMd5(3), 3333),  // bad size
-                new B2Part(largeFileId, 4, 1041, makeSha1(4), makeMd5(4), 1111)   // unneeded part number
+                new B2Part(largeFileId, 6, 1041, makeSha1(1), makeMd5(1), 1111, null),  // unneeded part number
+                new B2Part(largeFileId, 2, 6666, makeSha1(2), makeMd5(2), 2222, null),  // bad size
+                new B2Part(largeFileId, 3, 1041, makeSha1(3), makeMd5(3), 3333, null),  // bad size
+                new B2Part(largeFileId, 4, 1041, makeSha1(4), makeMd5(4), 1111, null)   // unneeded part number
         );
 
         recordingListener.setExpected(

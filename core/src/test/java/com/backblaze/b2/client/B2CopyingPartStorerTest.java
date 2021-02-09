@@ -30,7 +30,7 @@ public class B2CopyingPartStorerTest extends B2BaseTest {
     private static final String SHA1 = makeSha1(2);
     private static final String MD5 = makeMd5(2);
 
-    private final B2Part part = new B2Part(DST_FILE_ID, PART_NUMBER, 5000000, SHA1, MD5, 2222);
+    private final B2Part part = new B2Part(DST_FILE_ID, PART_NUMBER, 5000000, SHA1, MD5, 2222, null);
     private final B2LargeFileStorer largeFileStorer = mock(B2LargeFileStorer.class);
 
     private final B2UploadListener uploadListener = mock(B2UploadListener.class);
