@@ -904,8 +904,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
 
         // arrange to find that two parts -- the first and third -- have already been uploaded.
         final List<B2Part> alreadyUploadedParts = listOf(
-                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111),
-                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333)
+                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111, null),
+                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333, null)
         );
         final B2ListPartsResponse listPartsResponse = new B2ListPartsResponse(alreadyUploadedParts, null);
         when(webifier.listParts(anyObject(), anyObject())).thenReturn(listPartsResponse);

@@ -126,7 +126,8 @@ public class B2TestHelpers {
                 i * 1000L,
                 makeSha1(i),
                 makeMd5(i),
-                i);
+                i,
+                null);
     }
 
     // returns an array with the given number of bytes.
