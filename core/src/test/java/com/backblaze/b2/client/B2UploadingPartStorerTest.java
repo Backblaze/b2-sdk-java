@@ -42,9 +42,9 @@ public class B2UploadingPartStorerTest extends B2BaseTest {
         final B2LargeFileStorer largeFileStorer = mock(B2LargeFileStorer.class);
         final B2CancellationToken cancellationToken = new B2CancellationToken();
 
-        when(largeFileStorer.uploadPart(anyInt(), anyObject(), anyObject())).thenReturn(part);
+        when(largeFileStorer.uploadPart(anyInt(), anyObject(), anyObject(), eq(cancellationToken))).thenReturn(part);
 
         assertEquals(part, partStorer.storePart(largeFileStorer, uploadListener, cancellationToken));
-        verify(largeFileStorer).uploadPart(eq(2), anyObject(), eq(uploadListener));
+        verify(largeFileStorer).uploadPart(eq(2), anyObject(), eq(uploadListener), eq(cancellationToken));
     }
 }

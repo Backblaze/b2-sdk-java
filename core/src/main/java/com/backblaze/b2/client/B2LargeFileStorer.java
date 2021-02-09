@@ -369,7 +369,7 @@ public class B2LargeFileStorer {
     B2Part uploadPart(
             int partNumber,
             B2ContentSource contentSource,
-            B2UploadListener uploadListener) throws IOException, B2Exception {
+            B2UploadListener uploadListener, B2CancellationToken cancellationToken) throws IOException, B2Exception {
 
         updateProgress(
                 uploadListener,
@@ -392,6 +392,7 @@ public class B2LargeFileStorer {
                     "b2_upload_part",
                     accountAuthCache,
                     (isRetry) -> {
+                        cancellationToken.throwIfCancelled();
                         final B2UploadPartUrlResponse uploadPartUrlResponse = uploadPartUrlCache.get(isRetry);
 
                         final B2ContentSource contentSourceThatReportsProgress =

@@ -47,7 +47,7 @@ public class B2UploadingPartStorer implements B2PartStorer {
             B2CancellationToken cancellationToken) throws IOException, B2Exception {
 
         final B2CancellableContentSource cancellableContentSource = new B2CancellableContentSource(contentSource, cancellationToken);
-        return largeFileCreationManager.uploadPart(partNumber, cancellableContentSource, uploadListener);
+        return largeFileCreationManager.uploadPart(partNumber, cancellableContentSource, uploadListener, cancellationToken);
     }
 
     @Override
