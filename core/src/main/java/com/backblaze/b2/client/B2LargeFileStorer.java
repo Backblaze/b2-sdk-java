@@ -177,21 +177,18 @@ public class B2LargeFileStorer {
     }
 
     B2FileVersion storeFile(B2UploadListener uploadListenerOrNull) throws B2Exception {
-        final B2UploadListener uploadListener;
-        if (uploadListenerOrNull == null) {
-            uploadListener = B2UploadListener.noopListener();
-        } else {
-            uploadListener = uploadListenerOrNull;
+        try {
+            return storeFileAsync(uploadListenerOrNull).get();
+        } catch (ExecutionException e) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof B2Exception) {
+                throw (B2Exception) cause;
+            } else {
+                throw new B2LocalException("trouble", "exception while trying to upload parts: " + cause, cause);
+            }
+        } catch (InterruptedException e) {
+            throw new B2LocalException("trouble", "interrupted exception");
         }
-
-        final List<Future<B2Part>> partFutures = new ArrayList<>();
-
-        // Store each part in parallel.
-        for (final B2PartStorer partStorer : partStorers) {
-            partFutures.add(executor.submit(() -> partStorer.storePart(this, uploadListener, cancellationToken)));
-        }
-
-        return finishLargeFileFromB2PartFutures(fileVersion, partFutures);
     }
 
     /**
