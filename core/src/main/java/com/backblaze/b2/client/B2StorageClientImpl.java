@@ -57,6 +57,7 @@ import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
@@ -247,6 +248,26 @@ public class B2StorageClientImpl implements B2StorageClient {
                 retryer,
                 retryPolicySupplier,
                 executor).storeFile(uploadListener);
+    }
+
+    @Override
+    public CompletableFuture<B2FileVersion> storeLargeFileFromLocalContentAsync(
+            B2FileVersion fileVersion,
+            B2ContentSource contentSource,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception {
+
+        final B2LargeFileStorer storer = B2LargeFileStorer.forLocalContent(
+                fileVersion,
+                contentSource,
+                getPartSizes(),
+                accountAuthCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                executor);
+
+        return storer.storeFileAsync(uploadListenerOrNull);
     }
 
     @Override

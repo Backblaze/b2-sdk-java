@@ -6,7 +6,6 @@ package com.backblaze.b2.client;
 
 import com.backblaze.b2.client.exceptions.B2CannotComputeException;
 import com.backblaze.b2.client.exceptions.B2Exception;
-import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2UploadListener;
 
@@ -35,11 +34,13 @@ public interface B2PartStorer {
      * @param largeFileCreationManager The object managing the storage of the whole
      *                                 large file.
      * @param uploadListener The listener that tracks upload progress events.
+     * @param cancellationToken token to check whether the action has been cancelled
      * @return The part that is stored, if successful.
      * @throws B2Exception if there's trouble.
      */
     B2Part storePart(
             B2LargeFileStorer largeFileCreationManager,
-            B2UploadListener uploadListener) throws IOException, B2Exception;
+            B2UploadListener uploadListener,
+            B2CancellationToken cancellationToken) throws IOException, B2Exception;
 
 }
