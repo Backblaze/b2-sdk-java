@@ -39,14 +39,18 @@ public class B2Bucket {
     @B2Json.optional
     private final B2BucketFileLockConfiguration defaultFileLockConfiguration;
 
-    @B2Json.optional
+    @B2Json.ignored // temporarily ignored
     private final B2BucketServerSideEncryption defaultServerSideEncryption;
+
+    @B2Json.optional
+    private final B2BucketServerSideEncryption defaultServerSideEncryptionTransitional;
 
     @B2Json.required
     private final int revision;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules," +
-            "options,defaultFileLockConfiguration,defaultServerSideEncryption,revision")
+            "options,defaultFileLockConfiguration,defaultServerSideEncryptionTransitional,revision",
+            discards = "defaultServerSideEncryption") // temporarily discarded
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
@@ -69,6 +73,8 @@ public class B2Bucket {
         this.defaultFileLockConfiguration = defaultFileLockConfiguration;
         this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.revision = revision;
+
+        this.defaultServerSideEncryptionTransitional = defaultServerSideEncryption;
     }
 
     public String getAccountId() {
