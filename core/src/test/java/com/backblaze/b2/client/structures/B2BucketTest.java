@@ -164,7 +164,7 @@ public class B2BucketTest extends B2BaseTest {
                 "    },\n" +
                 "    \"status\": \"enabled\"\n" +
                 "  },\n" +
-                "  \"defaultServerSideEncryptionTransitional\": {\n" +
+                "  \"defaultServerSideEncryption\": {\n" +
                 "    \"algorithm\": \"AES256\",\n" +
                 "    \"mode\": \"SSE-B2\"\n" +
                 "  },\n" +
@@ -231,7 +231,7 @@ public class B2BucketTest extends B2BaseTest {
                 "    }\n" +
                 "  ],\n" +
                 "  \"defaultFileLockConfiguration\": null,\n" +
-                "  \"defaultServerSideEncryptionTransitional\": null,\n" +
+                "  \"defaultServerSideEncryption\": null,\n" +
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +
                 "      \"daysFromHidingToDeleting\": null,\n" +
