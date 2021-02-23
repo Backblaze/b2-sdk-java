@@ -4,6 +4,7 @@
  */
 package com.backblaze.b2.client.structures;
 
+import com.backblaze.b2.client.exceptions.B2ForbiddenException;
 import com.backblaze.b2.json.B2Json;
 
 import java.util.List;
@@ -40,7 +41,7 @@ public class B2Bucket {
     private final B2BucketFileLockConfiguration defaultFileLockConfiguration;
 
     @B2Json.optional
-    private final B2BucketServerSideEncryption defaultServerSideEncryption;
+    private final B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> defaultServerSideEncryption;
 
     @B2Json.required
     private final int revision;
@@ -56,7 +57,7 @@ public class B2Bucket {
                     List<B2LifecycleRule> lifecycleRules,
                     Set<String> options,
                     B2BucketFileLockConfiguration defaultFileLockConfiguration,
-                    B2BucketServerSideEncryption defaultServerSideEncryption,
+                    B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> defaultServerSideEncryption,
                     int revision) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -107,10 +108,27 @@ public class B2Bucket {
         return revision;
     }
 
-    public B2BucketFileLockConfiguration getDefaultFileLockConfiguration() { return defaultFileLockConfiguration; }
+    public B2BucketFileLockConfiguration getDefaultFileLockConfiguration() {
+        return defaultFileLockConfiguration;
+    }
 
-    public B2BucketServerSideEncryption getDefaultServerSideEncryption() {
-        return defaultServerSideEncryption;
+    /**
+     * Indicates whether client is authorized to read default bucket encryption settings for bucket
+     * @return true iff client is authorized to read value of defaultServerSideEncryption field in B2Bucket
+     */
+    public boolean isClientAuthorizedToReadDefaultServerSideEncryption() {
+        return defaultServerSideEncryption.isClientAuthorizedToRead();
+    }
+
+    /**
+     * Returns settings for default bucket encryption (i.e., mode and algorithm) or null if there are none.
+     * Throws B2ForbiddenException if client is not authorized to read bucket default encryption settings.
+     * @return default bucket encryption settings
+     * @throws B2ForbiddenException if client is not authorized to read defaultServerSideEncryption field
+     */
+    public B2BucketServerSideEncryption getDefaultServerSideEncryption() throws B2ForbiddenException {
+        // will throw B2ForbiddenException if client is not authorized to read value
+        return defaultServerSideEncryption.getValue();
     }
 
     @Override
@@ -144,7 +162,7 @@ public class B2Bucket {
                 Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules()) &&
                 Objects.equals(getOptions(), b2Bucket.getOptions()) &&
                 Objects.equals(getDefaultFileLockConfiguration(), b2Bucket.getDefaultFileLockConfiguration()) &&
-                Objects.equals(getDefaultServerSideEncryption(), b2Bucket.getDefaultServerSideEncryption());
+                Objects.equals(defaultServerSideEncryption, b2Bucket.defaultServerSideEncryption);
     }
 
     @Override
@@ -160,6 +178,6 @@ public class B2Bucket {
                 getOptions(),
                 getRevision(),
                 getDefaultFileLockConfiguration(),
-                getDefaultServerSideEncryption());
+                defaultServerSideEncryption);
     }
 }

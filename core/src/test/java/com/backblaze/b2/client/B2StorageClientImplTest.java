@@ -9,6 +9,7 @@ import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.*;
+import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Clock;
@@ -178,26 +179,43 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 .setLifecycleRules(lifecycleRules)
                 .setDefaultServerSideEncryption(defaultServerSideEncryption)
                 .build();
-        final B2Bucket bucket = new B2Bucket(
-                ACCOUNT_ID,
-                bucketId(1),
-                BUCKET_NAME,
-                BUCKET_TYPE,
-                bucketInfo,
-                new ArrayList<>(),
-                lifecycleRules,
-                Collections.emptySet(),
-                null,
-                defaultServerSideEncryption,
-                1);
-        B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
+        // create bucket from JSON because B2AuthorizationFilteredResponseField is not accessible from this package
+        final String bucketJson = "{\n" +
+                "  \"accountId\": \"1\",\n" +
+                "  \"bucketId\": \"bucket1\",\n" +
+                "  \"bucketInfo\": {\n" +
+                "    \"one\": \"1\",\n" +
+                "    \"two\": \"2\"\n" +
+                "  },\n" +
+                "  \"bucketName\": \"bucket1\",\n" +
+                "  \"bucketType\": \"allPublic\",\n" +
+                "  \"corsRules\": [],\n" +
+                "  \"defaultFileLockConfiguration\": null,\n" +
+                "  \"defaultServerSideEncryption\": {\n" +
+                "    \"isClientAuthorizedToRead\": true,\n" +
+                "    \"value\": {\n" +
+                "      \"algorithm\": \"AES256\",\n" +
+                "      \"mode\": \"SSE-B2\"\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"lifecycleRules\": [\n" +
+                "    {\n" +
+                "      \"daysFromHidingToDeleting\": null,\n" +
+                "      \"daysFromUploadingToHiding\": null,\n" +
+                "      \"fileNamePrefix\": \"files/\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"options\": [],\n" +
+                "  \"revision\": 1\n" +
+                "}";
+        final B2Bucket bucket = B2Json.fromJsonOrThrowRuntime(bucketJson, B2Bucket.class);
+        final B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
         when(webifier.createBucket(ACCOUNT_AUTH, expectedRequest)).thenReturn(bucket);
 
         final B2Bucket response = client.createBucket(request);
         assertEquals(bucket, response);
 
         retryer.assertCallCountIs(2); // auth + createBucket.
-
 
         // for coverage
         //noinspection ResultOfMethodCallIgnored
@@ -210,22 +228,45 @@ public class B2StorageClientImplTest extends B2BaseTest {
         //noinspection ResultOfMethodCallIgnored
         bucket.hashCode();
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,0 options," +
-                "null,B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256},v1)", bucket.toString());
+                "null,B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                "value={B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256}}),v1)", bucket.toString());
 
-        final B2Bucket bucketWithOptions = new B2Bucket(
-                ACCOUNT_ID,
-                bucketId(1),
-                BUCKET_NAME,
-                BUCKET_TYPE,
-                bucketInfo,
-                new ArrayList<>(),
-                lifecycleRules,
-                B2TestHelpers.makeBucketOrApplicationKeyOptions(),
-                null,
-                defaultServerSideEncryption,
-                1);
+        // create bucket from JSON because B2AuthorizationFilteredResponseField is not accessible from this package
+        final String bucketWithOptionsJson = "{\n" +
+                "  \"accountId\": \"1\",\n" +
+                "  \"bucketId\": \"bucket1\",\n" +
+                "  \"bucketInfo\": {\n" +
+                "    \"one\": \"1\",\n" +
+                "    \"two\": \"2\"\n" +
+                "  },\n" +
+                "  \"bucketName\": \"bucket1\",\n" +
+                "  \"bucketType\": \"allPublic\",\n" +
+                "  \"corsRules\": [],\n" +
+                "  \"defaultFileLockConfiguration\": null,\n" +
+                "  \"defaultServerSideEncryption\": {\n" +
+                "    \"isClientAuthorizedToRead\": true,\n" +
+                "    \"value\": {\n" +
+                "      \"algorithm\": \"AES256\",\n" +
+                "      \"mode\": \"SSE-B2\"\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"lifecycleRules\": [\n" +
+                "    {\n" +
+                "      \"daysFromHidingToDeleting\": null,\n" +
+                "      \"daysFromUploadingToHiding\": null,\n" +
+                "      \"fileNamePrefix\": \"files/\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"options\": [\n" +
+                "    \"myOption1\",\n" +
+                "    \"myOption2\"\n" +
+                "  ],\n" +
+                "  \"revision\": 1\n" +
+                "}";
+        final B2Bucket bucketWithOptions = B2Json.fromJsonOrThrowRuntime(bucketWithOptionsJson, B2Bucket.class);
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, " +
-                "myOption2] options,null,B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256},v1)",
+                "myOption2] options,null,B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                        "value={B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256}}),v1)",
                 bucketWithOptions.toString());
     }
 
