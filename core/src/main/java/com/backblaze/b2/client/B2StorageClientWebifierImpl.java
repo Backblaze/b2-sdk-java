@@ -280,8 +280,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             }
 
             if (request.getFileLock() != null) {
-                headersBuilder.set(B2Headers.FILE_LOCK_RETENTION_STATUS,
-                        request.getFileLock().getStatus());
+                // no need to send file lock status; but may need to receive one for HEAD calls
+                // discussed inside getFileInfoByName
                 headersBuilder.set(B2Headers.FILE_LOCK_RETENTION_MODE,
                         request.getFileLock().getMode());
                 headersBuilder.set(B2Headers.FILE_LOCK_RETENTION_RETAIN_UNTIL_TIMESTAMP,
@@ -564,6 +564,13 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         B2Headers headers = webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(),
                 request.getFileName()), makeHeaders(accountAuth, extras));
 
+        /* We would need an extra header to indicate "isClientAuthorizedToRead" so
+           we can construct an appropriate B2FileLock or legal hold status
+           For set both to null in the next B2FileVersion instantiation till a solution is finalized
+         */
+        final B2FileLock b2FileLockOrNull = B2FileLock.getFileLockFromHeadersOrNull(headers);
+        final String legalHoldOrNull = headers.getLegalHoldStatusOrNull();
+
         // b2_download_file_by_name promises most of these will be present, except as noted below,
         return new B2FileVersion(
                 headers.getValueOrNull(FILE_ID),
@@ -575,8 +582,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 headers.getB2FileInfo(),           // might be empty.
                 "upload",
                 headers.getUploadTimestampOrNull(),
-                B2FileLock.getFileLockFromHeadersOrNull(headers), // might be null.
-                headers.getLegalHoldStatusOrNull(),  // might be null.
+                null,
+                null,
                 B2FileSseForResponse.getEncryptionFromHeadersOrNull(headers) // might be null.
         );
     }

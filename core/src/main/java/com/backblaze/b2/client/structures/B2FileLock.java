@@ -6,32 +6,27 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.json.B2Json;
+import com.backblaze.b2.util.B2Preconditions;
 
 import java.util.Objects;
 
 public class B2FileLock {
 
     /**
-     * The B2FileLockStatus, "unauthorized", "on", or "off"
-     */
-    @B2Json.required
-    private final String status;
-
-    /**
      * The B2FileLockMode, i.e. "governance" or "compliance", will be null if status != "on"
      */
-    @B2Json.optional
+    @B2Json.required
     private final String mode;
 
     /**
      * How long the file must be retained for (in millis since 1970), will be null if status != "on"
      */
-    @B2Json.optional
+    @B2Json.required
     private final Long retainUntilTimestamp;
 
-    @B2Json.constructor(params = "status, mode, retainUntilTimestamp")
-    public B2FileLock(String status, String mode, Long retainUntilTimestamp) {
-        this.status = status;
+    @B2Json.constructor(params = "mode, retainUntilTimestamp")
+    public B2FileLock(String mode, Long retainUntilTimestamp) {
+        B2Preconditions.checkArgument(mode != null && retainUntilTimestamp != null, "neither mode nor retainUntilTimestamp can be null");
         this.mode = mode;
         this.retainUntilTimestamp = retainUntilTimestamp;
     }
@@ -46,19 +41,14 @@ public class B2FileLock {
             return null;
         }
 
-        // Get all the headers we're looking for
-        final String status = headers.getFileLockRetentionStatusOrNull();
-        if (status == null) {
-            return null;
-        }
-
         final String mode = headers.getFileLockRetentionModeOrNull();
         final Long retainUntilTimestamp = headers.getFileLockRetentionRetainUntilTimestampOrNull();
 
-        return new B2FileLock(status, mode, retainUntilTimestamp);
+        if (mode == null || retainUntilTimestamp == null) {
+            return null;
+        }
+        return new B2FileLock(mode, retainUntilTimestamp);
     }
-
-    public String getStatus() { return status; }
 
     public String getMode() { return mode; }
 
@@ -73,19 +63,17 @@ public class B2FileLock {
             return false;
         }
         B2FileLock that = (B2FileLock) o;
-        return Objects.equals(status, that.getStatus()) &&
-                Objects.equals(mode, that.getMode()) &&
+        return Objects.equals(mode, that.getMode()) &&
                 Objects.equals(retainUntilTimestamp, that.getRetainUntilTimestamp());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(status, mode, retainUntilTimestamp);
+        return Objects.hash(mode, retainUntilTimestamp);
     }
 
     public String toString() {
         return "B2FileLock{" +
-                "status='" + status + "', " +
                 "mode=" + mode + ", " +
                 "retainUntilTimestamp=" + retainUntilTimestamp +
                 '}';

@@ -5,6 +5,7 @@
 package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.client.contentSources.B2Headers;
+import com.backblaze.b2.client.exceptions.B2ForbiddenException;
 import com.backblaze.b2.json.B2Json;
 
 import java.util.Map;
@@ -44,7 +45,7 @@ public class B2FileVersion {
     @B2Json.required
     private final long uploadTimestamp;
     @B2Json.optional
-    private final B2FileLock fileLock;
+    private final B2AuthorizationFilteredResponseField<B2FileLock> fileLock;
     @B2Json.optional
     private final String legalHoldStatus;
     @B2Json.optional
@@ -62,7 +63,7 @@ public class B2FileVersion {
                          Map<String, String> fileInfo,
                          String action,
                          long uploadTimestamp,
-                         B2FileLock fileLock,
+                         B2AuthorizationFilteredResponseField<B2FileLock> fileLock,
                          String legalHoldStatus,
                          B2FileSseForResponse serverSideEncryption) {
         this.fileId = fileId;
@@ -119,7 +120,25 @@ public class B2FileVersion {
         return uploadTimestamp;
     }
 
-    public B2FileLock getFileLock() { return fileLock; }
+    /**
+     * indicates whether or not the client is authorized to read the file lock
+     * from this file version
+     *
+     * @return true iff the client is authorized to read value of the file lock
+     */
+    public boolean isClientAuthorizedToReadFileLock() {
+        return fileLock.isClientAuthorizedToRead();
+    }
+
+    /**
+     * returns the file lock setting on the file version
+     *
+     * @return the file lock settings of the file version
+     * @throws B2ForbiddenException if the client is not authorized to read the file lock setting
+     */
+    public B2FileLock getFileLock() throws B2ForbiddenException {
+        return fileLock == null ? null : fileLock.getValue();
+    }
 
     public String getLegalHoldStatus() { return legalHoldStatus; }
 
@@ -173,7 +192,7 @@ public class B2FileVersion {
                 Objects.equals(getContentMd5(), that.getContentMd5()) &&
                 Objects.equals(getFileInfo(), that.getFileInfo()) &&
                 Objects.equals(getAction(), that.getAction()) &&
-                Objects.equals(getFileLock(), that.getFileLock()) &&
+                Objects.equals(fileLock, that.fileLock) && // compare the complete AuthorizationFilteredResponseField
                 Objects.equals(getLegalHoldStatus(), that.getLegalHoldStatus()) &&
                 Objects.equals(getServerSideEncryption(), that.getServerSideEncryption());
     }
@@ -190,8 +209,8 @@ public class B2FileVersion {
                 getFileInfo(),
                 getAction(),
                 getUploadTimestamp(),
-                getFileLock(),
-                getLegalHoldStatus(),
+                fileLock,
+                legalHoldStatus,
                 getServerSideEncryption()
         );
     }

@@ -1578,7 +1578,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
                 .setLegalHoldStatus(B2LegalHoldStatus.ON)
-                .setFileLock(new B2FileLock("on", "governance", 9876543210L))
+                .setFileLock(new B2FileLock( "governance", 9876543210L))
                 .setListener(listener)
                 .build();
         final B2UploadUrlResponse uploadUrl = uploadUrlResponse(bucketId(1), 1);
@@ -1596,7 +1596,6 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    X-Bz-File-Lock-Legal-Hold-Status: on\n" +
                 "    X-Bz-File-Lock-Retention-Mode: governance\n" +
                 "    X-Bz-File-Lock-Retention-Retain-Until-Timestamp: 9876543210\n" +
-                "    X-Bz-File-Lock-Retention-Status: on\n" +
                 "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
                 "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
