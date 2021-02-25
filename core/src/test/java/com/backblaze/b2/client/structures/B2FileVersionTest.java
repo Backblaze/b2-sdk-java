@@ -42,9 +42,10 @@ public class B2FileVersionTest extends B2BaseTest {
                         "contentMd5='" + B2TestHelpers.SAMPLE_MD5 + "', " +
                         "action='upload', uploadTimestamp=1, fileInfo=[1], fileName='" + fileName(1) + "', " +
                         "fileLock='B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true,value={B2FileLock{mode=governance, retainUntilTimestamp=123456}})" + "', " +
-                        "legalHoldStatus='on', serverSideEncryption='null'}",
-                one.toString());
-
+                        "legalHold='B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true,value={B2LegalHold{status=on}})'" +  ", " +
+                        "serverSideEncryption='null'}",
+                        one.toString());
+      
         // just for code coverage.
         //noinspection ResultOfMethodCallIgnored
         one.hashCode();
@@ -64,7 +65,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 null,
                 0L,
                 null,
-                null,
+               null,
                 null
         );
 
@@ -74,7 +75,8 @@ public class B2FileVersionTest extends B2BaseTest {
                         "contentMd5='null', " +
                         "action='null', uploadTimestamp=0, fileInfo=[], fileName='null', " +
                         "fileLock='null', " +
-                        "legalHoldStatus='null', serverSideEncryption='null'}",
+                        "legalHold='null', " +
+                        "serverSideEncryption='null'}",
                 one.toString());
     }
 
@@ -100,7 +102,8 @@ public class B2FileVersionTest extends B2BaseTest {
 
         assertTrue(fileVersion.isClientAuthorizedToReadFileLock());
         assertEquals(new B2FileLock("governance", 123456L), fileVersion.getFileLock());
-        assertEquals("on", fileVersion.getLegalHoldStatus());
+        assertTrue(fileVersion.isClientAuthorizedToReadLegalHold());
+        assertEquals(new B2LegalHold("on"), fileVersion.getLegalHold());
     }
 
     @Test
@@ -157,7 +160,7 @@ public class B2FileVersionTest extends B2BaseTest {
 
         assertEquals(defaultVersion, converted);
         assertNull(defaultVersion.getFileLock());
-        assertNull(defaultVersion.getLegalHoldStatus());
+        assertNull(defaultVersion.getLegalHold());
     }
 
     @Test
@@ -186,10 +189,44 @@ public class B2FileVersionTest extends B2BaseTest {
                 new B2AuthorizationFilteredResponseField<>(false, null),
                 null,
                 null);
+
         assertEquals(defaultVersion, converted);
         assertFalse(converted.isClientAuthorizedToReadFileLock());
         thrown.expect(B2ForbiddenException.class);
         converted.getFileLock();
+    }
+
+    @Test
+    public void testClientUnAuthorizedToReadLegalHold() throws B2ForbiddenException {
+        final String jsonString = "{\n" +
+                "   \"fileName\": \"file.txt\",\n" +
+                "   \"legalHold\": {\n" +
+                "      \"isClientAuthorizedToRead\": false,\n" +
+                "      \"value\": null\n" +
+                "   },\n" +
+                "   \"uploadTimestamp\": 12345\n" +
+                "}";
+        final B2FileVersion converted = B2Json.fromJsonOrThrowRuntime(
+                jsonString,
+                B2FileVersion.class);
+        final B2FileVersion defaultVersion = new B2FileVersion(
+                null,
+                "file.txt",
+                0L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                12345L,
+                null,
+                new B2AuthorizationFilteredResponseField<>(false, null),
+                null);
+
+        assertEquals(defaultVersion, converted);
+        assertFalse(converted.isClientAuthorizedToReadLegalHold());
+        thrown.expect(B2ForbiddenException.class);
+        converted.getLegalHold();
     }
 
     private void checkAction(String action, boolean expectUpload, boolean expectHide, boolean expectStart, boolean expectFolder) {
@@ -226,7 +263,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 "upload",
                 i,
                 new B2AuthorizationFilteredResponseField<>(true, new B2FileLock("governance", 123456L)),
-                "on",
+                new B2AuthorizationFilteredResponseField<>(true, new B2LegalHold("on")),
                 null);
     }
 }

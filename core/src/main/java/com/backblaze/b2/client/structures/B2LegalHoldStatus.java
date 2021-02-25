@@ -9,17 +9,17 @@ package com.backblaze.b2.client.structures;
  */
 public interface B2LegalHoldStatus {
     /**
-     * Legal hold is on/enabled/set and the requester has permissions to read the status
+     * Legal hold is on (enabled)
      */
     String ON = "on";
 
     /**
-     * Legal hold is off/disabled/not-set and the requester has permissions to read the status
+     * Legal hold is off (disabled)
      */
     String OFF = "off";
 
     /**
-     * The requester does not have permissions to read the status.  The hold may or may not be set.
+     * Legal hold is not set
      */
-    String UNAUTHORIZED = "unauthorized";
+    String UNSET = "unset";
 }

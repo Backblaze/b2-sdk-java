@@ -41,6 +41,7 @@ import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
 import com.backblaze.b2.client.structures.B2HideFileRequest;
+import com.backblaze.b2.client.structures.B2LegalHold;
 import com.backblaze.b2.client.structures.B2ListBucketsRequest;
 import com.backblaze.b2.client.structures.B2ListBucketsResponse;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
@@ -275,7 +276,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             }
 
             if (request.getLegalHoldStatus() != null) {
-                headersBuilder.set(B2Headers.FILE_LOCK_LEGAL_HOLD_STATUS,
+                headersBuilder.set(B2Headers.FILE_LOCK_LEGAL_HOLD,
                         request.getLegalHoldStatus());
             }
 
@@ -566,10 +567,10 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
         /* We would need an extra header to indicate "isClientAuthorizedToRead" so
            we can construct an appropriate B2FileLock or legal hold status
-           For set both to null in the next B2FileVersion instantiation till a solution is finalized
+           For now set both to null in the next B2FileVersion instantiation till a solution is finalized.
          */
         final B2FileLock b2FileLockOrNull = B2FileLock.getFileLockFromHeadersOrNull(headers);
-        final String legalHoldOrNull = headers.getLegalHoldStatusOrNull();
+        final B2LegalHold legalHoldOrNull = B2LegalHold.getLegalHoldFromHeadersOrNull(headers);
 
         // b2_download_file_by_name promises most of these will be present, except as noted below,
         return new B2FileVersion(

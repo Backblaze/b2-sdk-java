@@ -61,7 +61,7 @@ public interface B2Headers {
     String FILE_LOCK_RETENTION_STATUS = "X-Bz-File-Lock-Retention-Status";
     String FILE_LOCK_RETENTION_MODE = "X-Bz-File-Lock-Retention-Mode";
     String FILE_LOCK_RETENTION_RETAIN_UNTIL_TIMESTAMP = "X-Bz-File-Lock-Retention-Retain-Until-Timestamp";
-    String FILE_LOCK_LEGAL_HOLD_STATUS = "X-Bz-File-Lock-Legal-Hold-Status";
+    String FILE_LOCK_LEGAL_HOLD = "X-Bz-File-Lock-Legal-Hold";
 
     // some headers for Server Side Encryption
     String SERVER_SIDE_ENCRYPTION_HEADER = "X-Bz-Server-Side-Encryption";
@@ -261,10 +261,10 @@ public interface B2Headers {
     }
 
     /**
-     * @return the value of the `X-Bz-File-Lock-Legal-Hold-Status` header
+     * @return the value of the `X-Bz-File-Lock-Legal-Hold` header
      * @apiNote We return null here because this is a completely optional, non-standard header.
      */
-    default String getLegalHoldStatusOrNull() { return getValueOrNull(FILE_LOCK_LEGAL_HOLD_STATUS); }
+    default String getLegalHoldOrNull() { return getValueOrNull(FILE_LOCK_LEGAL_HOLD); }
 
     /**
      * @return the value of the `X-Bz-Server-Side-Encryption` header

@@ -47,13 +47,13 @@ public class B2FileVersion {
     @B2Json.optional
     private final B2AuthorizationFilteredResponseField<B2FileLock> fileLock;
     @B2Json.optional
-    private final String legalHoldStatus;
+    private final B2AuthorizationFilteredResponseField<B2LegalHold> legalHold;
     @B2Json.optional
     private final B2FileSseForResponse serverSideEncryption;
 
     @B2Json.constructor(params = "fileId,fileName,contentLength,contentType," +
-            "contentSha1,contentMd5,fileInfo,action,uploadTimestamp,fileLock,legalHoldStatus," +
-            "serverSideEncryption")
+            "contentSha1,contentMd5,fileInfo,action,uploadTimestamp,fileLock," +
+            "legalHold,serverSideEncryption")
     public B2FileVersion(String fileId,
                          String fileName,
                          long contentLength,
@@ -64,7 +64,7 @@ public class B2FileVersion {
                          String action,
                          long uploadTimestamp,
                          B2AuthorizationFilteredResponseField<B2FileLock> fileLock,
-                         String legalHoldStatus,
+                         B2AuthorizationFilteredResponseField<B2LegalHold> legalHold,
                          B2FileSseForResponse serverSideEncryption) {
         this.fileId = fileId;
         this.fileName = fileName;
@@ -76,7 +76,7 @@ public class B2FileVersion {
         this.action = action;
         this.uploadTimestamp = uploadTimestamp;
         this.fileLock = fileLock;
-        this.legalHoldStatus = legalHoldStatus;
+        this.legalHold = legalHold;
         this.serverSideEncryption = serverSideEncryption;
     }
 
@@ -140,7 +140,25 @@ public class B2FileVersion {
         return fileLock == null ? null : fileLock.getValue();
     }
 
-    public String getLegalHoldStatus() { return legalHoldStatus; }
+    /**
+     * indicates whether or not the client is authorized to read the legal hold
+     * status from this file version
+     *
+     * @return true iff the client is authorized to read value of the legal hold status
+     */
+    public boolean isClientAuthorizedToReadLegalHold() {
+        return legalHold.isClientAuthorizedToRead();
+    }
+
+    /**
+     * returns the legal hold status on the file version
+     *
+     * @return the legal hold status of the file version
+     * @throws B2ForbiddenException if the client is not authorized to read the legal hold status
+     */
+    public B2LegalHold getLegalHold() throws B2ForbiddenException {
+        return legalHold == null ? null : legalHold.getValue();
+    }
 
     public B2FileSseForResponse getServerSideEncryption() { return serverSideEncryption; }
 
@@ -173,7 +191,7 @@ public class B2FileVersion {
                 "fileInfo=[" + (fileInfo != null ? fileInfo.size() : "") + "], " +
                 "fileName='" + fileName + "', " +
                 "fileLock='" + fileLock + "', " +
-                "legalHoldStatus='" + legalHoldStatus + "', " +
+                "legalHold='" + legalHold+ "', " +
                 "serverSideEncryption='" + serverSideEncryption + "'" +
                 '}';
     }
@@ -193,7 +211,7 @@ public class B2FileVersion {
                 Objects.equals(getFileInfo(), that.getFileInfo()) &&
                 Objects.equals(getAction(), that.getAction()) &&
                 Objects.equals(fileLock, that.fileLock) && // compare the complete AuthorizationFilteredResponseField
-                Objects.equals(getLegalHoldStatus(), that.getLegalHoldStatus()) &&
+                Objects.equals(legalHold, that.legalHold) && // compare the complete AuthorizationFilteredResponseField
                 Objects.equals(getServerSideEncryption(), that.getServerSideEncryption());
     }
 
@@ -210,7 +228,7 @@ public class B2FileVersion {
                 getAction(),
                 getUploadTimestamp(),
                 fileLock,
-                legalHoldStatus,
+                legalHold,
                 getServerSideEncryption()
         );
     }

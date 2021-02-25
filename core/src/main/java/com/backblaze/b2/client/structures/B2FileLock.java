@@ -72,6 +72,7 @@ public class B2FileLock {
         return Objects.hash(mode, retainUntilTimestamp);
     }
 
+    @Override
     public String toString() {
         return "B2FileLock{" +
                 "mode=" + mode + ", " +
