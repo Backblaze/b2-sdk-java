@@ -15,8 +15,8 @@ public class B2UploadFileRequest {
     private final String fileName;
     private final String contentType;
     private final B2FileSseForRequest serverSideEncryption;
-    private final B2FileLock fileLock;
-    private final String legalHoldStatus;
+    private final B2FileRetention fileRetention;
+    private final String legalHold;
     private final B2ContentSource contentSource;
     private final Map<String, String> fileInfo;
     private final B2UploadListener listener;
@@ -26,8 +26,8 @@ public class B2UploadFileRequest {
                                 String fileName,
                                 String contentType,
                                 B2FileSseForRequest serverSideEncryption,
-                                B2FileLock fileLock,
-                                String legalHoldStatus,
+                                B2FileRetention fileRetention,
+                                String legalHold,
                                 Map<String, String> fileInfo,
                                 B2ContentSource contentSource,
                                 B2UploadListener listener) {
@@ -35,21 +35,21 @@ public class B2UploadFileRequest {
         this.fileName = fileName;
         this.contentType = contentType;
         this.serverSideEncryption = serverSideEncryption;
-        this.fileLock = fileLock;
+        this.fileRetention = fileRetention;
 
-        this.legalHoldStatus = legalHoldStatus;
-        validateLegalHoldStatus(legalHoldStatus);
+        this.legalHold = legalHold;
+        validateLegalHold(legalHold);
 
         this.fileInfo = fileInfo;  // make sorted, immutable copyOf?!
         this.contentSource = contentSource;
         this.listener = (listener != null) ? listener : B2UploadListener.noopListener();
     }
 
-    private void validateLegalHoldStatus(String legalHoldStatus) {
-        if (legalHoldStatus != null) {
-            B2Preconditions.checkArgument(legalHoldStatus.matches(
-                    String.format("(%s|%s)", B2LegalHoldStatus.ON, B2LegalHoldStatus.OFF)),
-                    String.format("Legal hold status can only be '%s' or '%s'.", B2LegalHoldStatus.ON, B2LegalHoldStatus.OFF));
+    private void validateLegalHold(String legalHold) {
+        if (legalHold != null) {
+            B2Preconditions.checkArgument(legalHold.matches(
+                    String.format("(%s|%s)", B2LegalHold.ON, B2LegalHold.OFF)),
+                    String.format("Legal hold can only be set to '%s' or '%s'.", B2LegalHold.ON, B2LegalHold.OFF));
         }
     }
 
@@ -69,12 +69,12 @@ public class B2UploadFileRequest {
         return serverSideEncryption;
     }
 
-    public B2FileLock getFileLock() {
-        return fileLock;
+    public B2FileRetention getFileRetention() {
+        return fileRetention;
     }
 
-    public String getLegalHoldStatus() {
-        return legalHoldStatus;
+    public String getLegalHold() {
+        return legalHold;
     }
 
     public B2ContentSource getContentSource() {
@@ -102,8 +102,8 @@ public class B2UploadFileRequest {
         private String contentType;
         private B2ContentSource source;
         private B2FileSseForRequest serverSideEncryption;
-        private B2FileLock fileLock;
-        private String legalHoldStatus;
+        private B2FileRetention fileRetention;
+        private String legalHold;
         private Map<String, String> info;
         private B2UploadListener listener;
 
@@ -123,13 +123,13 @@ public class B2UploadFileRequest {
             return this;
         }
 
-        public Builder setFileLock(B2FileLock fileLock) {
-            this.fileLock = fileLock;
+        public Builder setFileRetention(B2FileRetention fileRetention) {
+            this.fileRetention = fileRetention;
             return this;
         }
 
-        public Builder setLegalHoldStatus(String legalHoldStatus) {
-            this.legalHoldStatus = legalHoldStatus;
+        public Builder setLegalHold(String legalHold) {
+            this.legalHold = legalHold;
             return this;
         }
 
@@ -155,8 +155,8 @@ public class B2UploadFileRequest {
                     fileName,
                     contentType,
                     serverSideEncryption,
-                    fileLock,
-                    legalHoldStatus,
+                    fileRetention,
+                    legalHold,
                     info,
                     source,
                     listener);

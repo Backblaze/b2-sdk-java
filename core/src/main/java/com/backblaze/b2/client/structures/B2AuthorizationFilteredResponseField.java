@@ -14,9 +14,11 @@ import java.util.Objects;
 /**
  * A generic class to represent response fields that are filtered based on authorization
  *
- * Parameter T will represent the different types of response field (e.g. B2FileLock, B2BucketServerSideEncryption, etc.)
+ * Parameter T will represent the different types of response field (e.g. B2FileRetention, B2BucketServerSideEncryption, etc.)
+ *
+ * This class isn't really for general use, but we need it public in order to build B2FileVersion outside this package.
  */
-class B2AuthorizationFilteredResponseField<T> {
+public class B2AuthorizationFilteredResponseField<T> {
 
     @B2Json.required
     private final boolean isClientAuthorizedToRead;
@@ -25,7 +27,7 @@ class B2AuthorizationFilteredResponseField<T> {
     private final T value;
 
     @B2Json.constructor(params = "isClientAuthorizedToRead, value")
-    B2AuthorizationFilteredResponseField(boolean isClientAuthorizedToRead, T value) {
+    public B2AuthorizationFilteredResponseField(boolean isClientAuthorizedToRead, T value) {
         B2Preconditions.checkArgument((isClientAuthorizedToRead || value == null), "value must be null if isClientAuthorizedToRead is false");
 
         this.isClientAuthorizedToRead = isClientAuthorizedToRead;

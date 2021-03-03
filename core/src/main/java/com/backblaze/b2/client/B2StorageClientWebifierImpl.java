@@ -14,10 +14,12 @@ import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2ApplicationKey;
+import com.backblaze.b2.client.structures.B2AuthorizationFilteredResponseField;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
+import com.backblaze.b2.client.structures.B2Capabilities;
 import com.backblaze.b2.client.structures.B2CopyFileRequest;
 import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
@@ -30,7 +32,7 @@ import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
-import com.backblaze.b2.client.structures.B2FileLock;
+import com.backblaze.b2.client.structures.B2FileRetention;
 import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileSseForResponse;
 import com.backblaze.b2.client.structures.B2FileVersion;
@@ -41,7 +43,6 @@ import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
 import com.backblaze.b2.client.structures.B2HideFileRequest;
-import com.backblaze.b2.client.structures.B2LegalHold;
 import com.backblaze.b2.client.structures.B2ListBucketsRequest;
 import com.backblaze.b2.client.structures.B2ListBucketsResponse;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
@@ -74,6 +75,7 @@ import com.backblaze.b2.util.B2StringUtil;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -275,18 +277,18 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 }
             }
 
-            if (request.getLegalHoldStatus() != null) {
-                headersBuilder.set(B2Headers.FILE_LOCK_LEGAL_HOLD,
-                        request.getLegalHoldStatus());
+            if (request.getLegalHold() != null) {
+                headersBuilder.set(B2Headers.FILE_LEGAL_HOLD,
+                        request.getLegalHold());
             }
 
-            if (request.getFileLock() != null) {
-                // no need to send file lock status; but may need to receive one for HEAD calls
+            if (request.getFileRetention() != null) {
+                // no need to send file retention headers; but may need to receive one for HEAD calls
                 // discussed inside getFileInfoByName
-                headersBuilder.set(B2Headers.FILE_LOCK_RETENTION_MODE,
-                        request.getFileLock().getMode());
-                headersBuilder.set(B2Headers.FILE_LOCK_RETENTION_RETAIN_UNTIL_TIMESTAMP,
-                        request.getFileLock().getRetainUntilTimestamp().toString());
+                headersBuilder.set(B2Headers.FILE_RETENTION_MODE,
+                        request.getFileRetention().getMode());
+                headersBuilder.set(B2Headers.FILE_RETENTION_RETAIN_UNTIL_TIMESTAMP,
+                        request.getFileRetention().getRetainUntilTimestamp().toString());
             }
 
             // if the source provides a last-modified time, add it.
@@ -565,12 +567,23 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         B2Headers headers = webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(),
                 request.getFileName()), makeHeaders(accountAuth, extras));
 
-        /* We would need an extra header to indicate "isClientAuthorizedToRead" so
-           we can construct an appropriate B2FileLock or legal hold status
-           For now set both to null in the next B2FileVersion instantiation till a solution is finalized.
-         */
-        final B2FileLock b2FileLockOrNull = B2FileLock.getFileLockFromHeadersOrNull(headers);
-        final B2LegalHold legalHoldOrNull = B2LegalHold.getLegalHoldFromHeadersOrNull(headers);
+        final B2FileRetention b2FileRetentionOrNull = B2FileRetention.getFileRetentionFromHeadersOrNull(headers);
+        final String legalHoldOrNull = headers.getFileLegalHoldOrNull();
+
+        final List<String> capabilities = accountAuth.getAllowed().getCapabilities();
+        final B2AuthorizationFilteredResponseField<B2FileRetention> fileRetention;
+        if (capabilities.contains(B2Capabilities.READ_FILE_RETENTIONS)) {
+            fileRetention = new B2AuthorizationFilteredResponseField<>(true, b2FileRetentionOrNull);
+        } else {
+            fileRetention = new B2AuthorizationFilteredResponseField<>(false, null);
+        }
+
+        final B2AuthorizationFilteredResponseField<String> legalHold;
+        if (capabilities.contains(B2Capabilities.READ_FILE_LEGAL_HOLDS)) {
+            legalHold = new B2AuthorizationFilteredResponseField<>(true, legalHoldOrNull);
+        } else {
+            legalHold = new B2AuthorizationFilteredResponseField<>(false, null);
+        }
 
         // b2_download_file_by_name promises most of these will be present, except as noted below,
         return new B2FileVersion(
@@ -583,8 +596,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 headers.getB2FileInfo(),           // might be empty.
                 "upload",
                 headers.getUploadTimestampOrNull(),
-                null,
-                null,
+                fileRetention,
+                legalHold,
                 B2FileSseForResponse.getEncryptionFromHeadersOrNull(headers) // might be null.
         );
     }

@@ -15,7 +15,7 @@ import static junit.framework.TestCase.assertNull;
  * Copyright 2020, Backblaze, Inc. All rights reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
-public class B2FileLockTest extends B2BaseTest {
+public class B2FileRetentionTest extends B2BaseTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -23,38 +23,39 @@ public class B2FileLockTest extends B2BaseTest {
     @Test
     public void testNullMode() {
         thrown.expect(IllegalArgumentException.class);
-        new B2FileLock(null, 123456789L);
+        new B2FileRetention(null, 123456789L);
     }
 
     @Test
     public void testNullRetainUntilTimestamp() {
         thrown.expect(IllegalArgumentException.class);
-        new B2FileLock("compliance", null);
+        new B2FileRetention("compliance", null);
     }
 
     @Test
     public void testGetFileLockFromHeadersOrNull() {
         final B2Headers b2Headers = B2HeadersImpl.builder()
-                .set("X-Bz-File-Lock-Retention-Mode", "compliance")
-                .set("X-Bz-File-Lock-Retention-Retain-Until-Timestamp", "123456789")
+                .set("X-Bz-File-Retention-Mode", "compliance")
+                .set("X-Bz-File-Retention-Retain-Until-Timestamp", "123456789")
                 .build();
-        final B2FileLock b2FileLock = B2FileLock.getFileLockFromHeadersOrNull(b2Headers);
-        assertEquals(new B2FileLock("compliance", 123456789L), b2FileLock);
+        final B2FileRetention b2FileRetention = B2FileRetention.getFileRetentionFromHeadersOrNull(b2Headers);
+        assertEquals(new B2FileRetention("compliance", 123456789L), b2FileRetention);
 
         final B2Headers b2HeadersNull = null;
-        final B2FileLock b2FileLockNull = B2FileLock.getFileLockFromHeadersOrNull(b2HeadersNull);
-        assertNull(b2FileLockNull);
+        //noinspection ConstantConditions
+        final B2FileRetention b2FileRetentionNull = B2FileRetention.getFileRetentionFromHeadersOrNull(b2HeadersNull);
+        assertNull(b2FileRetentionNull);
     }
 
     @Test
     public void testEquals() {
-        final B2FileLock config = new B2FileLock(
+        final B2FileRetention config = new B2FileRetention(
                 "governance",
                 123456L);
         final String jsonString = B2Json.toJsonOrThrowRuntime(config);
-        final B2FileLock convertedConfig = B2Json.fromJsonOrThrowRuntime(
+        final B2FileRetention convertedConfig = B2Json.fromJsonOrThrowRuntime(
                 jsonString,
-                B2FileLock.class);
+                B2FileRetention.class);
         assertEquals(config, convertedConfig);
     }
 }

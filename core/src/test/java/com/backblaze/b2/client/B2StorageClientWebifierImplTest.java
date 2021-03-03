@@ -24,10 +24,10 @@ import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileRetention;
 import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
-import com.backblaze.b2.client.structures.B2FileLock;
-import com.backblaze.b2.client.structures.B2LegalHoldStatus;
+import com.backblaze.b2.client.structures.B2LegalHold;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
@@ -1577,8 +1577,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
-                .setLegalHoldStatus(B2LegalHoldStatus.ON)
-                .setFileLock(new B2FileLock( "governance", 9876543210L))
+                .setLegalHold(B2LegalHold.ON)
+                .setFileRetention(new B2FileRetention( "governance", 9876543210L))
                 .setListener(listener)
                 .build();
         final B2UploadUrlResponse uploadUrl = uploadUrlResponse(bucketId(1), 1);
@@ -1593,10 +1593,10 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    Expect: 100-continue\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
-                "    X-Bz-File-Lock-Legal-Hold: on\n" +
-                "    X-Bz-File-Lock-Retention-Mode: governance\n" +
-                "    X-Bz-File-Lock-Retention-Retain-Until-Timestamp: 9876543210\n" +
+                "    X-Bz-File-Legal-Hold: on\n" +
                 "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
+                "    X-Bz-File-Retention-Mode: governance\n" +
+                "    X-Bz-File-Retention-Retain-Until-Timestamp: 9876543210\n" +
                 "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "inputStream:\n" +
@@ -1609,15 +1609,15 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     }
 
     @Test
-    public void testUploadFileWithInvalidLegalHoldStatus() {
+    public void testUploadFileWithInvalidLegalHoldValue() {
         final B2UploadListener listener = mock(B2UploadListener.class);
 
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("Legal hold status can only be 'on' or 'off'.");
+        thrown.expectMessage("Legal hold can only be set to 'on' or 'off'.");
 
         B2UploadFileRequest.builder(
                 bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
-                .setLegalHoldStatus("hold")
+                .setLegalHold("hold")
                 .setListener(listener)
                 .build();
     }

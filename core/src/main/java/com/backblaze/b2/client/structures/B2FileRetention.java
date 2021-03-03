@@ -10,7 +10,7 @@ import com.backblaze.b2.util.B2Preconditions;
 
 import java.util.Objects;
 
-public class B2FileLock {
+public class B2FileRetention {
 
     /**
      * The B2FileLockMode, i.e. "governance" or "compliance", will be null if status != "on"
@@ -25,29 +25,29 @@ public class B2FileLock {
     private final Long retainUntilTimestamp;
 
     @B2Json.constructor(params = "mode, retainUntilTimestamp")
-    public B2FileLock(String mode, Long retainUntilTimestamp) {
+    public B2FileRetention(String mode, Long retainUntilTimestamp) {
         B2Preconditions.checkArgument(mode != null && retainUntilTimestamp != null, "neither mode nor retainUntilTimestamp can be null");
         this.mode = mode;
         this.retainUntilTimestamp = retainUntilTimestamp;
     }
 
     /**
-     * Construct a B2FileLock from B2Headers, or null if the required headers are not present
+     * Construct a B2FileRetention from B2Headers, or null if the required headers are not present
      * @param headers B2Headers
-     * @return a new B2FileLock or null
+     * @return a new B2FileRetention or null
      */
-    public static B2FileLock getFileLockFromHeadersOrNull(B2Headers headers) {
+    public static B2FileRetention getFileRetentionFromHeadersOrNull(B2Headers headers) {
         if (headers == null) {
             return null;
         }
 
-        final String mode = headers.getFileLockRetentionModeOrNull();
-        final Long retainUntilTimestamp = headers.getFileLockRetentionRetainUntilTimestampOrNull();
+        final String mode = headers.getFileRetentionModeOrNull();
+        final Long retainUntilTimestamp = headers.getFileRetentionRetainUntilTimestampOrNull();
 
         if (mode == null || retainUntilTimestamp == null) {
             return null;
         }
-        return new B2FileLock(mode, retainUntilTimestamp);
+        return new B2FileRetention(mode, retainUntilTimestamp);
     }
 
     public String getMode() { return mode; }
@@ -62,7 +62,7 @@ public class B2FileLock {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        B2FileLock that = (B2FileLock) o;
+        B2FileRetention that = (B2FileRetention) o;
         return Objects.equals(mode, that.getMode()) &&
                 Objects.equals(retainUntilTimestamp, that.getRetainUntilTimestamp());
     }
@@ -74,7 +74,7 @@ public class B2FileLock {
 
     @Override
     public String toString() {
-        return "B2FileLock{" +
+        return "B2FileRetention{" +
                 "mode=" + mode + ", " +
                 "retainUntilTimestamp=" + retainUntilTimestamp +
                 '}';
