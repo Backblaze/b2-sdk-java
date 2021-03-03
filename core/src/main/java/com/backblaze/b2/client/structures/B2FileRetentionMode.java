@@ -5,10 +5,10 @@
 package com.backblaze.b2.client.structures;
 
 /**
- * B2FileLockMode provides constants for a bucket's default retention mode
+ * B2FileRetentionMode provides constants for a bucket's default retention mode
  */
 
-public interface B2FileLockMode {
+public interface B2FileRetentionMode {
 
     String COMPLIANCE = "compliance";
     String GOVERNANCE = "governance";

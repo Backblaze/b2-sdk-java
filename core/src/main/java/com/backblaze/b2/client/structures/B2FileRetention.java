@@ -13,7 +13,7 @@ import java.util.Objects;
 public class B2FileRetention {
 
     /**
-     * The B2FileLockMode, i.e. "governance" or "compliance", will be null if status != "on"
+     * The B2FileRetentionMode, i.e. "governance" or "compliance", will be null if status != "on"
      */
     @B2Json.required
     private final String mode;

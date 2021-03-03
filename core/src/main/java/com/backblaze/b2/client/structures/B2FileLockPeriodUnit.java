@@ -5,7 +5,7 @@
 package com.backblaze.b2.client.structures;
 
 /**
- * B2ObjectLocPeriodUnit provides constants for a bucket's default retention period
+ * B2FileLockPeriodUnit provides constants for a bucket's default retention period
  */
 
 public interface B2FileLockPeriodUnit {
