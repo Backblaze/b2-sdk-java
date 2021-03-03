@@ -100,7 +100,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 )
         );
 
-        assertTrue(fileVersion.isClientAuthorizedToReadFileLock());
+        assertTrue(fileVersion.isClientAuthorizedToReadFileRetention());
         assertEquals(new B2FileRetention("governance", 123456L), fileVersion.getFileRetention());
         assertTrue(fileVersion.isClientAuthorizedToReadLegalHold());
         assertEquals("on", fileVersion.getLegalHold());
@@ -191,7 +191,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 null);
 
         assertEquals(defaultVersion, converted);
-        assertFalse(converted.isClientAuthorizedToReadFileLock());
+        assertFalse(converted.isClientAuthorizedToReadFileRetention());
         thrown.expect(B2ForbiddenException.class);
         converted.getFileRetention();
     }

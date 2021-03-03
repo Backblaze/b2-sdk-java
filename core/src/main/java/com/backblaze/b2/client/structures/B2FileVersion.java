@@ -121,12 +121,12 @@ public class B2FileVersion {
     }
 
     /**
-     * indicates whether or not the client is authorized to read the file lock
+     * indicates whether or not the client is authorized to read the file retention
      * from this file version
      *
-     * @return true iff the client is authorized to read value of the file lock
+     * @return true iff the client is authorized to read value of the file retention
      */
-    public boolean isClientAuthorizedToReadFileLock() {
+    public boolean isClientAuthorizedToReadFileRetention() {
         return fileRetention.isClientAuthorizedToRead();
     }
 
