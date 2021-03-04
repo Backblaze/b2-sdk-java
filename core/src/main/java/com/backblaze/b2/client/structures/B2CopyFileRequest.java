@@ -8,7 +8,6 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.util.B2ByteRange;
-import com.backblaze.b2.util.B2Preconditions;
 
 import java.util.Map;
 import java.util.Objects;
@@ -45,8 +44,15 @@ public class B2CopyFileRequest {
     @B2Json.optional
     private final B2FileSseForRequest destinationServerSideEncryption;
 
+    @B2Json.optional
+    private final B2FileRetention fileRetention;
+
+    @B2Json.optional
+    private final String legalHold;
+
     @B2Json.constructor(params = "sourceFileId, destinationBucketId, fileName, range, metadataDirective, contentType, "+
-            "fileInfo, sourceServerSideEncryption, destinationServerSideEncryption")
+            "fileInfo, sourceServerSideEncryption, destinationServerSideEncryption, " +
+            "fileRetention, legalHold")
     private B2CopyFileRequest(
             String sourceFileId,
             String destinationBucketId,
@@ -56,7 +62,9 @@ public class B2CopyFileRequest {
             String contentType,
             Map<String, String> fileInfo,
             B2FileSseForRequest sourceServerSideEncryption,
-            B2FileSseForRequest destinationServerSideEncryption) {
+            B2FileSseForRequest destinationServerSideEncryption,
+            B2FileRetention fileRetention,
+            String legalHold) {
         this.sourceFileId = sourceFileId;
         this.destinationBucketId = destinationBucketId;
         this.fileName = fileName;
@@ -66,6 +74,8 @@ public class B2CopyFileRequest {
         this.fileInfo = fileInfo;
         this.sourceServerSideEncryption = sourceServerSideEncryption;
         this.destinationServerSideEncryption = destinationServerSideEncryption;
+        this.fileRetention = fileRetention;
+        this.legalHold = legalHold;
     }
 
     public String getSourceFileId() {
@@ -104,11 +114,19 @@ public class B2CopyFileRequest {
         return destinationServerSideEncryption;
     }
 
+    public B2FileRetention getFileRetention() {
+        return fileRetention;
+    }
+
+    public String getLegalHold() {
+        return legalHold;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        B2CopyFileRequest that = (B2CopyFileRequest) o;
+        final B2CopyFileRequest that = (B2CopyFileRequest) o;
         return Objects.equals(sourceFileId, that.sourceFileId) &&
                 Objects.equals(destinationBucketId, that.destinationBucketId) &&
                 Objects.equals(fileName, that.fileName) &&
@@ -117,12 +135,26 @@ public class B2CopyFileRequest {
                 Objects.equals(contentType, that.contentType) &&
                 Objects.equals(fileInfo, that.fileInfo) &&
                 Objects.equals(sourceServerSideEncryption, that.sourceServerSideEncryption) &&
-                Objects.equals(destinationServerSideEncryption, that.destinationServerSideEncryption);
+                Objects.equals(destinationServerSideEncryption, that.destinationServerSideEncryption) &&
+                Objects.equals(fileRetention, that.fileRetention) &&
+                Objects.equals(legalHold, that.legalHold);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sourceFileId, destinationBucketId, fileName, range, metadataDirective, contentType, fileInfo, sourceServerSideEncryption, destinationServerSideEncryption);
+        return Objects.hash(
+                sourceFileId,
+                destinationBucketId,
+                fileName,
+                range,
+                metadataDirective,
+                contentType,
+                fileInfo,
+                sourceServerSideEncryption,
+                destinationServerSideEncryption,
+                fileRetention,
+                legalHold
+        );
     }
 
     public static Builder builder(String sourceFileId, String fileName) {
@@ -139,6 +171,8 @@ public class B2CopyFileRequest {
         private Map<String, String> fileInfo;
         private B2FileSseForRequest sourceServerSideEncryption;
         private B2FileSseForRequest destinationServerSideEncryption;
+        private B2FileRetention fileRetention;
+        private String legalHold;
 
         public Builder(String sourceFileId, String fileName) {
             this.sourceFileId = sourceFileId;
@@ -180,6 +214,16 @@ public class B2CopyFileRequest {
             return this;
         }
 
+        public Builder setFileRetention(B2FileRetention fileRetention) {
+            this.fileRetention = fileRetention;
+            return this;
+        }
+
+        public Builder setLegalHold(String legalHold) {
+            this.legalHold = legalHold;
+            return this;
+        }
+
         public B2CopyFileRequest build() {
             return new B2CopyFileRequest(
                     sourceFileId,
@@ -190,7 +234,9 @@ public class B2CopyFileRequest {
                     contentType,
                     fileInfo,
                     sourceServerSideEncryption,
-                    destinationServerSideEncryption);
+                    destinationServerSideEncryption,
+                    fileRetention,
+                    legalHold);
         }
     }
 
