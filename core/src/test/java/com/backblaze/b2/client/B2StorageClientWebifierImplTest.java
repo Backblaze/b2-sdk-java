@@ -25,9 +25,9 @@ import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileRetention;
+import com.backblaze.b2.client.structures.B2FileRetentionMode;
 import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
-import com.backblaze.b2.client.structures.B2LegalHold;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
@@ -35,6 +35,7 @@ import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
 import com.backblaze.b2.client.structures.B2HideFileRequest;
+import com.backblaze.b2.client.structures.B2LegalHold;
 import com.backblaze.b2.client.structures.B2ListBucketsRequest;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
@@ -65,7 +66,9 @@ import org.junit.rules.ExpectedException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -1704,6 +1707,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      },\n" +
                 "      \"fileInfo\": null,\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0002\",\n" +
+                "      \"fileRetention\": null,\n" +
+                "      \"legalHold\": null,\n" +
                 "      \"metadataDirective\": \"COPY\",\n" +
                 "      \"range\": \"bytes=10-100\",\n" +
                 "      \"sourceFileId\": \"4_zBlah_0000001\",\n" +
@@ -1713,6 +1718,55 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "        \"customerKeyMd5\": \"F13Y6Zu3HEuFE+e+53QWzA==\",\n" +
                 "        \"mode\": \"SSE-C\"\n" +
                 "      }\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.copyFile(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testCopyFileWithReplaceAndFileRetentionAndLegalHold() throws B2Exception {
+        final long expirationInMillis = Instant.now().plus(10L, ChronoUnit.DAYS).toEpochMilli();
+
+        final B2CopyFileRequest request = B2CopyFileRequest
+                .builder(fileId(1), fileName(2))
+                .setDestinationBucketId(bucketId(3))
+                .setMetadataDirective(B2CopyFileRequest.REPLACE_METADATA_DIRECTIVE)
+                .setFileRetention(
+                        new B2FileRetention(
+                                B2FileRetentionMode.COMPLIANCE,
+                                expirationInMillis
+                        )
+                )
+                .setLegalHold(B2LegalHold.ON)
+                .build();
+        webifier.copyFile(ACCOUNT_AUTH, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_copy_file\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"contentType\": null,\n" +
+                "      \"destinationBucketId\": \"bucket3\",\n" +
+                "      \"destinationServerSideEncryption\": null,\n" +
+                "      \"fileInfo\": null,\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0002\",\n" +
+                "      \"fileRetention\": {\n" +
+                "        \"mode\": \"compliance\",\n" +
+                "        \"retainUntilTimestamp\": " + expirationInMillis + "\n" +
+                "      },\n" +
+                "      \"legalHold\": \"on\",\n" +
+                "      \"metadataDirective\": \"REPLACE\",\n" +
+                "      \"range\": null,\n" +
+                "      \"sourceFileId\": \"4_zBlah_0000001\",\n" +
+                "      \"sourceServerSideEncryption\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2FileVersion\n"
