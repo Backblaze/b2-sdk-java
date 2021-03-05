@@ -117,6 +117,9 @@ public class B2Bucket {
      * @return true iff client is authorized to read value of defaultServerSideEncryption field in B2Bucket
      */
     public boolean isClientAuthorizedToReadDefaultServerSideEncryption() {
+        if (defaultServerSideEncryption == null) {
+            return false;
+        }
         return defaultServerSideEncryption.isClientAuthorizedToRead();
     }
 
@@ -127,6 +130,9 @@ public class B2Bucket {
      * @throws B2ForbiddenException if client is not authorized to read defaultServerSideEncryption field
      */
     public B2BucketServerSideEncryption getDefaultServerSideEncryption() throws B2ForbiddenException {
+        if (defaultServerSideEncryption == null) {
+            return null;
+        }
         // will throw B2ForbiddenException if client is not authorized to read value
         return defaultServerSideEncryption.getValue();
     }
