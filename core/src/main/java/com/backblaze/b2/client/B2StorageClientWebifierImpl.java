@@ -280,6 +280,9 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             if (request.getLegalHold() != null) {
                 headersBuilder.set(B2Headers.FILE_LEGAL_HOLD,
                         request.getLegalHold());
+                // TODO: remove after production has transitioned fully to use newer header
+                headersBuilder.set("X-Bz-File-Lock-Legal-Hold-Status",
+                        request.getLegalHold());
             }
 
             if (request.getFileRetention() != null) {
@@ -288,6 +291,11 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 headersBuilder.set(B2Headers.FILE_RETENTION_MODE,
                         request.getFileRetention().getMode());
                 headersBuilder.set(B2Headers.FILE_RETENTION_RETAIN_UNTIL_TIMESTAMP,
+                        request.getFileRetention().getRetainUntilTimestamp().toString());
+                // TODO: remove after production has transitioned fully to use newer headers
+                headersBuilder.set("X-Bz-File-Lock-Retention-Mode",
+                        request.getFileRetention().getMode());
+                headersBuilder.set("X-Bz-File-Lock-Retention-Retain-Until-Timestamp",
                         request.getFileRetention().getRetainUntilTimestamp().toString());
             }
 

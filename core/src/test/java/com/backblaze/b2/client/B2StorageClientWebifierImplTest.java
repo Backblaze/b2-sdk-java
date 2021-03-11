@@ -1681,6 +1681,9 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
                 "    X-Bz-File-Legal-Hold: on\n" +
+                "    X-Bz-File-Lock-Legal-Hold-Status: on\n" +
+                "    X-Bz-File-Lock-Retention-Mode: governance\n" +
+                "    X-Bz-File-Lock-Retention-Retain-Until-Timestamp: 9876543210\n" +
                 "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
                 "    X-Bz-File-Retention-Mode: governance\n" +
                 "    X-Bz-File-Retention-Retain-Until-Timestamp: 9876543210\n" +
