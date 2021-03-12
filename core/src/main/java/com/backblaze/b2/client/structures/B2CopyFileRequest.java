@@ -44,10 +44,10 @@ public class B2CopyFileRequest {
     @B2Json.optional
     private final B2FileSseForRequest destinationServerSideEncryption;
 
-    @B2Json.optional
+    @B2Json.optional(omitNull = true)
     private final B2FileRetention fileRetention;
 
-    @B2Json.optional
+    @B2Json.optional(omitNull = true)
     private final String legalHold;
 
     @B2Json.constructor(params = "sourceFileId, destinationBucketId, fileName, range, metadataDirective, contentType, "+
