@@ -29,10 +29,10 @@ public class B2StartLargeFileRequest {
     @B2Json.optional
     private final Map<String, String> fileInfo;
 
-    @B2Json.optional
+    @B2Json.optional(omitNull = true)
     private final B2FileRetention fileRetention;
 
-    @B2Json.optional
+    @B2Json.optional(omitNull = true)
     private final String legalHold;
 
     @B2Json.constructor(params = "bucketId,fileName,contentType,serverSideEncryption,fileInfo," +
