@@ -128,6 +128,9 @@ public class B2FileVersion {
      * @return true iff the client is authorized to read value of the file retention
      */
     public boolean isClientAuthorizedToReadFileRetention() {
+        if (fileRetention == null) {
+            return false;
+        }
         return fileRetention.isClientAuthorizedToRead();
     }
 
@@ -148,6 +151,9 @@ public class B2FileVersion {
      * @return true iff the client is authorized to read value of the legal hold status
      */
     public boolean isClientAuthorizedToReadLegalHold() {
+        if (legalHoldIgnored == null) {
+            return false;
+        }
         return legalHoldIgnored.isClientAuthorizedToRead();
     }
 
