@@ -638,8 +638,6 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "        \"color\": \"blue\"\n" +
                 "      },\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
-                "      \"fileRetention\": null,\n" +
-                "      \"legalHold\": null,\n" +
                 "      \"serverSideEncryption\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
@@ -677,8 +675,6 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "        \"large_file_sha1\": \"" + sha1 + "\"\n" +
                 "      },\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
-                "      \"fileRetention\": null,\n" +
-                "      \"legalHold\": null,\n" +
                 "      \"serverSideEncryption\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
@@ -717,8 +713,6 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "        \"large_file_sha1\": \"" + sha1 + "\"\n" +
                 "      },\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
-                "      \"fileRetention\": null,\n" +
-                "      \"legalHold\": null,\n" +
                 "      \"serverSideEncryption\": {\n" +
                         "        \"algorithm\": \"AES256\",\n" +
                         "        \"customerKey\": \"customer-key\",\n" +
@@ -764,7 +758,6 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "        \"mode\": \"compliance\",\n" +
                 "        \"retainUntilTimestamp\": " + expirationInMillis + "\n" +
                 "      },\n" +
-                "      \"legalHold\": null,\n" +
                 "      \"serverSideEncryption\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
@@ -800,7 +793,6 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "        \"large_file_sha1\": \"" + sha1 + "\"\n" +
                 "      },\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
-                "      \"fileRetention\": null,\n" +
                 "      \"legalHold\": \"on\",\n" +
                 "      \"serverSideEncryption\": null\n" +
                 "    }\n" +
@@ -1794,8 +1786,6 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      },\n" +
                 "      \"fileInfo\": null,\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0002\",\n" +
-                "      \"fileRetention\": null,\n" +
-                "      \"legalHold\": null,\n" +
                 "      \"metadataDirective\": \"COPY\",\n" +
                 "      \"range\": \"bytes=10-100\",\n" +
                 "      \"sourceFileId\": \"4_zBlah_0000001\",\n" +
