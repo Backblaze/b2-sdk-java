@@ -21,18 +21,6 @@ public class B2FileRetentionTest extends B2BaseTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void testNullMode() {
-        thrown.expect(IllegalArgumentException.class);
-        new B2FileRetention(null, 123456789L);
-    }
-
-    @Test
-    public void testNullRetainUntilTimestamp() {
-        thrown.expect(IllegalArgumentException.class);
-        new B2FileRetention("compliance", null);
-    }
-
-    @Test
     public void testGetFileLockFromHeadersOrNull() {
         final B2Headers b2Headers = B2HeadersImpl.builder()
                 .set("X-Bz-File-Retention-Mode", "compliance")

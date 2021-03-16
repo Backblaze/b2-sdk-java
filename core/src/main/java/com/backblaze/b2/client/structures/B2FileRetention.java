@@ -15,18 +15,17 @@ public class B2FileRetention {
     /**
      * The B2FileRetentionMode, i.e. "governance" or "compliance", will be null if status != "on"
      */
-    @B2Json.required
+    @B2Json.optional
     private final String mode;
 
     /**
      * How long the file must be retained for (in millis since 1970), will be null if status != "on"
      */
-    @B2Json.required
+    @B2Json.optional
     private final Long retainUntilTimestamp;
 
     @B2Json.constructor(params = "mode, retainUntilTimestamp")
     public B2FileRetention(String mode, Long retainUntilTimestamp) {
-        B2Preconditions.checkArgument(mode != null && retainUntilTimestamp != null, "neither mode nor retainUntilTimestamp can be null");
         this.mode = mode;
         this.retainUntilTimestamp = retainUntilTimestamp;
     }
