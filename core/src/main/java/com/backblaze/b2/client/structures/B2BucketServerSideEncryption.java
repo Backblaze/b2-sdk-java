@@ -14,13 +14,13 @@ import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.SSE_
 
 public class B2BucketServerSideEncryption {
     /**
-     * The SSE mode, e.g., SSE-B2 or none (or "unauthorized")
+     * The SSE mode, e.g., SSE-B2
      */
-    @B2Json.required
+    @B2Json.optional
     private final String mode;
 
     /**
-     * The SSE algorithm, i.e., AES256 (omitted if mode is "unauthorized").
+     * The SSE algorithm, i.e., AES256
      */
     @B2Json.optional
     private final String algorithm;
