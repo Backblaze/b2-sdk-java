@@ -13,13 +13,13 @@ public class B2FileSseForResponse {
     /**
      * The SSE mode, e.g. SSE-B2 or SSE-C
      */
-    @B2Json.required
+    @B2Json.optional
     private final String mode;
 
     /**
      * The SSE algorithm, e.g. AES256
      */
-    @B2Json.required
+    @B2Json.optional
     private final String algorithm;
 
     /**
