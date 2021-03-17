@@ -1,4 +1,4 @@
-package com.backblaze.b2.client.webapihttpclient.android.http_client;
+package com.backblaze.b2.client.webApiUrlConnection.android.http_client;
 
 import android.util.Log;
 

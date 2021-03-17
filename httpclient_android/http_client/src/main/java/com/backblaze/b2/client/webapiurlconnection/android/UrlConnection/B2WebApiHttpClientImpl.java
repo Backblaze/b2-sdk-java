@@ -2,7 +2,7 @@
  * Copyright 2020, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
-package com.backblaze.b2.client.webApiHttpClient.android.UrlConnection;
+package com.backblaze.b2.client.webApiUrlConnection.android.UrlConnection;
 
 import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.contentSources.B2Headers;
@@ -14,7 +14,7 @@ import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.json.B2JsonOptions;
 import com.backblaze.b2.util.B2Preconditions;
-import com.backblaze.b2.util.B2.B2IoUtils;
+import com.backblaze.b2.util.B2IoUtils;
 import com.backblaze.b2.client.exceptions.B2Exception;
 
 import java.io.IOException;
@@ -107,7 +107,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
             if (200 <= statusCode && statusCode < 300) {
                 final DataInputStream contentStream = new DataInputStream(client.getInputStream());
                 String contentString;
-                while ((String contentLine = contentStream.readLine()) != null) {
+                while ((String) contentLine = contentStream.readLine() != null) {
                     contentString.append(inputLine);
                 }
                 final InputStream content = client.getInputStream();

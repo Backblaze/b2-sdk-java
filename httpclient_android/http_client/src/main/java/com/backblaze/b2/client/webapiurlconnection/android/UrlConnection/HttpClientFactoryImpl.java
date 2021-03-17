@@ -1,8 +1,8 @@
-gup/*
+/*
  * Copyright 2020, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
-package com.backblaze.b2.client.webApiHttpClient.android.UrlConnection;
+package com.backblaze.b2.client.webApiUrlConnection.android.UrlConnection;
 
 import android.util.Log;
 import com.backblaze.b2.client.exceptions.B2Exception;
@@ -51,7 +51,7 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
     * Returns new HTTPClient instance
     * */
     @Override
-    public URLConnection create() throws B2Exception, MalformedURLException {
+    public URLConnection create() throws B2Exception {
         try {
             final URL url = new URL(this.url);
             if (this.supportInsecureHttp) {

@@ -1,4 +1,4 @@
-package com.backblaze.b2.client.webapihttpclient.android.http_client;
+package com.backblaze.b2.client.webApiUrlConnection.android.UrlConnection;
 
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ public class B2WebApiHttpClientImplTest {
 
     @Test
     public void B2WebApiHttpClientImpl_build() {
-        final B2WebApiHttpClientImpl factory = B2WebApiHttpClientImpl.build();
+        final B2StorageHttpClientBuilder factory = B2WebApiHttpClientImpl.build();
         assertNotNull(factory);
     }
 
