@@ -6,7 +6,10 @@ package com.backblaze.b2.client.contentSources;
 
 import com.backblaze.b2.util.B2Preconditions;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -57,18 +60,19 @@ public interface B2Headers {
     String USER_AGENT = "User-Agent";
     String EXPECT = "Expect";
 
+    // Header used for authorization-filtered response fields
+    String CLIENT_UNAUTHORIZED_TO_READ = "X-Bz-Client-Unauthorized-To-Read";
+
     // some headers for File Lock
-    String FILE_RETENTION_ACCESS_DENIED = "X-Bz-File-Retention-Access-Denied";
     String FILE_RETENTION_MODE = "X-Bz-File-Retention-Mode";
     String FILE_RETENTION_RETAIN_UNTIL_TIMESTAMP = "X-Bz-File-Retention-Retain-Until-Timestamp";
-    String FILE_LEGAL_HOLD_ACCESS_DENIED = "X-Bz-File-Legal-Hold-Access-Denied";
     String FILE_LEGAL_HOLD = "X-Bz-File-Legal-Hold";
 
     // some headers for Server Side Encryption
-    String SERVER_SIDE_ENCRYPTION_HEADER = "X-Bz-Server-Side-Encryption";
-    String SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER = "X-Bz-Server-Side-Encryption-Customer-Algorithm";
-    String SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER = "X-Bz-Server-Side-Encryption-Customer-Key";
-    String SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER = "X-Bz-Server-Side-Encryption-Customer-Key-Md5";
+    String SERVER_SIDE_ENCRYPTION = "X-Bz-Server-Side-Encryption";
+    String SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM = "X-Bz-Server-Side-Encryption-Customer-Algorithm";
+    String SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY = "X-Bz-Server-Side-Encryption-Customer-Key";
+    String SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5 = "X-Bz-Server-Side-Encryption-Customer-Key-Md5";
 
     /**
      * @return a collection with the names of all the headers in this object.  never null.
@@ -230,25 +234,42 @@ public interface B2Headers {
     }
 
     /**
-     * @return the value of the `X-Bz-File-Retention-Access-Denied` header
-     * @apiNote We return null here because this is a completely optional, non-standard header.
+     * @return the list of headers, if any, included in the `X-Bz-Client-Unauthorized-To-Read` header.
+     * If no such header is present, then returns null.
+     * @apiNote We return null here instead of throwing an exception since this is a
+     *          completely optional, non-standard header.
      */
-    default String getFileRetentionAccessDeniedOrNull() {
-        return getValueOrNull(FILE_RETENTION_ACCESS_DENIED);
+    @SuppressWarnings("unchecked")
+    default List<String> getClientUnauthorizedToReadHeaderList() {
+        final String unauthorizedHeaders = getValueOrNull(CLIENT_UNAUTHORIZED_TO_READ);
+        if (unauthorizedHeaders == null) {
+            return Collections.EMPTY_LIST;
+        }
+
+        return Arrays.asList(unauthorizedHeaders.split(","));
     }
 
     /**
-     * @return the value of the `X-Bz-File-Retention-Mode` header
-     * @apiNote We return null here because this is a completely optional, non-standard header.
+     * @return true if the client does not have app key capabilities to read file retention,
+     * according to the 'X-Bz-Client-Unauthorized-To-Read' header
+     */
+    default boolean isClientUnauthorizedToReadFileRetention() {
+        return getClientUnauthorizedToReadHeaderList().contains(FILE_RETENTION_MODE);
+    }
+
+    /**
+     * @return the value of the `X-Bz-File-Retention-Mode` header, or null if none.
+     * @apiNote We return null here instead of throwing an exception since this is a
+     *          completely optional, non-standard header.
      */
     default String getFileRetentionModeOrNull() {
         return getValueOrNull(FILE_RETENTION_MODE);
     }
 
     /**
-     * @return the value of the `X-Bz-File-Retain-Until-Timestamp` header
-     * @throws IllegalStateException if the header can't be parsed as a long.
-     * @apiNote We return null here because this is a completely optional, non-standard header.
+     * @return the value of the `X-Bz-File-Retain-Until-Timestamp` header, or null if none.
+     * @apiNote We return null here because this is a completely optional, non-standard header
+     *          and anyone could put any type of value in it at any time.
      */
     default Long getFileRetentionRetainUntilTimestampOrNull() {
         final String str = getValueOrNull(B2Headers.FILE_RETENTION_RETAIN_UNTIL_TIMESTAMP);
@@ -259,49 +280,51 @@ public interface B2Headers {
         try {
             return Long.parseLong(str);
         } catch (IllegalArgumentException e) {
-            throw new IllegalStateException(
-                    "can't parse " + B2Headers.FILE_RETENTION_RETAIN_UNTIL_TIMESTAMP +
-                    "'" + str + "' as a long: " + e, e);
+            return null;
         }
     }
 
     /**
-     * @return the value of the `X-Bz-File-Legal-Hold-Access-Denied` header
-     * @apiNote We return null here because this is a completely optional, non-standard header.
+     * @return true if the client does not have app key capabilities to read legal hold,
+     * according to the 'X-Bz-Client-Unauthorized-To-Read' header
      */
-    default String getFileLegalHoldAccessDeniedOrNull() {
-        return getValueOrNull(FILE_LEGAL_HOLD_ACCESS_DENIED);
+    default boolean isClientUnauthorizedToReadLegalHold() {
+        return getClientUnauthorizedToReadHeaderList().contains(FILE_LEGAL_HOLD);
     }
 
     /**
-     * @return the value of the `X-Bz-File-Legal-Hold` header
-     * @apiNote We return null here because this is a completely optional, non-standard header.
+     * @return the value of the `X-Bz-File-Legal-Hold` header, or null if none.
+     * @apiNote We return null here instead of throwing an exception since this is a
+     *          completely optional, non-standard header.
      */
     default String getFileLegalHoldOrNull() {
         return getValueOrNull(FILE_LEGAL_HOLD);
     }
 
     /**
-     * @return the value of the `X-Bz-Server-Side-Encryption` header
-     * @apiNote We return null here because this is a completely optional, non-standard header.
+     * @return the value of the `X-Bz-Server-Side-Encryption` header, or null if none.
+     * @apiNote We return null here instead of throwing an exception since this is a
+     *          completely optional, non-standard header.
      */
     default String getServerSideEncryptionOrNull() {
-        return getValueOrNull(SERVER_SIDE_ENCRYPTION_HEADER);
+        return getValueOrNull(SERVER_SIDE_ENCRYPTION);
     }
 
     /**
-     * @return the value of the `X-Bz-Server-Side-Encryption-Customer-Algorithm` header
-     * @apiNote We return null here because this is a completely optional, non-standard header.
+     * @return the value of the `X-Bz-Server-Side-Encryption-Customer-Algorithm` header, or null if none.
+     * @apiNote We return null here instead of throwing an exception since this is a
+     *          completely optional, non-standard header.
      */
     default String getSseCustomerAlgorithmOrNull() {
-        return getValueOrNull(SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER);
+        return getValueOrNull(SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM);
     }
 
     /**
-     * @return the value of the `X-Bz-Server-Side-Encryption-Customer-Key-Md5` header
-     * @apiNote We return null here because this is a completely optional, non-standard header.
+     * @return the value of the `X-Bz-Server-Side-Encryption-Customer-Key-Md5` header, or null if none.
+     * @apiNote We return null here instead of throwing an exception since this is a
+     *          completely optional, non-standard header.
      */
     default String getSseCustomerKeyMd5OrNull() {
-        return getValueOrNull(SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER);
+        return getValueOrNull(SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5);
     }
 }

@@ -261,15 +261,15 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             if (request.getServerSideEncryption() != null) {
                 switch (request.getServerSideEncryption().getMode()) {
                     case SSE_B2:
-                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_HEADER,
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION,
                                 request.getServerSideEncryption().getAlgorithm());
                         break;
                     case SSE_C:
-                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER,
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM,
                                 request.getServerSideEncryption().getAlgorithm());
-                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER,
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY,
                                 request.getServerSideEncryption().getCustomerKey());
-                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER,
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5,
                                 request.getServerSideEncryption().getCustomerKeyMd5());
                         break;
                     default:
@@ -369,11 +369,11 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
             if (request.getServerSideEncryption() != null) {
                 B2Preconditions.checkArgument(request.getServerSideEncryption().getMode().equals(SSE_C));
-                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER,
+                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM,
                         request.getServerSideEncryption().getAlgorithm());
-                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER,
+                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY,
                         request.getServerSideEncryption().getCustomerKey());
-                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER,
+                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5,
                         request.getServerSideEncryption().getCustomerKeyMd5());
             }
 
@@ -518,9 +518,9 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         }
         if (serverSideEncryptionOrNull != null) {
             B2Preconditions.checkArgument(serverSideEncryptionOrNull.getMode().equals(SSE_C));
-            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER, serverSideEncryptionOrNull.getAlgorithm());
-            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER, serverSideEncryptionOrNull.getCustomerKey());
-            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER, serverSideEncryptionOrNull.getCustomerKeyMd5());
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM, serverSideEncryptionOrNull.getAlgorithm());
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY, serverSideEncryptionOrNull.getCustomerKey());
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5, serverSideEncryptionOrNull.getCustomerKeyMd5());
         }
         webApiClient.getContent(
                 url,
@@ -564,11 +564,11 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         final Map<String, String> extras = new TreeMap<>();
         if (request.getServerSideEncryption() != null) {
             B2Preconditions.checkArgument(request.getServerSideEncryption().getMode().equals(SSE_C));
-            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM_HEADER,
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM,
                 request.getServerSideEncryption().getAlgorithm());
-            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_HEADER,
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY,
                 request.getServerSideEncryption().getCustomerKey());
-            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5_HEADER,
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5,
                 request.getServerSideEncryption().getCustomerKeyMd5());
         }
 
@@ -580,6 +580,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
         final List<String> capabilities = accountAuth.getAllowed().getCapabilities();
         final B2AuthorizationFilteredResponseField<B2FileRetention> fileRetention;
+        // we rely on getCapabilities() rather than the CLIENT_UNAUTHORIZED_TO_READ header because the header is
+        // not sent for all files in all buckets due to header size limitations
         if (capabilities.contains(B2Capabilities.READ_FILE_RETENTIONS)) {
             fileRetention = new B2AuthorizationFilteredResponseField<>(true, b2FileRetentionOrNull);
         } else {
@@ -587,6 +589,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         }
 
         final B2AuthorizationFilteredResponseField<String> legalHold;
+        // we rely on getCapabilities() rather than the CLIENT_UNAUTHORIZED_TO_READ header because the header is
+        // not sent for all files in all buckets due to header size limitations
         if (capabilities.contains(B2Capabilities.READ_FILE_LEGAL_HOLDS)) {
             legalHold = new B2AuthorizationFilteredResponseField<>(true, legalHoldOrNull);
         } else {
