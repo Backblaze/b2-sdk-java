@@ -48,13 +48,13 @@ public class B2FileVersion {
     private final B2AuthorizationFilteredResponseField<B2FileRetention> fileRetention;
     // TODO: rename this back to legalHold type change (to String) has propagated throughout production environment
     @B2Json.optional
-    private final B2AuthorizationFilteredResponseField<String> legalHoldIgnored;
+    private final B2AuthorizationFilteredResponseField<String> legalHold;
     @B2Json.optional
     private final B2FileSseForResponse serverSideEncryption;
 
     @B2Json.constructor(params = "fileId,fileName,contentLength,contentType," +
             "contentSha1,contentMd5,fileInfo,action,uploadTimestamp,fileRetention," +
-            "legalHoldIgnored,serverSideEncryption")
+            "legalHold,serverSideEncryption")
     public B2FileVersion(String fileId,
                          String fileName,
                          long contentLength,
@@ -65,7 +65,7 @@ public class B2FileVersion {
                          String action,
                          long uploadTimestamp,
                          B2AuthorizationFilteredResponseField<B2FileRetention> fileRetention,
-                         B2AuthorizationFilteredResponseField<String> legalHoldIgnored,
+                         B2AuthorizationFilteredResponseField<String> legalHold,
                          B2FileSseForResponse serverSideEncryption) {
         this.fileId = fileId;
         this.fileName = fileName;
@@ -77,7 +77,7 @@ public class B2FileVersion {
         this.action = action;
         this.uploadTimestamp = uploadTimestamp;
         this.fileRetention = fileRetention;
-        this.legalHoldIgnored = legalHoldIgnored;
+        this.legalHold = legalHold;
         this.serverSideEncryption = serverSideEncryption;
     }
 
@@ -151,10 +151,10 @@ public class B2FileVersion {
      * @return true iff the client is authorized to read value of the legal hold status
      */
     public boolean isClientAuthorizedToReadLegalHold() {
-        if (legalHoldIgnored == null) {
+        if (legalHold == null) {
             return false;
         }
-        return legalHoldIgnored.isClientAuthorizedToRead();
+        return legalHold.isClientAuthorizedToRead();
     }
 
     /**
@@ -164,7 +164,7 @@ public class B2FileVersion {
      * @throws B2ForbiddenException if the client is not authorized to read the legal hold status
      */
     public String getLegalHold() throws B2ForbiddenException {
-        return legalHoldIgnored == null ? null : legalHoldIgnored.getValue();
+        return legalHold == null ? null : legalHold.getValue();
     }
 
     public B2FileSseForResponse getServerSideEncryption() { return serverSideEncryption; }
@@ -198,7 +198,7 @@ public class B2FileVersion {
                 "fileInfo=[" + (fileInfo != null ? fileInfo.size() : "") + "], " +
                 "fileName='" + fileName + "', " +
                 "fileRetention='" + fileRetention + "', " +
-                "legalHold='" + legalHoldIgnored + "', " +
+                "legalHold='" + legalHold + "', " +
                 "serverSideEncryption='" + serverSideEncryption + "'" +
                 '}';
     }
@@ -218,7 +218,7 @@ public class B2FileVersion {
                 Objects.equals(getFileInfo(), that.getFileInfo()) &&
                 Objects.equals(getAction(), that.getAction()) &&
                 Objects.equals(fileRetention, that.fileRetention) && // compare the complete AuthorizationFilteredResponseField
-                Objects.equals(legalHoldIgnored, that.legalHoldIgnored) && // compare the complete AuthorizationFilteredResponseField
+                Objects.equals(legalHold, that.legalHold) && // compare the complete AuthorizationFilteredResponseField
                 Objects.equals(getServerSideEncryption(), that.getServerSideEncryption());
     }
 
@@ -235,7 +235,7 @@ public class B2FileVersion {
                 getAction(),
                 getUploadTimestamp(),
                 fileRetention,
-                legalHoldIgnored,
+                legalHold,
                 getServerSideEncryption()
         );
     }

@@ -197,8 +197,6 @@ public class B2FileVersionTest extends B2BaseTest {
         converted.getFileRetention();
     }
 
-    // TODO: uncomment this test when legalHoldIgnored is renamed back to legalHold
-    /*
     @Test
     public void testClientNotAuthorizedToReadLegalHold() throws B2ForbiddenException {
         final String jsonString = "{\n" +
@@ -230,39 +228,6 @@ public class B2FileVersionTest extends B2BaseTest {
         assertFalse(converted.isClientAuthorizedToReadLegalHold());
         thrown.expect(B2ForbiddenException.class);
         converted.getLegalHold();
-    }
-    */
-
-    // TODO: removed this test when legalHoldIgnored is renamed back to legalHold
-    @Test
-    public void testlegalHoldIgnored() {
-        final String jsonString = "{\n" +
-                "   \"fileName\": \"file.txt\",\n" +
-                "   \"legalHold\": {\n" +
-                "      \"isClientAuthorizedToRead\": false,\n" +
-                "      \"value\": null\n" +
-                "   },\n" +
-                "   \"uploadTimestamp\": 12345\n" +
-                "}";
-        final B2FileVersion converted = B2Json.fromJsonOrThrowRuntime(
-                jsonString,
-                B2FileVersion.class,
-                B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS);
-        final B2FileVersion defaultVersion = new B2FileVersion(
-                null,
-                "file.txt",
-                0L,
-                null,
-                null,
-                null,
-                null,
-                null,
-                12345L,
-                null,
-                null,
-                null);
-
-        assertEquals(defaultVersion, converted);
     }
 
     private void checkAction(String action, boolean expectUpload, boolean expectHide, boolean expectStart, boolean expectFolder) {
