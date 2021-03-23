@@ -4,12 +4,10 @@
  */
 package com.backblaze.b2.client.structures;
 
-import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.json.B2Json;
 
 import java.util.Objects;
 
-import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.NONE;
 import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.SSE_B2;
 
 public class B2BucketServerSideEncryption {
@@ -29,7 +27,7 @@ public class B2BucketServerSideEncryption {
             new B2BucketServerSideEncryption(SSE_B2, "AES256");
 
     private static final B2BucketServerSideEncryption SSE_NONE =
-            new B2BucketServerSideEncryption(NONE, null);
+            new B2BucketServerSideEncryption(null, null);
 
     @B2Json.constructor(params = "mode, algorithm")
     private B2BucketServerSideEncryption(String mode, String algorithm) {
