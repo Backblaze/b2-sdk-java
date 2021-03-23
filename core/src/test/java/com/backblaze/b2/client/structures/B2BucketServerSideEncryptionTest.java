@@ -31,7 +31,7 @@ public class B2BucketServerSideEncryptionTest extends B2BaseTest {
     public void testSseNoneConfig() {
         final String jsonString = "{\n" +
                 "  \"algorithm\": null,\n" +
-                "  \"mode\": \"none\"\n" +
+                "  \"mode\": null\n" +
                 "}";
         final B2BucketServerSideEncryption converted = B2Json.fromJsonOrThrowRuntime(
                 jsonString,
