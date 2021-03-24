@@ -45,14 +45,14 @@ public class B2BucketFileLockConfiguration {
         return defaultRetention;
     }
 
-    public String getMode() {
+    public String getDefaultRetentionMode() {
         if (defaultRetention == null) {
             return null;
         }
         return defaultRetention.getMode();
     }
 
-    public B2BucketDefaultRetentionPeriod getPeriod() {
+    public B2BucketDefaultRetentionPeriod getDefaultRetentionPeriod() {
         if (defaultRetention == null) {
             return null;
         }
