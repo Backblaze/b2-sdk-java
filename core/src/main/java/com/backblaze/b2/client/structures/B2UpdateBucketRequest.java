@@ -30,7 +30,7 @@ public class B2UpdateBucketRequest {
     private final List<B2LifecycleRule> lifecycleRules;
 
     @B2Json.optional
-    private final B2BucketFileLockConfiguration defaultFileLockConfiguration;
+    private final B2BucketDefaultRetention defaultRetention;
 
     @B2Json.optional
     private final B2BucketServerSideEncryption defaultServerSideEncryption;
@@ -39,14 +39,14 @@ public class B2UpdateBucketRequest {
     private final Integer ifRevisionIs;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,corsRules,lifecycleRules," +
-            "defaultFileLockConfiguration,defaultServerSideEncryption,ifRevisionIs")
+            "defaultRetention,defaultServerSideEncryption,ifRevisionIs")
     private B2UpdateBucketRequest(String accountId,
                                   String bucketId,
                                   String bucketType,
                                   Map<String, String> bucketInfo,
                                   List<B2CorsRule> corsRules,
                                   List<B2LifecycleRule> lifecycleRules,
-                                  B2BucketFileLockConfiguration defaultFileLockConfiguration,
+                                  B2BucketDefaultRetention defaultRetention,
                                   B2BucketServerSideEncryption defaultServerSideEncryption,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
@@ -55,7 +55,7 @@ public class B2UpdateBucketRequest {
         this.bucketInfo = bucketInfo;
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
-        this.defaultFileLockConfiguration = defaultFileLockConfiguration;
+        this.defaultRetention = defaultRetention;
         this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.ifRevisionIs = ifRevisionIs;
     }
@@ -84,8 +84,8 @@ public class B2UpdateBucketRequest {
         return lifecycleRules;
     }
 
-    public B2BucketFileLockConfiguration getDefaultFileLockConfiguration()
-    { return defaultFileLockConfiguration; }
+    public B2BucketDefaultRetention getDefaultRetention()
+    { return defaultRetention; }
 
     public B2BucketServerSideEncryption getDefaultServerSideEncryption() {
         return defaultServerSideEncryption;
@@ -106,7 +106,7 @@ public class B2UpdateBucketRequest {
                 Objects.equals(getBucketInfo(), that.getBucketInfo()) &&
                 Objects.equals(getCorsRules(), that.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), that.getLifecycleRules()) &&
-                Objects.equals(getDefaultFileLockConfiguration(), that.getDefaultFileLockConfiguration()) &&
+                Objects.equals(getDefaultRetention(), that.getDefaultRetention()) &&
                 Objects.equals(getDefaultServerSideEncryption(), that.getDefaultServerSideEncryption()) &&
                 Objects.equals(getIfRevisionIs(), that.getIfRevisionIs());
     }
@@ -120,7 +120,7 @@ public class B2UpdateBucketRequest {
                 getBucketInfo(),
                 getCorsRules(),
                 getLifecycleRules(),
-                getDefaultFileLockConfiguration(),
+                getDefaultRetention(),
                 getDefaultServerSideEncryption(),
                 getIfRevisionIs());
     }
@@ -141,7 +141,7 @@ public class B2UpdateBucketRequest {
         private Map<String, String> bucketInfo;
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
-        private B2BucketFileLockConfiguration defaultFileLockConfiguration;
+        private B2BucketDefaultRetention defaultRetention;
         private B2BucketServerSideEncryption defaultServerSideEncryption;
 
         private Builder(B2Bucket bucket) {
@@ -170,9 +170,8 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
-        public Builder setDefaultFileLockConfiguration(
-                B2BucketFileLockConfiguration defaultFileLockConfiguration) {
-            this.defaultFileLockConfiguration = defaultFileLockConfiguration;
+        public Builder setDefaultRetention(B2BucketDefaultRetention defaultRetention) {
+            this.defaultRetention = defaultRetention;
             return this;
         }
 
@@ -189,7 +188,7 @@ public class B2UpdateBucketRequest {
                     bucketInfo,
                     corsRules,
                     lifecycleRules,
-                    defaultFileLockConfiguration,
+                    defaultRetention,
                     defaultServerSideEncryption,
                     ifRevisionIs);
         }

@@ -38,7 +38,7 @@ public class B2Bucket {
     private final Set<String> options;
 
     @B2Json.optional
-    private final B2BucketFileLockConfiguration defaultFileLockConfiguration;
+    private final B2AuthorizationFilteredResponseField<B2BucketFileLockConfiguration> fileLockConfiguration;
 
     @B2Json.optional
     private final B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> defaultServerSideEncryption;
@@ -47,7 +47,7 @@ public class B2Bucket {
     private final int revision;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules," +
-            "options,defaultFileLockConfiguration,defaultServerSideEncryption,revision")
+            "options,fileLockConfiguration,defaultServerSideEncryption,revision")
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
@@ -56,7 +56,7 @@ public class B2Bucket {
                     List<B2CorsRule> corsRules,
                     List<B2LifecycleRule> lifecycleRules,
                     Set<String> options,
-                    B2BucketFileLockConfiguration defaultFileLockConfiguration,
+                    B2AuthorizationFilteredResponseField<B2BucketFileLockConfiguration> fileLockConfiguration,
                     B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> defaultServerSideEncryption,
                     int revision) {
         this.accountId = accountId;
@@ -67,7 +67,7 @@ public class B2Bucket {
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
         this.options = options;
-        this.defaultFileLockConfiguration = defaultFileLockConfiguration;
+        this.fileLockConfiguration = fileLockConfiguration;
         this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.revision = revision;
     }
@@ -108,8 +108,29 @@ public class B2Bucket {
         return revision;
     }
 
-    public B2BucketFileLockConfiguration getDefaultFileLockConfiguration() {
-        return defaultFileLockConfiguration;
+    /**
+     * Indicates whether client is authorized to read file lock configuration settings for bucket
+     * @return true iff client is authorized to read value of fileLockConfiguration field in B2Bucket
+     */
+    public boolean isClientAuthorizedToReadFileLockConfiguration() {
+        if (fileLockConfiguration == null) {
+            return false;
+        }
+        return fileLockConfiguration.isClientAuthorizedToRead();
+    }
+
+    /**
+     * Returns bucket file lock configuration. Throws B2ForbiddenException if client is not authorized to read
+     * bucket file lock configuration.
+     * @return file lock configuration
+     * @throws B2ForbiddenException if client is not authorized to read fileLockConfiguration
+     */
+    public B2BucketFileLockConfiguration getFileLockConfiguration() throws B2ForbiddenException {
+        if (fileLockConfiguration == null) {
+            return null;
+        }
+
+        return fileLockConfiguration.getValue();
     }
 
     /**
@@ -147,8 +168,8 @@ public class B2Bucket {
                 (corsRules == null ? 0 : corsRules.size()) + " corsRules," +
                 (lifecycleRules == null ? 0 : lifecycleRules.size()) + " lifecycleRules," +
                 ((options == null || options.isEmpty()) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
-                (defaultFileLockConfiguration == null ? "null" : defaultFileLockConfiguration.toString()) + "," +
-                (defaultServerSideEncryption == null ? "null" : defaultServerSideEncryption.toString()) + "," +
+                fileLockConfiguration + "," +
+                defaultServerSideEncryption + "," +
                 "v" + revision +
                 ')';
     }
@@ -167,7 +188,8 @@ public class B2Bucket {
                 Objects.equals(getCorsRules(), b2Bucket.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules()) &&
                 Objects.equals(getOptions(), b2Bucket.getOptions()) &&
-                Objects.equals(getDefaultFileLockConfiguration(), b2Bucket.getDefaultFileLockConfiguration()) &&
+                // don't use getter for these two fields because they can throw B2ForbiddenException
+                Objects.equals(fileLockConfiguration, b2Bucket.fileLockConfiguration) &&
                 Objects.equals(defaultServerSideEncryption, b2Bucket.defaultServerSideEncryption);
     }
 
@@ -183,7 +205,8 @@ public class B2Bucket {
                 getLifecycleRules(),
                 getOptions(),
                 getRevision(),
-                getDefaultFileLockConfiguration(),
+                // don't use getter for these two fields because they can throw B2ForbiddenException
+                fileLockConfiguration,
                 defaultServerSideEncryption);
     }
 }

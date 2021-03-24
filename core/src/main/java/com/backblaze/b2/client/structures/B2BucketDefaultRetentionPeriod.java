@@ -8,7 +8,7 @@ import com.backblaze.b2.json.B2Json;
 
 import java.util.Objects;
 
-public class B2BucketFileLockPeriod {
+public class B2BucketDefaultRetentionPeriod {
 
     @B2Json.required
     private final int duration;
@@ -17,7 +17,7 @@ public class B2BucketFileLockPeriod {
     private final String unit;
 
     @B2Json.constructor(params = "duration, unit")
-    public B2BucketFileLockPeriod(int duration, String unit) {
+    public B2BucketDefaultRetentionPeriod(int duration, String unit) {
         this.duration = duration;
         this.unit = unit;
     }
@@ -28,7 +28,7 @@ public class B2BucketFileLockPeriod {
 
     @Override
     public String toString() {
-        return duration + "," + (unit == null ? "null" : unit);
+        return duration + "," + unit;
     }
 
     @Override
@@ -39,7 +39,7 @@ public class B2BucketFileLockPeriod {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        B2BucketFileLockPeriod period = (B2BucketFileLockPeriod) o;
+        B2BucketDefaultRetentionPeriod period = (B2BucketDefaultRetentionPeriod) o;
         return this.duration == period.duration &&
                 Objects.equals(this.unit, period.unit);
     }

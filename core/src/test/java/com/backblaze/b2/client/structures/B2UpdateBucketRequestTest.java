@@ -4,6 +4,7 @@ import com.backblaze.b2.client.B2TestHelpers;
 import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.util.B2Collections;
 import junit.framework.TestCase;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 /*
  * Copyright 2020, Backblaze, Inc. All rights reserved.
  */
-public class B2UpdateBucketRequestTest extends TestCase {
+public class B2UpdateBucketRequestTest {
 
     private static final B2AccountAuthorization ACCOUNT_AUTH = B2TestHelpers.makeAuth(1);
     private static final String ACCOUNT_ID = ACCOUNT_AUTH.getAccountId();
@@ -54,7 +55,7 @@ public class B2UpdateBucketRequestTest extends TestCase {
                 null,
                 1);
         final B2UpdateBucketRequest defaultRequest = B2UpdateBucketRequest.builder(defaultBucket).build();
-        assertEquals(defaultRequest, convertedRequest);
+        Assert.assertEquals(defaultRequest, convertedRequest);
     }
 
     @Test
@@ -64,7 +65,7 @@ public class B2UpdateBucketRequestTest extends TestCase {
         final B2UpdateBucketRequest convertedConfig = B2Json.fromJsonOrThrowRuntime(
                 configJson,
                 B2UpdateBucketRequest.class);
-        assertEquals(config, convertedConfig);
+        Assert.assertEquals(config, convertedConfig);
     }
 
     @Test
@@ -79,11 +80,9 @@ public class B2UpdateBucketRequestTest extends TestCase {
         List<B2LifecycleRule> lifecycleRules = listOf(
                 B2LifecycleRule.builder(FILE_PREFIX).build()
         );
-        B2BucketFileLockConfiguration defaultFileLockConfig = new B2BucketFileLockConfiguration(
-                "enabled",
-                new B2BucketFileLockPeriod(7, "days"),
-                "governance");
-        B2BucketServerSideEncryption defaultServerSideEncryption =
+        final B2BucketDefaultRetention defaultRetention =
+                new B2BucketDefaultRetention(B2FileRetentionMode.GOVERNANCE, 7, B2FileRetentionPeriodUnit.DAYS);
+        final B2BucketServerSideEncryption defaultServerSideEncryption =
                 B2BucketServerSideEncryption.createSseB2Aes256();
 
         final B2UpdateBucketRequest updateRequest = B2UpdateBucketRequest.builder(
@@ -104,7 +103,7 @@ public class B2UpdateBucketRequestTest extends TestCase {
                 .setBucketType(BUCKET_TYPE)
                 .setCorsRules(b2CorsRules)
                 .setLifecycleRules(lifecycleRules)
-                .setDefaultFileLockConfiguration(defaultFileLockConfig)
+                .setDefaultRetention(defaultRetention)
                 .setDefaultServerSideEncryption(defaultServerSideEncryption)
                 .build();
 
@@ -133,13 +132,12 @@ public class B2UpdateBucketRequestTest extends TestCase {
                 "      \"maxAgeSeconds\": 0\n" +
                 "    }\n" +
                 "  ],\n" +
-                "  \"defaultFileLockConfiguration\": {\n" +
+                "  \"defaultRetention\": {\n" +
                 "    \"mode\": \"governance\",\n" +
                 "    \"period\": {\n" +
                 "      \"duration\": 7,\n" +
                 "      \"unit\": \"days\"\n" +
-                "    },\n" +
-                "    \"status\": \"enabled\"\n" +
+                "    }\n" +
                 "  },\n" +
                 "  \"defaultServerSideEncryption\": {\n" +
                 "    \"algorithm\": \"AES256\",\n" +
@@ -159,10 +157,10 @@ public class B2UpdateBucketRequestTest extends TestCase {
         final B2UpdateBucketRequest convertedRequest = B2Json.fromJsonOrThrowRuntime(json, B2UpdateBucketRequest.class);
 
         // Compare json
-        assertEquals(json, requestJson);
+        Assert.assertEquals(json, requestJson);
 
         // Compare requests
-        assertEquals(updateRequest, convertedRequest);
+        Assert.assertEquals(updateRequest, convertedRequest);
 
     }
 

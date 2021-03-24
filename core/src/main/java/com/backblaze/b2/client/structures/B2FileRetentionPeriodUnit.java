@@ -5,10 +5,10 @@
 package com.backblaze.b2.client.structures;
 
 /**
- * B2FileLockPeriodUnit provides constants for a bucket's default retention period
+ * B2FileRetentionPeriodUnit provides constants for a bucket's default retention period
  */
 
-public interface B2FileLockPeriodUnit {
+public interface B2FileRetentionPeriodUnit {
 
     String DAYS = "days";
     String YEARS = "years";

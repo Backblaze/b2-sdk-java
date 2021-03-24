@@ -10,52 +10,58 @@ import java.util.Objects;
 
 public class B2BucketFileLockConfiguration {
 
+    // whether file lock is enabled on the bucket
     @B2Json.required
-    private final String status;
+    private final boolean isFileLockEnabled;
 
-    @B2Json.optional
-    private final B2BucketFileLockPeriod period;
+    @B2Json.required
+    private final B2BucketDefaultRetention defaultRetention;
 
-    @B2Json.optional
-    private final String mode;
-
-    @B2Json.constructor(params = "status, period, mode")
-    public B2BucketFileLockConfiguration(String status,
-                                         B2BucketFileLockPeriod period,
-                                         String mode) {
-        this.status = status;
-        this.period = period;
-        this.mode = mode;
+    @B2Json.constructor(params = "isFileLockEnabled, defaultRetention")
+    public B2BucketFileLockConfiguration(boolean isFileLockEnabled,
+                                         B2BucketDefaultRetention defaultRetention) {
+        this.isFileLockEnabled = isFileLockEnabled;
+        this.defaultRetention = defaultRetention;
     }
 
-    public B2BucketFileLockConfiguration(String status,
+    public B2BucketFileLockConfiguration(boolean isFileLockEnabled,
+                                         String mode,
                                          int duration,
-                                         String unit,
-                                         String mode) {
-        this.status = status;
-        this.period = new B2BucketFileLockPeriod(duration, unit);
-        this.mode = mode;
+                                         String unit) {
+        this.isFileLockEnabled = isFileLockEnabled;
+        this.defaultRetention = new B2BucketDefaultRetention(mode, new B2BucketDefaultRetentionPeriod(duration, unit));
     }
 
     public B2BucketFileLockConfiguration(boolean isFileLockEnabled) {
-        this.status = isFileLockEnabled ? B2BucketFileLockStatus.ENABLED : B2BucketFileLockStatus.DISABLED;
-        this.period = null;
-        this.mode = null;
+        this.isFileLockEnabled = isFileLockEnabled;
+        this.defaultRetention = new B2BucketDefaultRetention(null, null);
     }
 
-    public String getStatus() { return status; }
+    public boolean isFileLockEnabled() {
+        return isFileLockEnabled;
+    }
 
-    public B2BucketFileLockPeriod getPeriod() { return period; }
+    public B2BucketDefaultRetention getDefaultRetention() {
+        return defaultRetention;
+    }
 
     public String getMode() {
-        return mode;
+        if (defaultRetention == null) {
+            return null;
+        }
+        return defaultRetention.getMode();
+    }
+
+    public B2BucketDefaultRetentionPeriod getPeriod() {
+        if (defaultRetention == null) {
+            return null;
+        }
+        return defaultRetention.getPeriod();
     }
 
     @Override
     public String toString() {
-        return (status == null ? "null" : status) + "," +
-                (period == null ? "null" : period) + "," +
-                (mode == null ? "null" : mode);
+        return (isFileLockEnabled + "," + defaultRetention);
     }
 
     @Override
@@ -66,14 +72,14 @@ public class B2BucketFileLockConfiguration {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        B2BucketFileLockConfiguration lockConfiguration = (B2BucketFileLockConfiguration) o;
-        return Objects.equals(this.status, lockConfiguration.status) &&
-                Objects.equals(this.mode, lockConfiguration.mode) &&
-                Objects.equals(this.period, lockConfiguration.period);
+        B2BucketFileLockConfiguration that = (B2BucketFileLockConfiguration) o;
+        return isFileLockEnabled == that.isFileLockEnabled &&
+                Objects.equals(defaultRetention, that.defaultRetention);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(status, period, mode);
+        return Objects.hash(isFileLockEnabled, defaultRetention);
     }
+
 }

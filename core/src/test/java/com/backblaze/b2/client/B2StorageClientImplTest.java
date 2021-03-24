@@ -47,6 +47,7 @@ import static com.backblaze.b2.util.B2DateTimeUtil.parseDateTime;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
@@ -84,7 +85,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         B2ExecutorUtils.shutdownAndAwaitTermination(executor, 10, 10);
     }
 
@@ -179,36 +180,18 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 .setLifecycleRules(lifecycleRules)
                 .setDefaultServerSideEncryption(defaultServerSideEncryption)
                 .build();
-        // create bucket from JSON because B2AuthorizationFilteredResponseField is not accessible from this package
-        final String bucketJson = "{\n" +
-                "  \"accountId\": \"1\",\n" +
-                "  \"bucketId\": \"bucket1\",\n" +
-                "  \"bucketInfo\": {\n" +
-                "    \"one\": \"1\",\n" +
-                "    \"two\": \"2\"\n" +
-                "  },\n" +
-                "  \"bucketName\": \"bucket1\",\n" +
-                "  \"bucketType\": \"allPublic\",\n" +
-                "  \"corsRules\": [],\n" +
-                "  \"defaultFileLockConfiguration\": null,\n" +
-                "  \"defaultServerSideEncryption\": {\n" +
-                "    \"isClientAuthorizedToRead\": true,\n" +
-                "    \"value\": {\n" +
-                "      \"algorithm\": \"AES256\",\n" +
-                "      \"mode\": \"SSE-B2\"\n" +
-                "    }\n" +
-                "  },\n" +
-                "  \"lifecycleRules\": [\n" +
-                "    {\n" +
-                "      \"daysFromHidingToDeleting\": null,\n" +
-                "      \"daysFromUploadingToHiding\": null,\n" +
-                "      \"fileNamePrefix\": \"files/\"\n" +
-                "    }\n" +
-                "  ],\n" +
-                "  \"options\": [],\n" +
-                "  \"revision\": 1\n" +
-                "}";
-        final B2Bucket bucket = B2Json.fromJsonOrThrowRuntime(bucketJson, B2Bucket.class);
+        final B2Bucket bucket = new B2Bucket(
+                ACCOUNT_ID,
+                bucketId(1),
+                BUCKET_NAME,
+                BUCKET_TYPE,
+                bucketInfo,
+                new ArrayList<>(),
+                lifecycleRules,
+                Collections.emptySet(),
+                new B2AuthorizationFilteredResponseField<>(true, new B2BucketFileLockConfiguration(true)),
+                new B2AuthorizationFilteredResponseField<>(true, defaultServerSideEncryption),
+                1);
         final B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
         when(webifier.createBucket(ACCOUNT_AUTH, expectedRequest)).thenReturn(bucket);
 
@@ -228,44 +211,28 @@ public class B2StorageClientImplTest extends B2BaseTest {
         //noinspection ResultOfMethodCallIgnored
         bucket.hashCode();
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,0 options," +
-                "null,B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                "value={true,B2FileRetention{mode=null, period=null}})," +
+                "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
                 "value={B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256}}),v1)", bucket.toString());
 
-        // create bucket from JSON because B2AuthorizationFilteredResponseField is not accessible from this package
-        final String bucketWithOptionsJson = "{\n" +
-                "  \"accountId\": \"1\",\n" +
-                "  \"bucketId\": \"bucket1\",\n" +
-                "  \"bucketInfo\": {\n" +
-                "    \"one\": \"1\",\n" +
-                "    \"two\": \"2\"\n" +
-                "  },\n" +
-                "  \"bucketName\": \"bucket1\",\n" +
-                "  \"bucketType\": \"allPublic\",\n" +
-                "  \"corsRules\": [],\n" +
-                "  \"defaultFileLockConfiguration\": null,\n" +
-                "  \"defaultServerSideEncryption\": {\n" +
-                "    \"isClientAuthorizedToRead\": true,\n" +
-                "    \"value\": {\n" +
-                "      \"algorithm\": \"AES256\",\n" +
-                "      \"mode\": \"SSE-B2\"\n" +
-                "    }\n" +
-                "  },\n" +
-                "  \"lifecycleRules\": [\n" +
-                "    {\n" +
-                "      \"daysFromHidingToDeleting\": null,\n" +
-                "      \"daysFromUploadingToHiding\": null,\n" +
-                "      \"fileNamePrefix\": \"files/\"\n" +
-                "    }\n" +
-                "  ],\n" +
-                "  \"options\": [\n" +
-                "    \"myOption1\",\n" +
-                "    \"myOption2\"\n" +
-                "  ],\n" +
-                "  \"revision\": 1\n" +
-                "}";
-        final B2Bucket bucketWithOptions = B2Json.fromJsonOrThrowRuntime(bucketWithOptionsJson, B2Bucket.class);
+        final B2Bucket bucketWithOptions = new B2Bucket(
+                ACCOUNT_ID,
+                bucketId(1),
+                BUCKET_NAME,
+                BUCKET_TYPE,
+                bucketInfo,
+                new ArrayList<>(),
+                lifecycleRules,
+                B2TestHelpers.makeBucketOrApplicationKeyOptions(),
+                new B2AuthorizationFilteredResponseField<>(true, new B2BucketFileLockConfiguration(true)),
+                new B2AuthorizationFilteredResponseField<>(true, defaultServerSideEncryption),
+                1);
+
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, " +
-                "myOption2] options,null,B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                        "myOption2] options,B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                        "value={true,B2FileRetention{mode=null, period=null}})," +
+                        "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
                         "value={B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256}}),v1)",
                 bucketWithOptions.toString());
     }
@@ -353,7 +320,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         when(webifier.listBuckets(ACCOUNT_AUTH, expectedRequest)).thenReturn(response);
 
         assertEquals(bucket(1), client.getBucketOrNullByName(BUCKET_NAME));
-        assertEquals(null, client.getBucketOrNullByName("noSuchBucket"));
+        assertNull(client.getBucketOrNullByName("noSuchBucket"));
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -986,7 +953,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final B2UploadUrlResponse response = new B2UploadUrlResponse(bucketId(1), "uploadUrl", "uploadAuthToken");
         when(webifier.getUploadUrl(anyObject(), eq(request))).thenReturn(response);
 
-        assertTrue(response == client.getUploadUrl(request));
+        assertSame(response, client.getUploadUrl(request));
 
         verify(webifier, times(1)).authorizeAccount(anyObject());
         verify(webifier, times(1)).getUploadUrl(anyObject(), anyObject());
@@ -998,7 +965,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final B2UploadPartUrlResponse response = new B2UploadPartUrlResponse(bucketId(1), "uploadUrl", "uploadAuthToken");
         when(webifier.getUploadPartUrl(anyObject(), eq(request))).thenReturn(response);
 
-        assertTrue(response == client.getUploadPartUrl(request));
+        assertSame(response, client.getUploadPartUrl(request));
 
         verify(webifier, times(1)).authorizeAccount(anyObject());
         verify(webifier, times(1)).getUploadPartUrl(anyObject(), anyObject());
@@ -1012,7 +979,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final B2FileVersion fileVersion = makeVersion(1, 2);
         when(webifier.startLargeFile(anyObject(), eq(request))).thenReturn(fileVersion);
 
-        assertTrue(fileVersion == client.startLargeFile(request));
+        assertSame(fileVersion, client.startLargeFile(request));
 
         verify(webifier, times(1)).authorizeAccount(anyObject());
         verify(webifier, times(1)).startLargeFile(anyObject(), anyObject());
@@ -1026,7 +993,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final B2FileVersion fileVersion = makeVersion(1, 2);
         when(webifier.finishLargeFile(anyObject(), eq(request))).thenReturn(fileVersion);
 
-        assertTrue(fileVersion == client.finishLargeFile(request));
+        assertSame(fileVersion, client.finishLargeFile(request));
 
         verify(webifier, times(1)).authorizeAccount(anyObject());
         verify(webifier, times(1)).finishLargeFile(anyObject(), anyObject());

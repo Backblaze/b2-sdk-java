@@ -72,6 +72,15 @@ public class B2BucketTest extends B2BaseTest {
 
     @Test
     public void testJsonRoundTrip() {
+        final B2AuthorizationFilteredResponseField<B2BucketFileLockConfiguration> bucketFileLockContainer =
+                new B2AuthorizationFilteredResponseField<>(
+                        true,
+                        new B2BucketFileLockConfiguration(
+                                true,
+                                B2FileRetentionMode.GOVERNANCE,
+                                7,
+                                B2FileRetentionPeriodUnit.DAYS
+                        ));
         final B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> bucketSseContainer =
                 new B2AuthorizationFilteredResponseField<>(
                         true,
@@ -86,10 +95,7 @@ public class B2BucketTest extends B2BaseTest {
                 b2CorsRules,
                 lifecycleRules,
                 optionsSet,
-                new B2BucketFileLockConfiguration(
-                        "enabled",
-                        new B2BucketFileLockPeriod(7, "days"),
-                        "governance"),
+                bucketFileLockContainer,
                 bucketSseContainer,
                 1);
         final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
@@ -127,6 +133,15 @@ public class B2BucketTest extends B2BaseTest {
 
     @Test
     public void testFromJson() {
+        final B2AuthorizationFilteredResponseField<B2BucketFileLockConfiguration> bucketFileLockContainer =
+                new B2AuthorizationFilteredResponseField<>(
+                        true,
+                        new B2BucketFileLockConfiguration(
+                                true,
+                                B2FileRetentionMode.GOVERNANCE,
+                                7,
+                                B2FileRetentionPeriodUnit.DAYS
+                        ));
         final B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> bucketSseContainer =
                 new B2AuthorizationFilteredResponseField<>(
                         true,
@@ -141,10 +156,7 @@ public class B2BucketTest extends B2BaseTest {
                 b2CorsRules,
                 lifecycleRules,
                 optionsSet,
-                new B2BucketFileLockConfiguration(
-                        "enabled",
-                        new B2BucketFileLockPeriod(7, "days"),
-                        "governance"),
+                bucketFileLockContainer,
                 bucketSseContainer,
                 1);
         // Convert from B2Bucket -> json
@@ -173,19 +185,24 @@ public class B2BucketTest extends B2BaseTest {
                 "      \"maxAgeSeconds\": 0\n" +
                 "    }\n" +
                 "  ],\n" +
-                "  \"defaultFileLockConfiguration\": {\n" +
-                "    \"mode\": \"governance\",\n" +
-                "    \"period\": {\n" +
-                "      \"duration\": 7,\n" +
-                "      \"unit\": \"days\"\n" +
-                "    },\n" +
-                "    \"status\": \"enabled\"\n" +
-                "  },\n" +
                 "  \"defaultServerSideEncryption\": {\n" +
                 "    \"isClientAuthorizedToRead\": true,\n" +
                 "    \"value\": {\n" +
                 "      \"algorithm\": \"AES256\",\n" +
                 "      \"mode\": \"SSE-B2\"\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"fileLockConfiguration\": {\n" +
+                "    \"isClientAuthorizedToRead\": true,\n" +
+                "    \"value\": {\n" +
+                "      \"defaultRetention\": {\n" +
+                "        \"mode\": \"governance\",\n" +
+                "        \"period\": {\n" +
+                "          \"duration\": 7,\n" +
+                "          \"unit\": \"days\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"isFileLockEnabled\": true\n" +
                 "    }\n" +
                 "  },\n" +
                 "  \"lifecycleRules\": [\n" +
@@ -251,8 +268,8 @@ public class B2BucketTest extends B2BaseTest {
                 "      \"maxAgeSeconds\": 0\n" +
                 "    }\n" +
                 "  ],\n" +
-                "  \"defaultFileLockConfiguration\": null,\n" +
                 "  \"defaultServerSideEncryption\": null,\n" +
+                "  \"fileLockConfiguration\": null,\n" +
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +
                 "      \"daysFromHidingToDeleting\": null,\n" +
@@ -300,13 +317,18 @@ public class B2BucketTest extends B2BaseTest {
                 "      \"maxAgeSeconds\": 0\n" +
                 "    }\n" +
                 "  ],\n" +
-                "  \"defaultFileLockConfiguration\": {\n" +
-                "    \"mode\": \"governance\",\n" +
-                "    \"period\": {\n" +
-                "      \"duration\": 7,\n" +
-                "      \"unit\": \"days\"\n" +
-                "    },\n" +
-                "    \"status\": \"enabled\"\n" +
+                "  \"fileLockConfiguration\": {\n" +
+                "    \"isClientAuthorizedToRead\": true,\n" +
+                "    \"value\": {\n" +
+                "      \"defaultRetention\": {\n" +
+                "        \"mode\": \"governance\",\n" +
+                "        \"period\": {\n" +
+                "          \"duration\": 7,\n" +
+                "          \"unit\": \"days\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"isFileLockEnabled\": true\n" +
+                "    }\n" +
                 "  },\n" +
                 "  \"defaultServerSideEncryption\": {\n" +
                 "    \"isClientAuthorizedToRead\": false,\n" +
