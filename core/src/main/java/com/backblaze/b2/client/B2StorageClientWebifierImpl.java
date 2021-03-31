@@ -62,6 +62,8 @@ import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionResponse;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
@@ -654,6 +656,16 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 makeHeaders(accountAuth),
                 request,
                 B2UpdateFileLegalHoldResponse.class);
+    }
+
+    @Override
+    public B2UpdateFileRetentionResponse updateFileRetention(B2AccountAuthorization accountAuth,
+                                                             B2UpdateFileRetentionRequest request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeUrl(accountAuth, "b2_update_file_retention"),
+                makeHeaders(accountAuth),
+                request,
+                B2UpdateFileRetentionResponse.class);
     }
 
     private void addAuthHeader(B2HeadersImpl.Builder builder,

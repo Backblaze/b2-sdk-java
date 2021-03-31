@@ -53,6 +53,8 @@ import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionResponse;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
@@ -169,6 +171,7 @@ public class B2StorageClientImpl implements B2StorageClient {
         );
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Override
     public B2ListKeysIterable applicationKeys(B2ListKeysRequest request) throws B2Exception {
         return new B2ListKeysIterable(this, request);
@@ -324,11 +327,13 @@ public class B2StorageClientImpl implements B2StorageClient {
 
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Override
     public B2ListFilesIterable fileVersions(B2ListFileVersionsRequest request) throws B2Exception {
         return new B2ListFileVersionsIterable(this, request);
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Override
     public B2ListFilesIterable fileNames(B2ListFileNamesRequest request) throws B2Exception {
         return new B2ListFileNamesIterable(this, request);
@@ -500,6 +505,14 @@ public class B2StorageClientImpl implements B2StorageClient {
                 () -> webifier.updateFileLegalHold(accountAuthCache.get(), request),
                 retryPolicySupplier.get());
     }
+
+    @Override
+    public B2UpdateFileRetentionResponse updateFileRetention(B2UpdateFileRetentionRequest request) throws B2Exception {
+        return retryer.doRetry("b2_update_file_retention", accountAuthCache,
+                () -> webifier.updateFileRetention(accountAuthCache.get(), request),
+                retryPolicySupplier.get());
+    }
+
 
     //
     // For use by our iterators

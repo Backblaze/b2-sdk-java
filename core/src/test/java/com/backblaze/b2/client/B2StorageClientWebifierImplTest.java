@@ -45,6 +45,7 @@ import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
@@ -1878,6 +1879,38 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         );
 
         checkRequestCategory(OTHER, w -> w.updateFileLegalHold(ACCOUNT_AUTH, requestReal));
+    }
+
+    @Test
+    public void testUpdateFileRetention() throws B2Exception {
+        final B2FileRetention fileRetention = new B2FileRetention(B2FileRetentionMode.COMPLIANCE, 10000L);
+        final B2UpdateFileRetentionRequest requestReal = B2UpdateFileRetentionRequest
+                .builder(fileName(1), fileId(1), fileRetention)
+                .build();
+        webifier.updateFileRetention(ACCOUNT_AUTH, requestReal);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_update_file_retention\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"bypassGovernance\": false,\n" +
+                "      \"fileId\": \"4_zBlah_0000001\",\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"fileRetention\": {\n" +
+                "        \"mode\": \"compliance\",\n" +
+                "        \"retainUntilTimestamp\": 10000\n" +
+                "      }\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2UpdateFileRetentionResponse\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.updateFileRetention(ACCOUNT_AUTH, requestReal));
     }
 
     @Test

@@ -24,6 +24,11 @@ public class B2FileRetention {
     @B2Json.optional
     private final Long retainUntilTimestamp;
 
+    /**
+     * static field for convenience to use with updateFileRetention() to turn off retention
+     */
+    public static final B2FileRetention NONE = new B2FileRetention(null, null);
+
     @B2Json.constructor(params = "mode, retainUntilTimestamp")
     public B2FileRetention(String mode, Long retainUntilTimestamp) {
         this.mode = mode;

@@ -49,6 +49,8 @@ import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionResponse;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
@@ -170,6 +172,9 @@ public interface B2StorageClientWebifier extends AutoCloseable {
 
     B2UpdateFileLegalHoldResponse updateFileLegalHold(B2AccountAuthorization accountAuth,
                                                       B2UpdateFileLegalHoldRequest request) throws B2Exception;
+
+    B2UpdateFileRetentionResponse updateFileRetention(B2AccountAuthorization accountAuth,
+                                                      B2UpdateFileRetentionRequest request) throws B2Exception;
 
     /**
      * Closes this object and its underlying resources.

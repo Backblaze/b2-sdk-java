@@ -27,6 +27,8 @@ import com.backblaze.b2.client.structures.B2DeleteFileVersionResponse;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileRetention;
+import com.backblaze.b2.client.structures.B2FileRetentionMode;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
@@ -52,6 +54,8 @@ import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionResponse;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
@@ -1060,6 +1064,22 @@ public class B2StorageClientImplTest extends B2BaseTest {
 
         verify(webifier, times(1)).authorizeAccount(any());
         verify(webifier, times(1)).updateFileLegalHold(any(), eq(request));
+    }
+
+    @Test
+    public void testUpdateFileRetention() throws B2Exception {
+        final B2FileRetention fileRetention = new B2FileRetention(B2FileRetentionMode.COMPLIANCE, 10000L);
+        final B2UpdateFileRetentionRequest request = B2UpdateFileRetentionRequest
+                .builder(fileName(1), fileId(1), fileRetention)
+                .build();
+        final B2UpdateFileRetentionResponse response =
+                new B2UpdateFileRetentionResponse(fileName(1), fileId(1), fileRetention);
+        when(webifier.updateFileRetention(any(), eq(request))).thenReturn(response);
+
+        assertSame(response, client.updateFileRetention(request));
+
+        verify(webifier, times(1)).authorizeAccount(any());
+        verify(webifier, times(1)).updateFileRetention(any(), eq(request));
     }
 
     @Test
