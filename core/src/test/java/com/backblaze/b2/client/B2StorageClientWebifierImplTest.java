@@ -904,6 +904,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "request:\n" +
                 "    {\n" +
+                "      \"bypassGovernance\": false,\n" +
                 "      \"fileId\": \"4_zBlah_0000001\",\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0001\"\n" +
                 "    }\n" +
