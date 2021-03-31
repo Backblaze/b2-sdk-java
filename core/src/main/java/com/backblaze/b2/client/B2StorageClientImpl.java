@@ -51,6 +51,8 @@ import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
@@ -489,6 +491,13 @@ public class B2StorageClientImpl implements B2StorageClient {
     public B2FileVersion finishLargeFile(B2FinishLargeFileRequest request) throws B2Exception {
         return retryer.doRetry("b2_finish_large_file", accountAuthCache,
                 () -> webifier.finishLargeFile(accountAuthCache.get(), request),
+                retryPolicySupplier.get());
+    }
+
+    @Override
+    public B2UpdateFileLegalHoldResponse updateFileLegalHold(B2UpdateFileLegalHoldRequest request) throws B2Exception {
+        return retryer.doRetry("b2_update_file_legal_hold", accountAuthCache,
+                () -> webifier.updateFileLegalHold(accountAuthCache.get(), request),
                 retryPolicySupplier.get());
     }
 

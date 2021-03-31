@@ -40,6 +40,8 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
@@ -917,6 +919,15 @@ public interface B2StorageClient extends Closeable {
      */
     B2FileVersion finishLargeFile(B2FinishLargeFileRequest request) throws B2Exception;
 
+    /**
+     * Updates the legal hold configuration of the specified file as described by the request.
+     *
+     * @param request specifies which file to update and how to update it.
+     * @return the new state of the file
+     * @throws B2Exception if there's any trouble.
+     * @see <a href="https://www.backblaze.com/b2/docs/b2_update_file_legal_hold.html">b2_update_file_legal_hold</a>
+     */
+    B2UpdateFileLegalHoldResponse updateFileLegalHold(B2UpdateFileLegalHoldRequest request) throws B2Exception;
 
     /**
      * Closes this instance, releasing resources.

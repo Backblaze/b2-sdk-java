@@ -60,6 +60,8 @@ import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
@@ -642,6 +644,16 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 makeHeaders(accountAuth),
                 request,
                 B2Bucket.class);
+    }
+
+    @Override
+    public B2UpdateFileLegalHoldResponse updateFileLegalHold(B2AccountAuthorization accountAuth,
+                                                             B2UpdateFileLegalHoldRequest request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeUrl(accountAuth, "b2_update_file_legal_hold"),
+                makeHeaders(accountAuth),
+                request,
+                B2UpdateFileLegalHoldResponse.class);
     }
 
     private void addAuthHeader(B2HeadersImpl.Builder builder,

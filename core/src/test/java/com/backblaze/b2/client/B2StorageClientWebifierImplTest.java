@@ -44,6 +44,7 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
@@ -1695,7 +1696,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         final B2UploadListener listener = mock(B2UploadListener.class);
 
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("Legal hold can only be set to 'on' or 'off'.");
+        thrown.expectMessage("Invalid legalHold value. Valid values: on, off");
 
         B2UploadFileRequest.builder(
                 bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
@@ -1850,6 +1851,33 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         );
 
         checkRequestCategory(OTHER, w -> w.copyFile(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testUpdateFileLegalHold() throws B2Exception {
+        final B2UpdateFileLegalHoldRequest requestReal = B2UpdateFileLegalHoldRequest
+                .builder(fileName(1), fileId(1), B2LegalHold.ON)
+                .build();
+        webifier.updateFileLegalHold(ACCOUNT_AUTH, requestReal);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_update_file_legal_hold\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"fileId\": \"4_zBlah_0000001\",\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"legalHold\": \"on\"\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2UpdateFileLegalHoldResponse\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.updateFileLegalHold(ACCOUNT_AUTH, requestReal));
     }
 
     @Test

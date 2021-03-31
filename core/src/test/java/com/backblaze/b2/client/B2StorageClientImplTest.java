@@ -8,8 +8,56 @@ import com.backblaze.b2.client.contentHandlers.B2ContentSink;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.exceptions.B2Exception;
-import com.backblaze.b2.client.structures.*;
-import com.backblaze.b2.json.B2Json;
+import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2AuthorizationFilteredResponseField;
+import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
+import com.backblaze.b2.client.structures.B2Bucket;
+import com.backblaze.b2.client.structures.B2BucketFileLockConfiguration;
+import com.backblaze.b2.client.structures.B2BucketServerSideEncryption;
+import com.backblaze.b2.client.structures.B2BucketTypes;
+import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
+import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
+import com.backblaze.b2.client.structures.B2CopyFileRequest;
+import com.backblaze.b2.client.structures.B2CreateBucketRequest;
+import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
+import com.backblaze.b2.client.structures.B2DeleteBucketRequest;
+import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
+import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
+import com.backblaze.b2.client.structures.B2DeleteFileVersionResponse;
+import com.backblaze.b2.client.structures.B2DownloadAuthorization;
+import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
+import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileVersion;
+import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
+import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
+import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
+import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
+import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
+import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
+import com.backblaze.b2.client.structures.B2HideFileRequest;
+import com.backblaze.b2.client.structures.B2LegalHold;
+import com.backblaze.b2.client.structures.B2LifecycleRule;
+import com.backblaze.b2.client.structures.B2ListBucketsRequest;
+import com.backblaze.b2.client.structures.B2ListBucketsResponse;
+import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
+import com.backblaze.b2.client.structures.B2ListFileNamesResponse;
+import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
+import com.backblaze.b2.client.structures.B2ListFileVersionsResponse;
+import com.backblaze.b2.client.structures.B2ListPartsRequest;
+import com.backblaze.b2.client.structures.B2ListPartsResponse;
+import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
+import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
+import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
+import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
+import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import com.backblaze.b2.client.structures.B2UploadListener;
+import com.backblaze.b2.client.structures.B2UploadPartRequest;
+import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
+import com.backblaze.b2.client.structures.B2UploadProgress;
+import com.backblaze.b2.client.structures.B2UploadUrlResponse;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Clock;
@@ -48,7 +96,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
@@ -997,6 +1045,21 @@ public class B2StorageClientImplTest extends B2BaseTest {
 
         verify(webifier, times(1)).authorizeAccount(anyObject());
         verify(webifier, times(1)).finishLargeFile(anyObject(), anyObject());
+    }
+
+    @Test
+    public void testUpdateFileLegalHold() throws B2Exception {
+        final B2UpdateFileLegalHoldRequest request = B2UpdateFileLegalHoldRequest
+                .builder(fileName(1), fileId(1), B2LegalHold.ON)
+                .build();
+        final B2UpdateFileLegalHoldResponse response =
+                new B2UpdateFileLegalHoldResponse(fileName(1), fileId(1), B2LegalHold.ON);
+        when(webifier.updateFileLegalHold(any(), eq(request))).thenReturn(response);
+
+        assertSame(response, client.updateFileLegalHold(request));
+
+        verify(webifier, times(1)).authorizeAccount(any());
+        verify(webifier, times(1)).updateFileLegalHold(any(), eq(request));
     }
 
     @Test

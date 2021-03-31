@@ -47,9 +47,9 @@ public class B2UploadFileRequest {
 
     private void validateLegalHold(String legalHold) {
         if (legalHold != null) {
-            B2Preconditions.checkArgument(legalHold.matches(
-                    String.format("(%s|%s)", B2LegalHold.ON, B2LegalHold.OFF)),
-                    String.format("Legal hold can only be set to '%s' or '%s'.", B2LegalHold.ON, B2LegalHold.OFF));
+            B2Preconditions.checkArgument(
+                    legalHold.equals(B2LegalHold.ON) || legalHold.equals(B2LegalHold.OFF),
+                    String.format("Invalid legalHold value. Valid values: %s, %s", B2LegalHold.ON, B2LegalHold.OFF));
         }
     }
 
