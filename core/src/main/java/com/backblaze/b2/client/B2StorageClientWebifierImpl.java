@@ -233,7 +233,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
     @Override
     public B2UploadPartUrlResponse getUploadPartUrl(B2AccountAuthorization accountAuth,
-                                                B2GetUploadPartUrlRequest request) throws B2Exception {
+                                                    B2GetUploadPartUrlRequest request) throws B2Exception {
         return webApiClient.postJsonReturnJson(
                 makeUrl(accountAuth, "b2_get_upload_part_url"),
                 makeHeaders(accountAuth),
@@ -292,15 +292,23 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             if (request.getFileRetention() != null) {
                 // no need to send file retention headers; but may need to receive one for HEAD calls
                 // discussed inside getFileInfoByName
-                headersBuilder.set(B2Headers.FILE_RETENTION_MODE,
-                        request.getFileRetention().getMode());
-                headersBuilder.set(B2Headers.FILE_RETENTION_RETAIN_UNTIL_TIMESTAMP,
-                        request.getFileRetention().getRetainUntilTimestamp().toString());
+                if (request.getFileRetention().getMode() != null) {
+                    headersBuilder.set(B2Headers.FILE_RETENTION_MODE,
+                            request.getFileRetention().getMode());
+                }
+                if (request.getFileRetention().getRetainUntilTimestamp() != null) {
+                    headersBuilder.set(B2Headers.FILE_RETENTION_RETAIN_UNTIL_TIMESTAMP,
+                            request.getFileRetention().getRetainUntilTimestamp().toString());
+                }
                 // TODO: remove after production has transitioned fully to use newer headers
-                headersBuilder.set("X-Bz-File-Lock-Retention-Mode",
-                        request.getFileRetention().getMode());
-                headersBuilder.set("X-Bz-File-Lock-Retention-Retain-Until-Timestamp",
-                        request.getFileRetention().getRetainUntilTimestamp().toString());
+                if (request.getFileRetention().getMode() != null) {
+                    headersBuilder.set("X-Bz-File-Lock-Retention-Mode",
+                            request.getFileRetention().getMode());
+                }
+                if (request.getFileRetention().getRetainUntilTimestamp() != null) {
+                    headersBuilder.set("X-Bz-File-Lock-Retention-Retain-Until-Timestamp",
+                            request.getFileRetention().getRetainUntilTimestamp().toString());
+                }
             }
 
             // if the source provides a last-modified time, add it.
