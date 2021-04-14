@@ -1,5 +1,5 @@
 /*
- * Copyright 2020, Backblaze Inc. All Rights Reserved.
+ * Copyright 2021, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -1682,6 +1682,39 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
                 "    X-Bz-File-Retention-Mode: governance\n" +
                 "    X-Bz-File-Retention-Retain-Until-Timestamp: 9876543210\n" +
+                "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "inputStream:\n" +
+                "    Hello, World!\n" +
+                "contentLength:\n" +
+                "    13\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+    }
+
+    @Test
+    public void testUploadFileContainingEmptyFileLockRetention() throws B2Exception {
+        final B2UploadListener listener = mock(B2UploadListener.class);
+
+        final B2UploadFileRequest request = B2UploadFileRequest
+                .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
+                .setFileRetention(new B2FileRetention(null, null))
+                .setListener(listener)
+                .build();
+        final B2UploadUrlResponse uploadUrl = uploadUrlResponse(bucketId(1), 1);
+        webifier.uploadFile(uploadUrl, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    uploadUrl1\n" +
+                "headers:\n" +
+                "    Authorization: downloadToken1\n" +
+                "    Content-Type: b2/x-auto\n" +
+                "    Expect: 100-continue\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
+                "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
                 "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "inputStream:\n" +
