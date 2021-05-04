@@ -6,6 +6,7 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.client.exceptions.B2ForbiddenException;
 import com.backblaze.b2.json.B2Json;
+import com.backblaze.b2.util.B2Preconditions;
 
 import java.util.List;
 import java.util.Map;
@@ -37,10 +38,10 @@ public class B2Bucket {
     @B2Json.optional
     private final Set<String> options;
 
-    @B2Json.optional
+    @B2Json.required
     private final B2AuthorizationFilteredResponseField<B2BucketFileLockConfiguration> fileLockConfiguration;
 
-    @B2Json.optional
+    @B2Json.required
     private final B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> defaultServerSideEncryption;
 
     @B2Json.required
@@ -113,9 +114,8 @@ public class B2Bucket {
      * @return true iff client is authorized to read value of fileLockConfiguration field in B2Bucket
      */
     public boolean isClientAuthorizedToReadFileLockConfiguration() {
-        if (fileLockConfiguration == null) {
-            return false;
-        }
+        B2Preconditions.checkState(fileLockConfiguration != null);
+
         return fileLockConfiguration.isClientAuthorizedToRead();
     }
 
@@ -126,10 +126,9 @@ public class B2Bucket {
      * @throws B2ForbiddenException if client is not authorized to read fileLockConfiguration
      */
     public B2BucketFileLockConfiguration getFileLockConfiguration() throws B2ForbiddenException {
-        if (fileLockConfiguration == null) {
-            return null;
-        }
+        B2Preconditions.checkState(fileLockConfiguration != null);
 
+        // will throw B2ForbiddenException if client is not authorized to read value
         return fileLockConfiguration.getValue();
     }
 
@@ -138,9 +137,8 @@ public class B2Bucket {
      * @return true iff client is authorized to read value of defaultServerSideEncryption field in B2Bucket
      */
     public boolean isClientAuthorizedToReadDefaultServerSideEncryption() {
-        if (defaultServerSideEncryption == null) {
-            return false;
-        }
+        B2Preconditions.checkState(defaultServerSideEncryption != null);
+
         return defaultServerSideEncryption.isClientAuthorizedToRead();
     }
 
@@ -151,9 +149,8 @@ public class B2Bucket {
      * @throws B2ForbiddenException if client is not authorized to read defaultServerSideEncryption field
      */
     public B2BucketServerSideEncryption getDefaultServerSideEncryption() throws B2ForbiddenException {
-        if (defaultServerSideEncryption == null) {
-            return null;
-        }
+        B2Preconditions.checkState(defaultServerSideEncryption != null);
+
         // will throw B2ForbiddenException if client is not authorized to read value
         return defaultServerSideEncryption.getValue();
     }

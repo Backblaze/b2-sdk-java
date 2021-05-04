@@ -62,8 +62,8 @@ public class B2BucketTest extends B2BaseTest {
                 b2CorsRules,
                 lifecycleRules,
                 optionsSet,
-                null,
-                null,
+                new B2AuthorizationFilteredResponseField<>(false, null),
+                new B2AuthorizationFilteredResponseField<>(false, null),
                 1);
         final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
         final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(bucketJson, B2Bucket.class);
@@ -109,6 +109,14 @@ public class B2BucketTest extends B2BaseTest {
                 "  \"accountId\": \"" + ACCOUNT_ID + "\",\n" +
                 "  \"bucketId\": \"" + bucketId(1) + "\",\n" +
                 "  \"bucketName\": \"" + BUCKET_NAME + "\",\n" +
+                "  \"defaultServerSideEncryption\": {\n" +
+                "    \"isClientAuthorizedToRead\": false,\n" +
+                "    \"value\": null\n" +
+                "  },\n" +
+                "  \"fileLockConfiguration\": {\n" +
+                "    \"isClientAuthorizedToRead\": false,\n" +
+                "    \"value\": null\n" +
+                "  },\n" +
                 "  \"revision\": 1\n" +
                 "}";
 
@@ -124,8 +132,8 @@ public class B2BucketTest extends B2BaseTest {
                 null,
                 null,
                 null,
-                null,
-                null,
+                new B2AuthorizationFilteredResponseField<>(false, null),
+                new B2AuthorizationFilteredResponseField<>(false, null),
                 1);
 
         assertEquals(bucket, convertedBucket);
@@ -227,70 +235,6 @@ public class B2BucketTest extends B2BaseTest {
         assertEquals(json, bucketJson);
     }
 
-
-    @Test
-    public void testFromJsonWithoutFileLockConfiguration() {
-        final B2Bucket bucket = new B2Bucket(
-                ACCOUNT_ID,
-                bucketId(1),
-                BUCKET_NAME,
-                BUCKET_TYPE,
-                bucketInfo,
-                b2CorsRules,
-                lifecycleRules,
-                optionsSet,
-                null,
-                null,
-                1);
-        // Convert from B2Bucket -> json
-        final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
-
-        final String json = "{\n" +
-                "  \"accountId\": \"1\",\n" +
-                "  \"bucketId\": \"bucket1\",\n" +
-                "  \"bucketInfo\": {\n" +
-                "    \"one\": \"1\",\n" +
-                "    \"two\": \"2\"\n" +
-                "  },\n" +
-                "  \"bucketName\": \"bucket1\",\n" +
-                "  \"bucketType\": \"allPublic\",\n" +
-                "  \"corsRules\": [\n" +
-                "    {\n" +
-                "      \"allowedHeaders\": null,\n" +
-                "      \"allowedOperations\": [\n" +
-                "        \"b2_download_file_by_id\"\n" +
-                "      ],\n" +
-                "      \"allowedOrigins\": [\n" +
-                "        \"https://something.com\"\n" +
-                "      ],\n" +
-                "      \"corsRuleName\": \"rule-name\",\n" +
-                "      \"exposeHeaders\": null,\n" +
-                "      \"maxAgeSeconds\": 0\n" +
-                "    }\n" +
-                "  ],\n" +
-                "  \"defaultServerSideEncryption\": null,\n" +
-                "  \"fileLockConfiguration\": null,\n" +
-                "  \"lifecycleRules\": [\n" +
-                "    {\n" +
-                "      \"daysFromHidingToDeleting\": null,\n" +
-                "      \"daysFromUploadingToHiding\": null,\n" +
-                "      \"fileNamePrefix\": \"files/\"\n" +
-                "    }\n" +
-                "  ],\n" +
-                "  \"options\": [\n" +
-                "    \"myOption1\",\n" +
-                "    \"myOption2\"\n" +
-                "  ],\n" +
-                "  \"revision\": 1\n" +
-                "}";
-
-        // Convert from json -> B2Bucket
-        final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(json, B2Bucket.class);
-        assertEquals(bucket, convertedBucket);
-
-        // Compare json
-        assertEquals(json, bucketJson);
-    }
 
     @Test
     public void testUnauthorizedToReadServerSideEncryptionThrowsException() throws B2ForbiddenException {
