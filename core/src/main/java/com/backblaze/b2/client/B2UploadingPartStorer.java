@@ -12,7 +12,6 @@ import com.backblaze.b2.client.structures.B2UploadListener;
 
 import java.io.IOException;
 import java.util.Objects;
-
 /**
  * This implementation stores a part of a large file by uploading
  * the bytes from a B2ContentSource.
@@ -44,9 +43,11 @@ public class B2UploadingPartStorer implements B2PartStorer {
     @Override
     public B2Part storePart(
             B2LargeFileStorer largeFileCreationManager,
-            B2UploadListener uploadListener) throws IOException, B2Exception {
+            B2UploadListener uploadListener,
+            B2CancellationToken cancellationToken) throws IOException, B2Exception {
 
-        return largeFileCreationManager.uploadPart(partNumber, contentSource, uploadListener);
+        final B2CancellableContentSource cancellableContentSource = new B2CancellableContentSource(contentSource, cancellationToken);
+        return largeFileCreationManager.uploadPart(partNumber, cancellableContentSource, uploadListener, cancellationToken);
     }
 
     @Override
