@@ -7,6 +7,7 @@ package com.backblaze.b2.client.structures;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.exceptions.B2ForbiddenException;
 import com.backblaze.b2.json.B2Json;
+import com.backblaze.b2.util.B2Preconditions;
 
 import java.util.Map;
 import java.util.Objects;
@@ -44,10 +45,9 @@ public class B2FileVersion {
     private final String action;
     @B2Json.required
     private final long uploadTimestamp;
-    @B2Json.optional
+    @B2Json.required
     private final B2AuthorizationFilteredResponseField<B2FileRetention> fileRetention;
-    // TODO: rename this back to legalHold type change (to String) has propagated throughout production environment
-    @B2Json.optional
+    @B2Json.required
     private final B2AuthorizationFilteredResponseField<String> legalHold;
     @B2Json.optional
     private final B2FileSseForResponse serverSideEncryption;
@@ -128,9 +128,8 @@ public class B2FileVersion {
      * @return true iff the client is authorized to read value of the file retention
      */
     public boolean isClientAuthorizedToReadFileRetention() {
-        if (fileRetention == null) {
-            return false;
-        }
+        B2Preconditions.checkState(fileRetention != null);
+
         return fileRetention.isClientAuthorizedToRead();
     }
 
@@ -151,9 +150,8 @@ public class B2FileVersion {
      * @return true iff the client is authorized to read value of the legal hold status
      */
     public boolean isClientAuthorizedToReadLegalHold() {
-        if (legalHold == null) {
-            return false;
-        }
+        B2Preconditions.checkState(legalHold != null);
+
         return legalHold.isClientAuthorizedToRead();
     }
 
