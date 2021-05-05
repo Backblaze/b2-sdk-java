@@ -1,3 +1,7 @@
+/*
+ * Copyright 2020, Backblaze, Inc. All rights reserved.
+ * License https://www.backblaze.com/using_b2_code.html
+ */
 package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.client.contentSources.B2Headers;
@@ -8,13 +12,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
-/*
- * Copyright 2020, Backblaze, Inc. All rights reserved.
- * License https://www.backblaze.com/using_b2_code.html
- */
 public class B2FileRetentionTest extends B2BaseTest {
 
     @Rule

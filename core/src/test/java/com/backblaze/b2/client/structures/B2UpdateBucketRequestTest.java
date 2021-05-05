@@ -3,7 +3,6 @@ package com.backblaze.b2.client.structures;
 import com.backblaze.b2.client.B2TestHelpers;
 import com.backblaze.b2.json.B2Json;
 import com.backblaze.b2.util.B2Collections;
-import junit.framework.TestCase;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -13,7 +12,6 @@ import java.util.Map;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.util.B2Collections.listOf;
-import static org.junit.Assert.assertEquals;
 
 /*
  * Copyright 2020, Backblaze, Inc. All rights reserved.

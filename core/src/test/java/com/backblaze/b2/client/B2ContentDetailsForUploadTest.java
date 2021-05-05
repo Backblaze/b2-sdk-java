@@ -21,7 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class B2ContentDetailsForUploadTest extends B2BaseTest {
     private static final String CONTENTS = "Hello, World!";

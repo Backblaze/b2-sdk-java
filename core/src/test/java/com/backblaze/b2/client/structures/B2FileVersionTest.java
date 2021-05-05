@@ -8,7 +8,6 @@ import com.backblaze.b2.client.B2TestHelpers;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.exceptions.B2ForbiddenException;
 import com.backblaze.b2.json.B2Json;
-import com.backblaze.b2.json.B2JsonOptions;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2Collections;
 import org.junit.Rule;
@@ -19,7 +18,9 @@ import java.util.HashMap;
 
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
-import static junit.framework.TestCase.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -65,8 +66,8 @@ public class B2FileVersionTest extends B2BaseTest {
                 null,
                 null,
                 0L,
-                new B2AuthorizationFilteredResponseField<>(false, null),
-                new B2AuthorizationFilteredResponseField<>(false, null),
+                null,
+               null,
                 null
         );
 
@@ -75,8 +76,8 @@ public class B2FileVersionTest extends B2BaseTest {
                         "contentLength=0, contentType='null', contentSha1='null', " +
                         "contentMd5='null', " +
                         "action='null', uploadTimestamp=0, fileInfo=[], fileName='null', " +
-                        "fileRetention='B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=false,value={null})', " +
-                        "legalHold='B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=false,value={null})', " +
+                        "fileRetention='null', " +
+                        "legalHold='null', " +
                         "serverSideEncryption='null'}",
                 one.toString());
     }
@@ -108,17 +109,9 @@ public class B2FileVersionTest extends B2BaseTest {
     }
 
     @Test
-    public void testDefaultJson() {
+    public void testDefaultJson() throws B2ForbiddenException {
         final String jsonString = "{\n" +
                 "   \"fileName\": \"file.txt\",\n" +
-                "   \"fileRetention\": {\n" +
-                "      \"isClientAuthorizedToRead\": false,\n" +
-                "      \"value\": null\n" +
-                "   },\n" +
-                "   \"legalHold\": {\n" +
-                "      \"isClientAuthorizedToRead\": false,\n" +
-                "      \"value\": null\n" +
-                "   },\n" +
                 "   \"uploadTimestamp\": 12345\n" +
                 "}";
         final B2FileVersion converted = B2Json.fromJsonOrThrowRuntime(
@@ -134,24 +127,20 @@ public class B2FileVersionTest extends B2BaseTest {
                 null,
                 null,
                 12345L,
-                new B2AuthorizationFilteredResponseField<>(false, null),
-                new B2AuthorizationFilteredResponseField<>(false, null),
+                null,
+                null,
                 null);
         assertEquals(defaultVersion, converted);
+        assertTrue(defaultVersion.isClientAuthorizedToReadFileRetention());
+        assertNull(defaultVersion.getFileRetention());
+        assertTrue(defaultVersion.isClientAuthorizedToReadLegalHold());
+        assertNull(defaultVersion.getLegalHold());
     }
 
     @Test
-    public void testServerSideEncryption() {
+    public void testServerSideEncryption() throws B2ForbiddenException {
         final String jsonString = "{\n" +
                 "   \"fileName\": \"file.txt\",\n" +
-                "   \"fileRetention\": {\n" +
-                "      \"isClientAuthorizedToRead\": false,\n" +
-                "      \"value\": null\n" +
-                "   },\n" +
-                "   \"legalHold\": {\n" +
-                "      \"isClientAuthorizedToRead\": false,\n" +
-                "      \"value\": null\n" +
-                "   },\n" +
                 "   \"serverSideEncryption\": {\n" +
                 "      \"algorithm\": \"AES256\",\n" +
                 "      \"mode\": \"SSE-B2\"\n" +
@@ -171,11 +160,13 @@ public class B2FileVersionTest extends B2BaseTest {
                 null,
                 null,
                 12345L,
-                new B2AuthorizationFilteredResponseField<>(false, null),
-                new B2AuthorizationFilteredResponseField<>(false, null),
+                null,
+                null,
                 new B2FileSseForResponse("SSE-B2", "AES256", null));
 
         assertEquals(defaultVersion, converted);
+        assertNull(defaultVersion.getFileRetention());
+        assertNull(defaultVersion.getLegalHold());
     }
 
     @Test
@@ -183,10 +174,6 @@ public class B2FileVersionTest extends B2BaseTest {
         final String jsonString = "{\n" +
                 "   \"fileName\": \"file.txt\",\n" +
                 "   \"fileRetention\": {\n" +
-                "      \"isClientAuthorizedToRead\": false,\n" +
-                "      \"value\": null\n" +
-                "   },\n" +
-                "   \"legalHold\": {\n" +
                 "      \"isClientAuthorizedToRead\": false,\n" +
                 "      \"value\": null\n" +
                 "   },\n" +
@@ -206,7 +193,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 null,
                 12345L,
                 new B2AuthorizationFilteredResponseField<>(false, null),
-                new B2AuthorizationFilteredResponseField<>(false, null),
+                null,
                 null);
 
         assertEquals(defaultVersion, converted);
@@ -219,10 +206,6 @@ public class B2FileVersionTest extends B2BaseTest {
     public void testClientNotAuthorizedToReadLegalHold() throws B2ForbiddenException {
         final String jsonString = "{\n" +
                 "   \"fileName\": \"file.txt\",\n" +
-                "   \"fileRetention\": {\n" +
-                "      \"isClientAuthorizedToRead\": false,\n" +
-                "      \"value\": null\n" +
-                "   },\n" +
                 "   \"legalHold\": {\n" +
                 "      \"isClientAuthorizedToRead\": false,\n" +
                 "      \"value\": null\n" +
@@ -242,7 +225,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 null,
                 null,
                 12345L,
-                new B2AuthorizationFilteredResponseField<>(false, null),
+                null,
                 new B2AuthorizationFilteredResponseField<>(false, null),
                 null);
 
@@ -264,8 +247,8 @@ public class B2FileVersionTest extends B2BaseTest {
                         new HashMap<>(),
                         action,
                         0L,
-                        new B2AuthorizationFilteredResponseField<>(false, null),
-                        new B2AuthorizationFilteredResponseField<>(false, null),
+                        null,
+                        null,
                         null
                 );
         assertEquals(expectUpload, fileVersion.isUpload());

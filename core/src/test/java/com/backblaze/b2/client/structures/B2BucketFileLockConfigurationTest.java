@@ -5,7 +5,6 @@
 package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.json.B2Json;
-import junit.framework.TestCase;
 import org.junit.Assert;
 import org.junit.Test;
 

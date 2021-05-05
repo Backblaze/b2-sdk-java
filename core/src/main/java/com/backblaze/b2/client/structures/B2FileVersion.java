@@ -7,7 +7,6 @@ package com.backblaze.b2.client.structures;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.exceptions.B2ForbiddenException;
 import com.backblaze.b2.json.B2Json;
-import com.backblaze.b2.util.B2Preconditions;
 
 import java.util.Map;
 import java.util.Objects;
@@ -18,7 +17,7 @@ import java.util.Objects;
  * The API returns two fields that are not included here: accountId and bucketId.
  * The reason for not including them is that this SDK also returns the same
  * structure from getFileInfoByName, which gets the info from the headers returned
- * by a HEAD request on the file, which do no include them.
+ * by a HEAD request on the file, which do not include them.
  */
 public class B2FileVersion {
 
@@ -45,9 +44,9 @@ public class B2FileVersion {
     private final String action;
     @B2Json.required
     private final long uploadTimestamp;
-    @B2Json.required
+    @B2Json.optional
     private final B2AuthorizationFilteredResponseField<B2FileRetention> fileRetention;
-    @B2Json.required
+    @B2Json.optional
     private final B2AuthorizationFilteredResponseField<String> legalHold;
     @B2Json.optional
     private final B2FileSseForResponse serverSideEncryption;
@@ -123,13 +122,15 @@ public class B2FileVersion {
 
     /**
      * indicates whether or not the client is authorized to read the file retention
-     * from this file version
+     * from this file version. If fileRetention field is null (e.g., for hidden
+     * files and folders), then this method returns true.
      *
      * @return true iff the client is authorized to read value of the file retention
      */
     public boolean isClientAuthorizedToReadFileRetention() {
-        B2Preconditions.checkState(fileRetention != null);
-
+        if (fileRetention == null) {
+            return true;
+        }
         return fileRetention.isClientAuthorizedToRead();
     }
 
@@ -145,13 +146,15 @@ public class B2FileVersion {
 
     /**
      * indicates whether or not the client is authorized to read the legal hold
-     * status from this file version
+     * status from this file version. If legalHold field is null (e.g., for hidden
+     * files and folders), then this method returns true.
      *
      * @return true iff the client is authorized to read value of the legal hold status
      */
     public boolean isClientAuthorizedToReadLegalHold() {
-        B2Preconditions.checkState(legalHold != null);
-
+        if (legalHold == null) {
+            return true;
+        }
         return legalHold.isClientAuthorizedToRead();
     }
 
