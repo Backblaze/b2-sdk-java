@@ -37,11 +37,9 @@ import com.backblaze.b2.util.B2ExecutorUtils;
 import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.zip.Deflater;
 
 import static com.backblaze.b2.util.B2ExecutorUtils.createThreadFactory;
 
@@ -273,37 +271,6 @@ public class B2Sample {
             final B2ContentMemoryWriter handler = B2ContentMemoryWriter.build();
             client.downloadById(file3.getFileId(), handler);
             B2Preconditions.checkState(Arrays.equals(largeFileBytes, handler.getBytes()));
-        }
-
-        bigHeader(writer, "Upload/Download a deflated file from memory");
-        {
-            // upload a deflated file from memory and set b2-content-encoding for fileInfo
-            final String originalPizza = "original pizza";
-            final Deflater deflater = new Deflater();
-            deflater.setInput(originalPizza.getBytes(StandardCharsets.UTF_8));
-            deflater.finish();
-            final byte[] buffer = new byte[512]; // 512 big enough for the compressed content
-            final int compressedLength = deflater.deflate(buffer);
-            final String compressedContent = new String(buffer, 0, compressedLength);
-            final B2ContentSource source = B2ByteArrayContentSource.build(compressedContent.getBytes());
-
-
-            final String deflatedFileName = "demo/deflatedPizza.txt";
-            final B2UploadFileRequest request = B2UploadFileRequest
-                    .builder(bucketId, deflatedFileName, B2ContentTypes.B2_AUTO, source)
-                    .setCustomField("b2-content-encoding", "deflate") // set b2-content-encoding
-                    .build();
-            final B2FileVersion deflatedFile = client.uploadSmallFile(request);
-            writer.println("uploaded " + deflatedFile);
-
-            final B2ContentMemoryWriter sink = B2ContentMemoryWriter.build();
-            // call downloadById with enableContentCompression as false (by default), good for having deflate for content-encoding
-            client.downloadById(deflatedFile.getFileId(), sink);
-
-            writer.println("read from file [" + new String(sink.getBytes()) + "]");
-            if (!Arrays.equals(compressedContent.getBytes(), sink.getBytes())) {
-                writer.println("Failed: downloaded file content is NOT the same as the original test failed: ");
-            }
         }
 
         // delete file versions

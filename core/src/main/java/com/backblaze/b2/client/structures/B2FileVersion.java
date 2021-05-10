@@ -121,7 +121,7 @@ public class B2FileVersion {
     }
 
     /**
-     * indicates whether or not the client is authorized to read the file retention
+     * Indicates whether or not the client is authorized to read the file retention
      * from this file version. If fileRetention field is null (e.g., for hidden
      * files and folders), then this method returns true.
      *
@@ -135,7 +135,7 @@ public class B2FileVersion {
     }
 
     /**
-     * returns the file retention setting on the file version
+     * Returns the file retention setting on the file version
      *
      * @return the file retention settings of the file version
      * @throws B2ForbiddenException if the client is not authorized to read the file retention setting
@@ -145,7 +145,7 @@ public class B2FileVersion {
     }
 
     /**
-     * indicates whether or not the client is authorized to read the legal hold
+     * Indicates whether or not the client is authorized to read the legal hold
      * status from this file version. If legalHold field is null (e.g., for hidden
      * files and folders), then this method returns true.
      *
@@ -159,7 +159,7 @@ public class B2FileVersion {
     }
 
     /**
-     * returns the legal hold status on the file version
+     * Returns the legal hold status on the file version
      *
      * @return the legal hold status of the file version
      * @throws B2ForbiddenException if the client is not authorized to read the legal hold status

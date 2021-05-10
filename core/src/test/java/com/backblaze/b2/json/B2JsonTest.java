@@ -2792,43 +2792,6 @@ public class B2JsonTest extends B2BaseTest {
         assertEquals("b2", obj3.field77);
     }
 
-    /* A convenience Json object for testing IOException("Requested array size exceeds maximum limit") */
-    private static class ObjectWithSomeName {
-       @B2Json.required
-       private final String name;
-
-       @B2Json.constructor(params = "name")
-       public ObjectWithSomeName(String name) {
-           this.name = name;
-       }
-    }
-
-    @Test
-    public void testObjectWithNameToJson() throws B2JsonException {
-        String shouldBeNullJson = null;
-        try {
-            final B2JsonBoundedByteArrayOutputStream b2JsonByteArrayOutputStream = new B2JsonBoundedByteArrayOutputStream(1024);
-            final ObjectWithSomeName expectedObjectWithSomeBigName = new ObjectWithSomeName(makeNameStringWithLength(1024));
-
-            // due to overhead, the actual size of serialized bytes is bigger than 1024
-            // and expanding capacity at some point causes IOException
-            B2Json.get().toJson(expectedObjectWithSomeBigName, b2JsonByteArrayOutputStream);
-            shouldBeNullJson = b2JsonByteArrayOutputStream.toString();
-        } catch (IOException ioException) {
-            assertEquals("Requested array size exceeds maximum limit", ioException.getMessage());
-        }
-        assertNull(shouldBeNullJson);
-    }
-
-    private String makeNameStringWithLength(int length) {
-        final StringBuilder name = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            // name string pattern - 'ABC...ZABC...Z...'
-            name.append((char)(i%26 + 'A'));
-        }
-        return name.toString();
-    }
-
     private static class ClassThatUsesGenerics {
 
         @B2Json.required

@@ -19,7 +19,6 @@ import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.util.B2BaseTest;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -31,13 +30,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -55,6 +49,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/*
+ * Copyright 2019, Backblaze, Inc. All rights reserved.
+ */
 public class B2LargeFileStorerTest extends B2BaseTest {
 
     private static final long FIVE_MEGABYTES = 5000000;
@@ -81,7 +78,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
     private final Supplier<B2RetryPolicy> retryPolicySupplier = B2DefaultRetryPolicy.supplier();
     // Use an executor that has a predictable order of events.
     private final ExecutorService executor = new ExecutorThatUsesMainThread();
-    private final ExecutorService singleThreadedExecutor = Executors.newSingleThreadExecutor();
+
     private final B2UploadListener uploadListenerMock = mock(B2UploadListener.class);
 
     @Rule
@@ -101,7 +98,6 @@ public class B2LargeFileStorerTest extends B2BaseTest {
     @After
     public void tearDown() {
         executor.shutdown();
-        singleThreadedExecutor.shutdown();
     }
 
     public List<B2PartStorer> createB2LargeFileStorerAndGetSortedPartStorers(List<B2PartStorer> outOfOrderPartStorers) {
@@ -256,46 +252,10 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         largeFileStorer.storeFile(uploadListener);
     }
 
-    private void storeFileAsync(B2UploadListener uploadListener) throws IOException, ExecutionException, InterruptedException {
-        final List<B2PartStorer> partStorers = new ArrayList<>();
-        final B2ContentSource contentSourceForPart1 = mock(B2ContentSource.class);
-        when(contentSourceForPart1.getContentLength()).thenReturn(PART_SIZE_FOR_FIRST_TWO);
-        partStorers.add(new B2UploadingPartStorer(1, contentSourceForPart1));
-
-        final String copySourceFile = fileId(1);
-        partStorers.add(new B2CopyingPartStorer(2, copySourceFile));
-
-        partStorers.add(new B2AlreadyStoredPartStorer(part3));
-
-        final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
-                partStorers,
-                authCache,
-                webifier,
-                retryer,
-                retryPolicySupplier,
-                executor);
-
-        assertEquals(partStorers, largeFileStorer.getPartStorers());
-
-        largeFileStorer.storeFileAsync(uploadListener).get();
-    }
-
     @Test
     public void testStoreFile_success() throws IOException, B2Exception {
         storeFile(uploadListenerMock);
 
-        verifySuccessfulUpload();
-    }
-
-    @Test
-    public void testStoreFileAsync_success() throws IOException, B2Exception, ExecutionException, InterruptedException {
-        storeFileAsync(uploadListenerMock);
-
-        verifySuccessfulUpload();
-    }
-
-    private void verifySuccessfulUpload() throws B2Exception {
         // Checks for the part that is uploaded.
         verify(webifier).getUploadPartUrl(anyObject(), anyObject());
         verify(webifier).uploadPart(anyObject(), anyObject());
@@ -351,116 +311,47 @@ public class B2LargeFileStorerTest extends B2BaseTest {
            storeFile(uploadListenerMock);
            fail("should have thrown");
         } catch (B2InternalErrorException e) {
-            checkCannotUpload();
-        } catch (Exception e) {
-           fail("should have thrown B2InternalErrorException");
-        }
-    }
-    @Test
-    public void testStoreFileAsync_cannotUpload() throws B2Exception {
-        when(webifier.uploadPart(anyObject(), anyObject())).thenThrow(new B2InternalErrorException("error"));
-
-        try {
-            storeFileAsync(uploadListenerMock);
-            fail("should have thrown");
-        } catch (ExecutionException e) {
-            assertEquals(B2InternalErrorException.class, e.getCause().getClass());
-
-            checkCannotUpload();
-        } catch (Exception e) {
-            fail("should have thrown ExecutionException");
-        }
-    }
-
-    private void checkCannotUpload() throws B2Exception {
-
-        // Make sure retries work
-        verify(webifier, times(8)).uploadPart(anyObject(), anyObject());
-        verify(webifier, times(0)).finishLargeFile(anyObject(), anyObject());
-
-        // Make sure progress events are as expected.
-        // There should be 2 WAITING_TO_START from the uploading and copying part storers
-        // There should be 2 STARTING from the uploading and copying part storers
-        // There should be 1 FAILED (for the part that uploads)
-        // There should be 2 SUCCEEDED (one for each remaining part)
-        // Things to note: for copies we don't really know the number of bytes that will be copied. Even if a byte range
-        // is supplied in the copy, the range may exceed the file's size, and so it may get clamped during the actual
-        // copy operation. We use 1 byte as the placeholder until the copy succeeds, then use the result to update the
-        // real part size.
-        verify(uploadListenerMock).progress(
-                new B2UploadProgress(0, 3, 0, PART_SIZE_FOR_FIRST_TWO, 0, B2UploadState.WAITING_TO_START));
-        verify(uploadListenerMock, times(8)).progress(
-                new B2UploadProgress(0, 3, 0, PART_SIZE_FOR_FIRST_TWO, 0, B2UploadState.STARTING));
-        verify(uploadListenerMock).progress(
-                new B2UploadProgress(0, 3, 0, PART_SIZE_FOR_FIRST_TWO, 0, B2UploadState.FAILED));
-        verify(uploadListenerMock).progress(
-                new B2UploadProgress(1, 3, PART_SIZE_FOR_FIRST_TWO, 1, 0, B2UploadState.WAITING_TO_START));
-        verify(uploadListenerMock).progress(
-                new B2UploadProgress(1, 3, PART_SIZE_FOR_FIRST_TWO, 1, 0, B2UploadState.STARTING));
-        verify(uploadListenerMock).progress(
-                new B2UploadProgress(
-                        1,
-                        3,
-                        PART_SIZE_FOR_FIRST_TWO,
-                        PART_SIZE_FOR_FIRST_TWO,
-                        PART_SIZE_FOR_FIRST_TWO,
-                        B2UploadState.SUCCEEDED));
-        verify(uploadListenerMock).progress(
-                new B2UploadProgress(
-                        2,
-                        3,
-                        B2UploadProgress.UNKNOWN_PART_START_BYTE,
-                        LAST_PART_SIZE,
-                        LAST_PART_SIZE,
-                        B2UploadState.SUCCEEDED));
-    }
-
-    @Test
-    public void testStoreFileAsyncCancelled() throws B2Exception, IOException {
-        final List<B2PartStorer> partStorers = new ArrayList<>();
-        final B2ContentSource contentSourceForPart1 = mock(B2ContentSource.class);
-        final B2ContentSource contentSourceForPart2 = mock(B2ContentSource.class);
-
-        final AtomicReference<CompletableFuture<B2FileVersion>> future = new AtomicReference<>();
-
-        when(contentSourceForPart1.getContentLength()).thenReturn(PART_SIZE_FOR_FIRST_TWO);
-        when(contentSourceForPart2.getContentLength()).thenReturn(PART_SIZE_FOR_FIRST_TWO);
-
-        // when the first call to  uploadPart is called, we will cancel the request
-        when(webifier.uploadPart(any(), any())).thenAnswer(invocation -> {
-            future.get().cancel(true);
-            return null;
-        });
-
-        partStorers.add(new B2UploadingPartStorer(1, contentSourceForPart1));
-        partStorers.add(new B2UploadingPartStorer(2, contentSourceForPart2));
-        partStorers.add(new B2AlreadyStoredPartStorer(part3));
-
-        final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
-                partStorers,
-                authCache,
-                webifier,
-                retryer,
-                retryPolicySupplier,
-                singleThreadedExecutor);
-
-        assertEquals(partStorers, largeFileStorer.getPartStorers());
-
-        future.set(largeFileStorer.storeFileAsync(uploadListenerMock));
-
-        try {
-
-            future.get().get();
-            Assert.fail("we should have gotten a CancellationException");
-        } catch (CancellationException e) {
-
-            // upload part should only be called once
-            verify(webifier, times(1)).uploadPart(anyObject(), anyObject());
+            // Make sure retries work
+            verify(webifier, times(8)).uploadPart(anyObject(), anyObject());
             verify(webifier, times(0)).finishLargeFile(anyObject(), anyObject());
 
+            // Make sure progress events are as expected.
+            // There should be 2 WAITING_TO_START from the uploading and copying part storers
+            // There should be 2 STARTING from the uploading and copying part storers
+            // There should be 1 FAILED (for the part that uploads)
+            // There should be 2 SUCCEEDED (one for each remaining part)
+            // Things to note: for copies we don't really know the number of bytes that will be copied. Even if a byte range
+            // is supplied in the copy, the range may exceed the file's size, and so it may get clamped during the actual
+            // copy operation. We use 1 byte as the placeholder until the copy succeeds, then use the result to update the
+            // real part size.
+            verify(uploadListenerMock).progress(
+                    new B2UploadProgress(0, 3, 0, PART_SIZE_FOR_FIRST_TWO, 0, B2UploadState.WAITING_TO_START));
+            verify(uploadListenerMock, times(8)).progress(
+                    new B2UploadProgress(0, 3, 0, PART_SIZE_FOR_FIRST_TWO, 0, B2UploadState.STARTING));
+            verify(uploadListenerMock).progress(
+                    new B2UploadProgress(0, 3, 0, PART_SIZE_FOR_FIRST_TWO, 0, B2UploadState.FAILED));
+            verify(uploadListenerMock).progress(
+                    new B2UploadProgress(1, 3, PART_SIZE_FOR_FIRST_TWO, 1, 0, B2UploadState.WAITING_TO_START));
+            verify(uploadListenerMock).progress(
+                    new B2UploadProgress(1, 3, PART_SIZE_FOR_FIRST_TWO, 1, 0, B2UploadState.STARTING));
+            verify(uploadListenerMock).progress(
+                    new B2UploadProgress(
+                            1,
+                            3,
+                            PART_SIZE_FOR_FIRST_TWO,
+                            PART_SIZE_FOR_FIRST_TWO,
+                            PART_SIZE_FOR_FIRST_TWO,
+                            B2UploadState.SUCCEEDED));
+            verify(uploadListenerMock).progress(
+                    new B2UploadProgress(
+                            2,
+                            3,
+                            B2UploadProgress.UNKNOWN_PART_START_BYTE,
+                            LAST_PART_SIZE,
+                            LAST_PART_SIZE,
+                            B2UploadState.SUCCEEDED));
         } catch (Exception e) {
-            Assert.fail("we should have gotten a CancellationException");
+           fail("should have thrown B2InternalErrorException");
         }
     }
 

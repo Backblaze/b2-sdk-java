@@ -18,11 +18,11 @@ import java.util.HashMap;
 
 import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 public class B2FileVersionTest extends B2BaseTest {
 

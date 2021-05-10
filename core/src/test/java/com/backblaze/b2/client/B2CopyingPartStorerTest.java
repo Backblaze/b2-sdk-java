@@ -36,25 +36,23 @@ public class B2CopyingPartStorerTest extends B2BaseTest {
     private final B2UploadListener uploadListener = mock(B2UploadListener.class);
 
     public B2CopyingPartStorerTest() throws B2Exception {
-        when(largeFileStorer.copyPart(anyInt(), anyString(), anyObject(), anyObject(), anyObject())).thenReturn(part);
+        when(largeFileStorer.copyPart(anyInt(), anyString(), anyObject(), anyObject())).thenReturn(part);
     }
 
     @Test
     public void testStorePart_noByteRange() throws B2Exception {
         final B2CopyingPartStorer partStorer = new B2CopyingPartStorer(PART_NUMBER, SOURCE_FILE_ID);
-        final B2CancellationToken cancellationToken = new B2CancellationToken();
 
-        assertEquals(part, partStorer.storePart(largeFileStorer, uploadListener, cancellationToken));
-        verify(largeFileStorer).copyPart(2, SOURCE_FILE_ID, null, uploadListener, cancellationToken);
+        assertEquals(part, partStorer.storePart(largeFileStorer, uploadListener));
+        verify(largeFileStorer).copyPart(2, SOURCE_FILE_ID, null, uploadListener);
     }
 
     @Test
     public void testStorePart_byteRange() throws B2Exception {
         final B2ByteRange byteRange = B2ByteRange.between(1000000, 2000000);
         final B2CopyingPartStorer partStorer = new B2CopyingPartStorer(2, SOURCE_FILE_ID, byteRange);
-        final B2CancellationToken cancellationToken = new B2CancellationToken();
 
-        assertEquals(part, partStorer.storePart(largeFileStorer, uploadListener, cancellationToken));
-        verify(largeFileStorer).copyPart(2, SOURCE_FILE_ID, byteRange, uploadListener, cancellationToken);
+        assertEquals(part, partStorer.storePart(largeFileStorer, uploadListener));
+        verify(largeFileStorer).copyPart(2, SOURCE_FILE_ID, byteRange, uploadListener);
     }
 }

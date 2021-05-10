@@ -23,7 +23,6 @@ public class B2AlreadyStoredPartStorerTest extends B2BaseTest {
     public void testStorePart() {
         final B2Part part = new B2Part(fileId(1), 2, 10000000, makeSha1(1), makeMd5(2), 1111, null);
         final B2AlreadyStoredPartStorer partStorer = new B2AlreadyStoredPartStorer(part);
-        final B2CancellationToken cancellationToken = new B2CancellationToken();
-        assertEquals(part, partStorer.storePart(mock(B2LargeFileStorer.class), uploadListener, cancellationToken));
+        assertEquals(part, partStorer.storePart(mock(B2LargeFileStorer.class), uploadListener));
     }
 }
