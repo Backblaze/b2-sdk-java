@@ -1,20 +1,20 @@
 # Changelog
 
-## [Unreleased]
-
-## [5.0.0] - 2021-01-20
-### Added
-* added an asynchronous large file upload method `B2StorageClient.storeLargeFileFromLocalContentAsync`
+## [5.0.0] - 2021-05-10
 ### Changed `[Incompatible]`
-* Disable automatic decompressing compressed content in HTTP client download library
+* Disabled automatic decompression of compressed content in HTTP client download library
+* Added `updateFileRetention` and `updateLegalHold` to `B2StorageClient`
+* Added `storeLargeFileFromLocalContentAsync` to `B2StorageClient` to support asynchronous large file uploads
 
 ### Added
+* Added Server-Side Encryption (SSE) support to relevant API requests/responses
+* Added File Lock support to relevant API requests/responses
 * Set gradle targetCompatibility to 1.8
 * Added support for java.util.SortedMap interface
 * Support more than 64 fields per object
 
 ### Fixed
-* Fix regular expression that has an unescaped .
+* Fixed regular expression that had an unescaped '.'
 
 ## [4.0.0] - 2020-05-11
 ### Added

@@ -14,12 +14,14 @@ import com.backblaze.b2.client.exceptions.B2LocalException;
 import com.backblaze.b2.client.exceptions.B2UnauthorizedException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
 import com.backblaze.b2.client.structures.B2ApplicationKey;
+import com.backblaze.b2.client.structures.B2AuthorizationFilteredResponseField;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
-import com.backblaze.b2.client.structures.B2CopyPartRequest;
+import com.backblaze.b2.client.structures.B2Capabilities;
 import com.backblaze.b2.client.structures.B2CopyFileRequest;
+import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
 import com.backblaze.b2.client.structures.B2CreateKeyRequestReal;
 import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
@@ -30,6 +32,9 @@ import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileRetention;
+import com.backblaze.b2.client.structures.B2FileSseForRequest;
+import com.backblaze.b2.client.structures.B2FileSseForResponse;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
@@ -55,6 +60,10 @@ import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionResponse;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
@@ -70,11 +79,14 @@ import com.backblaze.b2.util.B2StringUtil;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_ID;
 import static com.backblaze.b2.client.contentSources.B2Headers.FILE_NAME;
+import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.SSE_B2;
+import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.SSE_C;
 import static com.backblaze.b2.util.B2StringUtil.percentEncode;
 
 public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
@@ -221,7 +233,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
     @Override
     public B2UploadPartUrlResponse getUploadPartUrl(B2AccountAuthorization accountAuth,
-                                                B2GetUploadPartUrlRequest request) throws B2Exception {
+                                                    B2GetUploadPartUrlRequest request) throws B2Exception {
         return webApiClient.postJsonReturnJson(
                 makeUrl(accountAuth, "b2_get_upload_part_url"),
                 makeHeaders(accountAuth),
@@ -249,6 +261,43 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                     .set(B2Headers.CONTENT_TYPE, request.getContentType())
                     .set(B2Headers.CONTENT_SHA1, contentDetails.getContentSha1HeaderValue());
             setCommonHeaders(headersBuilder);
+
+            if (request.getServerSideEncryption() != null) {
+                switch (request.getServerSideEncryption().getMode()) {
+                    case SSE_B2:
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION,
+                                request.getServerSideEncryption().getAlgorithm());
+                        break;
+                    case SSE_C:
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM,
+                                request.getServerSideEncryption().getAlgorithm());
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY,
+                                request.getServerSideEncryption().getCustomerKey());
+                        headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5,
+                                request.getServerSideEncryption().getCustomerKeyMd5());
+                        break;
+                    default:
+                        throw new B2LocalException("invalid_sse_mode", "invalid SSE mode in uploadFile");
+                }
+            }
+
+            if (request.getLegalHold() != null) {
+                headersBuilder.set(B2Headers.FILE_LEGAL_HOLD,
+                        request.getLegalHold());
+            }
+
+            if (request.getFileRetention() != null) {
+                // no need to send file retention headers; but may need to receive one for HEAD calls
+                // discussed inside getFileInfoByName
+                if (request.getFileRetention().getMode() != null) {
+                    headersBuilder.set(B2Headers.FILE_RETENTION_MODE,
+                            request.getFileRetention().getMode());
+                }
+                if (request.getFileRetention().getRetainUntilTimestamp() != null) {
+                    headersBuilder.set(B2Headers.FILE_RETENTION_RETAIN_UNTIL_TIMESTAMP,
+                            request.getFileRetention().getRetainUntilTimestamp().toString());
+                }
+            }
 
             // if the source provides a last-modified time, add it.
             final Long lastModMillis;
@@ -317,6 +366,16 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                     .set(B2Headers.PART_NUMBER, Integer.toString(request.getPartNumber()))
                     .set(B2Headers.CONTENT_SHA1, contentDetails.getContentSha1HeaderValue());
             setCommonHeaders(headersBuilder);
+
+            if (request.getServerSideEncryption() != null) {
+                B2Preconditions.checkArgument(request.getServerSideEncryption().getMode().equals(SSE_C));
+                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM,
+                        request.getServerSideEncryption().getAlgorithm());
+                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY,
+                        request.getServerSideEncryption().getCustomerKey());
+                headersBuilder.set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5,
+                        request.getServerSideEncryption().getCustomerKeyMd5());
+            }
 
             try {
                 return webApiClient.postDataReturnJson(
@@ -421,6 +480,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         downloadGuts(accountAuth,
                 makeDownloadByIdUrl(accountAuth, request),
                 request.getRange(),
+                request.getServerSideEncryption(),
                 handler);
     }
 
@@ -437,22 +497,30 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
         downloadGuts(accountAuth,
                 makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request),
                 request.getRange(),
+                request.getServerSideEncryption(),
                 handler);
     }
 
     @Override
     public String getDownloadByNameUrl(B2AccountAuthorization accountAuth,
-                                B2DownloadByNameRequest request) {
+                                       B2DownloadByNameRequest request) {
         return makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request);
     }
 
     private void downloadGuts(B2AccountAuthorization accountAuth,
                               String url,
                               B2ByteRange rangeOrNull,
+                              B2FileSseForRequest serverSideEncryptionOrNull,
                               B2ContentSink handler) throws B2Exception {
         final Map<String, String> extras = new TreeMap<>();
         if (rangeOrNull != null) {
             extras.put(B2Headers.RANGE, rangeOrNull.toString());
+        }
+        if (serverSideEncryptionOrNull != null) {
+            B2Preconditions.checkArgument(serverSideEncryptionOrNull.getMode().equals(SSE_C));
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM, serverSideEncryptionOrNull.getAlgorithm());
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY, serverSideEncryptionOrNull.getCustomerKey());
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5, serverSideEncryptionOrNull.getCustomerKeyMd5());
         }
         webApiClient.getContent(
                 url,
@@ -493,9 +561,41 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     @Override
     public B2FileVersion getFileInfoByName(B2AccountAuthorization accountAuth,
                                            B2GetFileInfoByNameRequest request) throws B2Exception {
-        B2Headers headers = webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(),
-                request.getFileName()), makeHeaders(accountAuth));
+        final Map<String, String> extras = new TreeMap<>();
+        if (request.getServerSideEncryption() != null) {
+            B2Preconditions.checkArgument(request.getServerSideEncryption().getMode().equals(SSE_C));
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_ALGORITHM,
+                request.getServerSideEncryption().getAlgorithm());
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY,
+                request.getServerSideEncryption().getCustomerKey());
+            extras.put(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5,
+                request.getServerSideEncryption().getCustomerKeyMd5());
+        }
 
+        B2Headers headers = webApiClient.head(makeGetFileInfoByNameUrl(accountAuth, request.getBucketName(),
+                request.getFileName()), makeHeaders(accountAuth, extras));
+
+        final B2FileRetention b2FileRetentionOrNull = B2FileRetention.getFileRetentionFromHeadersOrNull(headers);
+        final String legalHoldOrNull = headers.getFileLegalHoldOrNull();
+
+        final List<String> capabilities = accountAuth.getAllowed().getCapabilities();
+        final B2AuthorizationFilteredResponseField<B2FileRetention> fileRetention;
+        // we rely on getCapabilities() rather than the CLIENT_UNAUTHORIZED_TO_READ header because the header is
+        // not sent for all files in all buckets due to header size limitations
+        if (capabilities.contains(B2Capabilities.READ_FILE_RETENTIONS)) {
+            fileRetention = new B2AuthorizationFilteredResponseField<>(true, b2FileRetentionOrNull);
+        } else {
+            fileRetention = new B2AuthorizationFilteredResponseField<>(false, null);
+        }
+
+        final B2AuthorizationFilteredResponseField<String> legalHold;
+        // we rely on getCapabilities() rather than the CLIENT_UNAUTHORIZED_TO_READ header because the header is
+        // not sent for all files in all buckets due to header size limitations
+        if (capabilities.contains(B2Capabilities.READ_FILE_LEGAL_HOLDS)) {
+            legalHold = new B2AuthorizationFilteredResponseField<>(true, legalHoldOrNull);
+        } else {
+            legalHold = new B2AuthorizationFilteredResponseField<>(false, null);
+        }
 
         // b2_download_file_by_name promises most of these will be present, except as noted below,
         return new B2FileVersion(
@@ -507,7 +607,10 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 headers.getContentMd5OrNull(),    // might be null.
                 headers.getB2FileInfo(),           // might be empty.
                 "upload",
-                headers.getUploadTimestampOrNull()
+                headers.getUploadTimestampOrNull(),
+                fileRetention,
+                legalHold,
+                B2FileSseForResponse.getEncryptionFromHeadersOrNull(headers) // might be null.
         );
     }
 
@@ -539,6 +642,26 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 makeHeaders(accountAuth),
                 request,
                 B2Bucket.class);
+    }
+
+    @Override
+    public B2UpdateFileLegalHoldResponse updateFileLegalHold(B2AccountAuthorization accountAuth,
+                                                             B2UpdateFileLegalHoldRequest request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeUrl(accountAuth, "b2_update_file_legal_hold"),
+                makeHeaders(accountAuth),
+                request,
+                B2UpdateFileLegalHoldResponse.class);
+    }
+
+    @Override
+    public B2UpdateFileRetentionResponse updateFileRetention(B2AccountAuthorization accountAuth,
+                                                             B2UpdateFileRetentionRequest request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeUrl(accountAuth, "b2_update_file_retention"),
+                makeHeaders(accountAuth),
+                request,
+                B2UpdateFileRetentionResponse.class);
     }
 
     private void addAuthHeader(B2HeadersImpl.Builder builder,
@@ -588,6 +711,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
     private String makeDownloadByIdUrl(B2AccountAuthorization accountAuth,
                                        B2DownloadByIdRequest request) {
+        B2Preconditions.checkArgumentIsNotNull(request, "request");
         final String downloadUrl = accountAuth.getDownloadUrl();
         final StringBuilder uriBuilder = new StringBuilder(downloadUrl);
 
@@ -600,9 +724,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 .append("b2_download_file_by_id?fileId=")
                 .append(request.getFileId());
 
-        if (request != null) {
-            maybeAddOverrideHeadersToUrl(uriBuilder, 1, request);
-        }
+        maybeAddOverrideHeadersToUrl(uriBuilder, 1, request);
         return uriBuilder.toString();
     }
 
@@ -700,8 +822,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     }
 
     private boolean isLegalInfoNameCharacter(char c) {
-        /**
-         * Chars allowed in header as defined by: https://tools.ietf.org/html/rfc7230#section-3.2.6
+        /*
+          Chars allowed in header as defined by: https://tools.ietf.org/html/rfc7230#section-3.2.6
          */
         return
                 ('a' <= c && c <= 'z') ||

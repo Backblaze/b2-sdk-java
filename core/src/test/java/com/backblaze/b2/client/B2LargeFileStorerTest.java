@@ -8,9 +8,11 @@ import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.exceptions.B2InternalErrorException;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
@@ -43,8 +45,8 @@ import static com.backblaze.b2.client.B2TestHelpers.fileId;
 import static com.backblaze.b2.client.B2TestHelpers.makeMd5;
 import static com.backblaze.b2.client.B2TestHelpers.makeSha1;
 import static com.backblaze.b2.client.B2TestHelpers.makeVersion;
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
@@ -69,9 +71,9 @@ public class B2LargeFileStorerTest extends B2BaseTest {
     private final B2FileVersion largeFileVersion = makeVersion(4, 4);
 
     // Set up the parts of the large file.
-    private final B2Part part1 = new B2Part(fileId(1), 1, PART_SIZE_FOR_FIRST_TWO, makeSha1(1), makeMd5(1), 1111);
-    private final B2Part part2 = new B2Part(fileId(2), 2, PART_SIZE_FOR_FIRST_TWO, makeSha1(2), makeMd5(2), 2222);
-    private final B2Part part3 = new B2Part(fileId(3), 3, LAST_PART_SIZE, makeSha1(3), makeMd5(3), 3333);
+    private final B2Part part1 = new B2Part(fileId(1), 1, PART_SIZE_FOR_FIRST_TWO, makeSha1(1), makeMd5(1), 1111, null);
+    private final B2Part part2 = new B2Part(fileId(2), 2, PART_SIZE_FOR_FIRST_TWO, makeSha1(2), makeMd5(2), 2222, null);
+    private final B2Part part3 = new B2Part(fileId(3), 3, LAST_PART_SIZE, makeSha1(3), makeMd5(3), 3333, null);
 
 
     private final B2PartSizes partSizes;
@@ -107,7 +109,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
 
     public List<B2PartStorer> createB2LargeFileStorerAndGetSortedPartStorers(List<B2PartStorer> outOfOrderPartStorers) {
         return new B2LargeFileStorer(
-                largeFileVersion,
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
                 outOfOrderPartStorers,
                 authCache,
                 webifier,
@@ -157,7 +159,6 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         createB2LargeFileStorerAndGetSortedPartStorers(partStorers);
     }
 
-
     private B2LargeFileStorer createFromLocalContent() throws B2Exception {
         final B2ContentSource contentSource = new TestContentSource(0, FILE_SIZE);
 
@@ -187,7 +188,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
                 new B2UploadingPartStorer(4, createContentSourceWithSize(900)));
 
         return new B2LargeFileStorer(
-                largeFileVersion,
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
                 partStorers,
                 authCache,
                 webifier,
@@ -245,7 +246,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         partStorers.add(new B2AlreadyStoredPartStorer(part3));
 
         final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                largeFileVersion,
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
                 partStorers,
                 authCache,
                 webifier,
@@ -270,7 +271,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         partStorers.add(new B2AlreadyStoredPartStorer(part3));
 
         final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                largeFileVersion,
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
                 partStorers,
                 authCache,
                 webifier,
@@ -418,7 +419,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
     }
 
     @Test
-    public void testStoreFileAsyncCancelled() throws B2Exception, IOException, ExecutionException, InterruptedException {
+    public void testStoreFileAsyncCancelled() throws B2Exception, IOException {
         final List<B2PartStorer> partStorers = new ArrayList<>();
         final B2ContentSource contentSourceForPart1 = mock(B2ContentSource.class);
         final B2ContentSource contentSourceForPart2 = mock(B2ContentSource.class);
@@ -439,7 +440,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         partStorers.add(new B2AlreadyStoredPartStorer(part3));
 
         final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                largeFileVersion,
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
                 partStorers,
                 authCache,
                 webifier,
@@ -464,6 +465,15 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         } catch (Exception e) {
             Assert.fail("we should have gotten a CancellationException");
         }
+    }
+
+    @Test
+    public void testStoreLargeFileRequest_withSseB2_throwsIllegalArgumentException() {
+        thrown.expect(IllegalArgumentException.class);
+
+        B2StoreLargeFileRequest.builder(largeFileVersion)
+                .setServerSideEncryption(B2FileSseForRequest.createSseB2Aes256())
+                .build();
     }
 
     @Test

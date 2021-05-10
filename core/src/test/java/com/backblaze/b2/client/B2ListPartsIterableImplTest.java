@@ -204,6 +204,7 @@ public class B2ListPartsIterableImplTest extends B2BaseTest {
                 i * 1000 * 1000,
                 SAMPLE_SHA1,
                 SAMPLE_MD5,
-                i);
+                i,
+                null);
     }
 }

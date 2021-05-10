@@ -13,17 +13,23 @@ public class B2CreateBucketRequest {
     private final Map<String,String> bucketInfo;
     private final List<B2CorsRule> corsRules;
     private final List<B2LifecycleRule> lifecycleRules;
+    private final boolean fileLockEnabled;
+    private final B2BucketServerSideEncryption defaultServerSideEncryption;
 
     public B2CreateBucketRequest(String bucketName,
                                  String bucketType,
                                  Map<String, String> bucketInfo,
                                  List<B2CorsRule> corsRules,
-                                 List<B2LifecycleRule> lifecycleRules) {
+                                 List<B2LifecycleRule> lifecycleRules,
+                                 boolean fileLockEnabled,
+                                 B2BucketServerSideEncryption defaultServerSideEncryption) {
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
+        this.fileLockEnabled = fileLockEnabled;
+        this.defaultServerSideEncryption = defaultServerSideEncryption;
     }
 
     public String getBucketName() {
@@ -46,6 +52,14 @@ public class B2CreateBucketRequest {
         return lifecycleRules;
     }
 
+    public boolean isFileLockEnabled() {
+        return fileLockEnabled;
+    }
+
+    public B2BucketServerSideEncryption getDefaultServerSideEncryption() {
+        return defaultServerSideEncryption;
+    }
+
     public static Builder builder(String bucketName, String bucketType) {
         return new Builder(bucketName, bucketType);
     }
@@ -57,6 +71,8 @@ public class B2CreateBucketRequest {
         private Map<String, String> bucketInfo;
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
+        private boolean fileLockEnabled;
+        private B2BucketServerSideEncryption defaultServerSideEncryption;
 
         Builder(String bucketName,
                 String bucketType) {
@@ -79,8 +95,25 @@ public class B2CreateBucketRequest {
             return this;
         }
 
+        public Builder setFileLockEnabled(boolean fileLockEnabled) {
+            this.fileLockEnabled = fileLockEnabled;
+            return this;
+        }
+
+        public Builder setDefaultServerSideEncryption(B2BucketServerSideEncryption defaultServerSideEncryption) {
+            this.defaultServerSideEncryption = defaultServerSideEncryption;
+            return this;
+        }
+
         public B2CreateBucketRequest build() {
-            return new B2CreateBucketRequest(bucketName, bucketType, bucketInfo, corsRules, lifecycleRules);
+            return new B2CreateBucketRequest(
+                    bucketName,
+                    bucketType,
+                    bucketInfo,
+                    corsRules,
+                    lifecycleRules,
+                    fileLockEnabled,
+                    defaultServerSideEncryption);
         }
     }
 }

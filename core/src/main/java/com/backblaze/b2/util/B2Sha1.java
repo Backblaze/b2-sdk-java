@@ -72,7 +72,6 @@ public interface B2Sha1 {
      * @param sha1b the second sha1 to compare.  must be non-null.
      * @return true iff these represent the same sha1.
      */
-
     static boolean equalHexSha1s(String sha1a, String sha1b) {
         B2Preconditions.checkArgument(sha1a != null);
         B2Preconditions.checkArgument(sha1b != null);

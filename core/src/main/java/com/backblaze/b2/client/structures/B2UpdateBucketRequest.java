@@ -30,15 +30,24 @@ public class B2UpdateBucketRequest {
     private final List<B2LifecycleRule> lifecycleRules;
 
     @B2Json.optional
+    private final B2BucketDefaultRetention defaultRetention;
+
+    @B2Json.optional
+    private final B2BucketServerSideEncryption defaultServerSideEncryption;
+
+    @B2Json.optional
     private final Integer ifRevisionIs;
 
-    @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,corsRules,lifecycleRules,ifRevisionIs")
+    @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,corsRules,lifecycleRules," +
+            "defaultRetention,defaultServerSideEncryption,ifRevisionIs")
     private B2UpdateBucketRequest(String accountId,
                                   String bucketId,
                                   String bucketType,
                                   Map<String, String> bucketInfo,
                                   List<B2CorsRule> corsRules,
                                   List<B2LifecycleRule> lifecycleRules,
+                                  B2BucketDefaultRetention defaultRetention,
+                                  B2BucketServerSideEncryption defaultServerSideEncryption,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -46,6 +55,8 @@ public class B2UpdateBucketRequest {
         this.bucketInfo = bucketInfo;
         this.corsRules = corsRules;
         this.lifecycleRules = lifecycleRules;
+        this.defaultRetention = defaultRetention;
+        this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.ifRevisionIs = ifRevisionIs;
     }
 
@@ -73,6 +84,13 @@ public class B2UpdateBucketRequest {
         return lifecycleRules;
     }
 
+    public B2BucketDefaultRetention getDefaultRetention()
+    { return defaultRetention; }
+
+    public B2BucketServerSideEncryption getDefaultServerSideEncryption() {
+        return defaultServerSideEncryption;
+    }
+
     public Integer getIfRevisionIs() {
         return ifRevisionIs;
     }
@@ -88,6 +106,8 @@ public class B2UpdateBucketRequest {
                 Objects.equals(getBucketInfo(), that.getBucketInfo()) &&
                 Objects.equals(getCorsRules(), that.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), that.getLifecycleRules()) &&
+                Objects.equals(getDefaultRetention(), that.getDefaultRetention()) &&
+                Objects.equals(getDefaultServerSideEncryption(), that.getDefaultServerSideEncryption()) &&
                 Objects.equals(getIfRevisionIs(), that.getIfRevisionIs());
     }
 
@@ -100,6 +120,8 @@ public class B2UpdateBucketRequest {
                 getBucketInfo(),
                 getCorsRules(),
                 getLifecycleRules(),
+                getDefaultRetention(),
+                getDefaultServerSideEncryption(),
                 getIfRevisionIs());
     }
 
@@ -119,7 +141,8 @@ public class B2UpdateBucketRequest {
         private Map<String, String> bucketInfo;
         private List<B2CorsRule> corsRules;
         private List<B2LifecycleRule> lifecycleRules;
-
+        private B2BucketDefaultRetention defaultRetention;
+        private B2BucketServerSideEncryption defaultServerSideEncryption;
 
         private Builder(B2Bucket bucket) {
             this.accountId = bucket.getAccountId();
@@ -147,6 +170,15 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
+        public Builder setDefaultRetention(B2BucketDefaultRetention defaultRetention) {
+            this.defaultRetention = defaultRetention;
+            return this;
+        }
+
+        public Builder setDefaultServerSideEncryption(B2BucketServerSideEncryption defaultServerSideEncryption) {
+            this.defaultServerSideEncryption = defaultServerSideEncryption;
+            return this;
+        }
 
         public B2UpdateBucketRequest build() {
             return new B2UpdateBucketRequest(
@@ -156,6 +188,8 @@ public class B2UpdateBucketRequest {
                     bucketInfo,
                     corsRules,
                     lifecycleRules,
+                    defaultRetention,
+                    defaultServerSideEncryption,
                     ifRevisionIs);
         }
     }

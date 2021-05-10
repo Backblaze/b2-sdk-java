@@ -14,6 +14,7 @@ import java.util.Objects;
 public class B2DownloadByIdRequest implements B2OverrideableHeaders {
     private final String fileId;
     private final B2ByteRange range;
+    private final B2FileSseForRequest serverSideEncryption;
     private final String b2ContentDisposition;
     private final String b2ContentLanguage;
     private final String b2Expires;
@@ -22,15 +23,18 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
     private final String b2ContentType;
 
     private B2DownloadByIdRequest(String fileId,
-                                 B2ByteRange range,
-                                 String b2ContentDisposition,
-                                 String b2ContentLanguage,
-                                 String b2Expires,
-                                 String b2CacheControl,
-                                 String b2ContentEncoding,
-                                 String b2ContentType) {
+                                  B2ByteRange range,
+                                  B2FileSseForRequest serverSideEncryption,
+                                  String b2ContentDisposition,
+                                  String b2ContentLanguage,
+                                  String b2Expires,
+                                  String b2CacheControl,
+                                  String b2ContentEncoding,
+                                  String b2ContentType) {
+
         this.fileId = fileId;
         this.range = range;
+        this.serverSideEncryption = serverSideEncryption;
         this.b2ContentDisposition = b2ContentDisposition;
         this.b2ContentLanguage = b2ContentLanguage;
         this.b2Expires = b2Expires;
@@ -45,6 +49,10 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
 
     public B2ByteRange getRange() {
         return range;
+    }
+
+    public B2FileSseForRequest getServerSideEncryption() {
+        return serverSideEncryption;
     }
 
     @Override
@@ -84,6 +92,7 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
         B2DownloadByIdRequest that = (B2DownloadByIdRequest) o;
         return Objects.equals(fileId, that.fileId) &&
                 Objects.equals(range, that.range) &&
+                Objects.equals(serverSideEncryption, that.serverSideEncryption) &&
                 Objects.equals(b2ContentDisposition, that.b2ContentDisposition) &&
                 Objects.equals(b2ContentLanguage, that.b2ContentLanguage) &&
                 Objects.equals(b2Expires, that.b2Expires) &&
@@ -94,7 +103,7 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
 
     @Override
     public int hashCode() {
-        return Objects.hash(fileId, range, b2ContentDisposition, b2ContentLanguage, b2Expires, b2CacheControl, b2ContentEncoding, b2ContentType);
+        return Objects.hash(fileId, range, serverSideEncryption, b2ContentDisposition, b2ContentLanguage, b2Expires, b2CacheControl, b2ContentEncoding, b2ContentType);
     }
 
     public static Builder builder(String fileId) {
@@ -104,6 +113,7 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
     public static class Builder {
         private final String fileId;
         private B2ByteRange range;
+        private B2FileSseForRequest serverSideEncryption;
         private String b2ContentDisposition;
         private String b2ContentLanguage;
         private String b2Expires;
@@ -115,14 +125,10 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
             this.fileId = fileId;
         }
 
-        public Builder setRange(B2ByteRange range) {
-            this.range = range;
-            return this;
-        }
-
         public B2DownloadByIdRequest build() {
             return new B2DownloadByIdRequest(fileId,
                     range,
+                    serverSideEncryption,
                     b2ContentDisposition,
                     b2ContentLanguage,
                     b2Expires,
@@ -131,7 +137,16 @@ public class B2DownloadByIdRequest implements B2OverrideableHeaders {
                     b2ContentType);
         }
 
-        @SuppressWarnings("unused")
+        public Builder setRange(B2ByteRange range) {
+            this.range = range;
+            return this;
+        }
+
+        public Builder setServerSideEncryption(B2FileSseForRequest serverSideEncryption) {
+            this.serverSideEncryption = serverSideEncryption;
+            return this;
+        }
+
         public Builder setB2ContentDisposition(String b2ContentDisposition) {
             this.b2ContentDisposition = b2ContentDisposition;
             return this;

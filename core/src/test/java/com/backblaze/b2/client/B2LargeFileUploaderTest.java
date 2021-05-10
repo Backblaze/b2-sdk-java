@@ -216,7 +216,8 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
         // arrange to throw when asked for the sha1.
         when(contentSource.getSha1OrNull()).thenThrow(new IOException("testing"));
 
-        final B2FileVersion version = new B2FileVersion(fileId(1),
+        final B2FileVersion version = new B2FileVersion(
+                fileId(1),
                 fileName(1),
                 contentSource.getContentLength(),
                 B2ContentTypes.B2_AUTO,
@@ -224,7 +225,10 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "upload",
-                123L);
+                123L,
+                null,
+                null,
+                null);
 
         recordingListener.setExpected(); // no progress because threw before starting uploads.
 
@@ -329,7 +333,10 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null, // md5
                 B2Collections.mapOf(),
                 "action",
-                1234
+                1234,
+                null,
+                null,
+                null
         );
 
         thrown.expect(B2LocalException.class);
@@ -351,7 +358,10 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null, // md5 of the file
                 B2Collections.mapOf(B2Headers.LARGE_FILE_SHA1_INFO_NAME, makeSha1(1)),
                 "action",
-                1234
+                1234,
+                null,
+                null,
+                null
         );
 
         thrown.expect(B2LocalException.class);
@@ -373,7 +383,10 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "action",
-                1234
+                1234,
+                null,
+                null,
+                null
         );
 
         thrown.expect(B2LocalException.class);
@@ -395,7 +408,10 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "action",
-                1234
+                1234,
+                null,
+                null,
+                null
         );
 
         // shouldn't throw.  :)
@@ -417,7 +433,10 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "action",
-                1234
+                1234,
+                null,
+                null,
+                null
         );
 
         thrown.expect(B2LocalException.class);
@@ -448,7 +467,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testOneAlreadyUploadedPartThatMatches_part1() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
-                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111)
+                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111, null)
         );
 
         recordingListener.setExpected(
@@ -470,7 +489,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testOneAlreadyUploadedPartThatMatches_part3() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
-                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333)
+                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333, null)
         );
 
         recordingListener.setExpected(
@@ -491,9 +510,9 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testThreeAlreadyUploadedParts_allMatch() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf( // out-of-order on purpose.  should still be found.
-                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333),
-                new B2Part(largeFileId, 2, 1041, makeSha1(2), makeMd5(2), 2222),
-                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111)
+                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333, null),
+                new B2Part(largeFileId, 2, 1041, makeSha1(2), makeMd5(2), 2222, null),
+                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111, null)
         );
 
         recordingListener.setExpected(
@@ -512,10 +531,10 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     public void testFourAlreadyUploadedPart_noneMatch() throws IOException, B2Exception {
         final String largeFileId = fileId(1);
         final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
-                new B2Part(largeFileId, 6, 1041, makeSha1(1), makeMd5(1), 1111),  // unneeded part number
-                new B2Part(largeFileId, 2, 6666, makeSha1(2), makeMd5(2), 2222),  // bad size
-                new B2Part(largeFileId, 3, 1041, makeSha1(3), makeMd5(3), 3333),  // bad size
-                new B2Part(largeFileId, 4, 1041, makeSha1(4), makeMd5(4), 1111)   // unneeded part number
+                new B2Part(largeFileId, 6, 1041, makeSha1(1), makeMd5(1), 1111, null),  // unneeded part number
+                new B2Part(largeFileId, 2, 6666, makeSha1(2), makeMd5(2), 2222, null),  // bad size
+                new B2Part(largeFileId, 3, 1041, makeSha1(3), makeMd5(3), 3333, null),  // bad size
+                new B2Part(largeFileId, 4, 1041, makeSha1(4), makeMd5(4), 1111, null)   // unneeded part number
         );
 
         recordingListener.setExpected(
@@ -550,7 +569,10 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "upload",
-                B2Clock.get().wallClockMillis());
+                B2Clock.get().wallClockMillis(),
+                null,
+                null,
+                null);
 
 
         // arrange to answer get_upload_part_url (which will be called several times, but it's ok to reuse the same value since it's all mocked!)

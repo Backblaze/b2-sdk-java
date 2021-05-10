@@ -34,4 +34,15 @@ public interface B2Capabilities {
     String SHARE_FILES = "shareFiles";
     String WRITE_FILES = "writeFiles";
     String DELETE_FILES = "deleteFiles";
+
+    String READ_BUCKET_ENCRYPTION = "readBucketEncryption";
+    String WRITE_BUCKET_ENCRYPTION = "writeBucketEncryption";
+
+    String BYPASS_GOVERNANCE = "bypassGovernance";
+    String READ_BUCKET_RETENTIONS = "readBucketRetentions";
+    String WRITE_BUCKET_RETENTIONS = "writeBucketRetentions";
+    String READ_FILE_RETENTIONS = "readFileRetentions";
+    String WRITE_FILE_RETENTIONS = "writeFileRetentions";
+    String READ_FILE_LEGAL_HOLDS = "readFileLegalHolds";
+    String WRITE_FILE_LEGAL_HOLDS = "writeFileLegalHolds";
 }

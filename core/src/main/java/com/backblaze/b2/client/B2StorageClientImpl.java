@@ -48,7 +48,12 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
+import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionResponse;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
@@ -166,6 +171,7 @@ public class B2StorageClientImpl implements B2StorageClient {
         );
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Override
     public B2ListKeysIterable applicationKeys(B2ListKeysRequest request) throws B2Exception {
         return new B2ListKeysIterable(this, request);
@@ -239,8 +245,18 @@ public class B2StorageClientImpl implements B2StorageClient {
             B2UploadListener uploadListener,
             ExecutorService executor) throws B2Exception {
 
+        return storeLargeFileFromLocalContent(B2StoreLargeFileRequest.builder(fileVersion).build(), contentSource, uploadListener, executor);
+    }
+
+    @Override
+    public B2FileVersion storeLargeFileFromLocalContent(
+            B2StoreLargeFileRequest storeLargeFileRequest,
+            B2ContentSource contentSource,
+            B2UploadListener uploadListener,
+            ExecutorService executor) throws B2Exception {
+
         return B2LargeFileStorer.forLocalContent(
-                fileVersion,
+                storeLargeFileRequest,
                 contentSource,
                 getPartSizes(),
                 accountAuthCache,
@@ -257,8 +273,18 @@ public class B2StorageClientImpl implements B2StorageClient {
             B2UploadListener uploadListenerOrNull,
             ExecutorService executor) throws B2Exception {
 
+        return storeLargeFileFromLocalContentAsync(B2StoreLargeFileRequest.builder(fileVersion).build(), contentSource, uploadListenerOrNull, executor);
+    }
+
+    @Override
+    public CompletableFuture<B2FileVersion> storeLargeFileFromLocalContentAsync(
+            B2StoreLargeFileRequest storeLargeFileRequest,
+            B2ContentSource contentSource,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception {
+
         final B2LargeFileStorer storer = B2LargeFileStorer.forLocalContent(
-                fileVersion,
+                storeLargeFileRequest,
                 contentSource,
                 getPartSizes(),
                 accountAuthCache,
@@ -276,10 +302,19 @@ public class B2StorageClientImpl implements B2StorageClient {
             List<B2PartStorer> partStorers,
             B2UploadListener uploadListenerOrNull,
             ExecutorService executor) throws B2Exception {
+        return storeLargeFile(B2StoreLargeFileRequest.builder(fileVersion).build(), partStorers, uploadListenerOrNull, executor);
+    }
+
+    @Override
+    public B2FileVersion storeLargeFile(
+            B2StoreLargeFileRequest storeLargeFileRequest,
+            List<B2PartStorer> partStorers,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception {
 
         // Instantiate and return the manager.
         return new B2LargeFileStorer(
-                fileVersion,
+                storeLargeFileRequest,
                 partStorers,
                 accountAuthCache,
                 webifier,
@@ -322,11 +357,13 @@ public class B2StorageClientImpl implements B2StorageClient {
 
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Override
     public B2ListFilesIterable fileVersions(B2ListFileVersionsRequest request) throws B2Exception {
         return new B2ListFileVersionsIterable(this, request);
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Override
     public B2ListFilesIterable fileNames(B2ListFileNamesRequest request) throws B2Exception {
         return new B2ListFileNamesIterable(this, request);
@@ -491,6 +528,21 @@ public class B2StorageClientImpl implements B2StorageClient {
                 () -> webifier.finishLargeFile(accountAuthCache.get(), request),
                 retryPolicySupplier.get());
     }
+
+    @Override
+    public B2UpdateFileLegalHoldResponse updateFileLegalHold(B2UpdateFileLegalHoldRequest request) throws B2Exception {
+        return retryer.doRetry("b2_update_file_legal_hold", accountAuthCache,
+                () -> webifier.updateFileLegalHold(accountAuthCache.get(), request),
+                retryPolicySupplier.get());
+    }
+
+    @Override
+    public B2UpdateFileRetentionResponse updateFileRetention(B2UpdateFileRetentionRequest request) throws B2Exception {
+        return retryer.doRetry("b2_update_file_retention", accountAuthCache,
+                () -> webifier.updateFileRetention(accountAuthCache.get(), request),
+                retryPolicySupplier.get());
+    }
+
 
     //
     // For use by our iterators

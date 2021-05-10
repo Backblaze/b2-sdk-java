@@ -19,13 +19,24 @@ public class B2CopyPartRequest {
     private final String largeFileId;
     @B2Json.optional
     private final String range;
+    @B2Json.optional
+    private final B2FileSseForRequest sourceServerSideEncryption;
+    @B2Json.optional
+    private final B2FileSseForRequest destinationServerSideEncryption;
 
-    @B2Json.constructor(params = "partNumber, sourceFileId, largeFileId, range")
-    private B2CopyPartRequest(int partNumber, String sourceFileId, String largeFileId, String range) {
+    @B2Json.constructor(params = "partNumber, sourceFileId, largeFileId, range, sourceServerSideEncryption, destinationServerSideEncryption")
+    private B2CopyPartRequest(int partNumber,
+                              String sourceFileId,
+                              String largeFileId,
+                              String range,
+                              B2FileSseForRequest sourceServerSideEncryption,
+                              B2FileSseForRequest destinationServerSideEncryption) {
         this.partNumber = partNumber;
         this.sourceFileId = sourceFileId;
         this.largeFileId = largeFileId;
         this.range = range;
+        this.sourceServerSideEncryption = sourceServerSideEncryption;
+        this.destinationServerSideEncryption = destinationServerSideEncryption;
     }
 
     public static Builder builder(int partNumber, String sourceFileId, String largeFileId) {
@@ -48,6 +59,14 @@ public class B2CopyPartRequest {
         return range;
     }
 
+    public B2FileSseForRequest getSourceServerSideEncryption() {
+        return sourceServerSideEncryption;
+    }
+
+    public B2FileSseForRequest getDestinationServerSideEncryption() {
+        return destinationServerSideEncryption;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -56,12 +75,14 @@ public class B2CopyPartRequest {
         return partNumber == that.partNumber &&
                 Objects.equals(sourceFileId, that.sourceFileId) &&
                 Objects.equals(largeFileId, that.largeFileId) &&
-                Objects.equals(range, that.range);
+                Objects.equals(range, that.range) &&
+                Objects.equals(sourceServerSideEncryption, that.sourceServerSideEncryption) &&
+                Objects.equals(destinationServerSideEncryption, that.destinationServerSideEncryption);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(partNumber, sourceFileId, largeFileId, range);
+        return Objects.hash(partNumber, sourceFileId, largeFileId, range, sourceServerSideEncryption, destinationServerSideEncryption);
     }
 
     public static class Builder {
@@ -69,6 +90,8 @@ public class B2CopyPartRequest {
         private final String sourceFileId;
         private final String largeFileId;
         private B2ByteRange range;
+        private B2FileSseForRequest sourceServerSideEncryption;
+        private B2FileSseForRequest destinationServerSideEncryption;
 
         public Builder(int partNumber, String sourceFileId, String largeFileId) {
             this.partNumber = partNumber;
@@ -81,11 +104,23 @@ public class B2CopyPartRequest {
             return this;
         }
 
+        public Builder setSourceServerSideEncryption(B2FileSseForRequest sourceServerSideEncryption) {
+            this.sourceServerSideEncryption = sourceServerSideEncryption;
+            return this;
+        }
+
+        public Builder setDestinationServerSideEncryption(B2FileSseForRequest destinationServerSideEncryption) {
+            this.destinationServerSideEncryption = destinationServerSideEncryption;
+            return this;
+        }
+
         public B2CopyPartRequest build() {
             return new B2CopyPartRequest(
                     partNumber, sourceFileId,
                     largeFileId,
-                    range == null ? null : range.toString());
+                    range == null ? null : range.toString(),
+                    sourceServerSideEncryption,
+                    destinationServerSideEncryption);
         }
     }
 }

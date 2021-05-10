@@ -18,6 +18,7 @@ env:
 
 before_install:
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+  - pip3 install "setuptools_scm[toml]<6.0"
   - pip3 install b2
 
 script:

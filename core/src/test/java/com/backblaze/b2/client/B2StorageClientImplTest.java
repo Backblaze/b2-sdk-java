@@ -9,8 +9,11 @@ import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.client.contentSources.B2ContentTypes;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2AccountAuthorization;
+import com.backblaze.b2.client.structures.B2AuthorizationFilteredResponseField;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2Bucket;
+import com.backblaze.b2.client.structures.B2BucketFileLockConfiguration;
+import com.backblaze.b2.client.structures.B2BucketServerSideEncryption;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
@@ -24,6 +27,8 @@ import com.backblaze.b2.client.structures.B2DeleteFileVersionResponse;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileRetention;
+import com.backblaze.b2.client.structures.B2FileRetentionMode;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
@@ -32,6 +37,7 @@ import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
 import com.backblaze.b2.client.structures.B2HideFileRequest;
+import com.backblaze.b2.client.structures.B2LegalHold;
 import com.backblaze.b2.client.structures.B2LifecycleRule;
 import com.backblaze.b2.client.structures.B2ListBucketsRequest;
 import com.backblaze.b2.client.structures.B2ListBucketsResponse;
@@ -46,6 +52,10 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldResponse;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionResponse;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
@@ -89,7 +99,8 @@ import static com.backblaze.b2.util.B2DateTimeUtil.parseDateTime;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertSame;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
@@ -126,7 +137,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         B2ExecutorUtils.shutdownAndAwaitTermination(executor, 10, 10);
     }
 
@@ -181,6 +192,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 null,
                 null,
                 Collections.emptySet(),
+                null,
+                null,
                 1);
         when(webifier.createBucket(anyObject(), anyObject())).thenReturn(bucket);
 
@@ -194,8 +207,9 @@ public class B2StorageClientImplTest extends B2BaseTest {
                         BUCKET_TYPE,
                         null,
                         null,
-                        null
-                )
+                        null,
+                        false,
+                        null)
         );
         verify(webifier, times(1)).createBucket(eq(ACCOUNT_AUTH), eq(expectedRequest));
         retryer.assertCallCountIs(2); // auth + createBucket.
@@ -210,10 +224,13 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final List<B2LifecycleRule> lifecycleRules = listOf(
                 B2LifecycleRule.builder(FILE_PREFIX).build()
         );
+        final B2BucketServerSideEncryption defaultServerSideEncryption =
+                B2BucketServerSideEncryption.createSseB2Aes256();
         final B2CreateBucketRequest request = B2CreateBucketRequest
                 .builder(BUCKET_NAME, BUCKET_TYPE)
                 .setBucketInfo(bucketInfo)
                 .setLifecycleRules(lifecycleRules)
+                .setDefaultServerSideEncryption(defaultServerSideEncryption)
                 .build();
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
@@ -224,15 +241,16 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 new ArrayList<>(),
                 lifecycleRules,
                 Collections.emptySet(),
+                new B2AuthorizationFilteredResponseField<>(true, new B2BucketFileLockConfiguration(true)),
+                new B2AuthorizationFilteredResponseField<>(true, defaultServerSideEncryption),
                 1);
-        B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
+        final B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
         when(webifier.createBucket(ACCOUNT_AUTH, expectedRequest)).thenReturn(bucket);
 
         final B2Bucket response = client.createBucket(request);
         assertEquals(bucket, response);
 
         retryer.assertCallCountIs(2); // auth + createBucket.
-
 
         // for coverage
         //noinspection ResultOfMethodCallIgnored
@@ -244,7 +262,11 @@ public class B2StorageClientImplTest extends B2BaseTest {
         assertEquals(bucket(1), bucket(1));
         //noinspection ResultOfMethodCallIgnored
         bucket.hashCode();
-        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,0 options,v1)", bucket.toString());
+        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,0 options," +
+                "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                "value={true,B2FileRetention{mode=null, period=null}})," +
+                "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                "value={B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256}}),v1)", bucket.toString());
 
         final B2Bucket bucketWithOptions = new B2Bucket(
                 ACCOUNT_ID,
@@ -255,8 +277,15 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 new ArrayList<>(),
                 lifecycleRules,
                 B2TestHelpers.makeBucketOrApplicationKeyOptions(),
+                new B2AuthorizationFilteredResponseField<>(true, new B2BucketFileLockConfiguration(true)),
+                new B2AuthorizationFilteredResponseField<>(true, defaultServerSideEncryption),
                 1);
-        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, myOption2] options,v1)",
+
+        assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, " +
+                        "myOption2] options,B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                        "value={true,B2FileRetention{mode=null, period=null}})," +
+                        "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                        "value={B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256}}),v1)",
                 bucketWithOptions.toString());
     }
 
@@ -343,7 +372,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         when(webifier.listBuckets(ACCOUNT_AUTH, expectedRequest)).thenReturn(response);
 
         assertEquals(bucket(1), client.getBucketOrNullByName(BUCKET_NAME));
-        assertEquals(null, client.getBucketOrNullByName("noSuchBucket"));
+        assertNull(client.getBucketOrNullByName("noSuchBucket"));
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -353,6 +382,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 bucketId(i),
                 BUCKET_NAME,
                 BUCKET_TYPE,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -924,14 +955,17 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 null,
                 B2Collections.mapOf(),
                 "upload",
-                B2Clock.get().wallClockMillis());
+                B2Clock.get().wallClockMillis(),
+                null,
+                null,
+                null);
 
         final String largeFileId = largeFileVersion.getFileId();
 
         // arrange to find that two parts -- the first and third -- have already been uploaded.
         final List<B2Part> alreadyUploadedParts = listOf(
-                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111),
-                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333)
+                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111, null),
+                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333, null)
         );
         final B2ListPartsResponse listPartsResponse = new B2ListPartsResponse(alreadyUploadedParts, null);
         when(webifier.listParts(anyObject(), anyObject())).thenReturn(listPartsResponse);
@@ -971,7 +1005,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final B2UploadUrlResponse response = new B2UploadUrlResponse(bucketId(1), "uploadUrl", "uploadAuthToken");
         when(webifier.getUploadUrl(anyObject(), eq(request))).thenReturn(response);
 
-        assertTrue(response == client.getUploadUrl(request));
+        assertSame(response, client.getUploadUrl(request));
 
         verify(webifier, times(1)).authorizeAccount(anyObject());
         verify(webifier, times(1)).getUploadUrl(anyObject(), anyObject());
@@ -983,7 +1017,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final B2UploadPartUrlResponse response = new B2UploadPartUrlResponse(bucketId(1), "uploadUrl", "uploadAuthToken");
         when(webifier.getUploadPartUrl(anyObject(), eq(request))).thenReturn(response);
 
-        assertTrue(response == client.getUploadPartUrl(request));
+        assertSame(response, client.getUploadPartUrl(request));
 
         verify(webifier, times(1)).authorizeAccount(anyObject());
         verify(webifier, times(1)).getUploadPartUrl(anyObject(), anyObject());
@@ -997,7 +1031,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final B2FileVersion fileVersion = makeVersion(1, 2);
         when(webifier.startLargeFile(anyObject(), eq(request))).thenReturn(fileVersion);
 
-        assertTrue(fileVersion == client.startLargeFile(request));
+        assertSame(fileVersion, client.startLargeFile(request));
 
         verify(webifier, times(1)).authorizeAccount(anyObject());
         verify(webifier, times(1)).startLargeFile(anyObject(), anyObject());
@@ -1011,10 +1045,41 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final B2FileVersion fileVersion = makeVersion(1, 2);
         when(webifier.finishLargeFile(anyObject(), eq(request))).thenReturn(fileVersion);
 
-        assertTrue(fileVersion == client.finishLargeFile(request));
+        assertSame(fileVersion, client.finishLargeFile(request));
 
         verify(webifier, times(1)).authorizeAccount(anyObject());
         verify(webifier, times(1)).finishLargeFile(anyObject(), anyObject());
+    }
+
+    @Test
+    public void testUpdateFileLegalHold() throws B2Exception {
+        final B2UpdateFileLegalHoldRequest request = B2UpdateFileLegalHoldRequest
+                .builder(fileName(1), fileId(1), B2LegalHold.ON)
+                .build();
+        final B2UpdateFileLegalHoldResponse response =
+                new B2UpdateFileLegalHoldResponse(fileName(1), fileId(1), B2LegalHold.ON);
+        when(webifier.updateFileLegalHold(any(), eq(request))).thenReturn(response);
+
+        assertSame(response, client.updateFileLegalHold(request));
+
+        verify(webifier, times(1)).authorizeAccount(any());
+        verify(webifier, times(1)).updateFileLegalHold(any(), eq(request));
+    }
+
+    @Test
+    public void testUpdateFileRetention() throws B2Exception {
+        final B2FileRetention fileRetention = new B2FileRetention(B2FileRetentionMode.COMPLIANCE, 10000L);
+        final B2UpdateFileRetentionRequest request = B2UpdateFileRetentionRequest
+                .builder(fileName(1), fileId(1), fileRetention)
+                .build();
+        final B2UpdateFileRetentionResponse response =
+                new B2UpdateFileRetentionResponse(fileName(1), fileId(1), fileRetention);
+        when(webifier.updateFileRetention(any(), eq(request))).thenReturn(response);
+
+        assertSame(response, client.updateFileRetention(request));
+
+        verify(webifier, times(1)).authorizeAccount(any());
+        verify(webifier, times(1)).updateFileRetention(any(), eq(request));
     }
 
     @Test

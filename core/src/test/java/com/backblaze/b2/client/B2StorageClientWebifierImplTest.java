@@ -1,5 +1,5 @@
 /*
- * Copyright 2020, Backblaze Inc. All Rights Reserved.
+ * Copyright 2021, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -24,6 +24,9 @@ import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2FileRetention;
+import com.backblaze.b2.client.structures.B2FileRetentionMode;
+import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
@@ -32,6 +35,7 @@ import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
 import com.backblaze.b2.client.structures.B2GetUploadPartUrlRequest;
 import com.backblaze.b2.client.structures.B2GetUploadUrlRequest;
 import com.backblaze.b2.client.structures.B2HideFileRequest;
+import com.backblaze.b2.client.structures.B2LegalHold;
 import com.backblaze.b2.client.structures.B2ListBucketsRequest;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
@@ -40,6 +44,8 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileRetentionRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartRequest;
@@ -62,7 +68,9 @@ import org.junit.rules.ExpectedException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -435,6 +443,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "          \"maxAgeSeconds\": 0\n" +
                 "        }\n" +
                 "      ],\n" +
+                "      \"defaultServerSideEncryption\": null,\n" +
+                "      \"fileLockEnabled\": false,\n" +
                 "      \"lifecycleRules\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
@@ -629,7 +639,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      \"fileInfo\": {\n" +
                 "        \"color\": \"blue\"\n" +
                 "      },\n" +
-                "      \"fileName\": \"files/\u81ea\u7531/0001\"\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"serverSideEncryption\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2FileVersion\n"
@@ -665,7 +676,127 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "        \"color\": \"blue\",\n" +
                 "        \"large_file_sha1\": \"" + sha1 + "\"\n" +
                 "      },\n" +
-                "      \"fileName\": \"files/\u81ea\u7531/0001\"\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"serverSideEncryption\": null\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.startLargeFile(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testStartLargeFile_withSseC() throws B2Exception, IOException {
+        final String sha1 = contentSourceWithSha1.getSha1OrNull();
+        final B2UploadFileRequest uploadRequest = B2UploadFileRequest
+                .builder(bucketId(1), fileName(1), B2ContentTypes.TEXT_PLAIN, contentSourceWithSha1)
+                .setCustomField("color", "blue")
+                .setCustomField(B2Headers.LARGE_FILE_SHA1_INFO_NAME, sha1)
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customer-key", "customer-key-md5"))
+                .build();
+        final B2StartLargeFileRequest request = B2StartLargeFileRequest
+                .buildFrom(uploadRequest);
+        webifier.startLargeFile(ACCOUNT_AUTH, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_start_large_file\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"bucketId\": \"bucket1\",\n" +
+                "      \"contentType\": \"text/plain\",\n" +
+                "      \"fileInfo\": {\n" +
+                "        \"color\": \"blue\",\n" +
+                "        \"large_file_sha1\": \"" + sha1 + "\"\n" +
+                "      },\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"serverSideEncryption\": {\n" +
+                        "        \"algorithm\": \"AES256\",\n" +
+                        "        \"customerKey\": \"customer-key\",\n" +
+                        "        \"customerKeyMd5\": \"customer-key-md5\",\n" +
+                        "        \"mode\": \"SSE-C\"\n" +
+                        "      }\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.startLargeFile(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testStartLargeFile_withFileRetention() throws B2Exception, IOException {
+        final String sha1 = contentSourceWithSha1.getSha1OrNull();
+        final long expirationInMillis = Instant.now().plus(3L, ChronoUnit.DAYS).toEpochMilli();
+        final B2UploadFileRequest uploadRequest = B2UploadFileRequest
+                .builder(bucketId(1), fileName(1), B2ContentTypes.TEXT_PLAIN, contentSourceWithSha1)
+                .setFileRetention(new B2FileRetention(B2FileRetentionMode.COMPLIANCE, expirationInMillis))
+                .build();
+        final B2StartLargeFileRequest request = B2StartLargeFileRequest
+                .buildFrom(uploadRequest);
+        webifier.startLargeFile(ACCOUNT_AUTH, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_start_large_file\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"bucketId\": \"bucket1\",\n" +
+                "      \"contentType\": \"text/plain\",\n" +
+                "      \"fileInfo\": {\n" +
+                "        \"large_file_sha1\": \"" + sha1 + "\"\n" +
+                "      },\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"fileRetention\": {\n" +
+                "        \"mode\": \"compliance\",\n" +
+                "        \"retainUntilTimestamp\": " + expirationInMillis + "\n" +
+                "      },\n" +
+                "      \"serverSideEncryption\": null\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.startLargeFile(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testStartLargeFile_withLegalHold() throws B2Exception, IOException {
+        final String sha1 = contentSourceWithSha1.getSha1OrNull();
+        final B2UploadFileRequest uploadRequest = B2UploadFileRequest
+                .builder(bucketId(1), fileName(1), B2ContentTypes.TEXT_PLAIN, contentSourceWithSha1)
+                .setLegalHold(B2LegalHold.ON)
+                .build();
+        final B2StartLargeFileRequest request = B2StartLargeFileRequest
+                .buildFrom(uploadRequest);
+        webifier.startLargeFile(ACCOUNT_AUTH, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_start_large_file\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"bucketId\": \"bucket1\",\n" +
+                "      \"contentType\": \"text/plain\",\n" +
+                "      \"fileInfo\": {\n" +
+                "        \"large_file_sha1\": \"" + sha1 + "\"\n" +
+                "      },\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"legalHold\": \"on\",\n" +
+                "      \"serverSideEncryption\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2FileVersion\n"
@@ -773,6 +904,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "request:\n" +
                 "    {\n" +
+                "      \"bypassGovernance\": false,\n" +
                 "      \"fileId\": \"4_zBlah_0000001\",\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0001\"\n" +
                 "    }\n" +
@@ -890,7 +1022,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
 
         Map<String, String> expectedFileInfo = new HashMap<>();
-        expectedFileInfo.put("Color-with.special_chars`~!#$%^|\'*&+", "gr\u00fcn");
+        expectedFileInfo.put("Color-with.special_chars`~!#$%^|\\'*&+", "gr\u00fcn");
         expectedFileInfo.put("src_last_modified_millis", "1");
 
         assertEquals(fileId(1), version.getFileId());
@@ -907,6 +1039,39 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n");
+        checkRequestCategory(OTHER, w -> w.getFileInfoByName(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testGetFileInfoByNameWithSseC() throws B2Exception {
+        final B2GetFileInfoByNameRequest request = B2GetFileInfoByNameRequest
+            .builder(bucketName(1), fileName(1))
+            .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customerKey", "customerKeyMd5"))
+            .build();
+
+        final B2FileVersion version = webifier.getFileInfoByName(ACCOUNT_AUTH, request);
+
+        final Map<String, String> expectedFileInfo = new HashMap<>();
+        expectedFileInfo.put("Color-with.special_chars`~!#$%^|\\'*&+", "gr\u00fcn");
+        expectedFileInfo.put("src_last_modified_millis", "1");
+
+        assertEquals(fileId(1), version.getFileId());
+        assertEquals(fileName(1), version.getFileName());
+        assertEquals(1L, version.getContentLength());
+        assertEquals(1L, version.getUploadTimestamp());
+        assertEquals(expectedFileInfo, version.getFileInfo());
+        assertEquals(1L, Long.parseLong(version.getFileInfo().get("src_last_modified_millis")));
+
+        webApiClient.check("head.\n" +
+            "url:\n" +
+            "    downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001\n" +
+            "headers:\n" +
+            "    Authorization: accountToken1\n" +
+            "    User-Agent: SecretAgentMan/3.19.28\n" +
+            "    X-Bz-Server-Side-Encryption-Customer-Algorithm: AES256\n" +
+            "    X-Bz-Server-Side-Encryption-Customer-Key: customerKey\n" +
+            "    X-Bz-Server-Side-Encryption-Customer-Key-Md5: customerKeyMd5\n" +
+            "    X-Bz-Test-Mode: force_cap_exceeded\n");
         checkRequestCategory(OTHER, w -> w.getFileInfoByName(ACCOUNT_AUTH, request));
     }
 
@@ -971,6 +1136,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "          \"maxAgeSeconds\": 0\n" +
                 "        }\n" +
                 "      ],\n" +
+                "      \"defaultRetention\": null,\n" +
+                "      \"defaultServerSideEncryption\": null,\n" +
                 "      \"ifRevisionIs\": 1,\n" +
                 "      \"lifecycleRules\": null\n" +
                 "    }\n" +
@@ -1020,6 +1187,32 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n"
+        );
+
+        assertEquals(expectedUrl, webifier.getDownloadByIdUrl(ACCOUNT_AUTH, request));
+
+        checkRequestCategory(OTHER, w -> w.downloadById(ACCOUNT_AUTH, request, noopContentHandler));
+    }
+
+    @Test
+    public void testDownloadByIdWithSseC() throws B2Exception {
+        final String expectedUrl = "downloadUrl1/b2api/v2/b2_download_file_by_id?fileId=4_zBlah_0000001";
+        final B2DownloadByIdRequest request = B2DownloadByIdRequest
+                .builder(fileId(1))
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customerKey", "customerKeyMd5"))
+                .build();
+        webifier.downloadById(ACCOUNT_AUTH, request, noopContentHandler);
+
+        webApiClient.check("getContent.\n" +
+                "url:\n" +
+                "    " + expectedUrl + "\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Algorithm: AES256\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key: customerKey\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key-Md5: customerKeyMd5\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
 
@@ -1107,6 +1300,31 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "headers:\n" +
                 "    Authorization: accountToken1\n" +
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n"
+        );
+        assertEquals(expectedUrl, webifier.getDownloadByNameUrl(ACCOUNT_AUTH, request));
+
+        checkRequestCategory(OTHER, w -> w.downloadByName(ACCOUNT_AUTH, request, noopContentHandler));
+    }
+
+    @Test
+    public void testDownloadByNameWithSseC() throws B2Exception {
+        final String expectedUrl = "downloadUrl1/file/bucketName1/files/%E8%87%AA%E7%94%B1/0001";
+        final B2DownloadByNameRequest request = B2DownloadByNameRequest
+                .builder(bucketName(1), fileName(1))
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customerKey", "customerKeyMd5"))
+                .build();
+        webifier.downloadByName(ACCOUNT_AUTH, request, noopContentHandler);
+
+        webApiClient.check("getContent.\n" +
+                "url:\n" +
+                "    " + expectedUrl + "\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Algorithm: AES256\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key: customerKey\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key-Md5: customerKeyMd5\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
         assertEquals(expectedUrl, webifier.getDownloadByNameUrl(ACCOUNT_AUTH, request));
@@ -1230,6 +1448,49 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     }
 
     @Test
+    public void testUploadPartRequest_withSseB2_throwsIllegalArgumentException() {
+        thrown.expect(IllegalArgumentException.class);
+
+        B2UploadPartRequest.builder(6, contentSourceWithSha1)
+                .setServerSideEncryption(B2FileSseForRequest.createSseB2Aes256())
+                .build();
+    }
+
+    @Test
+    public void testUploadPart_withSseC() throws B2Exception {
+        final B2UploadPartRequest request = B2UploadPartRequest
+                .builder(6, contentSourceWithSha1)
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customer-key", "customer-key-md5"))
+                .build();
+        final B2UploadPartUrlResponse partUrl = uploadPartUrlResponse(1,2);
+        webifier.uploadPart(partUrl, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    uploadUrl2\n" +
+                "headers:\n" +
+                "    Authorization: downloadToken2\n" +
+                "    Expect: 100-continue\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Content-Sha1: " + SHA1 + "\n" +
+                "    X-Bz-Part-Number: 6\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Algorithm: AES256\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key: customer-key\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key-Md5: customer-key-md5\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "inputStream:\n" +
+                "    Hello, World!\n" +
+                "contentLength:\n" +
+                "    13\n" +
+                "responseClass:\n" +
+                "    B2Part\n"
+        );
+
+
+        checkRequestCategory(UPLOADING, w -> w.uploadPart(partUrl, request));
+    }
+
+    @Test
     public void testUploadPartWithNoSha1InContentSource() throws B2Exception {
         final B2UploadPartRequest request = B2UploadPartRequest
                 .builder(6, contentSourceWithoutOptionalData)
@@ -1261,8 +1522,13 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
     @Test
     public void testCopyPart() throws B2Exception {
+        final String sourceKey = "iLNDwUxG7jW5Dk8K4L5MmtRlFYGtHCPWWYkzpFZ6cb8=";
+        final String destinationKey = "hIoRG+b7TqbVdXxBb66XkD2F1xnquDx1JLjP0vcryIM=";
+
         final B2CopyPartRequest request = B2CopyPartRequest
                 .builder(3, fileId(1), fileId(2))
+                .setSourceServerSideEncryption(B2FileSseForRequest.createSseCAes256(sourceKey))
+                .setDestinationServerSideEncryption(B2FileSseForRequest.createSseCAes256(destinationKey))
                 .build();
         webifier.copyPart(ACCOUNT_AUTH, request);
 
@@ -1275,10 +1541,22 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n" +
                 "request:\n" +
                 "    {\n" +
+                "      \"destinationServerSideEncryption\": {\n" +
+                "        \"algorithm\": \"AES256\",\n" +
+                "        \"customerKey\": \"hIoRG+b7TqbVdXxBb66XkD2F1xnquDx1JLjP0vcryIM=\",\n" +
+                "        \"customerKeyMd5\": \"F13Y6Zu3HEuFE+e+53QWzA==\",\n" +
+                "        \"mode\": \"SSE-C\"\n" +
+                "      },\n" +
                 "      \"largeFileId\": \"4_zBlah_0000002\",\n" +
                 "      \"partNumber\": 3,\n" +
                 "      \"range\": null,\n" +
-                "      \"sourceFileId\": \"4_zBlah_0000001\"\n" +
+                "      \"sourceFileId\": \"4_zBlah_0000001\",\n" +
+                "      \"sourceServerSideEncryption\": {\n" +
+                "        \"algorithm\": \"AES256\",\n" +
+                "        \"customerKey\": \"iLNDwUxG7jW5Dk8K4L5MmtRlFYGtHCPWWYkzpFZ6cb8=\",\n" +
+                "        \"customerKeyMd5\": \"uNesypp/GNphraVA9wPL5A==\",\n" +
+                "        \"mode\": \"SSE-C\"\n" +
+                "      }\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2Part\n"
@@ -1340,6 +1618,126 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     }
 
     @Test
+    public void testUploadFileWithSseC() throws B2Exception {
+        final B2UploadListener listener = mock(B2UploadListener.class);
+
+        final B2UploadFileRequest request = B2UploadFileRequest
+                .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256("customerKey", "customerKeyMd5"))
+                .setListener(listener)
+                .build();
+        final B2UploadUrlResponse uploadUrl = uploadUrlResponse(bucketId(1), 1);
+        webifier.uploadFile(uploadUrl, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    uploadUrl1\n" +
+                "headers:\n" +
+                "    Authorization: downloadToken1\n" +
+                "    Content-Type: b2/x-auto\n" +
+                "    Expect: 100-continue\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
+                "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
+                "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Algorithm: AES256\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key: customerKey\n" +
+                "    X-Bz-Server-Side-Encryption-Customer-Key-Md5: customerKeyMd5\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "inputStream:\n" +
+                "    Hello, World!\n" +
+                "contentLength:\n" +
+                "    13\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+    }
+
+    @Test
+    public void testUploadFileWithFileLockInfo() throws B2Exception {
+        final B2UploadListener listener = mock(B2UploadListener.class);
+
+        final B2UploadFileRequest request = B2UploadFileRequest
+                .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
+                .setLegalHold(B2LegalHold.ON)
+                .setFileRetention(new B2FileRetention( "governance", 9876543210L))
+                .setListener(listener)
+                .build();
+        final B2UploadUrlResponse uploadUrl = uploadUrlResponse(bucketId(1), 1);
+        webifier.uploadFile(uploadUrl, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    uploadUrl1\n" +
+                "headers:\n" +
+                "    Authorization: downloadToken1\n" +
+                "    Content-Type: b2/x-auto\n" +
+                "    Expect: 100-continue\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
+                "    X-Bz-File-Legal-Hold: on\n" +
+                "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
+                "    X-Bz-File-Retention-Mode: governance\n" +
+                "    X-Bz-File-Retention-Retain-Until-Timestamp: 9876543210\n" +
+                "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "inputStream:\n" +
+                "    Hello, World!\n" +
+                "contentLength:\n" +
+                "    13\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+    }
+
+    @Test
+    public void testUploadFileContainingEmptyFileLockRetention() throws B2Exception {
+        final B2UploadListener listener = mock(B2UploadListener.class);
+
+        final B2UploadFileRequest request = B2UploadFileRequest
+                .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
+                .setFileRetention(new B2FileRetention(null, null))
+                .setListener(listener)
+                .build();
+        final B2UploadUrlResponse uploadUrl = uploadUrlResponse(bucketId(1), 1);
+        webifier.uploadFile(uploadUrl, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    uploadUrl1\n" +
+                "headers:\n" +
+                "    Authorization: downloadToken1\n" +
+                "    Content-Type: b2/x-auto\n" +
+                "    Expect: 100-continue\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Content-Sha1: 0a0a9f2a6772942557ab5355d76af442f8f65e01\n" +
+                "    X-Bz-File-Name: files/%E8%87%AA%E7%94%B1/0001\n" +
+                "    X-Bz-Info-src_last_modified_millis: 1234567\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "inputStream:\n" +
+                "    Hello, World!\n" +
+                "contentLength:\n" +
+                "    13\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+    }
+
+    @Test
+    public void testUploadFileWithInvalidLegalHoldValue() {
+        final B2UploadListener listener = mock(B2UploadListener.class);
+
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Invalid legalHold value. Valid values: on, off");
+
+        B2UploadFileRequest.builder(
+                bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithSha1)
+                .setLegalHold("hold")
+                .setListener(listener)
+                .build();
+    }
+
+        @Test
     public void testUploadFileWithNoSha1InContentSource() throws B2Exception {
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(1), B2ContentTypes.B2_AUTO, contentSourceWithoutOptionalData)
@@ -1388,12 +1786,17 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
     @Test
     public void testCopyFile() throws B2Exception {
+        final String sourceKey = "hIoRG+b7TqbVdXxBb66XkD2F1xnquDx1JLjP0vcryIM=";
+        final String destinationKey = "iLNDwUxG7jW5Dk8K4L5MmtRlFYGtHCPWWYkzpFZ6cb8=";
+
         final B2CopyFileRequest request = B2CopyFileRequest
                 .builder(fileId(1), fileName(2))
                 .setDestinationBucketId(bucketId(3))
                 .setContentType("b2/x-auto")
                 .setMetadataDirective(B2CopyFileRequest.COPY_METADATA_DIRECTIVE)
                 .setRange(B2ByteRange.between(10, 100))
+                .setSourceServerSideEncryption(B2FileSseForRequest.createSseCAes256(sourceKey))
+                .setDestinationServerSideEncryption(B2FileSseForRequest.createSseCAes256(destinationKey))
                 .build();
         webifier.copyFile(ACCOUNT_AUTH, request);
 
@@ -1408,17 +1811,137 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    {\n" +
                 "      \"contentType\": \"b2/x-auto\",\n" +
                 "      \"destinationBucketId\": \"bucket3\",\n" +
+                "      \"destinationServerSideEncryption\": {\n" +
+                "        \"algorithm\": \"AES256\",\n" +
+                "        \"customerKey\": \"iLNDwUxG7jW5Dk8K4L5MmtRlFYGtHCPWWYkzpFZ6cb8=\",\n" +
+                "        \"customerKeyMd5\": \"uNesypp/GNphraVA9wPL5A==\",\n" +
+                "        \"mode\": \"SSE-C\"\n" +
+                "      },\n" +
                 "      \"fileInfo\": null,\n" +
                 "      \"fileName\": \"files/\u81ea\u7531/0002\",\n" +
                 "      \"metadataDirective\": \"COPY\",\n" +
                 "      \"range\": \"bytes=10-100\",\n" +
-                "      \"sourceFileId\": \"4_zBlah_0000001\"\n" +
+                "      \"sourceFileId\": \"4_zBlah_0000001\",\n" +
+                "      \"sourceServerSideEncryption\": {\n" +
+                "        \"algorithm\": \"AES256\",\n" +
+                "        \"customerKey\": \"hIoRG+b7TqbVdXxBb66XkD2F1xnquDx1JLjP0vcryIM=\",\n" +
+                "        \"customerKeyMd5\": \"F13Y6Zu3HEuFE+e+53QWzA==\",\n" +
+                "        \"mode\": \"SSE-C\"\n" +
+                "      }\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2FileVersion\n"
         );
 
         checkRequestCategory(OTHER, w -> w.copyFile(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testCopyFileWithReplaceAndFileRetentionAndLegalHold() throws B2Exception {
+        final long expirationInMillis = Instant.now().plus(10L, ChronoUnit.DAYS).toEpochMilli();
+
+        final B2CopyFileRequest request = B2CopyFileRequest
+                .builder(fileId(1), fileName(2))
+                .setDestinationBucketId(bucketId(3))
+                .setMetadataDirective(B2CopyFileRequest.REPLACE_METADATA_DIRECTIVE)
+                .setFileRetention(
+                        new B2FileRetention(
+                                B2FileRetentionMode.COMPLIANCE,
+                                expirationInMillis
+                        )
+                )
+                .setLegalHold(B2LegalHold.ON)
+                .build();
+        webifier.copyFile(ACCOUNT_AUTH, request);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_copy_file\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"contentType\": null,\n" +
+                "      \"destinationBucketId\": \"bucket3\",\n" +
+                "      \"destinationServerSideEncryption\": null,\n" +
+                "      \"fileInfo\": null,\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0002\",\n" +
+                "      \"fileRetention\": {\n" +
+                "        \"mode\": \"compliance\",\n" +
+                "        \"retainUntilTimestamp\": " + expirationInMillis + "\n" +
+                "      },\n" +
+                "      \"legalHold\": \"on\",\n" +
+                "      \"metadataDirective\": \"REPLACE\",\n" +
+                "      \"range\": null,\n" +
+                "      \"sourceFileId\": \"4_zBlah_0000001\",\n" +
+                "      \"sourceServerSideEncryption\": null\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2FileVersion\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.copyFile(ACCOUNT_AUTH, request));
+    }
+
+    @Test
+    public void testUpdateFileLegalHold() throws B2Exception {
+        final B2UpdateFileLegalHoldRequest requestReal = B2UpdateFileLegalHoldRequest
+                .builder(fileName(1), fileId(1), B2LegalHold.ON)
+                .build();
+        webifier.updateFileLegalHold(ACCOUNT_AUTH, requestReal);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_update_file_legal_hold\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"fileId\": \"4_zBlah_0000001\",\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"legalHold\": \"on\"\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2UpdateFileLegalHoldResponse\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.updateFileLegalHold(ACCOUNT_AUTH, requestReal));
+    }
+
+    @Test
+    public void testUpdateFileRetention() throws B2Exception {
+        final B2FileRetention fileRetention = new B2FileRetention(B2FileRetentionMode.COMPLIANCE, 10000L);
+        final B2UpdateFileRetentionRequest requestReal = B2UpdateFileRetentionRequest
+                .builder(fileName(1), fileId(1), fileRetention)
+                .build();
+        webifier.updateFileRetention(ACCOUNT_AUTH, requestReal);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_update_file_retention\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"bypassGovernance\": false,\n" +
+                "      \"fileId\": \"4_zBlah_0000001\",\n" +
+                "      \"fileName\": \"files/\u81ea\u7531/0001\",\n" +
+                "      \"fileRetention\": {\n" +
+                "        \"mode\": \"compliance\",\n" +
+                "        \"retainUntilTimestamp\": 10000\n" +
+                "      }\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2UpdateFileRetentionResponse\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.updateFileRetention(ACCOUNT_AUTH, requestReal));
     }
 
     @Test

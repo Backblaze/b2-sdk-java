@@ -15,6 +15,7 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
     private final String bucketName;
     private final String fileName;
     private final B2ByteRange range;
+    private final B2FileSseForRequest serverSideEncryption;
     private final String b2ContentDisposition;
     private final String b2ContentLanguage;
     private final String b2Expires;
@@ -24,19 +25,21 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
 
 
     private B2DownloadByNameRequest(String bucketName,
-                                   String fileName,
-                                   B2ByteRange range,
-                                   String b2ContentDisposition,
-                                   String b2ContentLanguage,
-                                   String b2Expires,
-                                   String b2CacheControl,
-                                   String b2ContentEncoding,
-                                   String b2ContentType) {
+                                    String fileName,
+                                    B2ByteRange range,
+                                    B2FileSseForRequest serverSideEncryption,
+                                    String b2ContentDisposition,
+                                    String b2ContentLanguage,
+                                    String b2Expires,
+                                    String b2CacheControl,
+                                    String b2ContentEncoding,
+                                    String b2ContentType) {
         // B2Preconditions.checkArg(bucketName != null);
         // B2Preconditions.checkArg(fileName != null);
         this.bucketName = bucketName;
         this.fileName = fileName;
         this.range = range;
+        this.serverSideEncryption = serverSideEncryption;
         this.b2ContentDisposition = b2ContentDisposition;
         this.b2ContentLanguage = b2ContentLanguage;
         this.b2Expires = b2Expires;
@@ -55,6 +58,25 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
 
     public B2ByteRange getRange() {
         return range;
+    }
+
+    public B2FileSseForRequest getServerSideEncryption() {
+        return serverSideEncryption;
+    }
+
+    @SuppressWarnings("unused")
+    public String getCustomerAlgorithm() {
+        return serverSideEncryption == null ? null : serverSideEncryption.getAlgorithm();
+    }
+
+    @SuppressWarnings("unused")
+    public String getCustomerKey() {
+        return serverSideEncryption == null ? null : serverSideEncryption.getCustomerKey();
+    }
+
+    @SuppressWarnings("unused")
+    public String getCustomerKeyMd5() {
+        return serverSideEncryption == null ? null : serverSideEncryption.getCustomerKeyMd5();
     }
 
     @Override
@@ -95,6 +117,7 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
         return Objects.equals(bucketName, that.bucketName) &&
                 Objects.equals(fileName, that.fileName) &&
                 Objects.equals(range, that.range) &&
+                Objects.equals(serverSideEncryption, that.serverSideEncryption) &&
                 Objects.equals(b2ContentDisposition, that.b2ContentDisposition) &&
                 Objects.equals(b2ContentLanguage, that.b2ContentLanguage) &&
                 Objects.equals(b2Expires, that.b2Expires) &&
@@ -105,7 +128,7 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
 
     @Override
     public int hashCode() {
-        return Objects.hash(bucketName, fileName, range, b2ContentDisposition, b2ContentLanguage, b2Expires, b2CacheControl, b2ContentEncoding, b2ContentType);
+        return Objects.hash(bucketName, fileName, range, serverSideEncryption, b2ContentDisposition, b2ContentLanguage, b2Expires, b2CacheControl, b2ContentEncoding, b2ContentType);
     }
 
     public static Builder builder(String bucketName,
@@ -117,6 +140,7 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
         private final String bucketName;
         private final String fileName;
         private B2ByteRange range;
+        private B2FileSseForRequest serverSideEncryption;
         private String b2ContentDisposition;
         private String b2ContentLanguage;
         private String b2Expires;
@@ -135,7 +159,11 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
             return this;
         }
 
-        @SuppressWarnings("unused")
+        public Builder setServerSideEncryption(B2FileSseForRequest serverSideEncryption) {
+            this.serverSideEncryption = serverSideEncryption;
+            return this;
+        }
+
         public Builder setB2ContentDisposition(String b2ContentDisposition) {
             this.b2ContentDisposition = b2ContentDisposition;
             return this;
@@ -176,6 +204,7 @@ public class B2DownloadByNameRequest implements B2OverrideableHeaders {
                     bucketName,
                     fileName,
                     range,
+                    serverSideEncryption,
                     b2ContentDisposition,
                     b2ContentLanguage,
                     b2Expires,

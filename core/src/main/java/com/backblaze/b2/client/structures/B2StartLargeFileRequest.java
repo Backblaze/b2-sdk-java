@@ -25,17 +25,32 @@ public class B2StartLargeFileRequest {
     @B2Json.required
     private final String contentType;
     @B2Json.optional
+    private final B2FileSseForRequest serverSideEncryption;
+    @B2Json.optional
     private final Map<String, String> fileInfo;
 
-    @B2Json.constructor(params = "bucketId,fileName,contentType,fileInfo")
+    @B2Json.optional(omitNull = true)
+    private final B2FileRetention fileRetention;
+
+    @B2Json.optional(omitNull = true)
+    private final String legalHold;
+
+    @B2Json.constructor(params = "bucketId,fileName,contentType,serverSideEncryption,fileInfo," +
+            "fileRetention,legalHold")
     private B2StartLargeFileRequest(String bucketId,
                                     String fileName,
                                     String contentType,
-                                    Map<String, String> fileInfo) {
+                                    B2FileSseForRequest serverSideEncryption,
+                                    Map<String, String> fileInfo,
+                                    B2FileRetention fileRetention,
+                                    String legalHold) {
         this.bucketId = bucketId;
         this.fileName = fileName;
         this.contentType = contentType;
+        this.serverSideEncryption = serverSideEncryption;
         this.fileInfo = B2Collections.unmodifiableMap(fileInfo);
+        this.fileRetention = fileRetention;
+        this.legalHold = legalHold;
     }
 
     public String getBucketId() {
@@ -50,24 +65,47 @@ public class B2StartLargeFileRequest {
         return contentType;
     }
 
+    public B2FileSseForRequest getServerSideEncryption() {
+        return serverSideEncryption;
+    }
+
     public Map<String, String> getFileInfo() {
         return fileInfo;
+    }
+
+    public B2FileRetention getFileRetention() {
+        return fileRetention;
+    }
+
+    public String getLegalHold() {
+        return legalHold;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        B2StartLargeFileRequest that = (B2StartLargeFileRequest) o;
+        final B2StartLargeFileRequest that = (B2StartLargeFileRequest) o;
         return Objects.equals(getBucketId(), that.getBucketId()) &&
                 Objects.equals(getFileName(), that.getFileName()) &&
                 Objects.equals(getContentType(), that.getContentType()) &&
-                Objects.equals(getFileInfo(), that.getFileInfo());
+                Objects.equals(getServerSideEncryption(), that.getServerSideEncryption()) &&
+                Objects.equals(getFileInfo(), that.getFileInfo()) &&
+                Objects.equals(getFileRetention(), that.getFileRetention()) &&
+                Objects.equals(getLegalHold(), that.getLegalHold());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getBucketId(), getFileName(), getContentType(), getFileInfo());
+        return Objects.hash(
+                getBucketId(),
+                getFileName(),
+                getContentType(),
+                getServerSideEncryption(),
+                getFileInfo(),
+                getFileRetention(),
+                getLegalHold()
+        );
     }
 
     /**
@@ -77,6 +115,15 @@ public class B2StartLargeFileRequest {
     public static B2StartLargeFileRequest buildFrom(B2UploadFileRequest orig) throws B2Exception {
         try {
             final Builder builder = new Builder(orig.getBucketId(), orig.getFileName(), orig.getContentType());
+
+            // copy SSE settings (if any) from original
+            builder.setServerSideEncryption(orig.getServerSideEncryption());
+
+            // copy file retention settings (if any) from original
+            builder.setFileRetention(orig.getFileRetention());
+
+            // copy legal hold (if any) from original
+            builder.setLegalHold(orig.getLegalHold());
 
             // we always start with the original fileInfo.
             builder.setCustomFields(orig.getFileInfo());
@@ -112,7 +159,10 @@ public class B2StartLargeFileRequest {
         private String bucketId;
         private String fileName;
         private String contentType;
+        private B2FileSseForRequest serverSideEncryption;
         private Map<String, String> fileInfo;
+        private B2FileRetention fileRetention;
+        private String legalHold;
 
         Builder(String bucketId,
                 String fileName,
@@ -142,9 +192,24 @@ public class B2StartLargeFileRequest {
             return setCustomField("large_file_sha1", largeFileSha1);
         }
 
+        public Builder setServerSideEncryption(B2FileSseForRequest serverSideEncryption) {
+            this.serverSideEncryption = serverSideEncryption;
+            return this;
+        }
+
         public Builder setCustomFields(Map<String,String> newFileInfo) {
             B2Preconditions.checkArgumentIsNotNull(newFileInfo, "newFileInfo");
             newFileInfo.forEach(this::setCustomField);
+            return this;
+        }
+
+        public Builder setFileRetention(B2FileRetention fileRetention) {
+            this.fileRetention = fileRetention;
+            return this;
+        }
+
+        public Builder setLegalHold(String legalHold) {
+            this.legalHold = legalHold;
             return this;
         }
 
@@ -152,7 +217,10 @@ public class B2StartLargeFileRequest {
             return new B2StartLargeFileRequest(bucketId,
                     fileName,
                     contentType,
-                    fileInfo);
+                    serverSideEncryption,
+                    fileInfo,
+                    fileRetention,
+                    legalHold);
         }
     }
 }
