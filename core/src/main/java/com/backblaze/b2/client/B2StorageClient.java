@@ -305,37 +305,6 @@ public interface B2StorageClient extends Closeable {
             ExecutorService executor) throws B2Exception;
 
     /**
-     * Uploads the specified content source as separate parts to form a B2 large file,
-     * optionally allowing caller to pass SSE-C parameters to match those given to
-     * startLargeFile().
-     *
-     * This method assumes you have already called startLargeFile(). The return value
-     * of that call needs to be passed into this method as part of a
-     * B2StoreLargeFileRequest. However, this method will currently call finish file.
-     *
-     * XXX: should we switch to letting the caller finish the large file?
-     *
-     * @param storeLargeFileRequest The B2StoreLargeFileRequest for the large file
-     *                              getting stored. This is built from the return
-     *                              value of startLargeFile() and any other relevant
-     *                              parameters.
-     * @param contentSource The contentSource to upload.
-     * @param uploadListenerOrNull The object that handles upload progress events.
-     *                             This may be null if you do not need to be notified
-     *                             of progress events.
-     * @param executor The executor for uploading parts in parallel. The caller
-     *                 retains ownership of the executor and is responsible for
-     *                 shutting it down.
-     * @return The fileVersion of the large file after it has been finished.
-     * @throws B2Exception If there's trouble.
-     */
-    B2FileVersion storeLargeFileFromLocalContent(
-            B2StoreLargeFileRequest storeLargeFileRequest,
-            B2ContentSource contentSource,
-            B2UploadListener uploadListenerOrNull,
-            ExecutorService executor) throws B2Exception;
-
-    /**
      * Stores a large file, where storing each part may involve different behavior
      * or byte sources.
      *
