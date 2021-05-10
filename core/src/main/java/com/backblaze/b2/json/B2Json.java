@@ -8,7 +8,6 @@ package com.backblaze.b2.json;
 import com.backblaze.b2.util.B2StringUtil;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -22,6 +21,8 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+
+import static com.backblaze.b2.json.B2JsonBoundedByteArrayOutputStream.SYSTEM_MAX_CAPACITY;
 
 /**
  * <p>JSON (de)serialization of Java objects.</p>
@@ -131,7 +132,7 @@ public class B2Json {
 
     public byte[] toJsonUtf8BytesWithNewline(Object obj, B2JsonOptions options) throws B2JsonException {
         try {
-            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+            final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(SYSTEM_MAX_CAPACITY);
             toJson(obj, options, out);
             out.write('\n');
             return out.toByteArray();
@@ -193,11 +194,11 @@ public class B2Json {
     }
 
     public String toJson(Object obj, B2JsonOptions options) throws B2JsonException {
-        try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(SYSTEM_MAX_CAPACITY)) {
             toJson(obj, options, out);
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
-            throw new RuntimeException("IO exception writing to string");
+            throw new RuntimeException("IO exception writing to string: " + e.getMessage());
         }
     }
 
@@ -254,13 +255,13 @@ public class B2Json {
         final B2JsonTypeHandler keyHandler = handlerMap.getHandler(keyClass);
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonMapHandler(keyHandler, valueHandler);
-        try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(SYSTEM_MAX_CAPACITY)) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(map, options, jsonWriter);
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
-            throw new RuntimeException("IO exception writing to string");
+            throw new RuntimeException("IO exception writing to string: " + e.getMessage());
         }
     }
 
@@ -291,13 +292,13 @@ public class B2Json {
         }
         final B2JsonTypeHandler valueHandler = handlerMap.getHandler(valueClass);
         final B2JsonTypeHandler handler = new B2JsonListHandler(valueHandler);
-        try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (final B2JsonBoundedByteArrayOutputStream out = new B2JsonBoundedByteArrayOutputStream(SYSTEM_MAX_CAPACITY)) {
             B2JsonWriter jsonWriter = new B2JsonWriter(out, options);
             //noinspection unchecked
             handler.serialize(list, options, jsonWriter);
             return out.toString(B2StringUtil.UTF8);
         } catch (IOException e) {
-            throw new RuntimeException("IO exception writing to string");
+            throw new RuntimeException("IO exception writing to string: " + e.getMessage());
         }
     }
 

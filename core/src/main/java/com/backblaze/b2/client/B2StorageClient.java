@@ -52,6 +52,7 @@ import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 /*****
@@ -265,6 +266,39 @@ public interface B2StorageClient extends Closeable {
      * @throws B2Exception If there's trouble.
      */
     B2FileVersion storeLargeFileFromLocalContent(
+            B2FileVersion fileVersion,
+            B2ContentSource contentSource,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception;
+
+    /**
+     * Initiates uploading the specified content source as separate parts to form a
+     * B2 large file. This allows the upload to be cancelled partway through.
+     *
+     * This method assumes you have already called startLargeFile(). The return value
+     * of that call needs to be passed into this method.
+     *
+     * The returned future can be cancelled and this will also attempt to stop any part
+     * uploads in progress.
+     *
+     * Cancelling after the b2_finish_large_file API call has been started will result in the
+     * future being cancelled, but the API call can still succeed. There is no way to tell from
+     * the future whether this is the case. The caller is responsible for checking and calling
+     * B2StorageClient.cancelLargeFile.
+     *
+     * @param fileVersion The B2FileVersion for the large file getting stored.
+     *                    This is the return value of startLargeFile().
+     * @param contentSource The contentSource to upload.
+     * @param uploadListenerOrNull The object that handles upload progress events.
+     *                             This may be null if you do not need to be notified
+     *                             of progress events.
+     * @param executor The executor for uploading parts in parallel. The caller
+     *                 retains ownership of the executor and is responsible for
+     *                 shutting it down.
+     * @return CompletableFuture with the resulting B2FileVersion of the completed file
+     * @throws B2Exception on error
+     */
+    CompletableFuture<B2FileVersion> storeLargeFileFromLocalContentAsync(
             B2FileVersion fileVersion,
             B2ContentSource contentSource,
             B2UploadListener uploadListenerOrNull,

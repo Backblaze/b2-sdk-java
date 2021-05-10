@@ -23,6 +23,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.NoHttpResponseException;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
@@ -101,6 +102,20 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         if (headersOrNull != null) {
             get.setHeaders(makeHeaders(headersOrNull));
         }
+
+        /* By default, HTTP client libraries will automatically decompress compressed content
+           to make it easier for the caller making downloading requests. Most of the time
+           that's helpful, but this works against our API goal: download exactly what was
+           uploaded. So we need to disable this default behavior.
+
+           We achieve this by disabling content compression on HttpGet's request config
+           - setContentCompressionEnabled(false). With this change, if a file was uploaded
+           in a compressed format (e.g. gzip) the file would be downloaded still in its
+           original compressed format.
+         */
+        get.setConfig(RequestConfig.custom()
+                .setContentCompressionEnabled(false)
+                .build());
 
         try (CloseableHttpResponse response = clientFactory.create().execute(get)) {
             int statusCode = response.getStatusLine().getStatusCode();
