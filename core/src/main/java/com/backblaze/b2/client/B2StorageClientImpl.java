@@ -25,7 +25,6 @@ import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
-import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
@@ -274,8 +273,18 @@ public class B2StorageClientImpl implements B2StorageClient {
             B2UploadListener uploadListenerOrNull,
             ExecutorService executor) throws B2Exception {
 
+        return storeLargeFileFromLocalContentAsync(B2StoreLargeFileRequest.builder(fileVersion).build(), contentSource, uploadListenerOrNull, executor);
+    }
+
+    @Override
+    public CompletableFuture<B2FileVersion> storeLargeFileFromLocalContentAsync(
+            B2StoreLargeFileRequest storeLargeFileRequest,
+            B2ContentSource contentSource,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception {
+
         final B2LargeFileStorer storer = B2LargeFileStorer.forLocalContent(
-                fileVersion,
+                storeLargeFileRequest,
                 contentSource,
                 getPartSizes(),
                 accountAuthCache,

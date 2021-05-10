@@ -271,7 +271,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         partStorers.add(new B2AlreadyStoredPartStorer(part3));
 
         final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                largeFileVersion,
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
                 partStorers,
                 authCache,
                 webifier,
@@ -419,7 +419,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
     }
 
     @Test
-    public void testStoreFileAsyncCancelled() throws B2Exception, IOException, ExecutionException, InterruptedException {
+    public void testStoreFileAsyncCancelled() throws B2Exception, IOException {
         final List<B2PartStorer> partStorers = new ArrayList<>();
         final B2ContentSource contentSourceForPart1 = mock(B2ContentSource.class);
         final B2ContentSource contentSourceForPart2 = mock(B2ContentSource.class);
@@ -440,7 +440,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         partStorers.add(new B2AlreadyStoredPartStorer(part3));
 
         final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                largeFileVersion,
+                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
                 partStorers,
                 authCache,
                 webifier,
