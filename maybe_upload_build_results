@@ -51,6 +51,10 @@ if test $status != "0"; then
     exit $status
 fi
 
+# B2 CLI now checks for B2_APPLICATION_KEY/B2_APPLICATION_KEY_ID and expects both
+# if either is set, so we unset this here before calling upload_file
+unset B2_APPLICATION_KEY
+
 echo uploading $SRC to bucket: $B2_UPLOAD_BUCKET
 b2 upload_file --contentType application/octet $B2_UPLOAD_BUCKET $SRC $DEST
 status=$?
