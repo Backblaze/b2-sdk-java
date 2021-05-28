@@ -48,7 +48,6 @@ import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.structures.B2UploadListener;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
-import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.Closeable;
 import java.util.List;
@@ -203,12 +202,11 @@ public interface B2StorageClient extends Closeable {
      * @throws B2Exception if there's any trouble.
      */
     default B2Bucket getBucketOrNullByName(String name) throws B2Exception {
-        for (B2Bucket bucket : buckets()) {
-            if (bucket.getBucketName().equals(name)) {
-                return bucket;
-            }
-        }
-        return null;
+        // see note above in listBuckets() regarding retries and calling getAccountId()
+        final String accountId = getAccountId();
+        final B2ListBucketsRequest request = B2ListBucketsRequest.builder(accountId).setBucketName(name).build();
+        final List<B2Bucket> buckets = listBuckets(request).getBuckets();
+        return buckets.isEmpty() ? null : buckets.get(0);
     }
 
     /**

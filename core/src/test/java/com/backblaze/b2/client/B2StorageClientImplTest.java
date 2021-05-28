@@ -365,6 +365,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
     public void testGetBucketByName() throws B2Exception {
         final B2ListBucketsRequest expectedRequest = B2ListBucketsRequest
                 .builder(ACCOUNT_ID)
+                .setBucketName(BUCKET_NAME)
                 .build();
         final B2ListBucketsResponse response = new B2ListBucketsResponse(
                 listOf(bucket(1))
@@ -372,6 +373,15 @@ public class B2StorageClientImplTest extends B2BaseTest {
         when(webifier.listBuckets(ACCOUNT_AUTH, expectedRequest)).thenReturn(response);
 
         assertEquals(bucket(1), client.getBucketOrNullByName(BUCKET_NAME));
+
+        final String noSuchBucketName = "noSuchBucket";
+        final B2ListBucketsRequest expectedNoSuchBucketRequest = B2ListBucketsRequest
+                .builder(ACCOUNT_ID)
+                .setBucketName(noSuchBucketName)
+                .build();
+        final B2ListBucketsResponse noSuchBucketResponse = new B2ListBucketsResponse(Collections.emptyList());
+        when(webifier.listBuckets(ACCOUNT_AUTH, expectedNoSuchBucketRequest)).thenReturn(noSuchBucketResponse);
+
         assertNull(client.getBucketOrNullByName("noSuchBucket"));
     }
 
