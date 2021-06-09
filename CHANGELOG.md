@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+* Added `s3ApiUrl` to `B2AccountAuthorization`.
+
 ## [5.0.0] - 2021-05-10
 ### Changed `[Incompatible]`
 * Disabled automatic decompression of compressed content in HTTP client download library
