@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+* Added `s3ApiUrl` to `B2AccountAuthorization`.
+
 ## [5.0.0] - 2021-05-10
 ### Changed `[Incompatible]`
 * Disabled automatic decompression of compressed content in HTTP client download library
@@ -152,7 +157,9 @@
 * These changes were driven by switching our internal b2-sdk uses to use the http client from the sdk instead of a 
 different, custom interface.
 
-[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v5.0.0...HEAD
+[5.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v5.0.0
+[4.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v4.0.0
 [3.1.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v3.1.0
 [3.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v3.0.0
 [2.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v2.0.0

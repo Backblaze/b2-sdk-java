@@ -23,16 +23,19 @@ public class B2AccountAuthorization {
     private final long absoluteMinimumPartSize;
     @B2Json.required
     private final B2Allowed allowed;
+    @B2Json.optional
+    private final String s3ApiUrl;
 
 
-    @B2Json.constructor(params = "accountId,authorizationToken,apiUrl,downloadUrl,recommendedPartSize,absoluteMinimumPartSize,allowed")
+    @B2Json.constructor(params = "accountId,authorizationToken,apiUrl,downloadUrl,recommendedPartSize,absoluteMinimumPartSize,allowed,s3ApiUrl")
     public B2AccountAuthorization(String accountId,
                                   String authorizationToken,
                                   String apiUrl,
                                   String downloadUrl,
                                   long recommendedPartSize,
                                   long absoluteMinimumPartSize,
-                                  B2Allowed allowed) {
+                                  B2Allowed allowed,
+                                  String s3ApiUrl) {
         this.accountId = accountId;
         this.authorizationToken = authorizationToken;
         this.apiUrl = apiUrl;
@@ -40,6 +43,7 @@ public class B2AccountAuthorization {
         this.recommendedPartSize = recommendedPartSize;
         this.absoluteMinimumPartSize = absoluteMinimumPartSize;
         this.allowed = allowed;
+        this.s3ApiUrl = s3ApiUrl;
     }
 
 
@@ -71,6 +75,10 @@ public class B2AccountAuthorization {
         return allowed;
     }
 
+    public String getS3ApiUrl() {
+        return s3ApiUrl;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -82,7 +90,8 @@ public class B2AccountAuthorization {
                 Objects.equals(getAuthorizationToken(), that.getAuthorizationToken()) &&
                 Objects.equals(getApiUrl(), that.getApiUrl()) &&
                 Objects.equals(getDownloadUrl(), that.getDownloadUrl()) &&
-                Objects.equals(getAllowed(), that.getAllowed());
+                Objects.equals(getAllowed(), that.getAllowed()) &&
+                Objects.equals(getS3ApiUrl(), that.getS3ApiUrl());
     }
 
     @Override
@@ -95,12 +104,22 @@ public class B2AccountAuthorization {
                 ", recommendedPartSize=" + recommendedPartSize +
                 ", absoluteMinimumPartSize=" + absoluteMinimumPartSize +
                 ", allowed=" + allowed +
+                ", s3ApiUrl=" + s3ApiUrl +
                 '}';
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getAccountId(), getAuthorizationToken(), getApiUrl(), getDownloadUrl(), getRecommendedPartSize(), getAbsoluteMinimumPartSize(), getAllowed());
+        return Objects.hash(
+                getAccountId(),
+                getAuthorizationToken(),
+                getApiUrl(),
+                getDownloadUrl(),
+                getRecommendedPartSize(),
+                getAbsoluteMinimumPartSize(),
+                getAllowed(),
+                getS3ApiUrl()
+        );
     }
 
     /**
@@ -116,6 +135,7 @@ public class B2AccountAuthorization {
                 getDownloadUrl(),
                 getRecommendedPartSize(),
                 getAbsoluteMinimumPartSize(),
-                getAllowed());
+                getAllowed(),
+                getS3ApiUrl());
     }
 }

@@ -69,7 +69,8 @@ public class B2TestHelpers {
                 "downloadUrl" + i,
                 i * 1000L,
                 i * 100L,
-                new B2Allowed(B2Collections.listOf(B2Capabilities.LIST_FILES), null, null, ""));
+                new B2Allowed(B2Collections.listOf(B2Capabilities.LIST_FILES), null, null, ""),
+                "s3ApiUrl" + i);
     }
 
     /**
