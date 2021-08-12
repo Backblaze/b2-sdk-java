@@ -512,7 +512,7 @@ public interface B2StorageClient extends Closeable {
 
     /**
      * Just like fileNames(request), except that it makes a request for all
-     * fileVersions in the specified bucket.
+     * fileNames in the specified bucket.
      *
      * @param bucketId the bucket whose fileNames you want an Iterable for.
      * @return a new iterable to iterate over all of the fileNames in the specified bucket.
