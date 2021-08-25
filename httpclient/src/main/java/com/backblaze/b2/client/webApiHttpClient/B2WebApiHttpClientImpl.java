@@ -252,11 +252,11 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         }
         if (e instanceof ConnectionPoolTimeoutException) {
             // from HTTP Components
-            return new B2ConnectFailedException("connect_timed_out", null, "connect timed out for " + url, e);
+            return new B2ConnectFailedException("connection_pool_timed_out", null, "connection pool timed out for " + url, e);
         }
         if (e instanceof ConnectTimeoutException) {
             // from HTTP Components
-            return new B2ConnectFailedException("connection_pool_timed_out", null, "connection pool timed out for " + url, e);
+            return new B2ConnectFailedException("connect_timed_out", null, "connect timed out for " + url, e);
         }
         if (e instanceof SocketTimeoutException) {
             return new B2NetworkTimeoutException("socket_timeout", null, "socket timed out talking to " + url, e);
@@ -348,7 +348,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
     /**
      * Returns the UTF-8 representation of a string.
      */
-    private static byte [] getUtf8Bytes(String str) throws B2Exception {
+    private static byte [] getUtf8Bytes(String str) {
         try {
             return str.getBytes(UTF8);
         } catch (UnsupportedEncodingException e) {
