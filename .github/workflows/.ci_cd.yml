@@ -52,15 +52,15 @@ jobs:
           #
 
           # make the directory
-          mkdir -p $GITHUB_WORKSPACE/build/outputs
-          cp -v $GITHUB_WORKSPACE/build/libs/b2-sdk-*.{jar,pom} $GITHUB_WORKSPACE/build/outputs
+          mkdir -p build/outputs
+          cp -v build/libs/b2-sdk-*.{jar,pom} build/outputs
           # find the jar's version.
-          - VERSION=$(head -1 $GITHUB_WORKSPACE/core/build/resources/main/b2-sdk-core/version.txt | awk "-F'" '{print $1}')
+          - VERSION=$(head -1 core/build/resources/main/b2-sdk-core/version.txt | awk "-F'" '{print $1}')
           - echo VERSION=$VERSION
 
           # zip up the outputs
           echo OUTPUT_ZIP=$OUTPUT_ZIP
-          (cd $OUTPUT_DIR; zip -r $GITHUB_WORKSPACE/build/$OUTPUT_ZIP *)
+          (cd $OUTPUT_DIR; zip -r build/$OUTPUT_ZIP *)
 
       - name: Cleanup Gradle Cache
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
