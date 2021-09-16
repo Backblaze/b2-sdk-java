@@ -54,13 +54,8 @@ jobs:
           # make the directory
           mkdir -p build/outputs
           cp -v */build/libs/b2-sdk-*.{jar,pom} build/outputs
-          # find the jar's version.
-          - echo "VERSION=$(head -1 core/build/resources/main/b2-sdk-core/version.txt | awk \"-F'\ '{print $1}')"
-          - VERSION=$(head -1 core/build/resources/main/b2-sdk-core/version.txt | awk "-F'" '{print $1}')
-          #- echo ${{ env.VERSION }}
 
           # zip up the outputs
-          #- echo ${{ env.OUTPUT_ZIP }}
           (cd $OUTPUT_DIR; zip -r $GITHUB_WORKSPACE/build/$OUTPUT_ZIP *)
 
       - name: Cleanup Gradle Cache
