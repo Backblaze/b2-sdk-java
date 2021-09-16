@@ -41,7 +41,7 @@ jobs:
         run: |
           mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
           # upgrade pip and setuptools so that b2 CLI can be properly installed
-          python -m pip install --upgrade pip setuptools zip
+          python -m pip install --upgrade pip setuptools
           python -m pip install b2
 
       - name: Build the distribution
