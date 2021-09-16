@@ -53,7 +53,7 @@ jobs:
 
           # make the directory
           mkdir -p build/outputs
-          cp -v build/libs/b2-sdk-*.{jar,pom} build/outputs
+          cp -v */build/libs/b2-sdk-*.{jar,pom} build/outputs
           # find the jar's version.
           - VERSION=$(head -1 core/build/resources/main/b2-sdk-core/version.txt | awk "-F'" '{print $1}')
           - echo VERSION=$VERSION
