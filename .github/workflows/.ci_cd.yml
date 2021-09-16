@@ -11,7 +11,7 @@ on:
 
 env:
   PYTHON_DEFAULT_VERSION: 3.6
-  OUTPUT_DIR: build/outputs
+  OUTPUT_DIR: $GITHUB_WORKSPACE/build/outputs
   OUTPUT_ZIP: b2-sdk-build-${GITHUB_RUN_NUMBER}.zip
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   B2_ACCOUNT_ID: ${{ secrets.B2_ACCOUNT_ID }}
@@ -41,7 +41,7 @@ jobs:
         run: |
           mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
           # upgrade pip and setuptools so that b2 CLI can be properly installed
-          python -m pip install --upgrade pip setuptools
+          python -m pip install --upgrade pip setuptools zip
           python -m pip install b2
 
       - name: Build the distribution
@@ -54,13 +54,15 @@ jobs:
           # make the directory
           mkdir -p build/outputs
           cp -v */build/libs/b2-sdk-*.{jar,pom} build/outputs
+          which head
+          which zip
           # find the jar's version.
           - VERSION=$(head -1 core/build/resources/main/b2-sdk-core/version.txt | awk "-F'" '{print $1}')
           - echo VERSION=$VERSION
 
           # zip up the outputs
           echo OUTPUT_ZIP=$OUTPUT_ZIP
-          (cd $OUTPUT_DIR; zip -r build/$OUTPUT_ZIP *)
+          (cd $OUTPUT_DIR; zip -r $GITHUB_WORKSPACE/build/$OUTPUT_ZIP *)
 
       - name: Cleanup Gradle Cache
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
