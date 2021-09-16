@@ -52,12 +52,12 @@ jobs:
           #
 
           # make the directory
-          mkdir -p build/outputs
-          cp -v */build/libs/b2-sdk-*.{jar,pom} build/outputs
+          mkdir -p ${{ env.OUTPUT_DIR }}
+          cp -v */build/libs/b2-sdk-*.{jar,pom} ${{ env.OUTPUT_DIR }}
 
           # zip up the outputs
-          cd $OUTPUT_DIR
-          zip -r $GITHUB_WORKSPACE/build/$OUTPUT_ZIP *
+          cd ${{ env.OUTPUT_DIR }}
+          zip -r $GITHUB_WORKSPACE/build/${{ env.OUTPUT_ZIP }} *
 
       - name: Cleanup Gradle Cache
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
@@ -74,7 +74,7 @@ jobs:
       - name: Upload to b2
         # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
         # This should be using python 3.4
-        run: $GITHUB_WORKSPACE/maybe_upload_build_results $OUTPUT_ZIP
+        run: $GITHUB_WORKSPACE/maybe_upload_build_results ${{ env.OUTPUT_ZIP }}
 
       - name: Check GitHub Pages status
         uses: crazy-max/ghaction-github-status@v2
