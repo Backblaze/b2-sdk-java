@@ -1,0 +1,93 @@
+# Copyright 2017, Backblaze Inc. All Rights Reserved.
+# License https://www.backblaze.com/using_b2_code.html
+
+name: b2-sdk-java ci/cd
+
+on:
+  push:
+  pull_request:
+    branches:
+    - master
+
+env:
+  PYTHON_DEFAULT_VERSION: 3.6
+  OUTPUT_DIR: build/outputs
+  OUTPUT_ZIP: b2-sdk-build-${GITHUB_RUN_NUMBER}.zip
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  B2_ACCOUNT_ID: ${{ secrets.B2_ACCOUNT_ID }}
+  B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Use jdk8
+        uses: battila7/jdk-via-jabba@v1
+        with:
+          jdk: 1.8
+
+      - name: Set up Python ${{ env.PYTHON_DEFAULT_VERSION }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+          # upgrade pip and setuptools so that b2 CLI can be properly installed
+          python -m pip install --upgrade pip setuptools
+          python -m pip install b2
+
+      - name: Build the distribution
+        run: |
+          $GITHUB_WORKSPACE/gradlew build javadoc writeNewPom
+          #
+          # Prepare the outputs
+          #
+
+          # make the directory
+          mkdir -p $GITHUB_WORKSPACE/build/outputs
+          cp -v $GITHUB_WORKSPACE/build/libs/b2-sdk-*.{jar,pom} $GITHUB_WORKSPACE/build/outputs
+          # find the jar's version.
+          - VERSION=$(head -1 $GITHUB_WORKSPACE/core/build/resources/main/b2-sdk-core/version.txt | awk "-F'" '{print $1}')
+          - echo VERSION=$VERSION
+
+          # zip up the outputs
+          echo OUTPUT_ZIP=$OUTPUT_ZIP
+          (cd $OUTPUT_DIR; zip -r $GITHUB_WORKSPACE/build/$OUTPUT_ZIP *)
+
+      - name: Cleanup Gradle Cache
+        # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
+        # Restoring these files from a GitHub Actions cache might cause problems for future builds.
+        run: |
+          rm -f ~/.gradle/caches/modules-2/modules-2.lock
+          rm -fr ~/.gradle/caches/*/plugin-resolution/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Upload to b2
+        # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
+        # This should be using python 3.4
+        run: $GITHUB_WORKSPACE/maybe_upload_build_results $OUTPUT_ZIP
+
+      - name: Check GitHub Pages status
+        uses: crazy-max/ghaction-github-status@v2
+        with:
+          pages_threshold: major_outage
+
+      - name: Deploy
+        # note that i'm only uploading the javadocs for b2-sdk-core.
+        # that's because i'm lame and building separate javadocs for
+        # each jar and only uploading one set of javadocs.
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+          build_dir: core/build/docs/javadoc
