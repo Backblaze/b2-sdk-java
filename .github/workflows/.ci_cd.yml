@@ -56,7 +56,8 @@ jobs:
           cp -v */build/libs/b2-sdk-*.{jar,pom} build/outputs
 
           # zip up the outputs
-          (cd $OUTPUT_DIR; zip -r $GITHUB_WORKSPACE/build/$OUTPUT_ZIP *)
+          cd $OUTPUT_DIR
+          zip -r $GITHUB_WORKSPACE/build/$OUTPUT_ZIP *
 
       - name: Cleanup Gradle Cache
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
