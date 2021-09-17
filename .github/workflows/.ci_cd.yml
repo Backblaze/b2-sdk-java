@@ -13,7 +13,9 @@ env:
   PYTHON_DEFAULT_VERSION: 3.6
   OUTPUT_DIR: $GITHUB_WORKSPACE/build/outputs
   OUTPUT_ZIP: b2-sdk-build-${GITHUB_RUN_NUMBER}.zip
+  # This token was generated under rhryckewicz account
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # These are stored in Bitwarden
   B2_ACCOUNT_ID: ${{ secrets.B2_ACCOUNT_ID }}
   B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
 
