@@ -17,6 +17,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # These are stored in Bitwarden
   B2_ACCOUNT_ID: ${{ secrets.B2_ACCOUNT_ID }}
+  B2_UPLOAD_BUCKET: ${{ secrets.B2_UPLOAD_BUCKET }}
   B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
 
 jobs:
