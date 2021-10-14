@@ -968,6 +968,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 B2Clock.get().wallClockMillis(),
                 null,
                 null,
+                null,
                 null);
 
         final String largeFileId = largeFileVersion.getFileId();

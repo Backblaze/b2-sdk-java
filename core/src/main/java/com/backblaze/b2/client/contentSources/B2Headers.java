@@ -74,6 +74,9 @@ public interface B2Headers {
     String SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY = "X-Bz-Server-Side-Encryption-Customer-Key";
     String SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5 = "X-Bz-Server-Side-Encryption-Customer-Key-Md5";
 
+    // header for Cloud Replication
+    String REPLICATION_STATUS = "X-Bz-Replication-Status";
+
     /**
      * @return a collection with the names of all the headers in this object.  never null.
      */
@@ -326,5 +329,14 @@ public interface B2Headers {
      */
     default String getSseCustomerKeyMd5OrNull() {
         return getValueOrNull(SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5);
+    }
+
+    /**
+     * @return the value of the 'X-Bz-Replication-Status' header, or null if none.
+     * @apiNote We return null here instead of throwing an exception since this is a
+     *          completely optional, non-standard header.
+     */
+    default String getReplicationStatusOrNull() {
+        return getValueOrNull(REPLICATION_STATUS);
     }
 }

@@ -228,6 +228,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 123L,
                 null,
                 null,
+                null,
                 null);
 
         recordingListener.setExpected(); // no progress because threw before starting uploads.
@@ -336,8 +337,8 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 1234,
                 null,
                 null,
-                null
-        );
+                null,
+                null);
 
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("contentSource has fileName 'files/\u81ea\u7531/0002', but largeFileVersion has 'files/\u81ea\u7531/0001'");
@@ -361,8 +362,8 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 1234,
                 null,
                 null,
-                null
-        );
+                null,
+                null);
 
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("contentSource has sha1 'null', but largeFileVersion has '1111111111111111111111111111111111111111'");
@@ -386,8 +387,8 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 1234,
                 null,
                 null,
-                null
-        );
+                null,
+                null);
 
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("contentSource has contentType 'application/octet', but largeFileVersion has 'text/plain'");
@@ -411,8 +412,8 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 1234,
                 null,
                 null,
-                null
-        );
+                null,
+                null);
 
         // shouldn't throw.  :)
         B2LargeFileUploader.throwIfLargeFileVersionDoesntSeemToMatchRequest(largeFileVersion, contentSource.getContentLength(), request);
@@ -436,8 +437,8 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 1234,
                 null,
                 null,
-                null
-        );
+                null,
+                null);
 
         thrown.expect(B2LocalException.class);
         thrown.expectMessage("contentSource has fileInfo '{\n  a=b\n}', but largeFileVersion has '{\n}'");
@@ -570,6 +571,7 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
                 B2Collections.mapOf(),
                 "upload",
                 B2Clock.get().wallClockMillis(),
+                null,
                 null,
                 null,
                 null);

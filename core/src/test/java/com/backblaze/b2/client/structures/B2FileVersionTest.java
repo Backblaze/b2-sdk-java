@@ -45,7 +45,9 @@ public class B2FileVersionTest extends B2BaseTest {
                         "action='upload', uploadTimestamp=1, fileInfo=[1], fileName='" + fileName(1) + "', " +
                         "fileRetention='B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true,value={B2FileRetention{mode=governance, retainUntilTimestamp=123456}})" + "', " +
                         "legalHold='B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true,value={on})'" +  ", " +
-                        "serverSideEncryption='null'}",
+                        "serverSideEncryption='null'" + ", " +
+                        "replicationStatus='null'" +
+                        "}",
                         one.toString());
       
         // just for code coverage.
@@ -67,9 +69,9 @@ public class B2FileVersionTest extends B2BaseTest {
                 null,
                 0L,
                 null,
-               null,
-                null
-        );
+                null,
+                null,
+                null);
 
         assertEquals(
                 "B2FileVersion{fileId='null', " +
@@ -78,7 +80,9 @@ public class B2FileVersionTest extends B2BaseTest {
                         "action='null', uploadTimestamp=0, fileInfo=[], fileName='null', " +
                         "fileRetention='null', " +
                         "legalHold='null', " +
-                        "serverSideEncryption='null'}",
+                        "serverSideEncryption='null', " +
+                        "replicationStatus='null'" +
+                        "}",
                 one.toString());
     }
 
@@ -129,6 +133,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 12345L,
                 null,
                 null,
+                null,
                 null);
         assertEquals(defaultVersion, converted);
         assertTrue(defaultVersion.isClientAuthorizedToReadFileRetention());
@@ -162,11 +167,40 @@ public class B2FileVersionTest extends B2BaseTest {
                 12345L,
                 null,
                 null,
-                new B2FileSseForResponse("SSE-B2", "AES256", null));
+                new B2FileSseForResponse("SSE-B2", "AES256", null),
+                null);
 
         assertEquals(defaultVersion, converted);
         assertNull(defaultVersion.getFileRetention());
         assertNull(defaultVersion.getLegalHold());
+    }
+
+    @Test
+    public void testReplicationStatus() {
+        final String jsonString = "{\n" +
+                "   \"fileName\": \"file.txt\",\n" +
+                "   \"replicationStatus\": \"completed\",\n" +
+                "   \"uploadTimestamp\": 12345\n" +
+                "}";
+        final B2FileVersion converted = B2Json.fromJsonOrThrowRuntime(
+                jsonString,
+                B2FileVersion.class);
+        final B2FileVersion defaultVersion = new B2FileVersion(
+                null,
+                "file.txt",
+                0L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                12345L,
+                null,
+                null,
+                null,
+                B2ReplicationStatus.COMPLETED);
+
+        assertEquals(defaultVersion, converted);
     }
 
     @Test
@@ -193,6 +227,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 null,
                 12345L,
                 new B2AuthorizationFilteredResponseField<>(false, null),
+                null,
                 null,
                 null);
 
@@ -227,6 +262,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 12345L,
                 null,
                 new B2AuthorizationFilteredResponseField<>(false, null),
+                null,
                 null);
 
         assertEquals(defaultVersion, converted);
@@ -249,8 +285,8 @@ public class B2FileVersionTest extends B2BaseTest {
                         0L,
                         null,
                         null,
-                        null
-                );
+                        null,
+                        null);
         assertEquals(expectUpload, fileVersion.isUpload());
         assertEquals(expectHide, fileVersion.isHide());
         assertEquals(expectStart, fileVersion.isStart());
@@ -270,6 +306,7 @@ public class B2FileVersionTest extends B2BaseTest {
                 i,
                 new B2AuthorizationFilteredResponseField<>(true, new B2FileRetention("governance", 123456L)),
                 new B2AuthorizationFilteredResponseField<>(true, "on"),
+                null,
                 null);
     }
 }

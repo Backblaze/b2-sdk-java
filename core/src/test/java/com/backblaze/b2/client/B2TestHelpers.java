@@ -116,6 +116,7 @@ public class B2TestHelpers {
                 B2Clock.get().wallClockMillis(),
                 null,
                 null,
+                null,
                 null);
     }
 
