@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2021, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -43,8 +43,11 @@ public class B2CreateBucketRequestReal {
     @B2Json.optional
     private final B2BucketServerSideEncryption defaultServerSideEncryption;
 
+    @B2Json.optional
+    private final B2BucketReplicationConfiguration replicationConfiguration;
+
     @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules,fileLockEnabled,"+
-            "defaultServerSideEncryption")
+            "defaultServerSideEncryption, replicationConfiguration")
     private B2CreateBucketRequestReal(String accountId,
                                       String bucketName,
                                       String bucketType,
@@ -52,7 +55,8 @@ public class B2CreateBucketRequestReal {
                                       List<B2CorsRule> corsRules,
                                       List<B2LifecycleRule> lifecycleRules,
                                       boolean fileLockEnabled,
-                                      B2BucketServerSideEncryption defaultServerSideEncryption) {
+                                      B2BucketServerSideEncryption defaultServerSideEncryption,
+                                      B2BucketReplicationConfiguration replicationConfiguration) {
         this.accountId = accountId;
         this.bucketName = bucketName;
         this.bucketType = bucketType;
@@ -61,6 +65,7 @@ public class B2CreateBucketRequestReal {
         this.lifecycleRules = lifecycleRules;
         this.fileLockEnabled = fileLockEnabled;
         this.defaultServerSideEncryption = defaultServerSideEncryption;
+        this.replicationConfiguration = replicationConfiguration;
     }
 
     public B2CreateBucketRequestReal(String accountId,
@@ -72,7 +77,9 @@ public class B2CreateBucketRequestReal {
                 mostOfRequest.getCorsRules(),
                 mostOfRequest.getLifecycleRules(),
                 mostOfRequest.isFileLockEnabled(),
-                mostOfRequest.getDefaultServerSideEncryption());
+                mostOfRequest.getDefaultServerSideEncryption(),
+                mostOfRequest.getReplicationConfiguration()
+        );
     }
 
     @Override
@@ -87,7 +94,8 @@ public class B2CreateBucketRequestReal {
                 Objects.equals(corsRules, that.corsRules) &&
                 Objects.equals(lifecycleRules, that.lifecycleRules) &&
                 Objects.equals(fileLockEnabled, that.fileLockEnabled) &&
-                Objects.equals(defaultServerSideEncryption, that.defaultServerSideEncryption);
+                Objects.equals(defaultServerSideEncryption, that.defaultServerSideEncryption) &&
+                Objects.equals(replicationConfiguration, that.replicationConfiguration);
     }
 
     @Override
@@ -100,6 +108,23 @@ public class B2CreateBucketRequestReal {
                 corsRules,
                 lifecycleRules,
                 fileLockEnabled,
-                defaultServerSideEncryption);
+                defaultServerSideEncryption,
+                replicationConfiguration
+        );
+    }
+
+    @Override
+    public String toString() {
+        return "B2CreateBucketRequestReal{" +
+                "accountId='" + accountId + '\'' +
+                ", bucketName='" + bucketName + '\'' +
+                ", bucketType='" + bucketType + '\'' +
+                ", bucketInfo=" + bucketInfo +
+                ", corsRules=" + corsRules +
+                ", lifecycleRules=" + lifecycleRules +
+                ", fileLockEnabled=" + fileLockEnabled +
+                ", defaultServerSideEncryption=" + defaultServerSideEncryption +
+                ", replicationConfiguration=" + replicationConfiguration +
+                '}';
     }
 }

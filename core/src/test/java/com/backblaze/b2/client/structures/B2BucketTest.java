@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, Backblaze Inc. All Rights Reserved.
+ * Copyright 2021, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.util.B2Collections.listOf;
@@ -34,6 +35,8 @@ public class B2BucketTest extends B2BaseTest {
     private final List<B2CorsRule> b2CorsRules;
     private final List<B2LifecycleRule> lifecycleRules;
     private final Set<String> optionsSet;
+    private final List<B2ReplicationRule> replicationRules;
+    private final Map<String, String> sourceToDestinationKeyMapping;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -49,6 +52,33 @@ public class B2BucketTest extends B2BaseTest {
                 B2LifecycleRule.builder(FILE_PREFIX).build()
         );
         optionsSet = B2TestHelpers.makeBucketOrApplicationKeyOptions();
+
+        replicationRules = B2Collections.listOf(
+                new B2ReplicationRule(
+                        "my-replication-rule",
+                        "000011112222333344445555",
+                        3,
+                        "",
+                        false,
+                        true
+                ),
+                new B2ReplicationRule(
+                        "my-replication-rule-2",
+                        "777011112222333344445555",
+                        1,
+                        "abc",
+                        true,
+                        false
+                )
+        );
+
+        sourceToDestinationKeyMapping = new TreeMap<>();
+        sourceToDestinationKeyMapping.put(
+                "123a0a1a2a3a4a50000bc614e", "555a0a1a2a3a4a70000bc929a"
+        );
+        sourceToDestinationKeyMapping.put(
+                "456a0b9a8a7a6a50000fc614e", "555a0a1a2a3a4a70000bc929a"
+        );
     }
 
     @Test
@@ -64,7 +94,9 @@ public class B2BucketTest extends B2BaseTest {
                 optionsSet,
                 new B2AuthorizationFilteredResponseField<>(false, null),
                 new B2AuthorizationFilteredResponseField<>(false, null),
-                1);
+                new B2AuthorizationFilteredResponseField<>(false, null),
+                1
+        );
         final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
         final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(bucketJson, B2Bucket.class);
         assertEquals(bucket, convertedBucket);
@@ -86,6 +118,15 @@ public class B2BucketTest extends B2BaseTest {
                         true,
                         B2BucketServerSideEncryption.createSseB2Aes256()
                 );
+        final B2AuthorizationFilteredResponseField<B2BucketReplicationConfiguration> bucketReplicationConfigurationContainer =
+                new B2AuthorizationFilteredResponseField<>(
+                        true,
+                        B2BucketReplicationConfiguration.createForSourceAndDestination(
+                                "123a0a1a2a3a4a50000bc614e",
+                                replicationRules,
+                                sourceToDestinationKeyMapping
+                        )
+                );
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
                 bucketId(1),
@@ -97,7 +138,9 @@ public class B2BucketTest extends B2BaseTest {
                 optionsSet,
                 bucketFileLockContainer,
                 bucketSseContainer,
-                1);
+                bucketReplicationConfigurationContainer,
+                1
+        );
         final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
         final B2Bucket convertedBucket = B2Json.fromJsonOrThrowRuntime(bucketJson, B2Bucket.class);
         assertEquals(bucket, convertedBucket);
@@ -114,6 +157,10 @@ public class B2BucketTest extends B2BaseTest {
                 "    \"value\": null\n" +
                 "  },\n" +
                 "  \"fileLockConfiguration\": {\n" +
+                "    \"isClientAuthorizedToRead\": false,\n" +
+                "    \"value\": null\n" +
+                "  },\n" +
+                "  \"replicationConfiguration\": {\n" +
                 "    \"isClientAuthorizedToRead\": false,\n" +
                 "    \"value\": null\n" +
                 "  },\n" +
@@ -134,7 +181,9 @@ public class B2BucketTest extends B2BaseTest {
                 null,
                 new B2AuthorizationFilteredResponseField<>(false, null),
                 new B2AuthorizationFilteredResponseField<>(false, null),
-                1);
+                new B2AuthorizationFilteredResponseField<>(false, null),
+                1
+        );
 
         assertEquals(bucket, convertedBucket);
     }
@@ -155,6 +204,15 @@ public class B2BucketTest extends B2BaseTest {
                         true,
                         B2BucketServerSideEncryption.createSseB2Aes256()
                 );
+        final B2AuthorizationFilteredResponseField<B2BucketReplicationConfiguration> bucketReplicationConfigurationContainer =
+                new B2AuthorizationFilteredResponseField<>(
+                        true,
+                        B2BucketReplicationConfiguration.createForSourceAndDestination(
+                                "123a0a1a2a3a4a50000bc614e",
+                                replicationRules,
+                                sourceToDestinationKeyMapping
+                        )
+                );
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
                 bucketId(1),
@@ -166,7 +224,9 @@ public class B2BucketTest extends B2BaseTest {
                 optionsSet,
                 bucketFileLockContainer,
                 bucketSseContainer,
-                1);
+                bucketReplicationConfigurationContainer,
+                1
+        );
         // Convert from B2Bucket -> json
         final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
 
@@ -224,6 +284,38 @@ public class B2BucketTest extends B2BaseTest {
                 "    \"myOption1\",\n" +
                 "    \"myOption2\"\n" +
                 "  ],\n" +
+                "  \"replicationConfiguration\": {\n" +
+                "    \"isClientAuthorizedToRead\": true,\n" +
+                "    \"value\": {\n" +
+                "      \"asReplicationDestination\": {\n" +
+                "        \"sourceToDestinationKeyMapping\": {\n" +
+                "          \"123a0a1a2a3a4a50000bc614e\": \"555a0a1a2a3a4a70000bc929a\",\n" +
+                "          \"456a0b9a8a7a6a50000fc614e\": \"555a0a1a2a3a4a70000bc929a\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"asReplicationSource\": {\n" +
+                "        \"replicationRules\": [\n" +
+                "          {\n" +
+                "            \"destinationBucketId\": \"000011112222333344445555\",\n" +
+                "            \"fileNamePrefix\": \"\",\n" +
+                "            \"includeExistingFiles\": true,\n" +
+                "            \"isEnabled\": false,\n" +
+                "            \"priority\": 3,\n" +
+                "            \"replicationRuleName\": \"my-replication-rule\"\n" +
+                "          },\n" +
+                "          {\n" +
+                "            \"destinationBucketId\": \"777011112222333344445555\",\n" +
+                "            \"fileNamePrefix\": \"abc\",\n" +
+                "            \"includeExistingFiles\": false,\n" +
+                "            \"isEnabled\": true,\n" +
+                "            \"priority\": 1,\n" +
+                "            \"replicationRuleName\": \"my-replication-rule-2\"\n" +
+                "          }\n" +
+                "        ],\n" +
+                "        \"sourceApplicationKeyId\": \"123a0a1a2a3a4a50000bc614e\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
                 "  \"revision\": 1\n" +
                 "}";
 
@@ -278,6 +370,38 @@ public class B2BucketTest extends B2BaseTest {
                 "    \"isClientAuthorizedToRead\": false,\n" +
                 "    \"value\": null\n" +
                 "  },\n" +
+                "  \"replicationConfiguration\": {\n" +
+                "    \"isClientAuthorizedToRead\": true,\n" +
+                "    \"value\": {\n" +
+                "      \"asReplicationDestination\": {\n" +
+                "        \"sourceToDestinationKeyMapping\": {\n" +
+                "          \"123a0a1a2a3a4a50000bc614e\": \"555a0a1a2a3a4a70000bc929a\",\n" +
+                "          \"456a0b9a8a7a6a50000fc614e\": \"555a0a1a2a3a4a70000bc929a\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"asReplicationSource\": {\n" +
+                "        \"replicationRules\": [\n" +
+                "          {\n" +
+                "            \"destinationBucketId\": \"000011112222333344445555\",\n" +
+                "            \"fileNamePrefix\": \"\",\n" +
+                "            \"includeExistingFiles\": true,\n" +
+                "            \"isEnabled\": false,\n" +
+                "            \"priority\": 3,\n" +
+                "            \"replicationRuleName\": \"my-replication-rule\"\n" +
+                "          },\n" +
+                "          {\n" +
+                "            \"destinationBucketId\": \"777011112222333344445555\",\n" +
+                "            \"fileNamePrefix\": \"abc\",\n" +
+                "            \"includeExistingFiles\": false,\n" +
+                "            \"isEnabled\": true,\n" +
+                "            \"priority\": 1,\n" +
+                "            \"replicationRuleName\": \"my-replication-rule-2\"\n" +
+                "          }\n" +
+                "        ],\n" +
+                "        \"sourceApplicationKeyId\": \"123a0a1a2a3a4a50000bc614e\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +
                 "      \"daysFromHidingToDeleting\": null,\n" +
@@ -296,6 +420,81 @@ public class B2BucketTest extends B2BaseTest {
         assertFalse(bucket.isClientAuthorizedToReadDefaultServerSideEncryption());
 
         thrown.expect(B2ForbiddenException.class);
-        final B2BucketServerSideEncryption defaultSse = bucket.getDefaultServerSideEncryption();
+
+        // The following must throw
+        bucket.getDefaultServerSideEncryption();
+    }
+
+    @Test
+    public void testUnauthorizedToReadReplicationConfigurationThrowsException() throws B2ForbiddenException {
+        final String bucketJson = "{\n" +
+                "  \"accountId\": \"1\",\n" +
+                "  \"bucketId\": \"bucket1\",\n" +
+                "  \"bucketInfo\": {\n" +
+                "    \"one\": \"1\",\n" +
+                "    \"two\": \"2\"\n" +
+                "  },\n" +
+                "  \"bucketName\": \"bucket1\",\n" +
+                "  \"bucketType\": \"allPublic\",\n" +
+                "  \"corsRules\": [\n" +
+                "    {\n" +
+                "      \"allowedHeaders\": null,\n" +
+                "      \"allowedOperations\": [\n" +
+                "        \"b2_download_file_by_id\"\n" +
+                "      ],\n" +
+                "      \"allowedOrigins\": [\n" +
+                "        \"https://something.com\"\n" +
+                "      ],\n" +
+                "      \"corsRuleName\": \"rule-name\",\n" +
+                "      \"exposeHeaders\": null,\n" +
+                "      \"maxAgeSeconds\": 0\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"defaultServerSideEncryption\": {\n" +
+                "    \"isClientAuthorizedToRead\": true,\n" +
+                "    \"value\": {\n" +
+                "      \"algorithm\": \"AES256\",\n" +
+                "      \"mode\": \"SSE-B2\"\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"fileLockConfiguration\": {\n" +
+                "    \"isClientAuthorizedToRead\": true,\n" +
+                "    \"value\": {\n" +
+                "      \"defaultRetention\": {\n" +
+                "        \"mode\": \"governance\",\n" +
+                "        \"period\": {\n" +
+                "          \"duration\": 7,\n" +
+                "          \"unit\": \"days\"\n" +
+                "        }\n" +
+                "      },\n" +
+                "      \"isFileLockEnabled\": true\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"lifecycleRules\": [\n" +
+                "    {\n" +
+                "      \"daysFromHidingToDeleting\": null,\n" +
+                "      \"daysFromUploadingToHiding\": null,\n" +
+                "      \"fileNamePrefix\": \"files/\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"options\": [\n" +
+                "    \"myOption1\",\n" +
+                "    \"myOption2\"\n" +
+                "  ],\n" +
+                "  \"replicationConfiguration\": {\n" +
+                "    \"isClientAuthorizedToRead\": false,\n" +
+                "    \"value\": null\n" +
+                "  },\n" +
+                "  \"revision\": 1\n" +
+                "}";
+
+        final B2Bucket bucket = B2Json.fromJsonOrThrowRuntime(bucketJson, B2Bucket.class);
+
+        assertFalse(bucket.isClientAuthorizedToReadReplicationConfiguration());
+
+        thrown.expect(B2ForbiddenException.class);
+
+        // The following must throw
+        bucket.getReplicationConfiguration();
     }
 }

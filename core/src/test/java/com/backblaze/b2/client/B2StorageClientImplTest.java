@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, Backblaze Inc. All Rights Reserved.
+ * Copyright 2021, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -13,6 +13,7 @@ import com.backblaze.b2.client.structures.B2AuthorizationFilteredResponseField;
 import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2BucketFileLockConfiguration;
+import com.backblaze.b2.client.structures.B2BucketReplicationConfiguration;
 import com.backblaze.b2.client.structures.B2BucketServerSideEncryption;
 import com.backblaze.b2.client.structures.B2BucketTypes;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
@@ -50,6 +51,7 @@ import com.backblaze.b2.client.structures.B2ListPartsResponse;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2ReplicationRule;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
@@ -79,6 +81,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -194,7 +197,9 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 Collections.emptySet(),
                 null,
                 null,
-                1);
+                null,
+                1
+        );
         when(webifier.createBucket(anyObject(), anyObject())).thenReturn(bucket);
 
         final B2Bucket response = client.createBucket(BUCKET_NAME, BUCKET_TYPE);
@@ -209,7 +214,9 @@ public class B2StorageClientImplTest extends B2BaseTest {
                         null,
                         null,
                         false,
-                        null)
+                        null,
+                        null
+                )
         );
         verify(webifier, times(1)).createBucket(eq(ACCOUNT_AUTH), eq(expectedRequest));
         retryer.assertCallCountIs(2); // auth + createBucket.
@@ -226,6 +233,37 @@ public class B2StorageClientImplTest extends B2BaseTest {
         );
         final B2BucketServerSideEncryption defaultServerSideEncryption =
                 B2BucketServerSideEncryption.createSseB2Aes256();
+        final List<B2ReplicationRule> replicationRules = listOf(
+                new B2ReplicationRule(
+                        "my-replication-rule",
+                        "000011112222333344445555",
+                        3,
+                        "",
+                        false,
+                        true
+                ),
+                new B2ReplicationRule(
+                        "my-replication-rule-2",
+                        "777011112222333344445555",
+                        1,
+                        "abc",
+                        true,
+                        false
+                )
+        );
+        final Map<String, String> sourceToDestinationKeyMapping = new TreeMap<>();
+        sourceToDestinationKeyMapping.put(
+                "123a0a1a2a3a4a50000bc614e", "555a0a1a2a3a4a70000bc929a"
+        );
+        sourceToDestinationKeyMapping.put(
+                "456a0b9a8a7a6a50000fc614e", "555a0a1a2a3a4a70000bc929a"
+        );
+        final B2BucketReplicationConfiguration replicationConfiguration =
+                B2BucketReplicationConfiguration.createForSourceAndDestination(
+                        "123a0a1a2a3a4a50000bc614e",
+                        replicationRules,
+                        sourceToDestinationKeyMapping
+                );
         final B2CreateBucketRequest request = B2CreateBucketRequest
                 .builder(BUCKET_NAME, BUCKET_TYPE)
                 .setBucketInfo(bucketInfo)
@@ -243,7 +281,9 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 Collections.emptySet(),
                 new B2AuthorizationFilteredResponseField<>(true, new B2BucketFileLockConfiguration(true)),
                 new B2AuthorizationFilteredResponseField<>(true, defaultServerSideEncryption),
-                1);
+                new B2AuthorizationFilteredResponseField<>(true, replicationConfiguration),
+                1
+        );
         final B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
         when(webifier.createBucket(ACCOUNT_AUTH, expectedRequest)).thenReturn(bucket);
 
@@ -266,7 +306,21 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
                 "value={true,B2FileRetention{mode=null, period=null}})," +
                 "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
-                "value={B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256}}),v1)", bucket.toString());
+                "value={B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256}})," +
+                "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                "value={B2BucketReplicationConfiguration{asReplicationSource=B2SourceConfig{" +
+                "sourceApplicationKeyId='123a0a1a2a3a4a50000bc614e', " +
+                "replicationRules=[B2ReplicationRule{replicationRuleName='my-replication-rule', " +
+                "destinationBucketId='000011112222333344445555', priority=3, fileNamePrefix='', " +
+                "isEnabled=false, includeExistingFiles=true}, " +
+                "B2ReplicationRule{replicationRuleName='my-replication-rule-2', " +
+                "destinationBucketId='777011112222333344445555', priority=1, fileNamePrefix='abc', " +
+                "isEnabled=true, includeExistingFiles=false}]}, " +
+                "asReplicationDestination=B2DestinationConfig{" +
+                "sourceToDestinationKeyMapping={123a0a1a2a3a4a50000bc614e=555a0a1a2a3a4a70000bc929a, " +
+                "456a0b9a8a7a6a50000fc614e=555a0a1a2a3a4a70000bc929a}}}}),v1)",
+                bucket.toString()
+        );
 
         final B2Bucket bucketWithOptions = new B2Bucket(
                 ACCOUNT_ID,
@@ -279,13 +333,27 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 B2TestHelpers.makeBucketOrApplicationKeyOptions(),
                 new B2AuthorizationFilteredResponseField<>(true, new B2BucketFileLockConfiguration(true)),
                 new B2AuthorizationFilteredResponseField<>(true, defaultServerSideEncryption),
-                1);
+                new B2AuthorizationFilteredResponseField<>(true, replicationConfiguration),
+                1
+        );
 
         assertEquals("B2Bucket(bucket1,allPublic,bucket1,2 infos,0 corsRules,1 lifecycleRules,[myOption1, " +
                         "myOption2] options,B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
                         "value={true,B2FileRetention{mode=null, period=null}})," +
                         "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
-                        "value={B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256}}),v1)",
+                        "value={B2BucketServerSideEncryption{mode='SSE-B2', algorithm=AES256}})," +
+                        "B2AuthorizationFilteredResponseField(isClientAuthorizedToRead=true," +
+                        "value={B2BucketReplicationConfiguration{asReplicationSource=B2SourceConfig{" +
+                        "sourceApplicationKeyId='123a0a1a2a3a4a50000bc614e', " +
+                        "replicationRules=[B2ReplicationRule{replicationRuleName='my-replication-rule', " +
+                        "destinationBucketId='000011112222333344445555', priority=3, fileNamePrefix='', " +
+                        "isEnabled=false, includeExistingFiles=true}, " +
+                        "B2ReplicationRule{replicationRuleName='my-replication-rule-2', " +
+                        "destinationBucketId='777011112222333344445555', priority=1, fileNamePrefix='abc', " +
+                        "isEnabled=true, includeExistingFiles=false}]}, " +
+                        "asReplicationDestination=B2DestinationConfig{" +
+                        "sourceToDestinationKeyMapping={123a0a1a2a3a4a50000bc614e=555a0a1a2a3a4a70000bc929a, " +
+                        "456a0b9a8a7a6a50000fc614e=555a0a1a2a3a4a70000bc929a}}}}),v1)",
                 bucketWithOptions.toString());
     }
 
@@ -398,7 +466,9 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 null,
                 null,
                 null,
-                2);
+                null,
+                2
+        );
     }
 
     @Test
