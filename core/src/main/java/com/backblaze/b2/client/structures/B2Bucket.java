@@ -44,7 +44,7 @@ public class B2Bucket {
     @B2Json.required
     private final B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> defaultServerSideEncryption;
 
-    @B2Json.required
+    @B2Json.optional
     private final B2AuthorizationFilteredResponseField<B2BucketReplicationConfiguration> replicationConfiguration;
 
     @B2Json.required
