@@ -24,6 +24,12 @@ public class B2BucketReplicationConfiguration {
     @B2Json.optional
     private final B2DestinationConfig asReplicationDestination;
 
+    /**
+     * Static field for convenience to use with updateBucket() to remove bucket replication configuration
+     */
+    public static final B2BucketReplicationConfiguration NONE =
+            new B2BucketReplicationConfiguration(null, null);
+
     @B2Json.constructor(params = "asReplicationSource, asReplicationDestination")
     private B2BucketReplicationConfiguration(B2SourceConfig asReplicationSource,
                                              B2DestinationConfig asReplicationDestination) {

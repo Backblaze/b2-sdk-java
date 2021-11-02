@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import static com.backblaze.b2.util.B2Collections.listOf;
 import static com.backblaze.b2.util.B2Collections.mapOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class B2BucketReplicationConfigurationTest extends B2BaseTest {
 
@@ -189,5 +190,16 @@ public class B2BucketReplicationConfigurationTest extends B2BaseTest {
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
+    }
+
+    @Test
+    public void testValueNone() {
+        final B2BucketReplicationConfiguration b2BucketReplicationConfiguration =
+                B2BucketReplicationConfiguration.NONE;
+        
+        assertNull(b2BucketReplicationConfiguration.getReplicationRulesOrNull());
+        assertNull(b2BucketReplicationConfiguration.getSourceApplicationKeyIdOrNull());
+        assertNull(b2BucketReplicationConfiguration.getSourceToDestinationKeyMappingOrNull());
+        assertEquals(b2BucketReplicationConfiguration, B2BucketReplicationConfiguration.NONE);
     }
 }
