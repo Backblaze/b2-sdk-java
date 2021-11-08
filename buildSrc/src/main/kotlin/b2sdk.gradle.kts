@@ -1,6 +1,8 @@
 // Copyright 2021, Backblaze Inc. All Rights Reserved.
 // License https://www.backblaze.com/using_b2_code.html
 
+import org.gradle.api.credentials.PasswordCredentials
+
 plugins {
     java
     `maven-publish`
@@ -85,7 +87,11 @@ publishing {
         register<MavenPublication>("maven") {
             groupId = project.group.toString()
             artifactId = project.name
-            version = project.version.toString()
+
+            version = when (val buildNum = providers.environmentVariable("BUILD_NUMBER").forUseAtConfigurationTime().orNull) {
+                null -> project.version.toString()
+                else -> "${project.version}+$buildNum"
+            }
 
             withoutBuildIdentifier()
 
@@ -118,6 +124,13 @@ publishing {
                     url.set("https://github.com/Backblaze/b2-sdk-java")
                 }
             }
+        }
+    }
+
+    repositories {
+        maven("https://maven.pkg.github.com/Backblaze/repo") {
+            name = "bzGithubPackages"
+            credentials(PasswordCredentials::class)
         }
     }
 }

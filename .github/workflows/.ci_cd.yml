@@ -13,6 +13,7 @@ env:
   PYTHON_DEFAULT_VERSION: 3.6
   OUTPUT_DIR: $GITHUB_WORKSPACE/build/outputs
   OUTPUT_ZIP: b2-sdk-build-${GITHUB_RUN_NUMBER}.zip
+  BUILD_NUMBER: $GITHUB_RUN_NUMBER
   # This token was generated under rhryckewicz account
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # These are stored in Bitwarden
@@ -61,6 +62,13 @@ jobs:
           # zip up the outputs
           cd ${{ env.OUTPUT_DIR }}
           zip -r $GITHUB_WORKSPACE/build/${{ env.OUTPUT_ZIP }} *
+
+      - name: Deploy to internal Maven repo
+        if: github.ref == 'refs/heads/master'
+        run: $GITHUB_WORKSPACE/gradlew publishMavenPublicationToBzGithubPackagesRepository
+        env:
+          ORG_GRADLE_PROJECT_bzGithubPackagesUsername: ${{ secrets.PACKAGES_USERNAME }}
+          ORG_GRADLE_PROJECT_bzGithubPackagesPassword: ${{ secrets.PACKAGES_TOKEN }}
 
       - name: Cleanup Gradle Cache
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
