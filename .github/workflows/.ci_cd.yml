@@ -49,14 +49,14 @@ jobs:
 
       - name: Build the distribution
         run: |
-          $GITHUB_WORKSPACE/gradlew build javadoc writeNewPom
+          $GITHUB_WORKSPACE/gradlew build
           #
           # Prepare the outputs
           #
 
           # make the directory
           mkdir -p ${{ env.OUTPUT_DIR }}
-          cp -v */build/libs/b2-sdk-*.{jar,pom} ${{ env.OUTPUT_DIR }}
+          cp -v */build/libs/b2-sdk-*.{jar,pom,module} ${{ env.OUTPUT_DIR }}
 
           # zip up the outputs
           cd ${{ env.OUTPUT_DIR }}
