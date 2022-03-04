@@ -16,7 +16,6 @@ public class B2ReplicationRuleTest extends B2BaseTest {
         final String jsonString = "{\n" +
                 "  \"destinationBucketId\": \"000011112222333344445555\",\n" +
                 "  \"fileNamePrefix\": \"\",\n" +
-                "  \"includeExistingFiles\": true,\n" +
                 "  \"isEnabled\": false,\n" +
                 "  \"priority\": 3,\n" +
                 "  \"replicationRuleName\": \"my-replication-rule\"\n" +
@@ -32,8 +31,7 @@ public class B2ReplicationRuleTest extends B2BaseTest {
                         "000011112222333344445555",
                         3,
                         "",
-                        false,
-                        true
+                        false
                 );
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);

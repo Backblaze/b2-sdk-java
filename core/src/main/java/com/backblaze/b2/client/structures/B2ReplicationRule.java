@@ -54,29 +54,20 @@ public class B2ReplicationRule {
     private final boolean isEnabled;
 
     /**
-     * Indicates if existing files in the bucket will be replicated (if they have not already been replicated
-     * to the destination bucket this rule specifies).
-     */
-    @B2Json.required
-    private final boolean includeExistingFiles;
-
-    /**
      * Initializes a new, immutable rule.
      */
     @B2Json.constructor(params = "replicationRuleName, destinationBucketId, priority, " +
-        "fileNamePrefix, isEnabled, includeExistingFiles")
+        "fileNamePrefix, isEnabled")
     public B2ReplicationRule(String replicationRuleName,
                              String destinationBucketId,
                              int priority,
                              String fileNamePrefix,
-                             boolean isEnabled,
-                             boolean includeExistingFiles) {
+                             boolean isEnabled) {
         this.replicationRuleName = replicationRuleName;
         this.destinationBucketId = destinationBucketId;
         this.priority = priority;
         this.fileNamePrefix = fileNamePrefix;
         this.isEnabled = isEnabled;
-        this.includeExistingFiles = includeExistingFiles;
     }
 
     public String getReplicationRuleName() {
@@ -99,10 +90,6 @@ public class B2ReplicationRule {
         return isEnabled;
     }
 
-    public boolean includeExistingFiles() {
-        return includeExistingFiles;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -110,7 +97,6 @@ public class B2ReplicationRule {
         B2ReplicationRule that = (B2ReplicationRule) o;
         return priority == that.priority &&
                 isEnabled == that.isEnabled &&
-                includeExistingFiles == that.includeExistingFiles &&
                 Objects.equals(replicationRuleName, that.replicationRuleName) &&
                 Objects.equals(destinationBucketId, that.destinationBucketId) &&
                 Objects.equals(fileNamePrefix, that.fileNamePrefix);
@@ -123,8 +109,7 @@ public class B2ReplicationRule {
                 destinationBucketId,
                 priority,
                 fileNamePrefix,
-                isEnabled,
-                includeExistingFiles
+                isEnabled
         );
     }
 
@@ -136,7 +121,6 @@ public class B2ReplicationRule {
                 ", priority=" + priority +
                 ", fileNamePrefix='" + fileNamePrefix + '\'' +
                 ", isEnabled=" + isEnabled +
-                ", includeExistingFiles=" + includeExistingFiles +
                 '}';
     }
 }
