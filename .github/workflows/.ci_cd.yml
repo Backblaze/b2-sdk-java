@@ -1,4 +1,4 @@
-# Copyright 2017, Backblaze Inc. All Rights Reserved.
+# Copyright 2022, Backblaze Inc. All Rights Reserved.
 # License https://www.backblaze.com/using_b2_code.html
 
 name: b2-sdk-java ci/cd
@@ -10,7 +10,7 @@ on:
     - master
 
 env:
-  PYTHON_DEFAULT_VERSION: 3.6
+  PYTHON_DEFAULT_VERSION: 3.8
   OUTPUT_DIR: $GITHUB_WORKSPACE/build/outputs
   OUTPUT_ZIP: b2-sdk-build-${GITHUB_RUN_NUMBER}.zip
   BUILD_NUMBER: ${{ github.run_number }}
