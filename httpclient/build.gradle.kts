@@ -16,6 +16,6 @@ b2sdk {
 dependencies {
     api(projects.b2SdkCore)
 
-    api("org.apache.httpcomponents:httpclient:4.5.9")
+    api("org.apache.httpcomponents:httpclient:4.5.13")
     api("commons-logging:commons-logging:1.2")
 }

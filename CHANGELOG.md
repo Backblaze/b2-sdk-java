@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+## [5.0.1] - 2022-04-18
 ### Added
 * Added `s3ApiUrl` to `B2AccountAuthorization`.
 * Updated to version `4.5.13` of `org.apache.httpcomponents:httpclient`
