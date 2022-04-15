@@ -1,4 +1,4 @@
-// Copyright 2021, Backblaze Inc. All Rights Reserved.
+// Copyright 2022, Backblaze Inc. All Rights Reserved.
 // License https://www.backblaze.com/using_b2_code.html
 
 import org.gradle.api.credentials.PasswordCredentials
@@ -12,7 +12,7 @@ val b2Sdk = extensions.create("b2sdk", B2SdkExtension::class)
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+        languageVersion.set(JavaLanguageVersion.of(11))
     }
 
     withSourcesJar()
@@ -20,8 +20,7 @@ java {
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    options.release.set(8)
 }
 
 tasks.withType<Javadoc>().configureEach {
