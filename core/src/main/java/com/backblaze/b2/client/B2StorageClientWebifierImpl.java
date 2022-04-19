@@ -610,7 +610,8 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 headers.getUploadTimestampOrNull(),
                 fileRetention,
                 legalHold,
-                B2FileSseForResponse.getEncryptionFromHeadersOrNull(headers) // might be null.
+                B2FileSseForResponse.getEncryptionFromHeadersOrNull(headers), // might be null.
+                null // might be null
         );
     }
 

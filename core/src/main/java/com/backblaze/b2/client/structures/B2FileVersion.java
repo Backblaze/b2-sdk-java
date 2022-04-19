@@ -50,10 +50,12 @@ public class B2FileVersion {
     private final B2AuthorizationFilteredResponseField<String> legalHold;
     @B2Json.optional
     private final B2FileSseForResponse serverSideEncryption;
+    @B2Json.optional
+    private final String replicationStatus;
 
     @B2Json.constructor(params = "fileId,fileName,contentLength,contentType," +
             "contentSha1,contentMd5,fileInfo,action,uploadTimestamp,fileRetention," +
-            "legalHold,serverSideEncryption")
+            "legalHold,serverSideEncryption,replicationStatus")
     public B2FileVersion(String fileId,
                          String fileName,
                          long contentLength,
@@ -65,7 +67,8 @@ public class B2FileVersion {
                          long uploadTimestamp,
                          B2AuthorizationFilteredResponseField<B2FileRetention> fileRetention,
                          B2AuthorizationFilteredResponseField<String> legalHold,
-                         B2FileSseForResponse serverSideEncryption) {
+                         B2FileSseForResponse serverSideEncryption,
+                         String replicationStatus) {
         this.fileId = fileId;
         this.fileName = fileName;
         this.contentLength = contentLength;
@@ -78,6 +81,7 @@ public class B2FileVersion {
         this.fileRetention = fileRetention;
         this.legalHold = legalHold;
         this.serverSideEncryption = serverSideEncryption;
+        this.replicationStatus = replicationStatus;
     }
 
     public String getFileId() {
@@ -170,6 +174,10 @@ public class B2FileVersion {
 
     public B2FileSseForResponse getServerSideEncryption() { return serverSideEncryption; }
 
+    public String getReplicationStatus() {
+        return replicationStatus;
+    }
+
     public boolean isUpload() {
         return UPLOAD_ACTION.equals(action);
     }
@@ -200,7 +208,8 @@ public class B2FileVersion {
                 "fileName='" + fileName + "', " +
                 "fileRetention='" + fileRetention + "', " +
                 "legalHold='" + legalHold + "', " +
-                "serverSideEncryption='" + serverSideEncryption + "'" +
+                "serverSideEncryption='" + serverSideEncryption + "', " +
+                "replicationStatus='" + replicationStatus + "'" +
                 '}';
     }
 
@@ -220,7 +229,8 @@ public class B2FileVersion {
                 Objects.equals(getAction(), that.getAction()) &&
                 Objects.equals(fileRetention, that.fileRetention) && // compare the complete AuthorizationFilteredResponseField
                 Objects.equals(legalHold, that.legalHold) && // compare the complete AuthorizationFilteredResponseField
-                Objects.equals(getServerSideEncryption(), that.getServerSideEncryption());
+                Objects.equals(getServerSideEncryption(), that.getServerSideEncryption()) &&
+                Objects.equals(getReplicationStatus(), that.getReplicationStatus());
     }
 
     @Override
@@ -237,7 +247,8 @@ public class B2FileVersion {
                 getUploadTimestamp(),
                 fileRetention,
                 legalHold,
-                getServerSideEncryption()
+                getServerSideEncryption(),
+                getReplicationStatus()
         );
     }
 }

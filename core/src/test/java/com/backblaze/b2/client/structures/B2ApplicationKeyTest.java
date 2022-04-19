@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, Backblaze Inc. All Rights Reserved.
+ * Copyright 2021, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -30,6 +30,8 @@ public class B2ApplicationKeyTest extends B2BaseTest {
         capabilities.add(B2Capabilities.WRITE_FILE_RETENTIONS);
         capabilities.add(B2Capabilities.READ_FILE_LEGAL_HOLDS);
         capabilities.add(B2Capabilities.WRITE_FILE_LEGAL_HOLDS);
+        capabilities.add(B2Capabilities.READ_BUCKET_REPLICATIONS);
+        capabilities.add(B2Capabilities.WRITE_BUCKET_REPLICATIONS);
         final B2ApplicationKey applicationKey =
                 new B2ApplicationKey(
                         "accountId",

@@ -445,7 +445,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      ],\n" +
                 "      \"defaultServerSideEncryption\": null,\n" +
                 "      \"fileLockEnabled\": false,\n" +
-                "      \"lifecycleRules\": null\n" +
+                "      \"lifecycleRules\": null,\n" +
+                "      \"replicationConfiguration\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2Bucket\n"
@@ -1139,7 +1140,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      \"defaultRetention\": null,\n" +
                 "      \"defaultServerSideEncryption\": null,\n" +
                 "      \"ifRevisionIs\": 1,\n" +
-                "      \"lifecycleRules\": null\n" +
+                "      \"lifecycleRules\": null,\n" +
+                "      \"replicationConfiguration\": null\n" +
                 "    }\n" +
                 "responseClass:\n" +
                 "    B2Bucket\n"

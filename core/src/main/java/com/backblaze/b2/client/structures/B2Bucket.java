@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2021, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -44,11 +44,14 @@ public class B2Bucket {
     @B2Json.required
     private final B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> defaultServerSideEncryption;
 
+    @B2Json.optional
+    private final B2AuthorizationFilteredResponseField<B2BucketReplicationConfiguration> replicationConfiguration;
+
     @B2Json.required
     private final int revision;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules," +
-            "options,fileLockConfiguration,defaultServerSideEncryption,revision")
+            "options,fileLockConfiguration,defaultServerSideEncryption,replicationConfiguration,revision")
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
@@ -59,6 +62,7 @@ public class B2Bucket {
                     Set<String> options,
                     B2AuthorizationFilteredResponseField<B2BucketFileLockConfiguration> fileLockConfiguration,
                     B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> defaultServerSideEncryption,
+                    B2AuthorizationFilteredResponseField<B2BucketReplicationConfiguration> replicationConfiguration,
                     int revision) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -70,6 +74,7 @@ public class B2Bucket {
         this.options = options;
         this.fileLockConfiguration = fileLockConfiguration;
         this.defaultServerSideEncryption = defaultServerSideEncryption;
+        this.replicationConfiguration = replicationConfiguration;
         this.revision = revision;
     }
 
@@ -155,6 +160,29 @@ public class B2Bucket {
         return defaultServerSideEncryption.getValue();
     }
 
+    /**
+     * Indicates whether client is authorized to read replication configuration settings for bucket
+     * @return true iff client is authorized to read value of replicationConfiguration field in B2Bucket
+     */
+    public boolean isClientAuthorizedToReadReplicationConfiguration() {
+        B2Preconditions.checkState(replicationConfiguration != null);
+
+        return replicationConfiguration.isClientAuthorizedToRead();
+    }
+
+    /**
+     * Returns settings for bucket replication configuration or null if there are none.
+     * Throws B2ForbiddenException if client is not authorized to read bucket replication configuration settings.
+     * @return replication configuration settings
+     * @throws B2ForbiddenException if client is not authorized to read replicationConfiguration field
+     */
+    public B2BucketReplicationConfiguration getReplicationConfiguration() throws B2ForbiddenException {
+        B2Preconditions.checkState(replicationConfiguration != null);
+
+        // will throw B2ForbiddenException if client is not authorized to read value
+        return replicationConfiguration.getValue();
+    }
+
     @Override
     public String toString() {
         return "B2Bucket(" +
@@ -167,6 +195,7 @@ public class B2Bucket {
                 ((options == null || options.isEmpty()) ? 0 : "[" + String.join(", ", options) + "]") + " options," +
                 fileLockConfiguration + "," +
                 defaultServerSideEncryption + "," +
+                replicationConfiguration + "," +
                 "v" + revision +
                 ')';
     }
@@ -187,7 +216,8 @@ public class B2Bucket {
                 Objects.equals(getOptions(), b2Bucket.getOptions()) &&
                 // don't use getter for these two fields because they can throw B2ForbiddenException
                 Objects.equals(fileLockConfiguration, b2Bucket.fileLockConfiguration) &&
-                Objects.equals(defaultServerSideEncryption, b2Bucket.defaultServerSideEncryption);
+                Objects.equals(defaultServerSideEncryption, b2Bucket.defaultServerSideEncryption) &&
+                Objects.equals(replicationConfiguration, b2Bucket.replicationConfiguration);
     }
 
     @Override
@@ -204,6 +234,8 @@ public class B2Bucket {
                 getRevision(),
                 // don't use getter for these two fields because they can throw B2ForbiddenException
                 fileLockConfiguration,
-                defaultServerSideEncryption);
+                defaultServerSideEncryption,
+                replicationConfiguration
+        );
     }
 }

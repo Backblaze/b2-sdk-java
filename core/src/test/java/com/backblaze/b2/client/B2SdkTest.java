@@ -14,8 +14,8 @@ import static org.junit.Assert.assertTrue;
 
 public class B2SdkTest extends B2BaseTest {
     // our versions are three integers separated by periods, with an
-    // optional "-prereleaseName" at the end.  see semver.org
-    private static final Pattern VERSION_PATTERN = Pattern.compile("^\\d+[.]\\d+[.]\\d+(-[a-zA-Z0-9]+)?$");
+    // optional "-PRIVATE+<number>" at the end.  see semver.org
+    private static final Pattern VERSION_PATTERN = Pattern.compile("^\\d+[.]\\d+[.]\\d+(-[a-zA-Z0-9\\+]+)?$");
 
     @Test
     public void testName() {

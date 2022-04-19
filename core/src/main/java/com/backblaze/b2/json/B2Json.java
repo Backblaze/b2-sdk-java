@@ -535,6 +535,7 @@ public class B2Json {
     @Target(ElementType.FIELD)
     public @interface optionalWithDefault {
         String defaultValue();
+        boolean omitNull() default false;
     }
 
     /**

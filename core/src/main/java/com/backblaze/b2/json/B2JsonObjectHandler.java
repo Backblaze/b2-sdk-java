@@ -219,27 +219,33 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
 
     /**
      * Determines whether this field has the omitNull property.
-     * This property can only be set from the 'optional' annotation,
+     * This property can only be set from the 'optional' or
+     * 'optionalWithDefault' annotations,
      * for all others omitNull will return false.
      * @param field field definition
      * @return whether the field has the omitNull property
      */
     private boolean omitNull(Field field) throws B2JsonException {
         final B2Json.optional optionalAnnotation = field.getAnnotation(B2Json.optional.class);
+        final B2Json.optionalWithDefault optionalWithDefaultAnnotation = field.getAnnotation(B2Json.optionalWithDefault.class);
 
+        final boolean omitNull;
         if (optionalAnnotation != null) {
-            final boolean omitNull = optionalAnnotation.omitNull();
-            // omitNull can only be set on non-primitive classes
-            if (omitNull && field.getType().isPrimitive()) {
-                final String message = String.format(
-                        "Field %s.%s declared with 'omitNull = true' but is a primitive type",
-                        this.clazz.getSimpleName(),
-                        field.getName());
-                throw new B2JsonException(message);
-            }
-            return omitNull;
+            omitNull = optionalAnnotation.omitNull();
+        } else if (optionalWithDefaultAnnotation != null) {
+            omitNull = optionalWithDefaultAnnotation.omitNull();
+        } else {
+            omitNull = false;
         }
-        return false;
+        // omitNull can only be set on non-primitive classes
+        if (omitNull && field.getType().isPrimitive()) {
+            final String message = String.format(
+                    "Field %s.%s declared with 'omitNull = true' but is a primitive type",
+                    this.clazz.getSimpleName(),
+                    field.getName());
+            throw new B2JsonException(message);
+        }
+        return omitNull;
     }
 
     /**

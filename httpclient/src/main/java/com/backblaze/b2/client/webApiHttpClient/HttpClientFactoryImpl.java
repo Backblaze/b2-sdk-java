@@ -161,7 +161,7 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
                     createRequestConfig());
         }
 
-        private RequestConfig createRequestConfig() {
+        public RequestConfig createRequestConfig() {
             return RequestConfig.custom()
                     .setConnectionRequestTimeout(connectionRequestTimeoutSeconds * 1000) // time waiting for cxn from pool
                     .setConnectTimeout(connectTimeoutSeconds * 1000) // time waiting for remote server to connect

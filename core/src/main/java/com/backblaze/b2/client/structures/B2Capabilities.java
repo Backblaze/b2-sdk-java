@@ -45,4 +45,7 @@ public interface B2Capabilities {
     String WRITE_FILE_RETENTIONS = "writeFileRetentions";
     String READ_FILE_LEGAL_HOLDS = "readFileLegalHolds";
     String WRITE_FILE_LEGAL_HOLDS = "writeFileLegalHolds";
+
+    String READ_BUCKET_REPLICATIONS = "readBucketReplications";
+    String WRITE_BUCKET_REPLICATIONS = "writeBucketReplications";
 }

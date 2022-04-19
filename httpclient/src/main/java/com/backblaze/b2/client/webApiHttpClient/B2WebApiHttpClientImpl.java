@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2022, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.webApiHttpClient;
@@ -51,11 +51,13 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
 
     private final B2Json bzJson = B2Json.get();
     private final HttpClientFactory clientFactory;
+    private final RequestConfig defaultRequestConfig;
 
     private B2WebApiHttpClientImpl(HttpClientFactory clientFactory) {
         this.clientFactory = (clientFactory != null) ?
                 clientFactory :
                 HttpClientFactoryImpl.build();
+        defaultRequestConfig = HttpClientFactoryImpl.builder().createRequestConfig();
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -112,8 +114,11 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
            - setContentCompressionEnabled(false). With this change, if a file was uploaded
            in a compressed format (e.g. gzip) the file would be downloaded still in its
            original compressed format.
+
+           In order to keep all other configuration settings, we start with a copy of the
+           defaultRequestConfig and then modify the setContentCompressionEnabled.
          */
-        get.setConfig(RequestConfig.custom()
+        get.setConfig(RequestConfig.copy(defaultRequestConfig)
                 .setContentCompressionEnabled(false)
                 .build());
 

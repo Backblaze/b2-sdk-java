@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2021, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -15,6 +15,7 @@ public class B2CreateBucketRequest {
     private final List<B2LifecycleRule> lifecycleRules;
     private final boolean fileLockEnabled;
     private final B2BucketServerSideEncryption defaultServerSideEncryption;
+    private final B2BucketReplicationConfiguration replicationConfiguration;
 
     public B2CreateBucketRequest(String bucketName,
                                  String bucketType,
@@ -22,7 +23,8 @@ public class B2CreateBucketRequest {
                                  List<B2CorsRule> corsRules,
                                  List<B2LifecycleRule> lifecycleRules,
                                  boolean fileLockEnabled,
-                                 B2BucketServerSideEncryption defaultServerSideEncryption) {
+                                 B2BucketServerSideEncryption defaultServerSideEncryption,
+                                 B2BucketReplicationConfiguration replicationConfiguration) {
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
@@ -30,6 +32,7 @@ public class B2CreateBucketRequest {
         this.lifecycleRules = lifecycleRules;
         this.fileLockEnabled = fileLockEnabled;
         this.defaultServerSideEncryption = defaultServerSideEncryption;
+        this.replicationConfiguration = replicationConfiguration;
     }
 
     public String getBucketName() {
@@ -60,6 +63,10 @@ public class B2CreateBucketRequest {
         return defaultServerSideEncryption;
     }
 
+    public B2BucketReplicationConfiguration getReplicationConfiguration() {
+        return replicationConfiguration;
+    }
+
     public static Builder builder(String bucketName, String bucketType) {
         return new Builder(bucketName, bucketType);
     }
@@ -73,6 +80,7 @@ public class B2CreateBucketRequest {
         private List<B2LifecycleRule> lifecycleRules;
         private boolean fileLockEnabled;
         private B2BucketServerSideEncryption defaultServerSideEncryption;
+        private B2BucketReplicationConfiguration replicationConfiguration;
 
         Builder(String bucketName,
                 String bucketType) {
@@ -105,6 +113,11 @@ public class B2CreateBucketRequest {
             return this;
         }
 
+        public Builder setReplicationConfiguration(B2BucketReplicationConfiguration replicationConfiguration) {
+            this.replicationConfiguration = replicationConfiguration;
+            return this;
+        }
+
         public B2CreateBucketRequest build() {
             return new B2CreateBucketRequest(
                     bucketName,
@@ -113,7 +126,9 @@ public class B2CreateBucketRequest {
                     corsRules,
                     lifecycleRules,
                     fileLockEnabled,
-                    defaultServerSideEncryption);
+                    defaultServerSideEncryption,
+                    replicationConfiguration
+            );
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2021, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -36,10 +36,13 @@ public class B2UpdateBucketRequest {
     private final B2BucketServerSideEncryption defaultServerSideEncryption;
 
     @B2Json.optional
+    private final B2BucketReplicationConfiguration replicationConfiguration;
+
+    @B2Json.optional
     private final Integer ifRevisionIs;
 
     @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,corsRules,lifecycleRules," +
-            "defaultRetention,defaultServerSideEncryption,ifRevisionIs")
+            "defaultRetention,defaultServerSideEncryption,replicationConfiguration,ifRevisionIs")
     private B2UpdateBucketRequest(String accountId,
                                   String bucketId,
                                   String bucketType,
@@ -48,6 +51,7 @@ public class B2UpdateBucketRequest {
                                   List<B2LifecycleRule> lifecycleRules,
                                   B2BucketDefaultRetention defaultRetention,
                                   B2BucketServerSideEncryption defaultServerSideEncryption,
+                                  B2BucketReplicationConfiguration replicationConfiguration,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -57,6 +61,7 @@ public class B2UpdateBucketRequest {
         this.lifecycleRules = lifecycleRules;
         this.defaultRetention = defaultRetention;
         this.defaultServerSideEncryption = defaultServerSideEncryption;
+        this.replicationConfiguration = replicationConfiguration;
         this.ifRevisionIs = ifRevisionIs;
     }
 
@@ -91,6 +96,10 @@ public class B2UpdateBucketRequest {
         return defaultServerSideEncryption;
     }
 
+    public B2BucketReplicationConfiguration getReplicationConfiguration() {
+        return replicationConfiguration;
+    }
+
     public Integer getIfRevisionIs() {
         return ifRevisionIs;
     }
@@ -108,6 +117,7 @@ public class B2UpdateBucketRequest {
                 Objects.equals(getLifecycleRules(), that.getLifecycleRules()) &&
                 Objects.equals(getDefaultRetention(), that.getDefaultRetention()) &&
                 Objects.equals(getDefaultServerSideEncryption(), that.getDefaultServerSideEncryption()) &&
+                Objects.equals(getReplicationConfiguration(), that.getReplicationConfiguration()) &&
                 Objects.equals(getIfRevisionIs(), that.getIfRevisionIs());
     }
 
@@ -122,7 +132,9 @@ public class B2UpdateBucketRequest {
                 getLifecycleRules(),
                 getDefaultRetention(),
                 getDefaultServerSideEncryption(),
-                getIfRevisionIs());
+                getReplicationConfiguration(),
+                getIfRevisionIs()
+        );
     }
 
     public static Builder builder(B2Bucket bucket) {
@@ -143,6 +155,7 @@ public class B2UpdateBucketRequest {
         private List<B2LifecycleRule> lifecycleRules;
         private B2BucketDefaultRetention defaultRetention;
         private B2BucketServerSideEncryption defaultServerSideEncryption;
+        private B2BucketReplicationConfiguration replicationConfiguration;
 
         private Builder(B2Bucket bucket) {
             this.accountId = bucket.getAccountId();
@@ -180,6 +193,11 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
+        public Builder setReplicationConfiguration(B2BucketReplicationConfiguration replicationConfiguration) {
+            this.replicationConfiguration = replicationConfiguration;
+            return this;
+        }
+
         public B2UpdateBucketRequest build() {
             return new B2UpdateBucketRequest(
                     accountId,
@@ -190,7 +208,9 @@ public class B2UpdateBucketRequest {
                     lifecycleRules,
                     defaultRetention,
                     defaultServerSideEncryption,
-                    ifRevisionIs);
+                    replicationConfiguration,
+                    ifRevisionIs
+            );
         }
     }
 }
