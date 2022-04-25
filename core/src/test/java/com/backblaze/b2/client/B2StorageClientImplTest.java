@@ -239,14 +239,16 @@ public class B2StorageClientImplTest extends B2BaseTest {
                         "000011112222333344445555",
                         3,
                         "",
-                        false
+                        false,
+                        true
                 ),
                 new B2ReplicationRule(
                         "my-replication-rule-2",
                         "777011112222333344445555",
                         1,
                         "abc",
-                        true
+                        true,
+                        false
                 )
         );
         final Map<String, String> sourceToDestinationKeyMapping = new TreeMap<>();
@@ -310,10 +312,10 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 "sourceApplicationKeyId='123a0a1a2a3a4a50000bc614e', " +
                 "replicationRules=[B2ReplicationRule{replicationRuleName='my-replication-rule', " +
                 "destinationBucketId='000011112222333344445555', priority=3, fileNamePrefix='', " +
-                "isEnabled=false}, " +
+                "isEnabled=false, includeExistingFiles=true}, " +
                 "B2ReplicationRule{replicationRuleName='my-replication-rule-2', " +
                 "destinationBucketId='777011112222333344445555', priority=1, fileNamePrefix='abc', " +
-                "isEnabled=true}]}, " +
+                "isEnabled=true, includeExistingFiles=false}]}, " +
                 "asReplicationDestination=B2DestinationConfig{" +
                 "sourceToDestinationKeyMapping={123a0a1a2a3a4a50000bc614e=555a0a1a2a3a4a70000bc929a, " +
                 "456a0b9a8a7a6a50000fc614e=555a0a1a2a3a4a70000bc929a}}}}),v1)",
@@ -345,10 +347,10 @@ public class B2StorageClientImplTest extends B2BaseTest {
                         "sourceApplicationKeyId='123a0a1a2a3a4a50000bc614e', " +
                         "replicationRules=[B2ReplicationRule{replicationRuleName='my-replication-rule', " +
                         "destinationBucketId='000011112222333344445555', priority=3, fileNamePrefix='', " +
-                        "isEnabled=false}, " +
+                        "isEnabled=false, includeExistingFiles=true}, " +
                         "B2ReplicationRule{replicationRuleName='my-replication-rule-2', " +
                         "destinationBucketId='777011112222333344445555', priority=1, fileNamePrefix='abc', " +
-                        "isEnabled=true}]}, " +
+                        "isEnabled=true, includeExistingFiles=false}]}, " +
                         "asReplicationDestination=B2DestinationConfig{" +
                         "sourceToDestinationKeyMapping={123a0a1a2a3a4a50000bc614e=555a0a1a2a3a4a70000bc929a, " +
                         "456a0b9a8a7a6a50000fc614e=555a0a1a2a3a4a70000bc929a}}}}),v1)",
