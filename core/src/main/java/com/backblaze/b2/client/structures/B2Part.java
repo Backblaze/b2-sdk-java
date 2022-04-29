@@ -96,6 +96,7 @@ public class B2Part {
                 ", partNumber='" + partNumber + '\'' +
                 ", contentLength=" + contentLength +
                 ", contentSha1='" + contentSha1 + '\'' +
+                ", contentMd5='" + contentMd5 + '\'' +
                 ", uploadTimestamp=" + uploadTimestamp +
                 ", serverSideEncryption=" + serverSideEncryption +
                 '}';

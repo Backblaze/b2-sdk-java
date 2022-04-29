@@ -24,7 +24,7 @@ public class B2PartTest extends B2BaseTest {
         assertEquals(one, one);
         assertEquals(one, makePart(1));
 
-        assertEquals("B2Part{fileId='" + fileId(1) + "', partNumber='1', contentLength=1000, contentSha1='1111111111111111111111111111111111111111', uploadTimestamp=1, serverSideEncryption=null}", one.toString());
+        assertEquals("B2Part{fileId='" + fileId(1) + "', partNumber='1', contentLength=1000, contentSha1='1111111111111111111111111111111111111111', contentMd5='11111111111111111111111111111111', uploadTimestamp=1, serverSideEncryption=null}", one.toString());
 
         // for coverage
         //noinspection ResultOfMethodCallIgnored
