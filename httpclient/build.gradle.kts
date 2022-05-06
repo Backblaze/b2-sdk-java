@@ -1,4 +1,4 @@
-// Copyright 2021, Backblaze Inc. All Rights Reserved.
+// Copyright 2022, Backblaze Inc. All Rights Reserved.
 // License https://www.backblaze.com/using_b2_code.html
 
 plugins {
@@ -16,6 +16,6 @@ b2sdk {
 dependencies {
     api(projects.b2SdkCore)
 
-    api("org.apache.httpcomponents:httpclient:4.5.9")
+    api("org.apache.httpcomponents:httpclient:4.5.13")
     api("commons-logging:commons-logging:1.2")
 }
