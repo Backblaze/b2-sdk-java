@@ -2,11 +2,12 @@
 
 ## [Unreleased]
 
-## [5.1.0] - 2022-04-18
+## [5.1.0] - 2022-05-06
 ### Added
 * Added `s3ApiUrl` to `B2AccountAuthorization`.
 * Updated to version `4.5.13` of `org.apache.httpcomponents:httpclient`
 * Updated to version `4.13.2` of `junit:junit`
+* Added Replication Configuration to Create Bucket and Update Bucket API requests/responses
 
 ## [5.0.0] - 2021-05-10
 ### Changed `[Incompatible]`

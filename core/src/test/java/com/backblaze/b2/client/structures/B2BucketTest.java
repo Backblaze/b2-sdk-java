@@ -59,14 +59,16 @@ public class B2BucketTest extends B2BaseTest {
                         "000011112222333344445555",
                         3,
                         "",
-                        false
+                        false,
+                        true
                 ),
                 new B2ReplicationRule(
                         "my-replication-rule-2",
                         "777011112222333344445555",
                         1,
                         "abc",
-                        true
+                        true,
+                        false
                 )
         );
 
@@ -296,6 +298,7 @@ public class B2BucketTest extends B2BaseTest {
                 "          {\n" +
                 "            \"destinationBucketId\": \"000011112222333344445555\",\n" +
                 "            \"fileNamePrefix\": \"\",\n" +
+                "            \"includeExistingFiles\": true,\n" +
                 "            \"isEnabled\": false,\n" +
                 "            \"priority\": 3,\n" +
                 "            \"replicationRuleName\": \"my-replication-rule\"\n" +
@@ -303,6 +306,7 @@ public class B2BucketTest extends B2BaseTest {
                 "          {\n" +
                 "            \"destinationBucketId\": \"777011112222333344445555\",\n" +
                 "            \"fileNamePrefix\": \"abc\",\n" +
+                "            \"includeExistingFiles\": false,\n" +
                 "            \"isEnabled\": true,\n" +
                 "            \"priority\": 1,\n" +
                 "            \"replicationRuleName\": \"my-replication-rule-2\"\n" +
@@ -380,6 +384,7 @@ public class B2BucketTest extends B2BaseTest {
                 "          {\n" +
                 "            \"destinationBucketId\": \"000011112222333344445555\",\n" +
                 "            \"fileNamePrefix\": \"\",\n" +
+                "            \"includeExistingFiles\": true,\n" +
                 "            \"isEnabled\": false,\n" +
                 "            \"priority\": 3,\n" +
                 "            \"replicationRuleName\": \"my-replication-rule\"\n" +
@@ -387,6 +392,7 @@ public class B2BucketTest extends B2BaseTest {
                 "          {\n" +
                 "            \"destinationBucketId\": \"777011112222333344445555\",\n" +
                 "            \"fileNamePrefix\": \"abc\",\n" +
+                "            \"includeExistingFiles\": false,\n" +
                 "            \"isEnabled\": true,\n" +
                 "            \"priority\": 1,\n" +
                 "            \"replicationRuleName\": \"my-replication-rule-2\"\n" +

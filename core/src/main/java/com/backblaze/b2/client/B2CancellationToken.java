@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Token to pass around whether the caller has cancelled an operation so that
  * sub tasks can stop their processing.
  */
-class B2CancellationToken {
+public class B2CancellationToken {
     /**
      * The actual cancellation state
      */
