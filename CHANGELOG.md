@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [5.2.0] - 2022-05-06
+### Added
+* Added Replication Configuration to Create Bucket and Update Bucket API requests/responses
+
 ## [5.1.0] - 2022-04-18
 ### Added
 * Added `s3ApiUrl` to `B2AccountAuthorization`.
