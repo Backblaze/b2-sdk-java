@@ -25,8 +25,9 @@ jobs:
 
       - uses: gradle/wrapper-validation-action@v1
       - name: Deploy to Maven Central
-        run: ./gradlew publishToSonatype closeSonatypeStagingRepository --no-daemon --stacktrace
+        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon --stacktrace
         env:
+          RELEASE_BUILD: true
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
