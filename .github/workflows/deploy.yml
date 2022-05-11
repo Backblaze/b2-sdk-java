@@ -58,4 +58,4 @@ jobs:
           files: |
             core/build/libs/*-bundle.jar
             httpclient/build/libs/*-bundle.jar
-            sample/build/libs/*-bundle.jar
+            samples/build/libs/*-bundle.jar
