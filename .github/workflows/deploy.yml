@@ -25,7 +25,7 @@ jobs:
 
       - uses: gradle/wrapper-validation-action@v1
       - name: Deploy to Maven Central
-        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon --stacktrace
+        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository createBundle --no-daemon --stacktrace
         env:
           RELEASE_BUILD: true
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
@@ -39,3 +39,23 @@ jobs:
         run: |
           rm -f ~/.gradle/caches/modules-2/modules-2.lock
           rm -fr ~/.gradle/caches/*/plugin-resolution/
+
+      - name: Get tag name
+        id: get_tag
+        shell: bash
+        run: |
+          tag_name="$(echo $GITHUB_REF | cut -d / -f 3)"
+          echo ::set-output name=tag::$tag_name
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          name: ${{ steps.get_tag.outputs.tag }}
+          prerelease: false
+          draft: false
+          files: |
+            core/build/libs/*-bundle.jar
+            httpclient/build/libs/*-bundle.jar
+            sample/build/libs/*-bundle.jar
