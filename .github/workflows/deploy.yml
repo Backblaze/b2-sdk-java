@@ -56,6 +56,6 @@ jobs:
           prerelease: false
           draft: false
           files: |
-            core/build/libs/*-bundle.jar
-            httpclient/build/libs/*-bundle.jar
-            samples/build/libs/*-bundle.jar
+            core/build/libs/bundle-*.jar
+            httpclient/build/libs/bundle-*.jar
+            samples/build/libs/bundle-*.jar
