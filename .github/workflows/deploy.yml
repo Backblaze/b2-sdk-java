@@ -4,7 +4,7 @@
 name: b2-sdk-java Maven Central deployment
 on:
   push:
-    tags: ['v*']
+    tags: ['testv*']
 
 jobs:
   deploy:
@@ -25,7 +25,7 @@ jobs:
 
       - uses: gradle/wrapper-validation-action@v1
       - name: Deploy to Maven Central
-        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository createBundle --no-daemon --stacktrace
+        run: ./gradlew createBundle --no-daemon --stacktrace
         env:
           RELEASE_BUILD: true
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
