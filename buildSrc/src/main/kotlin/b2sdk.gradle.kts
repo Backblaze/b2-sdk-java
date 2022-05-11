@@ -2,6 +2,7 @@
 // License https://www.backblaze.com/using_b2_code.html
 
 import org.gradle.api.credentials.PasswordCredentials
+import org.gradle.api.publish.internal.PublicationInternal
 
 plugins {
     java
@@ -139,25 +140,33 @@ publishing {
     }
 }
 
-// Don't configure signing unless this is present
 val sonatypeUsername = findProperty("sonatypeUsername")
 val sonatypePassword = findProperty("sonatypePassword")
 
 val gpgSigningKey = System.getenv("GPG_SIGNING_KEY")
 val gpgPassphrase = System.getenv("GPG_PASSPHRASE")
 
-if (sonatypeUsername != null && sonatypePassword != null) {
-    signing {
-        setRequired {
-            gradle.taskGraph.hasTask("publishToSonatype")
-        }
+signing {
+    setRequired {
+        gradle.taskGraph.hasTask("publishToSonatype") || gradle.taskGraph.hasTask("createBundle")
+    }
 
-        if (gpgSigningKey != null && gpgPassphrase != null) {
-            useInMemoryPgpKeys(gpgSigningKey, gpgPassphrase)
-        } else {
-            useGpgCmd()
-        }
+    if (gpgSigningKey != null && gpgPassphrase != null) {
+        useInMemoryPgpKeys(gpgSigningKey, gpgPassphrase)
+    } else {
+        useGpgCmd()
+    }
 
-        sign(publishing.publications["maven"])
+    sign(publishing.publications["maven"])
+}
+
+tasks.register<Jar>("createBundle") {
+    archiveClassifier.set("bundle")
+    from((project.publishing.publications["maven"] as PublicationInternal<*>).publishableArtifacts.files) {
+        rename {
+            it
+                .replace("pom-default.xml", "${project.name}-${project.version}.pom")
+                .replace("module.json", "${project.name}-${project.version}.module")
+        }
     }
 }
