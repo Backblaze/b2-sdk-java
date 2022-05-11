@@ -161,7 +161,7 @@ signing {
 }
 
 tasks.register<Jar>("createBundle") {
-    archiveClassifier.set("bundle")
+    archiveBaseName.set("bundle-for-${project.name}")
     from((project.publishing.publications["maven"] as PublicationInternal<*>).publishableArtifacts.files) {
         rename {
             it
