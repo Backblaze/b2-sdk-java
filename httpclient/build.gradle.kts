@@ -17,5 +17,12 @@ dependencies {
     api(projects.b2SdkCore)
 
     api("org.apache.httpcomponents:httpclient:4.5.13")
+    https://backblaze.atlassian.net/browse/DEV-12909
+    constraints {
+        implementation("commons-codec:commons-codec:1.15") {
+            because("earlier versions have a known vulnerability")
+        }
+    }
+
     api("commons-logging:commons-logging:1.2")
 }
