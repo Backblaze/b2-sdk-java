@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+* Updated to version `1.15` of `commons-codec`.
 
 ## [5.1.0] - 2022-04-18
 ### Added
