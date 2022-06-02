@@ -39,30 +39,4 @@ public class B2ReplicationRuleTest extends B2BaseTest {
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
     }
-
-    @Test
-    public void testFromJsonWithOptionalFieldsNotSet() {
-        final String jsonString = "{\n" +
-                "  \"destinationBucketId\": \"000011112222333344445555\",\n" +
-                "  \"fileNamePrefix\": \"\",\n" +
-                "  \"isEnabled\": false,\n" +
-                "  \"priority\": 3,\n" +
-                "  \"replicationRuleName\": \"my-replication-rule\"\n" +
-                "}";
-        final B2ReplicationRule converted =
-                B2Json.fromJsonOrThrowRuntime(
-                        jsonString,
-                        B2ReplicationRule.class
-                );
-        final B2ReplicationRule defaultConfig =
-                new B2ReplicationRule(
-                        "my-replication-rule",
-                        "000011112222333344445555",
-                        3,
-                        "",
-                        false,
-                        false
-                );
-        assertEquals(defaultConfig, converted);
-    }
 }

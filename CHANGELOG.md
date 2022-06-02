@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+### Changed `[Incompatible]`
+* Updated `includeExistingFiles` to be required on B2ReplicationRule
+
+### Added
 * Updated to version `1.15` of `commons-codec`.
 
 ## [5.1.0] - 2022-05-06

@@ -57,7 +57,7 @@ public class B2ReplicationRule {
      * Indicates if existing files in the bucket will be replicated (if they have not already been replicated
      * to the destination bucket this rule specifies).
      */
-    @B2Json.optionalWithDefault(defaultValue = "false")
+    @B2Json.required
     private final boolean includeExistingFiles;
 
     /**
