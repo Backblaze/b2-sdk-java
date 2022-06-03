@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [6.0.0] - 2022-06-03
 ### Changed `[Incompatible]`
 * Updated `includeExistingFiles` to be required on B2ReplicationRule
 
