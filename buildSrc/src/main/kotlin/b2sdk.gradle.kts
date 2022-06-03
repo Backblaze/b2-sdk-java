@@ -146,18 +146,20 @@ val sonatypePassword = findProperty("sonatypePassword")
 val gpgSigningKey = System.getenv("GPG_SIGNING_KEY")
 val gpgPassphrase = System.getenv("GPG_PASSPHRASE")
 
-signing {
-    setRequired {
-        gradle.taskGraph.hasTask("publishToSonatype") || gradle.taskGraph.hasTask("createBundle")
-    }
+if (sonatypeUsername != null && sonatypePassword != null) {
+    signing {
+        setRequired {
+            gradle.taskGraph.hasTask("publishToSonatype") || gradle.taskGraph.hasTask("createBundle")
+        }
 
-    if (gpgSigningKey != null && gpgPassphrase != null) {
-        useInMemoryPgpKeys(gpgSigningKey, gpgPassphrase)
-    } else {
-        useGpgCmd()
-    }
+        if (gpgSigningKey != null && gpgPassphrase != null) {
+            useInMemoryPgpKeys(gpgSigningKey, gpgPassphrase)
+        } else {
+            useGpgCmd()
+        }
 
-    sign(publishing.publications["maven"])
+        sign(publishing.publications["maven"])
+    }
 }
 
 tasks.register<Jar>("createBundle") {
