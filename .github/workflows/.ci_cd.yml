@@ -36,6 +36,7 @@ jobs:
           java-version: '8'
           cache: 'gradle'
 
+      - uses: gradle/wrapper-validation-action@v1
       - name: Set up Python ${{ env.PYTHON_DEFAULT_VERSION }}
         uses: actions/setup-python@v2
         with:
@@ -64,7 +65,7 @@ jobs:
           zip -r $GITHUB_WORKSPACE/build/${{ env.OUTPUT_ZIP }} *
 
       - name: Deploy to internal Maven repo
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' && github.repository == 'Backblaze/b2-sdk-java-private'
         run: $GITHUB_WORKSPACE/gradlew publishMavenPublicationToBzGithubPackagesRepository
         env:
           ORG_GRADLE_PROJECT_bzGithubPackagesUsername: ${{ secrets.PACKAGES_USERNAME }}

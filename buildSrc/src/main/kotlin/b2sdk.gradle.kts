@@ -2,9 +2,11 @@
 // License https://www.backblaze.com/using_b2_code.html
 
 import org.gradle.api.credentials.PasswordCredentials
+import org.gradle.api.publish.internal.PublicationInternal
 
 plugins {
     java
+    signing
     `maven-publish`
 }
 
@@ -87,9 +89,13 @@ publishing {
             groupId = project.group.toString()
             artifactId = project.name
 
-            version = when (val buildNum = providers.environmentVariable("BUILD_NUMBER").forUseAtConfigurationTime().orNull) {
-                null -> project.version.toString()
-                else -> "${project.version}+$buildNum"
+            if (System.getenv("RELEASE_BUILD") != null) {
+                version = project.version.toString()
+            } else {
+                version = when (val buildNum = System.getenv("BUILD_NUMBER")) {
+                    null -> project.version.toString()
+                    else -> "${project.version}+$buildNum"
+                }
             }
 
             withoutBuildIdentifier()
@@ -130,6 +136,37 @@ publishing {
         maven("https://maven.pkg.github.com/Backblaze/repo") {
             name = "bzGithubPackages"
             credentials(PasswordCredentials::class)
+        }
+    }
+}
+
+val sonatypeUsername = findProperty("sonatypeUsername")
+val sonatypePassword = findProperty("sonatypePassword")
+
+val gpgSigningKey = System.getenv("GPG_SIGNING_KEY")
+val gpgPassphrase = System.getenv("GPG_PASSPHRASE")
+
+signing {
+    setRequired {
+        gradle.taskGraph.hasTask("publishToSonatype") || gradle.taskGraph.hasTask("createBundle")
+    }
+
+    if (gpgSigningKey != null && gpgPassphrase != null) {
+        useInMemoryPgpKeys(gpgSigningKey, gpgPassphrase)
+    } else {
+        useGpgCmd()
+    }
+
+    sign(publishing.publications["maven"])
+}
+
+tasks.register<Jar>("createBundle") {
+    archiveBaseName.set("bundle-for-${project.name}")
+    from((project.publishing.publications["maven"] as PublicationInternal<*>).publishableArtifacts.files) {
+        rename {
+            it
+                .replace("pom-default.xml", "${project.name}-${project.version}.pom")
+                .replace("module.json", "${project.name}-${project.version}.module")
         }
     }
 }

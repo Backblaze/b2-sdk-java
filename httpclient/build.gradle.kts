@@ -22,5 +22,6 @@ dependencies {
             because("earlier versions have a known vulnerability")
         }
     }
+
     api("commons-logging:commons-logging:1.2")
 }
