@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+* Added `fileLockEnabled` to `B2UpdateBucketRequest` to support enabling file lock on existing buckets
 
 ## [6.0.0] - 2022-06-03
 ### Changed `[Incompatible]`
