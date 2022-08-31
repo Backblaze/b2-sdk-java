@@ -577,8 +577,9 @@ public class B2Json {
      * should use.  This constructor must take ALL of the serializable
      * fields as parameters.
      *
-     * You must provide an "params" parameter that lists the order of
-     * the parameters to the constructor.
+     * You must provide a "params" parameter that lists the order of
+     * the parameters to the constructor or compile classes with the
+     * '-parameters' javac option.
      *
      * If present, the "discards" parameter is a comma-separated list of
      * field names which are allowed to be present in the parsed json,
@@ -595,7 +596,10 @@ public class B2Json {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.CONSTRUCTOR)
     public @interface constructor {
-        String params();
+        /**
+         * This is optional for classes compiled with the '-parameters' javac argument
+         */
+        String params() default "";
         String discards() default "";
         String versionParam() default "";
     }
