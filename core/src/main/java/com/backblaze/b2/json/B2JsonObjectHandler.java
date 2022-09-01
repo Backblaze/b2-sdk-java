@@ -169,13 +169,13 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             // Verify that, if present, the number of params specified in the annotation is correct
             final int expectedParamCount = fields.length + numberOfVersionParams;
             if (annotationParamNames != null && annotationParamNames.length != expectedParamCount) {
-                throw new IllegalArgumentException(clazz.getName() + " constructor's @B2Json.constructor annotation does not have the right number of params.");
+                throw new B2JsonException(clazz.getName() + " constructor's @B2Json.constructor annotation does not have the right number of params.");
             }
 
             // Verify that the number of actual constructor params is correct
             Parameter[] constructorParams = this.constructor.getParameters();
             if (constructorParams.length != expectedParamCount) {
-                throw new IllegalArgumentException(clazz.getName() + " constructor does not have the right number of parameters");
+                throw new B2JsonException(clazz.getName() + " constructor does not have the right number of parameters");
             }
 
             Integer versionParamIndex = null;

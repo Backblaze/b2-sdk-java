@@ -577,9 +577,9 @@ public class B2Json {
      * should use.  This constructor must take ALL of the serializable
      * fields as parameters.
      *
-     * You must provide a "params" parameter that lists the order of
-     * the parameters to the constructor or compile classes with the
-     * '-parameters' javac option.
+     * You must either compile classes with the '-parameters' javac option
+     * or else provide a "params" parameter that lists the order of
+     * the parameters to the constructor.
      *
      * If present, the "discards" parameter is a comma-separated list of
      * field names which are allowed to be present in the parsed json,
