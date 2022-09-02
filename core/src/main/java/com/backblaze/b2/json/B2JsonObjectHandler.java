@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Backblaze Inc. All Rights Reserved.
+ * Copyright 2022, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -11,10 +11,7 @@ import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -162,21 +159,38 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
 
         // Figure out the argument positions for the constructor.
         {
+            // Parse @B2Json.constructor#params into an array
             String paramsWithCommas = annotation.params().replace(" ", "");
-            String [] paramNames = paramsWithCommas.split(",");
-            if (paramNames.length == 1 && paramNames[0].length() == 0) {
-                paramNames = new String [0];
+            String[] annotationParamNames = paramsWithCommas.split(",");
+            if (annotationParamNames.length == 1 && annotationParamNames[0].length() == 0) {
+                annotationParamNames = null;
             }
 
-            final int constructorParamCount = fields.length + numberOfVersionParams;
-            if (paramNames.length != constructorParamCount) {
-                throw new IllegalArgumentException(clazz.getName() + " constructor does not have the right number of parameters");
+            // Verify that, if present, the number of params specified in the annotation is correct
+            final int expectedParamCount = fields.length + numberOfVersionParams;
+            if (annotationParamNames != null && annotationParamNames.length != expectedParamCount) {
+                throw new B2JsonException(clazz.getName() + " constructor's @B2Json.constructor annotation does not have the right number of params.");
+            }
+
+            // Verify that the number of actual constructor params is correct
+            Parameter[] constructorParams = this.constructor.getParameters();
+            if (constructorParams.length != expectedParamCount) {
+                throw new B2JsonException(clazz.getName() + " constructor does not have the right number of parameters");
             }
 
             Integer versionParamIndex = null;
             Set<String> paramNamesSeen = new HashSet<>();
-            for (int i = 0; i < paramNames.length; i++) {
-                String paramName = paramNames[i];
+            for (int i = 0; i < constructorParams.length; i++) {
+                // Use annotated param names, if provided. Otherwise, attempt to use Java 8's real parameter name reflection
+                String paramName;
+                if (annotationParamNames != null) {
+                    paramName = annotationParamNames[i];
+                } else if (constructorParams[i].isNamePresent()) {
+                    paramName = constructorParams[i].getName();
+                } else {
+                    throw new B2JsonException(clazz.getName() + " constructor is missing 'params' for its @B2Json.constructor annotation. Either specify this or add -parameters to javac args.");
+                }
+
                 if (paramNamesSeen.contains(paramName)) {
                     throw new B2JsonException(clazz.getName() + " constructor parameter '" + paramName + "' listed twice");
                 }
@@ -196,7 +210,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                 }
             }
             this.versionParamIndexOrNull = versionParamIndex;
-            this.constructorParamCount = constructorParamCount;
+            this.constructorParamCount = constructorParams.length;
         }
 
         // figure out which names to discard, if any
