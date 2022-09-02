@@ -313,10 +313,7 @@ FAQ
 
     B2Json requires that we make a constructor for each class that takes all
     of the parameters, so that we can assign values for final members and validate
-    the values as needed.  Since Java reflection doesn't let us access the names
-    of the parameters to the constructors, we have to annotate constructors to
-    provide the names.  It's a price we're happy to pay for the features it
-    provides.
+    the values as needed.
 
 
 STRUCTURE

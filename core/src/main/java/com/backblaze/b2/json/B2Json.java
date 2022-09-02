@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Backblaze Inc. All Rights Reserved.
+ * Copyright 2022, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -577,7 +577,8 @@ public class B2Json {
      * should use.  This constructor must take ALL of the serializable
      * fields as parameters.
      *
-     * You must provide an "params" parameter that lists the order of
+     * You must either compile classes with the '-parameters' javac option
+     * or else provide a "params" parameter that lists the order of
      * the parameters to the constructor.
      *
      * If present, the "discards" parameter is a comma-separated list of
@@ -595,7 +596,10 @@ public class B2Json {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.CONSTRUCTOR)
     public @interface constructor {
-        String params();
+        /**
+         * This is optional for classes compiled with the '-parameters' javac argument
+         */
+        String params() default "";
         String discards() default "";
         String versionParam() default "";
     }

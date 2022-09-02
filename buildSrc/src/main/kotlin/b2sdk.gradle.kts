@@ -23,6 +23,7 @@ java {
 
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(8)
+    options.compilerArgs.add("-parameters")
 }
 
 tasks.withType<Javadoc>().configureEach {
