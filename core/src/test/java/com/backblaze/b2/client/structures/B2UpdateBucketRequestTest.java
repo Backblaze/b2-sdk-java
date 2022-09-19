@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2022, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -133,6 +133,7 @@ public class B2UpdateBucketRequestTest {
                 .setDefaultRetention(defaultRetention)
                 .setDefaultServerSideEncryption(defaultServerSideEncryption)
                 .setReplicationConfiguration(replicationConfiguration)
+                .setFileLockEnabled(Boolean.TRUE)
                 .build();
 
         // Convert from B2UpdateBucketRequest -> json
@@ -171,6 +172,7 @@ public class B2UpdateBucketRequestTest {
                 "    \"algorithm\": \"AES256\",\n" +
                 "    \"mode\": \"SSE-B2\"\n" +
                 "  },\n" +
+                "  \"fileLockEnabled\": true,\n" +
                 "  \"ifRevisionIs\": 1,\n" +
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +

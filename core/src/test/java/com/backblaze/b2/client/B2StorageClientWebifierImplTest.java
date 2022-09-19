@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2022, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -136,18 +136,18 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
 
 
-    private RecordingWebApiClient webApiClient = new RecordingWebApiClient();
+    private final RecordingWebApiClient webApiClient = new RecordingWebApiClient();
 
     // i'm doing most tests with the a test mode to ensure it's set on all request type.
     // there's a separate test it can be disabled; that test only checks one request type.
-    private B2StorageClientWebifierImpl webifier = new B2StorageClientWebifierImpl(
+    private final B2StorageClientWebifierImpl webifier = new B2StorageClientWebifierImpl(
             webApiClient,
             USER_AGENT,
             MASTER_URL,
             B2TestMode.FORCE_CAP_EXCEEDED
     );
 
-    private B2ContentSink noopContentHandler = (r, i) -> {};
+    private final B2ContentSink noopContentHandler = (r, i) -> {};
 
 
     @Rule
@@ -1139,6 +1139,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      ],\n" +
                 "      \"defaultRetention\": null,\n" +
                 "      \"defaultServerSideEncryption\": null,\n" +
+                "      \"fileLockEnabled\": null,\n" +
                 "      \"ifRevisionIs\": 1,\n" +
                 "      \"lifecycleRules\": null,\n" +
                 "      \"replicationConfiguration\": null\n" +

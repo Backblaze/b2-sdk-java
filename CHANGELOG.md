@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.1.0] - 2022-09-19
+### Added
+* Added support for Java 8's `-parameters` option so constructor parameters do not need to be reiterated in `B2Json.constructor#params`
+* Added `fileLockEnabled` to `B2UpdateBucketRequest` to support enabling file lock on existing buckets
+
 ## [6.0.0] - 2022-06-03
 ### Changed `[Incompatible]`
 * Updated `includeExistingFiles` to be required on B2ReplicationRule
@@ -166,7 +171,9 @@
 * These changes were driven by switching our internal b2-sdk uses to use the http client from the sdk instead of a 
 different, custom interface.
 
-[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v5.0.0...HEAD
+[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.1.0...HEAD
+[6.1.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.1.0
+[6.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.0.0
 [5.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v5.0.0
 [4.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v4.0.0
 [3.1.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v3.1.0
