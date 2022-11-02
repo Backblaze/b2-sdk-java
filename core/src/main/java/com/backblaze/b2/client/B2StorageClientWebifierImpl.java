@@ -93,7 +93,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
     // This path specifies which version of the B2 APIs to use.
     // See: https://www.backblaze.com/b2/docs/versions.html
-    private static String API_VERSION_PATH = "b2api/v2/";
+    private static final String API_VERSION_PATH = "b2api/v2/";
 
     private final B2WebApiClient webApiClient;
     private final String userAgent;
@@ -315,6 +315,12 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             for (Map.Entry<String, String> entry : request.getFileInfo().entrySet()) {
                 validateFileInfoName(entry.getKey());
                 headersBuilder.set(B2Headers.FILE_INFO_PREFIX + entry.getKey(), percentEncode(entry.getValue()));
+            }
+
+            // Add custom upload timestamp if necessary
+            final Long customUploadTimestamp = request.getCustomUploadTimestamp();
+            if (customUploadTimestamp != null) {
+                headersBuilder.set(B2Headers.CUSTOM_UPLOAD_TIMESTAMP, customUploadTimestamp.toString());
             }
 
             final B2ByteProgressListener progressAdapter = new B2UploadProgressAdapter(uploadListener, 0, 1, 0, contentLen);

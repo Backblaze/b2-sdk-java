@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 ### Added
+* Added support for custom upload timestamps
+
+### [6.1.0] - 2022-09-19
+### Added
 * Added support for Java 8's `-parameters` option so constructor parameters do not need to be reiterated in `B2Json.constructor#params`
 * Added `fileLockEnabled` to `B2UpdateBucketRequest` to support enabling file lock on existing buckets
 
