@@ -8,6 +8,7 @@ import com.backblaze.b2.client.contentHandlers.B2ContentMemoryWriter;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.contentSources.B2HeadersImpl;
 import com.backblaze.b2.client.exceptions.B2Exception;
+import com.backblaze.b2.client.exceptions.B2InternalErrorException;
 import com.backblaze.b2.client.structures.B2ErrorStructure;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.json.B2Json;
@@ -73,16 +74,23 @@ public class B2WebApiHttpClientImplTest {
             RESPONSE_HEADERS
     );
 
+    private static final String ERROR_MESSAGE = "something went wrong";
     private static final B2ErrorStructure INTERNAL_ERROR_STRUCTURE = new B2ErrorStructure(
             HttpStatus.SC_INTERNAL_SERVER_ERROR,
             "bad",
-            "something went wrong");
+            ERROR_MESSAGE);
 
 
     private static final SimpleHttpRequestHandler.Response JSON_ERROR_RESPONSE = createResponse(
             HttpStatus.SC_INTERNAL_SERVER_ERROR,
             ContentType.APPLICATION_JSON.toString(),
             B2Json.toJsonOrThrowRuntime(INTERNAL_ERROR_STRUCTURE).getBytes()
+    );
+
+    private static final SimpleHttpRequestHandler.Response TEXT_ERROR_RESPONSE = createResponse(
+            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            ContentType.TEXT_PLAIN.toString(),
+            ERROR_MESSAGE.getBytes()
     );
 
     @Test
@@ -93,11 +101,14 @@ public class B2WebApiHttpClientImplTest {
         // compressed large content with false enableContentCompression
         doTestGetContent(REQUEST_HEADERS, COMPRESSED_LARGE_CONTENT_RESPONSE, RESPONSE_HEADERS);
 
-        // error case
-        doTestGetContentWithException(REQUEST_HEADERS, JSON_ERROR_RESPONSE, RESPONSE_HEADERS);
+        // error case with JSON response
+        doTestGetContentWithJsonException(REQUEST_HEADERS, JSON_ERROR_RESPONSE, RESPONSE_HEADERS);
+
+        // error case with text/plain response
+        doTestGetContentWithTextException(REQUEST_HEADERS, TEXT_ERROR_RESPONSE);
     }
 
-    private void doTestGetContentWithException(Map<String, String> requestHeaders, SimpleHttpRequestHandler.Response expectedResponse, Map<String, String> responseHeaders) {
+    private void doTestGetContentWithJsonException(Map<String, String> requestHeaders, SimpleHttpRequestHandler.Response expectedResponse, Map<String, String> responseHeaders) {
         final B2HeadersImpl.Builder requestHeaderBuilder = B2HeadersImpl.builder();
         requestHeaders.forEach(requestHeaderBuilder::set);
         requestHandler.setNextResponse(expectedResponse);
@@ -111,6 +122,24 @@ public class B2WebApiHttpClientImplTest {
             assertEquals(INTERNAL_ERROR_STRUCTURE.status, b2Exception.getStatus());
             assertEquals(INTERNAL_ERROR_STRUCTURE.code, b2Exception.getCode());
             assertEquals(INTERNAL_ERROR_STRUCTURE.message, b2Exception.getMessage());
+        }
+    }
+
+    private void doTestGetContentWithTextException(Map<String, String> requestHeaders, SimpleHttpRequestHandler.Response expectedResponse) {
+        final B2HeadersImpl.Builder requestHeaderBuilder = B2HeadersImpl.builder();
+        requestHeaders.forEach(requestHeaderBuilder::set);
+        requestHandler.setNextResponse(expectedResponse);
+
+        final B2ContentMemoryWriter sink = B2ContentMemoryWriter.build();
+
+        // call getContent and verify the returned exception response data
+        try {
+            b2WebApiClient.getContent(url, requestHeaderBuilder.build(), sink);
+        } catch (B2Exception b2Exception) {
+            assertEquals(B2InternalErrorException.class, b2Exception.getClass());
+            assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, b2Exception.getStatus());
+            assertEquals("unknown", b2Exception.getCode());
+            assertEquals(ERROR_MESSAGE, b2Exception.getMessage());
         }
     }
 

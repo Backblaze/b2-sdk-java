@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased] - TBD
+### Added
+* Return a subtype of `B2Exception` on errors when the response body does not conform to `B2ErrorStructure`. 
+  Returning a `B2Exception` subtype enables the `B2Retryer` to retry exceptions that may succeed on retry.
+
 ## [6.1.0] - 2022-09-19
 ### Added
 * Added support for Java 8's `-parameters` option so constructor parameters do not need to be reiterated in `B2Json.constructor#params`
