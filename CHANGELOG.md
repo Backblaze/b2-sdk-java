@@ -3,7 +3,7 @@
 ## [Unreleased] - TBD
 ### Added
 * Return a subtype of `B2Exception` on errors when the response body does not conform to `B2ErrorStructure`. 
-  Returning a `B2Exception` subtype enables the `B2Retryer` to retry exceptions the may succeed on retry.
+  Returning a `B2Exception` subtype enables the `B2Retryer` to retry exceptions that may succeed on retry.
 
 ## [6.1.0] - 2022-09-19
 ### Added
