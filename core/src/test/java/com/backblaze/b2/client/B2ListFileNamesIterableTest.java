@@ -23,7 +23,9 @@ import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.client.B2TestHelpers.fileName;
 import static com.backblaze.b2.client.B2TestHelpers.makeVersion;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
@@ -67,6 +69,49 @@ public class B2ListFileNamesIterableTest extends B2BaseTest {
         assertTrue(iter.hasNext());
         assertTrue(names.get(1) == iter.next());
         assertTrue(!iter.hasNext());
+    }
+
+    @Test
+    public void testEmptyPageWithNextFileName() throws B2Exception {
+          final B2ListFileNamesRequest request = B2ListFileNamesRequest
+                .builder(BUCKET_ID)
+                .setStartFileName("file/0000")
+                .setMaxFileCount(106)
+                .setPrefix("file/")
+                .setDelimiter("/")
+                .build();
+
+        // First page is empty, but has a nextFileName
+        final B2ListFileNamesResponse emptyResponse = new B2ListFileNamesResponse(B2Collections.listOf(), fileName(3000000));
+        when(client.listFileNames(request)).thenReturn(emptyResponse);
+
+        // Second page has actual results
+        final B2ListFileNamesRequest pageTwoRequest = B2ListFileNamesRequest
+                .builder(BUCKET_ID)
+                .setStartFileName(fileName(3000000))
+                .setMaxFileCount(106)
+                .setPrefix("file/")
+                .setDelimiter("/")
+                .build();
+        final List<B2FileVersion> pageTwoNames = B2Collections.listOf(
+                makeVersion(3,3000014),
+                makeVersion(4, 3000015),
+                makeVersion(5, 3000015));
+        final B2ListFileNamesResponse pageTwoResponse = new B2ListFileNamesResponse(pageTwoNames, null);
+        when(client.listFileNames(pageTwoRequest)).thenReturn(pageTwoResponse);
+
+        final Iterator<B2FileVersion> iter = new B2ListFileNamesIterable(client, request).iterator();
+
+        // first page.
+        assertTrue(iter.hasNext());
+
+        // second page
+        assertSame(pageTwoNames.get(0), iter.next());
+        assertTrue(iter.hasNext());
+        assertSame(pageTwoNames.get(1), iter.next());
+        assertTrue(iter.hasNext());
+        assertSame(pageTwoNames.get(2), iter.next());
+        assertFalse(iter.hasNext());
     }
 
     @Test
