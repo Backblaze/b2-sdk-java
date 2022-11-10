@@ -175,6 +175,81 @@ public class B2ListFileVersionsIterableTest extends B2BaseTest {
     }
 
     @Test
+    public void testMultiplePagesWithEmptyPageInMiddle() throws B2Exception {
+        // using some arguments here to make sure they're used in first request and that most are propagated.
+        final B2ListFileVersionsRequest request = B2ListFileVersionsRequest
+                .builder(BUCKET_ID)
+                .setStart("file/0000", fileId(0))
+                .setMaxFileCount(106)
+                .setPrefix("file/")
+                .setDelimiter("/")
+                .build();
+
+        // when asked, return one answer with a few versions and some nexts.
+        final List<B2FileVersion> pageOneVersions = B2Collections.listOf(makeVersion(1, 1), makeVersion(2, 1));
+        final B2ListFileVersionsResponse pageOneResponse = new B2ListFileVersionsResponse(pageOneVersions, fileName(3), fileId(13));
+        when(client.listFileVersions(request)).thenReturn(pageOneResponse);
+
+        // Second page is empty, but has a nextFileName (Maybe millions were checked, but
+        // didn't match; an empty page is returned to prevent the client from timing out)
+        final B2ListFileVersionsRequest pageTwoRequest = B2ListFileVersionsRequest
+                .builder(BUCKET_ID)
+                .setStart(fileName(3), fileId(13))
+                .setMaxFileCount(106)
+                .setPrefix("file/")
+                .setDelimiter("/")
+                .build();
+        final B2ListFileVersionsResponse pageTwoResponse = new B2ListFileVersionsResponse(B2Collections.listOf(), fileName(3000000), fileId(5));
+        when(client.listFileVersions(pageTwoRequest)).thenReturn(pageTwoResponse);
+
+        // Third page has actual results and a nextFileName
+        final B2ListFileVersionsRequest pageThreeRequest = B2ListFileVersionsRequest
+                .builder(BUCKET_ID)
+                .setStart(fileName(3000000), fileId(5))
+                .setMaxFileCount(106)
+                .setPrefix("file/")
+                .setDelimiter("/")
+                .build();
+        final List<B2FileVersion> pageThreeVersions = B2Collections.listOf(
+                makeVersion(3,3000014),
+                makeVersion(4, 3000015),
+                makeVersion(5, 3000015));
+        final B2ListFileVersionsResponse pageThreeResponse = new B2ListFileVersionsResponse(pageThreeVersions, fileName(3000016), fileId(5));
+        when(client.listFileVersions(pageThreeRequest)).thenReturn(pageThreeResponse);
+
+        // note that we expected to have more cuz pageThreeResponse had 'next's, but it turned out we didn't.
+        final B2ListFileVersionsRequest pageFourRequest = B2ListFileVersionsRequest
+                .builder(BUCKET_ID)
+                .setStart(fileName(3000016), fileId(5))
+                .setMaxFileCount(106)
+                .setPrefix("file/")
+                .setDelimiter("/")
+                .build();
+        final B2ListFileVersionsResponse pageFourResponse = new B2ListFileVersionsResponse(B2Collections.listOf(), null, null);
+        when(client.listFileVersions(pageFourRequest)).thenReturn(pageFourResponse);
+
+        // iter should have two pageOneVersions.
+        final Iterator<B2FileVersion> iter = new B2ListFileVersionsIterable(client, request).iterator();
+
+        // first page.
+        assertTrue(iter.hasNext());
+        assertSame(pageOneVersions.get(0), iter.next());
+        assertTrue(iter.hasNext());
+        assertSame(pageOneVersions.get(1), iter.next());
+        assertTrue(iter.hasNext());
+
+        // third page
+        //noinspection ConstantConditions
+        assertTrue(iter.hasNext());
+        assertSame(pageThreeVersions.get(0), iter.next());
+        assertTrue(iter.hasNext());
+        assertSame(pageThreeVersions.get(1), iter.next());
+        assertTrue(iter.hasNext());
+        assertSame(pageThreeVersions.get(2), iter.next());
+        assertFalse(iter.hasNext());
+    }
+
+    @Test
     public void testOkForNextFileIdToBeNull() throws B2Exception {
         final B2ListFileVersionsRequest request = B2ListFileVersionsRequest
                 .builder(BUCKET_ID)
