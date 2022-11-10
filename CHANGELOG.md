@@ -1,5 +1,7 @@
 # Changelog
 
+## [Unreleased] - TBD
+
 ## [6.1.1] - 2022-11-10
 ### Added
 * Return a subtype of `B2Exception` on errors when the response body does not conform to `B2ErrorStructure`. 
