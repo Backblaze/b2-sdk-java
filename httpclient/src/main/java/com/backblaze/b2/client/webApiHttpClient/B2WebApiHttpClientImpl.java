@@ -284,11 +284,11 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         try {
             B2ErrorStructure err = B2Json.get().fromJson(responseText, B2ErrorStructure.class);
             return B2Exception.create(err.code, err.status, getRetryAfterSecondsOrNull(response), err.message);
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             // we can't parse the response as a B2 JSON error structure.
-            // so use the default.
-            return new B2Exception("unknown", statusCode, getRetryAfterSecondsOrNull(response), responseText);
+            // so use the "unknown" as the code
+            return B2Exception.create("unknown", statusCode, getRetryAfterSecondsOrNull(response), responseText);
+
         }
     }
 
