@@ -24,7 +24,20 @@ public abstract class B2ListFilesIterableBase implements B2ListFilesIterable {
 
         @Override
         public boolean hasNext() {
-            return (currentIndex < getCurrentResponseSize());
+            return hasNextOnCurrentPage() || hasMorePages();
+        }
+
+        private boolean hasNextOnCurrentPage() {
+            return currentIndex < getCurrentResponseSize();
+        }
+
+        /**
+         * Returns true if we haven't gotten the first response page yet, or the response
+         * says we're not at the end.
+         */
+        private boolean hasMorePages() {
+            final B2ListFilesResponse response = getCurrentResponseOrNull();
+            return response == null || !response.atEnd();
         }
 
         @Override
@@ -45,21 +58,20 @@ public abstract class B2ListFilesIterableBase implements B2ListFilesIterable {
         }
 
         private void advanceIfNeeded() throws B2Exception {
-            if (hasNext()) {
-                // no need to advance.
-                return;
-            }
+            // Advance until we find a non-empty page, or the response says we're at the end
+            while (!hasNextOnCurrentPage()) {
 
-            if (getCurrentResponseOrNull() != null) {
-                // we've gotten at least one page of results.  was it the last page?
-                if (getCurrentResponseOrNull().atEnd()) {
-                    // no more pages to fetch.
-                    return;
+                if (getCurrentResponseOrNull() != null) {
+                    // we've gotten at least one page of results.  was it the last page?
+                    if (getCurrentResponseOrNull().atEnd()) {
+                        // no more pages to fetch.
+                        return;
+                    }
                 }
-            }
 
-            advance();
-            currentIndex = 0;
+                advance();
+                currentIndex = 0;
+            }
         }
 
         // may be called when there's no current response yet.
