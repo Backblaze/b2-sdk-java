@@ -1,6 +1,19 @@
 # Changelog
 
-## [Unreleased]
+## [Unreleased] - TBD
+### Added
+* Added support for custom upload timestamps
+
+## [6.1.1] - 2022-11-10
+### Added
+* Return a subtype of `B2Exception` on errors when the response body does not conform to `B2ErrorStructure`. 
+  Returning a `B2Exception` subtype enables the `B2Retryer` to retry exceptions that may succeed on retry.
+
+### Fixed
+* Fixed B2ListFilesIterableBase assuming a response with 0 results was the end. It now looks for
+  `nextFileName` being null to indicate the end.
+
+## [6.1.0] - 2022-09-19
 ### Added
 * Added support for custom upload timestamps
 
@@ -175,7 +188,9 @@
 * These changes were driven by switching our internal b2-sdk uses to use the http client from the sdk instead of a 
 different, custom interface.
 
-[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.0.0...HEAD
+[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.1.1...HEAD
+[6.1.1]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.1.1
+[6.1.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.1.0
 [6.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.0.0
 [5.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v5.0.0
 [4.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v4.0.0
