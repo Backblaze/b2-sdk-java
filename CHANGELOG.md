@@ -2,6 +2,8 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Reduced lock contention in B2Json
+* Updated internal python for building to python3
 * Added support for custom upload timestamps
 
 ## [6.1.1] - 2022-11-10
