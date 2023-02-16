@@ -32,6 +32,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -2896,5 +2897,33 @@ public class B2JsonTest extends B2BaseTest {
         public ItemArray(T[] values) {
             this.values = values;
         }
+    }
+
+    private static class MapWithAtomicLongArrayHolder {
+        @B2Json.optional
+        Map<String, AtomicLongArray> map;
+
+        @B2Json.constructor
+        MapWithAtomicLongArrayHolder(Map<String, AtomicLongArray> map) {
+            this.map = map;
+        }
+    }
+
+    @Test
+    public void testMapWithAtomicLongArray() throws IOException, B2JsonException {
+        final String json1 =
+                "{\n" +
+                        "  \"map\": {\n" +
+                        "    \"20150207\": null,\n" +
+                        "    \"20230209\": [ 4, 23, 5, 3147483647 ]\n" +  // max int size is 2147483647
+                        "  }\n" +
+                        "}" ;
+        checkDeserializeSerialize(json1, MapWithAtomicLongArrayHolder.class);
+
+        final String json2 =
+                "{\n" +
+                        "  \"map\": null\n" +
+                        "}";
+        checkDeserializeSerialize(json2, MapWithAtomicLongArrayHolder.class);
     }
 }

@@ -2,6 +2,7 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Added support for AtomicLongArray in B2Json
 * Reduced lock contention in B2Json
 * Updated internal python for building to python3
 * Added support for custom upload timestamps

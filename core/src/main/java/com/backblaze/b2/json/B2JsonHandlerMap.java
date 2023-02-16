@@ -31,6 +31,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * Holds a mapping from Class to B2JsonTypeHandler.
@@ -116,6 +117,7 @@ public class B2JsonHandlerMap {
         map.put(long[].class, new B2JsonLongArrayHandler(map.get(long.class)));
         map.put(float[].class, new B2JsonFloatArrayHandler(map.get(float.class)));
         map.put(double[].class, new B2JsonDoubleArrayHandler(map.get(double.class)));
+        map.put(AtomicLongArray.class, new B2JsonAtomicLongArrayHandler(new B2JsonLongHandler(false)));
 
         if (initialMapOrNull != null) {
             initialMapOrNull.forEach(this::putHandler);
