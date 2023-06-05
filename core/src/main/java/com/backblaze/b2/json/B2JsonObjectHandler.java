@@ -53,9 +53,14 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
     private FieldInfo [] fields;
 
     /**
-     * Map from field name to field.
+     * Map from json member name to FieldInfo.
      */
-    private final Map<String, FieldInfo> fieldMap  = new HashMap<>();
+    private final Map<String, FieldInfo> jsonMemberNameFieldInfoMap = new HashMap<>();
+
+    /**
+     * Map from Java object field name to FieldInfo
+     */
+    private final Map<String, FieldInfo> javaFieldNameFieldInfoMap = new HashMap<>();
 
     /**
      * The constructor to use.
@@ -129,10 +134,18 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             final VersionRange versionRange = getVersionRange(field);
             final boolean isSensitive = field.getAnnotation(B2Json.sensitive.class) != null;
             final boolean omitNull = omitNull(field);
-            final FieldInfo fieldInfo = new FieldInfo(field, handler, requirement, defaultValueJsonOrNull, versionRange, isSensitive, omitNull);
-            fieldMap.put(field.getName(), fieldInfo);
+            final B2Json.serializedName serializedNameAnnotation = field.getAnnotation(B2Json.serializedName.class);
+            final String jsonMemberName = serializedNameAnnotation != null ? serializedNameAnnotation.value() : field.getName();
+            final FieldInfo fieldInfo =
+                    new FieldInfo(jsonMemberName, field, handler, requirement, defaultValueJsonOrNull, versionRange, isSensitive, omitNull);
+
+            if (jsonMemberNameFieldInfoMap.containsKey(jsonMemberName)) {
+                throw new B2JsonException(clazz.getName() + " contains multiple class fields for the json member " + jsonMemberName);
+            }
+            jsonMemberNameFieldInfoMap.put(jsonMemberName, fieldInfo);
+            javaFieldNameFieldInfoMap.put(field.getName(), fieldInfo);
         }
-        fields = fieldMap.values().toArray(new FieldInfo [fieldMap.size()]);
+        fields = jsonMemberNameFieldInfoMap.values().toArray(new FieldInfo [jsonMemberNameFieldInfoMap.size()]);
         Arrays.sort(fields);
 
         // Find the constructor to use.
@@ -202,7 +215,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                     versionParamIndex = i;
                 }
                 else {
-                    final FieldInfo fieldInfo = fieldMap.get(paramName);
+                    final FieldInfo fieldInfo = javaFieldNameFieldInfoMap.get(paramName);
                     if (fieldInfo == null) {
                         throw new B2JsonException(clazz.getName() + " param name is not a field: " + paramName);
                     }
@@ -222,7 +235,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                 String[] discardNames = discardsWithCommas.split(",");
                 fieldsToDiscard = B2Collections.unmodifiableSet(discardNames);
                 for (String name : fieldsToDiscard) {
-                    final FieldInfo fieldInfo = fieldMap.get(name);
+                    final FieldInfo fieldInfo = javaFieldNameFieldInfoMap.get(name);
                     if (fieldInfo != null && fieldInfo.requirement != FieldRequirement.IGNORED) {
                         throw new B2JsonException(clazz.getSimpleName() + "'s field '" + name + "' cannot be discarded: it's " + fieldInfo.requirement + ".  only non-existent or IGNORED fields can be discarded.");
                     }
@@ -269,7 +282,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
      */
     @Override
     protected void checkDefaultValues() throws B2JsonException {
-        for (FieldInfo field : fieldMap.values()) {
+        for (FieldInfo field : jsonMemberNameFieldInfoMap.values()) {
             if (field.defaultValueJsonOrNull != null) {
                 try {
                     field.handler.deserialize(
@@ -278,7 +291,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                     );
                 } catch (B2JsonException | IOException e) {
                     throw new B2JsonException("error in default value for " +
-                            clazz.getSimpleName() + "." + field.getName() + ": " +
+                            clazz.getSimpleName() + "." + field.getJsonMemberName() + ": " +
                             e.getMessage());
                 }
             }
@@ -350,7 +363,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             out.startObject();
             if (fields != null) {
                 for (FieldInfo fieldInfo : fields) {
-                    if (unionTypeFieldName != null && !typeFieldDone && unionTypeFieldName.compareTo(fieldInfo.getName()) < 0) {
+                    if (unionTypeFieldName != null && !typeFieldDone && unionTypeFieldName.compareTo(fieldInfo.getJsonMemberName()) < 0) {
                         out.writeObjectFieldNameAndColon(unionTypeFieldName);
                         out.writeString(unionTypeFieldValue);
                         typeFieldDone = true;
@@ -360,12 +373,12 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
 
                         // Only write the field if the value is not null OR omitNull is not set
                         if (!fieldInfo.omitNull || value != null) {
-                            out.writeObjectFieldNameAndColon(fieldInfo.getName());
+                            out.writeObjectFieldNameAndColon(fieldInfo.getJsonMemberName());
                             if (fieldInfo.getIsSensitive() && options.getRedactSensitive()) {
                                 out.writeString("***REDACTED***");
                             } else {
                                 if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
-                                    throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                                    throw new B2JsonException("required field " + fieldInfo.getJsonMemberName() + " cannot be null");
                                 }
                                 //noinspection unchecked
                                 B2JsonUtil.serializeMaybeNull(fieldInfo.handler, value, out, options);
@@ -410,7 +423,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
         if (in.startObjectAndCheckForContents()) {
             do {
                 String fieldName = in.readObjectFieldNameAndColon();
-                FieldInfo fieldInfo = fieldMap.get(fieldName);
+                FieldInfo fieldInfo = jsonMemberNameFieldInfoMap.get(fieldName);
                 if (fieldInfo == null) {
                     if ((options.getExtraFieldOption() == B2JsonOptions.ExtraFieldOption.ERROR) &&
                             (fieldsToDiscard == null || !fieldsToDiscard.contains(fieldName))) {
@@ -420,12 +433,12 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                 }
                 else {
                     if (foundFieldBits.get(fieldInfo.constructorArgIndex)) {
-                        throw new B2JsonException("duplicate field: " + fieldInfo.getName());
+                        throw new B2JsonException("duplicate field: " + fieldInfo.getJsonMemberName());
                     }
                     @SuppressWarnings("unchecked")
                     final Object value = B2JsonUtil.deserializeMaybeNull(fieldInfo.handler, in, options);
                     if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
-                        throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                        throw new B2JsonException("required field " + fieldInfo.getJsonMemberName() + " cannot be null");
                     }
                     constructorArgs[fieldInfo.constructorArgIndex] = value;
                     foundFieldBits.set(fieldInfo.constructorArgIndex);
@@ -456,7 +469,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
         }
         for (Map.Entry<String, Object> entry : fieldNameToValue.entrySet()) {
             String fieldName = entry.getKey();
-            FieldInfo fieldInfo = fieldMap.get(fieldName);
+            FieldInfo fieldInfo = jsonMemberNameFieldInfoMap.get(fieldName);
             if (fieldInfo == null) {
                 if ((options.getExtraFieldOption() == B2JsonOptions.ExtraFieldOption.ERROR) &&
                         (fieldsToDiscard == null || !fieldsToDiscard.contains(fieldName))) {
@@ -466,7 +479,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             else {
                 Object value = entry.getValue();
                 if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
-                    throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                    throw new B2JsonException("required field " + fieldInfo.getJsonMemberName() + " cannot be null");
                 }
                 constructorArgs[fieldInfo.constructorArgIndex] = value;
             }
@@ -490,7 +503,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             String fieldName = entry.getKey();
             String strOfValue = entry.getValue();
 
-            FieldInfo fieldInfo = fieldMap.get(fieldName);
+            FieldInfo fieldInfo = jsonMemberNameFieldInfoMap.get(fieldName);
             if (fieldInfo == null) {
                 if ((options.getExtraFieldOption() == B2JsonOptions.ExtraFieldOption.ERROR) &&
                         (fieldsToDiscard == null || !fieldsToDiscard.contains(fieldName))) {
@@ -500,7 +513,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             else {
                 final Object value = fieldInfo.handler.deserializeUrlParam(strOfValue);
                 if (fieldInfo.isRequiredAndInVersion(version) && value == null) {
-                    throw new B2JsonException("required field " + fieldInfo.getName() + " cannot be null");
+                    throw new B2JsonException("required field " + fieldInfo.getJsonMemberName() + " cannot be null");
                 }
                 constructorArgs[fieldInfo.constructorArgIndex] = value;
             }
@@ -522,7 +535,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             int index = fieldInfo.constructorArgIndex;
             if (constructorArgs[index] == null) {
                 if (fieldInfo.isRequiredAndInVersion(version)) {
-                    throw new B2JsonException("required field " + fieldInfo.getName() + " is missing");
+                    throw new B2JsonException("required field " + fieldInfo.getJsonMemberName() + " is missing");
                 }
                 if (fieldInfo.defaultValueJsonOrNull != null) {
                     // We do a fresh deserialization of the default value each time, in case it's
@@ -548,7 +561,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             }
             else {
                 if (!fieldInfo.isInVersion(version)) {
-                    throw new B2JsonException("field " + fieldInfo.getName() + " is not in version " + version);
+                    throw new B2JsonException("field " + fieldInfo.getJsonMemberName() + " is not in version " + version);
                 }
             }
         }

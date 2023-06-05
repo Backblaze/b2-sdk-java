@@ -573,6 +573,40 @@ public class B2Json {
     public @interface sensitive {}
 
     /**
+     * Annotation to declare that this member will be serialized to JSON
+     * with the specified name, instead of the field name in the Java class.
+     *
+     * The Java class's field name is used for the params list in the
+     * B2Json.constructor annotation
+     *
+     * For example:
+     * <pre>
+     * class Example {
+     *     {@literal @}B2Json.serializedName(value = "@field")
+     *      private String field;
+     *
+     *     {@literal @}B2Json.constructor(params = "field")
+     *      public Example(String field) {
+     *          this.field = field;
+     *      }
+     * }
+     * </pre>
+     * will serialize to the following JSON:
+     * <pre>
+     *     {
+     *         "@field": "value"
+     *     }
+     * </pre>
+     *
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface serializedName {
+        String value();
+    }
+
+
+    /**
      * Constructor annotation saying that this is the constructor B2Json
      * should use.  This constructor must take ALL of the serializable
      * fields as parameters.

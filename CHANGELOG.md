@@ -2,6 +2,7 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Added the `serializedName` annotation to rename the serialized Json member name
 * Added support for AtomicLongArray in B2Json
 * Reduced lock contention in B2Json
 * Updated internal python for building to python3
