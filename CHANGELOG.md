@@ -9,6 +9,9 @@
 * Updated internal python for building to python3
 * Added support for custom upload timestamps
 
+### Fixed
+* Fixed union types to ignore extra and discarded fields when deserializing JSON to Java objects
+
 ## [6.1.1] - 2022-11-10
 ### Added
 * Return a subtype of `B2Exception` on errors when the response body does not conform to `B2ErrorStructure`. 

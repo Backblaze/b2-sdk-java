@@ -9,7 +9,7 @@ import java.lang.reflect.Field;
 
 /**
  * Information for one field in an object that is (de)serialized.
- *
+ * <p>
  * Used by B2ObjectHandler and B2JsonObjectHandler.
  */
 public final class FieldInfo implements Comparable<FieldInfo> {

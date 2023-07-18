@@ -610,18 +610,18 @@ public class B2Json {
      * Constructor annotation saying that this is the constructor B2Json
      * should use.  This constructor must take ALL of the serializable
      * fields as parameters.
-     *
+     * <p>
      * You must either compile classes with the '-parameters' javac option
      * or else provide a "params" parameter that lists the order of
      * the parameters to the constructor.
-     *
+     * <p>
      * If present, the "discards" parameter is a comma-separated list of
      * field names which are allowed to be present in the parsed json,
      * but whose values will be discarded.  The names may be for fields
      * that don't exist or for fields marked @ignored.  This is useful
      * for accepting deprecated fields without having to use
      * ALLOW_EXTRA_FIELDS, which would accept ALL unknown fields.
-     *
+     * <p>
      * When versionParam is non-empty, it is the name of a parameter that
      * is not a field name, and will take the version number being constructed.
      * This should be included for objects that have multiple versions,

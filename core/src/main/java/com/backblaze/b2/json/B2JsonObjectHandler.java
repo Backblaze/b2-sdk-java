@@ -78,7 +78,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
     private Integer versionParamIndexOrNull;
 
     /**
-     * null or a set containing the names of fields to discard during parsing.
+     * Set containing the names of fields to discard during parsing.
      */
     private Set<String> fieldsToDiscard;
 
@@ -145,28 +145,13 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             jsonMemberNameFieldInfoMap.put(jsonMemberName, fieldInfo);
             javaFieldNameFieldInfoMap.put(field.getName(), fieldInfo);
         }
-        fields = jsonMemberNameFieldInfoMap.values().toArray(new FieldInfo [jsonMemberNameFieldInfoMap.size()]);
+        fields = jsonMemberNameFieldInfoMap.values().toArray(new FieldInfo[jsonMemberNameFieldInfoMap.size()]);
         Arrays.sort(fields);
 
-        // Find the constructor to use.
-        Constructor<T> chosenConstructor = null;
-        for (Constructor<?> candidate : clazz.getDeclaredConstructors()) {
-            if (candidate.getAnnotation(B2Json.constructor.class) != null) {
-                if (chosenConstructor != null) {
-                    throw new B2JsonException(clazz.getName() + " has two constructors selected");
-                }
-                //noinspection unchecked
-                chosenConstructor = (Constructor<T>) candidate;
-                chosenConstructor.setAccessible(true);
-            }
-        }
-        if (chosenConstructor == null) {
-            throw new B2JsonException(clazz.getName() + " has no constructor annotated with B2Json.constructor");
-        }
-        this.constructor = chosenConstructor;
+        this.constructor = B2JsonDeserializationUtil.findB2JsonConstructor(clazz);
 
         // Does the constructor take the version number as a parameter?
-        final B2Json.constructor annotation = chosenConstructor.getAnnotation(B2Json.constructor.class);
+        final B2Json.constructor annotation = this.constructor.getAnnotation(B2Json.constructor.class);
         final String versionParamOrEmpty = annotation.versionParam();
         final int numberOfVersionParams = versionParamOrEmpty.isEmpty() ? 0 : 1;
 
@@ -213,8 +198,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                 }
                 if (paramName.equals(versionParamOrEmpty)) {
                     versionParamIndex = i;
-                }
-                else {
+                } else {
                     final FieldInfo fieldInfo = javaFieldNameFieldInfoMap.get(paramName);
                     if (fieldInfo == null) {
                         throw new B2JsonException(clazz.getName() + " param name is not a field: " + paramName);
@@ -228,17 +212,11 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
 
         // figure out which names to discard, if any
         {
-            String discardsWithCommas = annotation.discards().replace(" ", "");
-            if (discardsWithCommas.isEmpty()) {
-                fieldsToDiscard = null;
-            } else {
-                String[] discardNames = discardsWithCommas.split(",");
-                fieldsToDiscard = B2Collections.unmodifiableSet(discardNames);
-                for (String name : fieldsToDiscard) {
-                    final FieldInfo fieldInfo = javaFieldNameFieldInfoMap.get(name);
-                    if (fieldInfo != null && fieldInfo.requirement != FieldRequirement.IGNORED) {
-                        throw new B2JsonException(clazz.getSimpleName() + "'s field '" + name + "' cannot be discarded: it's " + fieldInfo.requirement + ".  only non-existent or IGNORED fields can be discarded.");
-                    }
+            this.fieldsToDiscard = B2JsonDeserializationUtil.getDiscards(this.constructor);
+            for (String name : fieldsToDiscard) {
+                final FieldInfo fieldInfo = javaFieldNameFieldInfoMap.get(name);
+                if (fieldInfo != null && fieldInfo.requirement != FieldRequirement.IGNORED) {
+                    throw new B2JsonException(clazz.getSimpleName() + "'s field '" + name + "' cannot be discarded: it's " + fieldInfo.requirement + ".  only non-existent or IGNORED fields can be discarded.");
                 }
             }
         }
