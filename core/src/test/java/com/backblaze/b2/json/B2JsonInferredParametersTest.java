@@ -69,6 +69,9 @@ public class B2JsonInferredParametersTest extends B2BaseTest {
                         "  \"c\": 101\n" +
                         "}",
                 MismatchingOrderContainer.class);
+        assertEquals(41, actual.a);
+        assertEquals("hello", actual.b);
+        assertEquals(101, actual.c);
     }
 
     @Test
