@@ -177,6 +177,7 @@ public class B2UpdateBucketRequestTest {
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +
                 "      \"daysFromHidingToDeleting\": null,\n" +
+                "      \"daysFromStartingToCancelingUnfinishedLargeFiles\": null,\n" +
                 "      \"daysFromUploadingToHiding\": null,\n" +
                 "      \"fileNamePrefix\": \"files/\"\n" +
                 "    }\n" +

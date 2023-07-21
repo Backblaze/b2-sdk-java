@@ -22,7 +22,7 @@ public class B2LifecycleRuleTest extends B2BaseTest {
         final B2LifecycleRule a = B2LifecycleRule
                 .builder(FILE_PREFIX)
                 .build();
-        assertEquals("files/:null:null", a.toString());
+        assertEquals("files/:null:null:null", a.toString());
     }
 
     @Test
@@ -31,14 +31,16 @@ public class B2LifecycleRuleTest extends B2BaseTest {
                 .builder(FILE_PREFIX)
                 .setDaysFromUploadingToHiding(2)
                 .setDaysFromHidingToDeleting(1)
+                .setDaysFromStartingToCancelingUnfinishedLargeFiles(3)
                 .build();
         final B2LifecycleRule b = B2LifecycleRule
                 .builder(FILE_PREFIX)
                 .setDaysFromUploadingToHiding(2)
                 .setDaysFromHidingToDeleting(1)
+                .setDaysFromStartingToCancelingUnfinishedLargeFiles(3)
                 .build();
         assertEquals(a, b);
-        assertEquals("files/:2:1", a.toString());
+        assertEquals("files/:2:1:3", a.toString());
     }
 
     @Test
@@ -70,6 +72,17 @@ public class B2LifecycleRuleTest extends B2BaseTest {
         B2LifecycleRule
                 .builder(FILE_PREFIX)
                 .setDaysFromHidingToDeleting(0)
+                .build();
+    }
+
+    @Test
+    public void testNegativeDaysIsBad3() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("daysFromStartingToCancelingUnfinishedLargeFiles must be positive");
+
+        B2LifecycleRule
+                .builder(FILE_PREFIX)
+                .setDaysFromStartingToCancelingUnfinishedLargeFiles(0)
                 .build();
     }
 

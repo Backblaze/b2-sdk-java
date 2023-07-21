@@ -276,6 +276,7 @@ public class B2BucketTest extends B2BaseTest {
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +
                 "      \"daysFromHidingToDeleting\": null,\n" +
+                "      \"daysFromStartingToCancelingUnfinishedLargeFiles\": null,\n" +
                 "      \"daysFromUploadingToHiding\": null,\n" +
                 "      \"fileNamePrefix\": \"files/\"\n" +
                 "    }\n" +
