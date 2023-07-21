@@ -86,10 +86,15 @@ public class B2LifecycleRule {
 
     @Override
     public String toString() {
-        return fileNamePrefix + ":" +
-                daysFromUploadingToHiding + ":" +
-                daysFromHidingToDeleting + ":" +
-                daysFromStartingToCancelingUnfinishedLargeFiles;
+        return new StringBuilder(32)
+                .append(fileNamePrefix)
+                .append(":")
+                .append(daysFromUploadingToHiding)
+                .append(":")
+                .append(daysFromHidingToDeleting)
+                .append(":")
+                .append(daysFromStartingToCancelingUnfinishedLargeFiles)
+                .toString();
     }
 
     @Override
