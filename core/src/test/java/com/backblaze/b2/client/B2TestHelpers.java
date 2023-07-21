@@ -184,6 +184,7 @@ public class B2TestHelpers {
                 .builder("/prefix" + i + "/")
                 .setDaysFromUploadingToHiding(i)
                 .setDaysFromHidingToDeleting(2 * i)
+                .setDaysFromStartingToCancelingUnfinishedLargeFiles(3 * i)
                 .build();
     }
 
