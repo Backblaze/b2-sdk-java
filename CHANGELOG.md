@@ -2,7 +2,7 @@
 
 ## [Unreleased] - TBD
 ### Added
-* Added support for daysFromStartingToCancelingUnfinishedLargeFiles lifecycle rule
+* Added support for daysFromStartingToCancelingUnfinishedLargeFiles to B2LifecycleRule
 * Reduced lock contention in B2AccountAuthorizationCache
 * Added the `serializedName` annotation to rename the serialized Json member name
 * Added support for AtomicLongArray in B2Json
