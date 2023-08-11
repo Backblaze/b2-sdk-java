@@ -2,6 +2,7 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Added B2StorageClient.storePartsForLargeFile
 * Added support for daysFromStartingToCancelingUnfinishedLargeFiles to B2LifecycleRule
 * Reduced lock contention in B2AccountAuthorizationCache
 * Added the `serializedName` annotation to rename the serialized Json member name

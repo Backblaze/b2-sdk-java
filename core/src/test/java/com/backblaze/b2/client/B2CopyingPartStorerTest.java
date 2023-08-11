@@ -36,7 +36,7 @@ public class B2CopyingPartStorerTest extends B2BaseTest {
     private final B2UploadListener uploadListener = mock(B2UploadListener.class);
 
     public B2CopyingPartStorerTest() throws B2Exception {
-        when(largeFileStorer.copyPart(anyInt(), anyString(), anyObject(), anyObject(), anyObject())).thenReturn(part);
+        when(largeFileStorer.copyPart(anyInt(), anyString(), anyObject(), anyObject())).thenReturn(part);
     }
 
     @Test
@@ -45,7 +45,7 @@ public class B2CopyingPartStorerTest extends B2BaseTest {
         final B2CancellationToken cancellationToken = new B2CancellationToken();
 
         assertEquals(part, partStorer.storePart(largeFileStorer, uploadListener, cancellationToken));
-        verify(largeFileStorer).copyPart(2, SOURCE_FILE_ID, null, uploadListener, cancellationToken);
+        verify(largeFileStorer).copyPart(2, SOURCE_FILE_ID, null, uploadListener);
     }
 
     @Test
@@ -55,6 +55,6 @@ public class B2CopyingPartStorerTest extends B2BaseTest {
         final B2CancellationToken cancellationToken = new B2CancellationToken();
 
         assertEquals(part, partStorer.storePart(largeFileStorer, uploadListener, cancellationToken));
-        verify(largeFileStorer).copyPart(2, SOURCE_FILE_ID, byteRange, uploadListener, cancellationToken);
+        verify(largeFileStorer).copyPart(2, SOURCE_FILE_ID, byteRange, uploadListener);
     }
 }

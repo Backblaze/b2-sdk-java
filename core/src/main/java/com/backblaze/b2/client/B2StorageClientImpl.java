@@ -81,7 +81,7 @@ public class B2StorageClientImpl implements B2StorageClient {
 
     private final B2AccountAuthorizationCache accountAuthCache;
     private final B2UploadUrlCache uploadUrlCache;
-
+    private final boolean contiguousPartNumberingRequired;
 
     // protected by synchronized(this)
     // starts out false.  it is changed to true when close() is called.
@@ -116,6 +116,7 @@ public class B2StorageClientImpl implements B2StorageClient {
         this.retryer = retryer;
         this.accountAuthCache = new B2AccountAuthorizationCache(webifier, config.getAccountAuthorizer());
         this.uploadUrlCache = new B2UploadUrlCache(webifier, accountAuthCache);
+        this.contiguousPartNumberingRequired = config.isPartNumberGapsAllowed();
     }
 
     /**
@@ -245,7 +246,7 @@ public class B2StorageClientImpl implements B2StorageClient {
             B2UploadListener uploadListener,
             ExecutorService executor) throws B2Exception {
 
-        return storeLargeFileFromLocalContent(B2StoreLargeFileRequest.builder(fileVersion).build(), contentSource, uploadListener, executor);
+        return storeLargeFileFromLocalContent(B2StoreLargeFileRequest.builder(fileVersion.getFileId()).build(), contentSource, uploadListener, executor);
     }
 
     @Override
@@ -273,7 +274,7 @@ public class B2StorageClientImpl implements B2StorageClient {
             B2UploadListener uploadListenerOrNull,
             ExecutorService executor) throws B2Exception {
 
-        return storeLargeFileFromLocalContentAsync(B2StoreLargeFileRequest.builder(fileVersion).build(), contentSource, uploadListenerOrNull, executor);
+        return storeLargeFileFromLocalContentAsync(B2StoreLargeFileRequest.builder(fileVersion.getFileId()).build(), contentSource, uploadListenerOrNull, executor);
     }
 
     @Override
@@ -302,7 +303,7 @@ public class B2StorageClientImpl implements B2StorageClient {
             List<B2PartStorer> partStorers,
             B2UploadListener uploadListenerOrNull,
             ExecutorService executor) throws B2Exception {
-        return storeLargeFile(B2StoreLargeFileRequest.builder(fileVersion).build(), partStorers, uploadListenerOrNull, executor);
+        return storeLargeFile(B2StoreLargeFileRequest.builder(fileVersion.getFileId()).build(), partStorers, uploadListenerOrNull, executor);
     }
 
     @Override
@@ -320,7 +321,38 @@ public class B2StorageClientImpl implements B2StorageClient {
                 webifier,
                 retryer,
                 retryPolicySupplier,
-                executor).storeFile(uploadListenerOrNull);
+                executor,
+                contiguousPartNumberingRequired).storeFile(uploadListenerOrNull);
+    }
+
+    @Override
+    public List<B2Part> storePartsForLargeFile(
+            B2FileVersion fileVersion,
+            List<B2PartStorer> partStorers,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception {
+        return storePartsForLargeFile(
+                B2StoreLargeFileRequest.builder(fileVersion.getFileId()).build(),
+                partStorers,
+                uploadListenerOrNull,
+                executor);
+    }
+
+    @Override
+    public List<B2Part> storePartsForLargeFile(
+            B2StoreLargeFileRequest storeLargeFileRequest,
+            List<B2PartStorer> partStorers,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception {
+        return new B2LargeFileStorer(
+                storeLargeFileRequest,
+                partStorers,
+                accountAuthCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                executor,
+                contiguousPartNumberingRequired).storeParts(uploadListenerOrNull);
     }
 
     private B2FileVersion uploadLargeFileGuts(ExecutorService executor,
@@ -370,7 +402,7 @@ public class B2StorageClientImpl implements B2StorageClient {
     }
 
     @Override
-    public B2ListFilesIterable unfinishedLargeFiles(B2ListUnfinishedLargeFilesRequest request) throws B2Exception {
+    public B2ListFilesIterable unfinishedLargeFiles(B2ListUnfinishedLargeFilesRequest request) {
         return new B2ListUnfinishedLargeFilesIterable(this, request);
     }
 

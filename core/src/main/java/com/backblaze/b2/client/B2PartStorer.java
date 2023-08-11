@@ -31,15 +31,14 @@ public interface B2PartStorer {
     /**
      * Store the part this B2PartStorer is responsible for.
      *
-     * @param largeFileCreationManager The object managing the storage of the whole
-     *                                 large file.
+     * @param largeFileStorer The object managing the storage of the whole large file.
      * @param uploadListener The listener that tracks upload progress events.
      * @param cancellationToken token to check whether the action has been cancelled
      * @return The part that is stored, if successful.
      * @throws B2Exception if there's trouble.
      */
     B2Part storePart(
-            B2LargeFileStorer largeFileCreationManager,
+            B2LargeFileStorer largeFileStorer,
             B2UploadListener uploadListener,
             B2CancellationToken cancellationToken) throws IOException, B2Exception;
 

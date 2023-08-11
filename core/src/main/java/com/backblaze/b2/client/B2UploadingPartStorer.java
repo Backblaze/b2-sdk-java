@@ -42,12 +42,12 @@ public class B2UploadingPartStorer implements B2PartStorer {
 
     @Override
     public B2Part storePart(
-            B2LargeFileStorer largeFileCreationManager,
+            B2LargeFileStorer largeFileStorer,
             B2UploadListener uploadListener,
             B2CancellationToken cancellationToken) throws IOException, B2Exception {
 
         final B2CancellableContentSource cancellableContentSource = new B2CancellableContentSource(contentSource, cancellationToken);
-        return largeFileCreationManager.uploadPart(partNumber, cancellableContentSource, uploadListener, cancellationToken);
+        return largeFileStorer.uploadPart(partNumber, cancellableContentSource, uploadListener);
     }
 
     @Override
