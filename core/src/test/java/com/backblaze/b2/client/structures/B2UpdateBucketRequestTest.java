@@ -1,5 +1,5 @@
 /*
- * Copyright 2022, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.util.B2Collections.listOf;
@@ -40,6 +41,7 @@ public class B2UpdateBucketRequestTest {
         final B2Bucket defaultBucket = new B2Bucket(
                 ACCOUNT_ID,
                 BUCKET_ID,
+                null,
                 null,
                 null,
                 null,
@@ -111,6 +113,17 @@ public class B2UpdateBucketRequestTest {
                         sourceToDestinationKeyMapping
                 );
 
+        final List<B2EventNotificationRule> eventNotificationRules = listOf(
+                new B2EventNotificationRule(
+                        "ruleName",
+                        new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
+                        "",
+                        new B2WebhookConfiguration("https://www.example.com"),
+                        true,
+                        ""
+                )
+        );
+
         final B2UpdateBucketRequest updateRequest = B2UpdateBucketRequest.builder(
                 new B2Bucket(
                         ACCOUNT_ID,
@@ -120,6 +133,7 @@ public class B2UpdateBucketRequestTest {
                         bucketInfo,
                         b2CorsRules,
                         lifecycleRules,
+                        null,
                         null,
                         null,
                         null,
@@ -134,6 +148,7 @@ public class B2UpdateBucketRequestTest {
                 .setDefaultServerSideEncryption(defaultServerSideEncryption)
                 .setReplicationConfiguration(replicationConfiguration)
                 .setFileLockEnabled(Boolean.TRUE)
+                .setEventNotificationRules(eventNotificationRules)
                 .build();
 
         // Convert from B2UpdateBucketRequest -> json
@@ -172,6 +187,21 @@ public class B2UpdateBucketRequestTest {
                 "    \"algorithm\": \"AES256\",\n" +
                 "    \"mode\": \"SSE-B2\"\n" +
                 "  },\n" +
+                "  \"eventNotificationRules\": [\n" +
+                "    {\n" +
+                "      \"disabledReason\": \"\",\n" +
+                "      \"eventTypes\": [\n" +
+                "        \"b2:ObjectCreated:Copy\"\n" +
+                "      ],\n" +
+                "      \"isEnabled\": true,\n" +
+                "      \"name\": \"ruleName\",\n" +
+                "      \"objectNamePrefix\": \"\",\n" +
+                "      \"targetConfiguration\": {\n" +
+                "        \"targetType\": \"webhook\",\n" +
+                "        \"url\": \"https://www.example.com\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ],\n" +
                 "  \"fileLockEnabled\": true,\n" +
                 "  \"ifRevisionIs\": 1,\n" +
                 "  \"lifecycleRules\": [\n" +
@@ -230,6 +260,7 @@ public class B2UpdateBucketRequestTest {
                 BUCKET_ID,
                 BUCKET_NAME,
                 BUCKET_TYPE,
+                null,
                 null,
                 null,
                 null,

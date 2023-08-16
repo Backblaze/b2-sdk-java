@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -17,6 +17,8 @@ public class B2CreateBucketRequest {
     private final B2BucketServerSideEncryption defaultServerSideEncryption;
     private final B2BucketReplicationConfiguration replicationConfiguration;
 
+    private final List<B2EventNotificationRule> eventNotificationRules;
+
     public B2CreateBucketRequest(String bucketName,
                                  String bucketType,
                                  Map<String, String> bucketInfo,
@@ -24,7 +26,8 @@ public class B2CreateBucketRequest {
                                  List<B2LifecycleRule> lifecycleRules,
                                  boolean fileLockEnabled,
                                  B2BucketServerSideEncryption defaultServerSideEncryption,
-                                 B2BucketReplicationConfiguration replicationConfiguration) {
+                                 B2BucketReplicationConfiguration replicationConfiguration,
+                                 List<B2EventNotificationRule> eventNotificationRules) {
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
@@ -33,6 +36,7 @@ public class B2CreateBucketRequest {
         this.fileLockEnabled = fileLockEnabled;
         this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.replicationConfiguration = replicationConfiguration;
+        this.eventNotificationRules = eventNotificationRules;
     }
 
     public String getBucketName() {
@@ -67,6 +71,10 @@ public class B2CreateBucketRequest {
         return replicationConfiguration;
     }
 
+    public List<B2EventNotificationRule> getEventNotificationRules() {
+        return eventNotificationRules;
+    }
+
     public static Builder builder(String bucketName, String bucketType) {
         return new Builder(bucketName, bucketType);
     }
@@ -81,6 +89,7 @@ public class B2CreateBucketRequest {
         private boolean fileLockEnabled;
         private B2BucketServerSideEncryption defaultServerSideEncryption;
         private B2BucketReplicationConfiguration replicationConfiguration;
+        private List<B2EventNotificationRule> eventNotificationRules;
 
         Builder(String bucketName,
                 String bucketType) {
@@ -118,6 +127,11 @@ public class B2CreateBucketRequest {
             return this;
         }
 
+        public Builder setEventNotificationRules(List<B2EventNotificationRule> eventNotificationRules) {
+            this.eventNotificationRules = eventNotificationRules;
+            return this;
+        }
+
         public B2CreateBucketRequest build() {
             return new B2CreateBucketRequest(
                     bucketName,
@@ -127,7 +141,8 @@ public class B2CreateBucketRequest {
                     lifecycleRules,
                     fileLockEnabled,
                     defaultServerSideEncryption,
-                    replicationConfiguration
+                    replicationConfiguration,
+                    eventNotificationRules
             );
         }
     }

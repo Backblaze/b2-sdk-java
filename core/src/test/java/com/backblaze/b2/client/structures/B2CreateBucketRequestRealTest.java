@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import static com.backblaze.b2.util.B2Collections.listOf;
 import static com.backblaze.b2.util.B2Collections.mapOf;
@@ -90,6 +91,17 @@ public class B2CreateBucketRequestRealTest extends B2BaseTest {
                         sourceToDestinationKeyMapping
                 );
 
+        final List<B2EventNotificationRule> eventNotificationRules = listOf(
+                new B2EventNotificationRule(
+                        "ruleName",
+                        new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
+                        "",
+                        new B2WebhookConfiguration("https://www.example.com"),
+                        true,
+                        ""
+                )
+        );
+
         final B2CreateBucketRequestReal createRequestReal =
                 new B2CreateBucketRequestReal(
                         ACCOUNT_ID,
@@ -101,6 +113,7 @@ public class B2CreateBucketRequestRealTest extends B2BaseTest {
                                 .setFileLockEnabled(true)
                                 .setDefaultServerSideEncryption(defaultServerSideEncryption)
                                 .setReplicationConfiguration(replicationConfiguration)
+                                .setEventNotificationRules(eventNotificationRules)
                                 .build()
                 );
 
@@ -133,6 +146,21 @@ public class B2CreateBucketRequestRealTest extends B2BaseTest {
                 "    \"algorithm\": \"AES256\",\n" +
                 "    \"mode\": \"SSE-B2\"\n" +
                 "  },\n" +
+                "  \"eventNotificationRules\": [\n" +
+                "    {\n" +
+                "      \"disabledReason\": \"\",\n" +
+                "      \"eventTypes\": [\n" +
+                "        \"b2:ObjectCreated:Copy\"\n" +
+                "      ],\n" +
+                "      \"isEnabled\": true,\n" +
+                "      \"name\": \"ruleName\",\n" +
+                "      \"objectNamePrefix\": \"\",\n" +
+                "      \"targetConfiguration\": {\n" +
+                "        \"targetType\": \"webhook\",\n" +
+                "        \"url\": \"https://www.example.com\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ],\n" +
                 "  \"fileLockEnabled\": true,\n" +
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +

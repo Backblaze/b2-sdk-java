@@ -2,6 +2,7 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Added support for event notification rules
 * Added B2StorageClient.storePartsForLargeFile
 * Added support for daysFromStartingToCancelingUnfinishedLargeFiles to B2LifecycleRule
 * Reduced lock contention in B2AccountAuthorizationCache

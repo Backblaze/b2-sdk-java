@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -47,11 +47,13 @@ public class B2Bucket {
     @B2Json.optional
     private final B2AuthorizationFilteredResponseField<B2BucketReplicationConfiguration> replicationConfiguration;
 
+    @B2Json.optional
+    private final B2AuthorizationFilteredResponseField<List<B2EventNotificationRule>> eventNotificationRules;
+
     @B2Json.required
     private final int revision;
 
-    @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules," +
-            "options,fileLockConfiguration,defaultServerSideEncryption,replicationConfiguration,revision")
+    @B2Json.constructor
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
@@ -63,6 +65,7 @@ public class B2Bucket {
                     B2AuthorizationFilteredResponseField<B2BucketFileLockConfiguration> fileLockConfiguration,
                     B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> defaultServerSideEncryption,
                     B2AuthorizationFilteredResponseField<B2BucketReplicationConfiguration> replicationConfiguration,
+                    B2AuthorizationFilteredResponseField<List<B2EventNotificationRule>> eventNotificationRules,
                     int revision) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -75,6 +78,7 @@ public class B2Bucket {
         this.fileLockConfiguration = fileLockConfiguration;
         this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.replicationConfiguration = replicationConfiguration;
+        this.eventNotificationRules = eventNotificationRules;
         this.revision = revision;
     }
 
@@ -183,8 +187,38 @@ public class B2Bucket {
         return replicationConfiguration.getValue();
     }
 
+    /**
+     * Indicates whether client is authorized to read event notification rule settings for bucket
+     * @return true iff client is authorized to read value of eventNotificationRules field in B2Bucket
+     */
+    public boolean isClientAuthorizedToReadEventNotificationRules() {
+        B2Preconditions.checkState(eventNotificationRules != null);
+
+        return eventNotificationRules.isClientAuthorizedToRead();
+    }
+
+    /**
+     * Returns settings for bucket event notification rules or null if there are none.
+     * Throws B2ForbiddenException if client is not authorized to read bucket event notification rule settings.
+     * @return event notification rule settings
+     * @throws B2ForbiddenException if client is not authorized to read eventNotificationRules field
+     */
+    public List<B2EventNotificationRule> getEventNotificationRules() throws B2ForbiddenException {
+        B2Preconditions.checkState(eventNotificationRules != null);
+
+        // will throw B2ForbiddenException if client is not authorized to read value
+        return eventNotificationRules.getValue();
+    }
+
     @Override
     public String toString() {
+        String eventNotificationRulesDesc = "unauthorized to view";
+        try {
+            eventNotificationRulesDesc = String.valueOf(
+                    (eventNotificationRules == null ? 0 : eventNotificationRules.getValue().size())
+            );
+        } catch (B2ForbiddenException ignored) {}
+
         return "B2Bucket(" +
                 bucketName + "," +
                 bucketType + "," +
@@ -196,6 +230,7 @@ public class B2Bucket {
                 fileLockConfiguration + "," +
                 defaultServerSideEncryption + "," +
                 replicationConfiguration + "," +
+                eventNotificationRulesDesc + " eventNotificationRules," +
                 "v" + revision +
                 ')';
     }
@@ -214,10 +249,11 @@ public class B2Bucket {
                 Objects.equals(getCorsRules(), b2Bucket.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules()) &&
                 Objects.equals(getOptions(), b2Bucket.getOptions()) &&
-                // don't use getter for these two fields because they can throw B2ForbiddenException
+                // don't use getter for these fields because they can throw B2ForbiddenException
                 Objects.equals(fileLockConfiguration, b2Bucket.fileLockConfiguration) &&
                 Objects.equals(defaultServerSideEncryption, b2Bucket.defaultServerSideEncryption) &&
-                Objects.equals(replicationConfiguration, b2Bucket.replicationConfiguration);
+                Objects.equals(replicationConfiguration, b2Bucket.replicationConfiguration) &&
+                Objects.equals(eventNotificationRules, b2Bucket.eventNotificationRules);
     }
 
     @Override
@@ -232,10 +268,11 @@ public class B2Bucket {
                 getLifecycleRules(),
                 getOptions(),
                 getRevision(),
-                // don't use getter for these two fields because they can throw B2ForbiddenException
+                // don't use getter for these fields because they can throw B2ForbiddenException
                 fileLockConfiguration,
                 defaultServerSideEncryption,
-                replicationConfiguration
+                replicationConfiguration,
+                eventNotificationRules
         );
     }
 }

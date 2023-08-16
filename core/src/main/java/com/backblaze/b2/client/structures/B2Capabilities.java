@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -48,4 +48,7 @@ public interface B2Capabilities {
 
     String READ_BUCKET_REPLICATIONS = "readBucketReplications";
     String WRITE_BUCKET_REPLICATIONS = "writeBucketReplications";
+
+    String READ_BUCKET_NOTIFICATIONS = "readBucketNotifications";
+    String WRITE_BUCKET_NOTIFICATIONS = "writeBucketNotifications";
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -444,6 +444,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "        }\n" +
                 "      ],\n" +
                 "      \"defaultServerSideEncryption\": null,\n" +
+                "      \"eventNotificationRules\": null,\n" +
                 "      \"fileLockEnabled\": false,\n" +
                 "      \"lifecycleRules\": null,\n" +
                 "      \"replicationConfiguration\": null\n" +
@@ -1139,6 +1140,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      ],\n" +
                 "      \"defaultRetention\": null,\n" +
                 "      \"defaultServerSideEncryption\": null,\n" +
+                "      \"eventNotificationRules\": null,\n" +
                 "      \"fileLockEnabled\": null,\n" +
                 "      \"ifRevisionIs\": 1,\n" +
                 "      \"lifecycleRules\": null,\n" +

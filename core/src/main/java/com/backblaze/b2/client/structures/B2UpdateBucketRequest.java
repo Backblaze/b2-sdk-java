@@ -1,5 +1,5 @@
 /*
- * Copyright 2022, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -42,10 +42,12 @@ public class B2UpdateBucketRequest {
     private final Boolean fileLockEnabled;
 
     @B2Json.optional
+    private final List<B2EventNotificationRule> eventNotificationRules;
+
+    @B2Json.optional
     private final Integer ifRevisionIs;
 
-    @B2Json.constructor(params = "accountId,bucketId,bucketType,bucketInfo,corsRules,lifecycleRules," +
-            "defaultRetention,defaultServerSideEncryption,replicationConfiguration,fileLockEnabled,ifRevisionIs")
+    @B2Json.constructor
     private B2UpdateBucketRequest(String accountId,
                                   String bucketId,
                                   String bucketType,
@@ -56,6 +58,7 @@ public class B2UpdateBucketRequest {
                                   B2BucketServerSideEncryption defaultServerSideEncryption,
                                   B2BucketReplicationConfiguration replicationConfiguration,
                                   Boolean fileLockEnabled,
+                                  List<B2EventNotificationRule> eventNotificationRules,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -67,6 +70,7 @@ public class B2UpdateBucketRequest {
         this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.replicationConfiguration = replicationConfiguration;
         this.fileLockEnabled = fileLockEnabled;
+        this.eventNotificationRules = eventNotificationRules;
         this.ifRevisionIs = ifRevisionIs;
     }
 
@@ -105,6 +109,10 @@ public class B2UpdateBucketRequest {
         return replicationConfiguration;
     }
 
+    public List<B2EventNotificationRule> getEventNotificationRules() {
+        return eventNotificationRules;
+    }
+
     public Boolean getFileLockEnabled() {
         return fileLockEnabled;
     }
@@ -128,7 +136,8 @@ public class B2UpdateBucketRequest {
                 Objects.equals(getDefaultServerSideEncryption(), that.getDefaultServerSideEncryption()) &&
                 Objects.equals(getReplicationConfiguration(), that.getReplicationConfiguration()) &&
                 Objects.equals(getFileLockEnabled() , that.getFileLockEnabled()) &&
-                Objects.equals(getIfRevisionIs(), that.getIfRevisionIs());
+                Objects.equals(getIfRevisionIs(), that.getIfRevisionIs()) &&
+                Objects.equals(getEventNotificationRules(), that.getEventNotificationRules());
     }
 
     @Override
@@ -144,7 +153,8 @@ public class B2UpdateBucketRequest {
                 getDefaultServerSideEncryption(),
                 getReplicationConfiguration(),
                 getFileLockEnabled(),
-                getIfRevisionIs()
+                getIfRevisionIs(),
+                getEventNotificationRules()
         );
     }
 
@@ -168,6 +178,8 @@ public class B2UpdateBucketRequest {
         private B2BucketServerSideEncryption defaultServerSideEncryption;
         private B2BucketReplicationConfiguration replicationConfiguration;
         private Boolean fileLockEnabled;
+
+        private List<B2EventNotificationRule> eventNotificationRules;
 
         private Builder(B2Bucket bucket) {
             this.accountId = bucket.getAccountId();
@@ -215,6 +227,11 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
+        public Builder setEventNotificationRules(List<B2EventNotificationRule> eventNotificationRules) {
+            this.eventNotificationRules = eventNotificationRules;
+            return this;
+        }
+
         public B2UpdateBucketRequest build() {
             return new B2UpdateBucketRequest(
                     accountId,
@@ -227,6 +244,7 @@ public class B2UpdateBucketRequest {
                     defaultServerSideEncryption,
                     replicationConfiguration,
                     fileLockEnabled,
+                    eventNotificationRules,
                     ifRevisionIs
             );
         }

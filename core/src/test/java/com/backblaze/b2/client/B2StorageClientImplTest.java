@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -28,6 +28,7 @@ import com.backblaze.b2.client.structures.B2DeleteFileVersionResponse;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2EventNotificationRule;
 import com.backblaze.b2.client.structures.B2FileRetention;
 import com.backblaze.b2.client.structures.B2FileRetentionMode;
 import com.backblaze.b2.client.structures.B2FileVersion;
@@ -64,6 +65,7 @@ import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
+import com.backblaze.b2.client.structures.B2WebhookConfiguration;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Clock;
@@ -82,6 +84,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -198,6 +201,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 null,
                 null,
                 null,
+                null,
                 1
         );
         when(webifier.createBucket(anyObject(), anyObject())).thenReturn(bucket);
@@ -205,7 +209,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final B2Bucket response = client.createBucket(BUCKET_NAME, BUCKET_TYPE);
         assertEquals(bucket, response);
 
-        B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(
+        final B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(
                 ACCOUNT_ID,
                 new B2CreateBucketRequest(
                         BUCKET_NAME,
@@ -214,6 +218,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                         null,
                         null,
                         false,
+                        null,
                         null,
                         null
                 )
@@ -264,11 +269,39 @@ public class B2StorageClientImplTest extends B2BaseTest {
                         replicationRules,
                         sourceToDestinationKeyMapping
                 );
+        final List<B2EventNotificationRule> eventNotificationRules = listOf(
+                new B2EventNotificationRule(
+                        "myRule",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectCreated:Replica",
+                                        "b2:ObjectCreated:Upload"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example.com"),
+                        true,
+                        ""
+                ),
+                new B2EventNotificationRule(
+                        "myRule2",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectDeleted:LifecycleRule"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example2.com"),
+                        true,
+                        ""
+                )
+        );
         final B2CreateBucketRequest request = B2CreateBucketRequest
                 .builder(BUCKET_NAME, BUCKET_TYPE)
                 .setBucketInfo(bucketInfo)
                 .setLifecycleRules(lifecycleRules)
                 .setDefaultServerSideEncryption(defaultServerSideEncryption)
+                .setEventNotificationRules(eventNotificationRules)
                 .build();
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
@@ -282,6 +315,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 new B2AuthorizationFilteredResponseField<>(true, new B2BucketFileLockConfiguration(true)),
                 new B2AuthorizationFilteredResponseField<>(true, defaultServerSideEncryption),
                 new B2AuthorizationFilteredResponseField<>(true, replicationConfiguration),
+                new B2AuthorizationFilteredResponseField<>(true, eventNotificationRules),
                 1
         );
         final B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(ACCOUNT_ID, request);
@@ -318,7 +352,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 "isEnabled=true, includeExistingFiles=false}]}, " +
                 "asReplicationDestination=B2DestinationConfig{" +
                 "sourceToDestinationKeyMapping={123a0a1a2a3a4a50000bc614e=555a0a1a2a3a4a70000bc929a, " +
-                "456a0b9a8a7a6a50000fc614e=555a0a1a2a3a4a70000bc929a}}}}),v1)",
+                "456a0b9a8a7a6a50000fc614e=555a0a1a2a3a4a70000bc929a}}}}),2 eventNotificationRules,v1)",
                 bucket.toString()
         );
 
@@ -334,6 +368,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 new B2AuthorizationFilteredResponseField<>(true, new B2BucketFileLockConfiguration(true)),
                 new B2AuthorizationFilteredResponseField<>(true, defaultServerSideEncryption),
                 new B2AuthorizationFilteredResponseField<>(true, replicationConfiguration),
+                new B2AuthorizationFilteredResponseField<>(true, eventNotificationRules),
                 1
         );
 
@@ -353,7 +388,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                         "isEnabled=true, includeExistingFiles=false}]}, " +
                         "asReplicationDestination=B2DestinationConfig{" +
                         "sourceToDestinationKeyMapping={123a0a1a2a3a4a50000bc614e=555a0a1a2a3a4a70000bc929a, " +
-                        "456a0b9a8a7a6a50000fc614e=555a0a1a2a3a4a70000bc929a}}}}),v1)",
+                        "456a0b9a8a7a6a50000fc614e=555a0a1a2a3a4a70000bc929a}}}}),2 eventNotificationRules,v1)",
                 bucketWithOptions.toString());
     }
 
@@ -460,6 +495,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 bucketId(i),
                 BUCKET_NAME,
                 BUCKET_TYPE,
+                null,
                 null,
                 null,
                 null,
@@ -590,6 +626,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 .setBucketInfo(B2Collections.mapOf())
                 .setLifecycleRules(listOf())
                 .setBucketType(B2BucketTypes.ALL_PUBLIC)
+                .setEventNotificationRules(listOf())
                 .build();
         when(webifier.updateBucket(anyObject(), eq(request))).thenReturn(bucket(1));
 
@@ -606,6 +643,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                         .setBucketInfo(B2Collections.mapOf())
                         .setLifecycleRules(listOf())
                         .setBucketType(B2BucketTypes.ALL_PUBLIC)
+                        .setEventNotificationRules(listOf())
                         .build());
     }
 
