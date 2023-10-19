@@ -7,6 +7,7 @@ package com.backblaze.b2.json;
 
 import com.backblaze.b2.util.B2StringUtil;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +20,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -71,7 +73,6 @@ public class B2Json {
      * relying on the shape of a class for which you don't own the
      * source code?
      */
-    private static String UTF8 = "UTF-8";
 
     /**
      * A simple instance that can be shared.
@@ -80,7 +81,7 @@ public class B2Json {
 
     /**
      * Bit map values for the options parameter to the constructor.
-     *
+     * <p>
      * Deprecated in favor of using B2JsonOptions.
      */
     @Deprecated
@@ -115,11 +116,7 @@ public class B2Json {
     }
 
     public byte[] toJsonUtf8Bytes(Object obj, B2JsonOptions options) throws B2JsonException {
-        try {
-            return toJson(obj, options).getBytes(UTF8);
-        } catch (IOException e) {
-            throw new RuntimeException("error writing to byte array: " + e.getMessage());
-        }
+        return toJson(obj, options).getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -159,17 +156,17 @@ public class B2Json {
     /**
      * Turn an object into JSON, writing the results to given
      * output stream.
-     *
+     * <p>
      * objTypeOrNull can be set to null if obj is not a parameterized class. However,
      * if obj contains type parameters (like if obj is a {@literal List<String>}, then
      * you will need to pass in its type information via objTypeOrNull. This will instruct
      * B2Json to derive the B2JsonTypeHandler from the type information instead of the
      * object's class.
-     *
+     * <p>
      * Getting the Type of obj can be done in at least two ways:
      * 1. If it is a member of an enclosing class, EnclosingClass.getDeclaredField(...).getGenericType()
      * 2. By constructing a class that implements Type.
-     *
+     * <p>
      * Note that the output stream is NOT closed as a side-effect of calling this.
      * It was a bug that it was being closed in version 1.1.1 and earlier.
      */
@@ -333,7 +330,7 @@ public class B2Json {
     }
 
     public <T> T fromJsonUntilEof(InputStream in, Class<T> clazz, B2JsonOptions options) throws IOException, B2JsonException {
-        B2JsonReader reader = new B2JsonReader(new InputStreamReader(in, "UTF-8"));
+        final B2JsonReader reader = new B2JsonReader(new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)));
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         //noinspection unchecked
         T result = (T) handler.deserialize(reader, options);
@@ -360,17 +357,17 @@ public class B2Json {
 
     /**
      * Parse the bytes from an InputStream as JSON using the supplied options, returning the parsed object.
-     *
+     * <p>
      * The Type parameter will usually be a class, which is straightforward to supply. However,
      * if you are trying to deserialize a parameterized type (like if obj is a
      * {@literal List<String>}, then you will need to supply a proper Type instance.
-     *
+     * <p>
      * Getting the Type can be done in at least two ways:
      * 1. If it is a member of an enclosing class, EnclosingClass.getDeclaredField(...).getGenericType()
      * 2. By constructing a class that implements Type.
      */
     public <T> T fromJson(InputStream in, Type type, B2JsonOptions options) throws IOException, B2JsonException {
-        B2JsonReader reader = new B2JsonReader(new InputStreamReader(in, "UTF-8"));
+        final B2JsonReader reader = new B2JsonReader(new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)));
         final B2JsonTypeHandler handler = handlerMap.getHandler(type);
 
         if (handler == null) {
@@ -435,7 +432,10 @@ public class B2Json {
     }
 
     public <T> T fromJson(byte[] jsonUtf8Bytes, Class<T> clazz, B2JsonOptions options) throws IOException, B2JsonException {
-        B2JsonReader reader = new B2JsonReader(new InputStreamReader(new ByteArrayInputStream(jsonUtf8Bytes), "UTF-8"));
+        final B2JsonReader reader = new B2JsonReader(
+                new BufferedReader(
+                        new InputStreamReader(
+                                new ByteArrayInputStream(jsonUtf8Bytes), StandardCharsets.UTF_8)));
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         //noinspection unchecked
         return (T) handler.deserialize(reader, options);
@@ -443,7 +443,7 @@ public class B2Json {
 
     /**
      * Parse a URL parameter map as an object of the given class.
-     *
+     * <p>
      * The values in the map are the values that will be used in the
      * object.  The caller is responsible for URL-decoding them
      * before passing them to this method.
@@ -575,10 +575,10 @@ public class B2Json {
     /**
      * Annotation to declare that this member will be serialized to JSON
      * with the specified name, instead of the field name in the Java class.
-     *
+     * <p>
      * The Java class's field name is used for the params list in the
      * B2Json.constructor annotation
-     *
+     * <p>
      * For example:
      * <pre>
      * class Example {
@@ -667,7 +667,7 @@ public class B2Json {
 
     /**
      * Convert from deprecated options flags to options object.
-     *
+     * <p>
      * Called a lot, so optimized to always return the same objects.
      */
     private static B2JsonOptions optionsFromFlags(int optionFlags) {

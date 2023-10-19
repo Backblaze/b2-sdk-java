@@ -2,6 +2,7 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Updated B2Json `fromJson` methods to utilize a BufferedReader when deserializing JSON for performance improvement
 * Added support for event notification rules
 * Added B2StorageClient.storePartsForLargeFile
 * Added support for daysFromStartingToCancelingUnfinishedLargeFiles to B2LifecycleRule

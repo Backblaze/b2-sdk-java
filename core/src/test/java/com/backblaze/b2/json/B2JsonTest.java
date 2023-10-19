@@ -14,6 +14,7 @@ import org.junit.rules.ExpectedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
@@ -178,6 +179,64 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"\\u0040d\": \"goodbye\"\n" +
                 "}";
         assertEquals(obj, b2Json.fromJson(alternateJson, Container.class));
+    }
+
+    @Test
+    public void testFromJsonWithInputStream() throws B2JsonException, IOException {
+        String json =
+                "{\n" +
+                        "  \"@d\": \"goodbye\",\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\"\n" +
+                        "}";
+        Container obj = new Container(41, "hello", "goodbye");
+        assertEquals(json, b2Json.toJson(obj));
+        InputStream jsonInputStream = new ByteArrayInputStream(json.getBytes());
+
+        assertEquals(obj, b2Json.fromJson(jsonInputStream, Container.class));
+    }
+
+    @Test
+    public void testFromJsonUntilEof() throws B2JsonException, IOException {
+        String json =
+                "{\n" +
+                        "  \"@d\": \"goodbye\",\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\"\n" +
+                        "}";
+        Container obj = new Container(41, "hello", "goodbye");
+
+        InputStream jsonInputStream = new ByteArrayInputStream(json.getBytes());
+        assertEquals(obj, b2Json.fromJsonUntilEof(jsonInputStream, Container.class));
+    }
+
+    @Test
+    public void testFromJsonUntilEofWithCharacterAfterEof() throws B2JsonException, IOException {
+        String json =
+                "{\n" +
+                        "  \"@d\": \"goodbye\",\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\"\n" +
+                        "}}";
+        Container obj = new Container(41, "hello", "goodbye");
+
+        InputStream jsonInputStream = new ByteArrayInputStream(json.getBytes());
+        thrown.expect(B2JsonException.class);
+        thrown.expectMessage("non-whitespace characters after JSON value");
+        b2Json.fromJsonUntilEof(jsonInputStream, Container.class);
+    }
+
+    @Test
+    public void testFromJsonWithByteArray() throws B2JsonException, IOException {
+        String json =
+                "{\n" +
+                        "  \"@d\": \"goodbye\",\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\"\n" +
+                        "}";
+        Container obj = new Container(41, "hello", "goodbye");
+
+        assertEquals(obj, b2Json.fromJson(json.getBytes(), Container.class));
     }
 
     @Test
