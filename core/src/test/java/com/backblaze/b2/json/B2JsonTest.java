@@ -16,7 +16,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -179,6 +181,21 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"\\u0040d\": \"goodbye\"\n" +
                 "}";
         assertEquals(obj, b2Json.fromJson(alternateJson, Container.class));
+    }
+
+    @Test
+    public void testFromJsonWithReader() throws B2JsonException, IOException {
+        final String json =
+                "{\n" +
+                        "  \"@d\": \"goodbye\",\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\"\n" +
+                        "}";
+        final Container obj = new Container(41, "hello", "goodbye");
+        assertEquals(json, b2Json.toJson(obj));
+
+        assertEquals(obj, b2Json.fromJson(new StringReader(json), Container.class, B2JsonOptions.DEFAULT));
+        assertEquals(obj, b2Json.fromJson(new StringReader(json), Container.class));
     }
 
     @Test

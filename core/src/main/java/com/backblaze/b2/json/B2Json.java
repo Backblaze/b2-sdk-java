@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.io.StringReader;
+
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -367,15 +369,38 @@ public class B2Json {
      * 2. By constructing a class that implements Type.
      */
     public <T> T fromJson(InputStream in, Type type, B2JsonOptions options) throws IOException, B2JsonException {
-        final B2JsonReader reader = new B2JsonReader(new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)));
-        final B2JsonTypeHandler handler = handlerMap.getHandler(type);
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+        return fromJson(reader, type, options);
+    }
+
+    /**
+     * Parse JSON as an object of the given class with the given options.
+     */
+    public <T> T fromJson(Reader reader, Class<T> clazz) throws IOException, B2JsonException {
+        return fromJson(reader, clazz, B2JsonOptions.DEFAULT);
+    }
+
+    /**
+     * Parse the bytes from a Reader as JSON using the supplied options, returning the parsed object.
+     * <p>
+     * The Type parameter will usually be a class, which is straightforward to supply. However,
+     * if you are trying to deserialize a parameterized type (for instance, if the object is a
+     * {@literal List<String>}), then you will need to supply a proper Type instance.
+     * <p>
+     * Getting the Type can be done in at least two ways:
+     * 1. If it is a member of an enclosing class, EnclosingClass.getDeclaredField(...).getGenericType()
+     * 2. By constructing a class that implements Type.
+     */
+    public <T> T fromJson(Reader reader, Type type, B2JsonOptions options) throws IOException, B2JsonException {
+        final B2JsonReader b2JsonReader = new B2JsonReader(reader);
+        final B2JsonTypeHandler<Object> handler = handlerMap.getHandler(type);
 
         if (handler == null) {
             throw new B2JsonException("B2Json.fromJson called with handler not in handlerMap");
 
         }
         //noinspection unchecked
-        return (T) handler.deserialize(reader, options);
+        return (T) handler.deserialize(b2JsonReader, options);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Added B2Json `fromJson` methods that take a `java.io.Reader` as input for JSON
 * Updated B2Json `fromJson` methods to utilize a BufferedReader when deserializing JSON for performance improvement
 * Added support for event notification rules
 * Added B2StorageClient.storePartsForLargeFile
