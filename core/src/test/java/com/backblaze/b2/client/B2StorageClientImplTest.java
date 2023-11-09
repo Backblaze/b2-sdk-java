@@ -33,6 +33,8 @@ import com.backblaze.b2.client.structures.B2FileRetention;
 import com.backblaze.b2.client.structures.B2FileRetentionMode;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
@@ -53,6 +55,8 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2ReplicationRule;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
@@ -1216,6 +1220,92 @@ public class B2StorageClientImplTest extends B2BaseTest {
         // closing the client should do nothing the second time.
         client.close();
         verify(webifier, times(1)).close();
+    }
+
+    @Test
+    public void testSetBucketNotificationRules() throws B2Exception {
+        final List<B2EventNotificationRule> eventNotificationRules = listOf(
+                new B2EventNotificationRule(
+                        "myRule",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectCreated:Replica",
+                                        "b2:ObjectCreated:Upload"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example.com"),
+                        true,
+                        ""
+                ),
+                new B2EventNotificationRule(
+                        "myRule2",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectDeleted:LifecycleRule"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example2.com"),
+                        true,
+                        ""
+                )
+        );
+
+        final B2SetBucketNotificationRulesRequest request = B2SetBucketNotificationRulesRequest
+                .builder(bucketId(1), eventNotificationRules)
+                .build();
+        final B2SetBucketNotificationRulesResponse response =
+                new B2SetBucketNotificationRulesResponse(bucketId(1), eventNotificationRules);
+        when(webifier.setBucketNotificationRules(any(), eq(request))).thenReturn(response);
+
+        assertSame(response, client.setBucketNotificationRules(request));
+
+        verify(webifier, times(1)).authorizeAccount(any());
+        verify(webifier, times(1)).setBucketNotificationRules(any(), eq(request));
+    }
+
+    @Test
+    public void testGetBucketNotificationRules() throws B2Exception {
+        final List<B2EventNotificationRule> eventNotificationRules = listOf(
+                new B2EventNotificationRule(
+                        "myRule",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectCreated:Replica",
+                                        "b2:ObjectCreated:Upload"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example.com"),
+                        true,
+                        ""
+                ),
+                new B2EventNotificationRule(
+                        "myRule2",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectDeleted:LifecycleRule"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example2.com"),
+                        true,
+                        ""
+                )
+        );
+
+        final B2GetBucketNotificationRulesRequest request = B2GetBucketNotificationRulesRequest
+                .builder(bucketId(1))
+                .build();
+        final B2GetBucketNotificationRulesResponse response =
+                new B2GetBucketNotificationRulesResponse(bucketId(1), eventNotificationRules);
+        when(webifier.getBucketNotificationRules(any(), eq(request))).thenReturn(response);
+
+        assertSame(response, client.getBucketNotificationRules(request));
+
+        verify(webifier, times(1)).authorizeAccount(any());
+        verify(webifier, times(1)).getBucketNotificationRules(any(), eq(request));
     }
 
 }

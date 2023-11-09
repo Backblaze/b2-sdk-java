@@ -24,11 +24,13 @@ import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2EventNotificationRule;
 import com.backblaze.b2.client.structures.B2FileRetention;
 import com.backblaze.b2.client.structures.B2FileRetentionMode;
 import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesRequest;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
@@ -41,6 +43,7 @@ import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesRequest;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
@@ -53,6 +56,7 @@ import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
+import com.backblaze.b2.client.structures.B2WebhookConfiguration;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
@@ -73,7 +77,9 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
@@ -88,6 +94,7 @@ import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.Request
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.OTHER;
 import static com.backblaze.b2.client.exceptions.B2UnauthorizedException.RequestCategory.UPLOADING;
 import static com.backblaze.b2.json.B2Json.toJsonOrThrowRuntime;
+import static com.backblaze.b2.util.B2Collections.listOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -1947,6 +1954,113 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         );
 
         checkRequestCategory(OTHER, w -> w.updateFileRetention(ACCOUNT_AUTH, requestReal));
+    }
+
+    @Test
+    public void testSetBucketNotificationRules() throws B2Exception {
+        final List<B2EventNotificationRule> eventNotificationRules = listOf(
+                new B2EventNotificationRule(
+                        "myRule",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectCreated:Replica",
+                                        "b2:ObjectCreated:Upload"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example.com"),
+                        true,
+                        ""
+                ),
+                new B2EventNotificationRule(
+                        "myRule2",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectDeleted:LifecycleRule"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example2.com"),
+                        true,
+                        ""
+                )
+        );
+
+        final B2SetBucketNotificationRulesRequest requestReal = B2SetBucketNotificationRulesRequest
+                .builder(bucketId(1), eventNotificationRules)
+                .build();
+        webifier.setBucketNotificationRules(ACCOUNT_AUTH, requestReal);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_set_bucket_notification_rules\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"bucketId\": \"bucket1\",\n" +
+                "      \"eventNotificationRules\": [\n" +
+                "        {\n" +
+                "          \"disabledReason\": \"\",\n" +
+                "          \"eventTypes\": [\n" +
+                "            \"b2:ObjectCreated:Replica\",\n" +
+                "            \"b2:ObjectCreated:Upload\"\n" +
+                "          ],\n" +
+                "          \"isEnabled\": true,\n" +
+                "          \"name\": \"myRule\",\n" +
+                "          \"objectNamePrefix\": \"\",\n" +
+                "          \"targetConfiguration\": {\n" +
+                "            \"targetType\": \"webhook\",\n" +
+                "            \"url\": \"https://www.example.com\"\n" +
+                "          }\n" +
+                "        },\n" +
+                "        {\n" +
+                "          \"disabledReason\": \"\",\n" +
+                "          \"eventTypes\": [\n" +
+                "            \"b2:ObjectDeleted:LifecycleRule\"\n" +
+                "          ],\n" +
+                "          \"isEnabled\": true,\n" +
+                "          \"name\": \"myRule2\",\n" +
+                "          \"objectNamePrefix\": \"\",\n" +
+                "          \"targetConfiguration\": {\n" +
+                "            \"targetType\": \"webhook\",\n" +
+                "            \"url\": \"https://www.example2.com\"\n" +
+                "          }\n" +
+                "        }\n" +
+                "      ]\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2SetBucketNotificationRulesResponse\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.setBucketNotificationRules(ACCOUNT_AUTH, requestReal));
+    }
+
+    @Test
+    public void testGetBucketNotificationRules() throws B2Exception {
+        final B2GetBucketNotificationRulesRequest requestReal = B2GetBucketNotificationRulesRequest
+                .builder(bucketId(1))
+                .build();
+        webifier.getBucketNotificationRules(ACCOUNT_AUTH, requestReal);
+
+        webApiClient.check("postJsonReturnJson.\n" +
+                "url:\n" +
+                "    apiUrl1/b2api/v2/b2_get_bucket_notification_rules\n" +
+                "headers:\n" +
+                "    Authorization: accountToken1\n" +
+                "    User-Agent: SecretAgentMan/3.19.28\n" +
+                "    X-Bz-Test-Mode: force_cap_exceeded\n" +
+                "request:\n" +
+                "    {\n" +
+                "      \"bucketId\": \"bucket1\"\n" +
+                "    }\n" +
+                "responseClass:\n" +
+                "    B2GetBucketNotificationRulesResponse\n"
+        );
+
+        checkRequestCategory(OTHER, w -> w.getBucketNotificationRules(ACCOUNT_AUTH, requestReal));
     }
 
     @Test

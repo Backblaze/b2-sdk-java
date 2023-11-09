@@ -1,5 +1,5 @@
 /*
- * Copyright 2020, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -37,6 +37,8 @@ import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileSseForResponse;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
@@ -57,6 +59,8 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2OverrideableHeaders;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
@@ -669,6 +673,26 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 makeHeaders(accountAuth),
                 request,
                 B2UpdateFileRetentionResponse.class);
+    }
+
+    @Override
+    public B2SetBucketNotificationRulesResponse setBucketNotificationRules(B2AccountAuthorization accountAuth,
+                                                                           B2SetBucketNotificationRulesRequest request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeUrl(accountAuth, "b2_set_bucket_notification_rules"),
+                makeHeaders(accountAuth),
+                request,
+                B2SetBucketNotificationRulesResponse.class);
+    }
+
+    @Override
+    public B2GetBucketNotificationRulesResponse getBucketNotificationRules(B2AccountAuthorization accountAuth,
+                                                                           B2GetBucketNotificationRulesRequest request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeUrl(accountAuth, "b2_get_bucket_notification_rules"),
+                makeHeaders(accountAuth),
+                request,
+                B2GetBucketNotificationRulesResponse.class);
     }
 
     private void addAuthHeader(B2HeadersImpl.Builder builder,

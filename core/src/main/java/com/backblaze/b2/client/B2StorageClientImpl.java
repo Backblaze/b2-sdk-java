@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -27,6 +27,8 @@ import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
@@ -47,6 +49,8 @@ import com.backblaze.b2.client.structures.B2ListPartsResponse;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
@@ -603,5 +607,19 @@ public class B2StorageClientImpl implements B2StorageClient {
     }
     B2ListPartsResponse listParts(B2ListPartsRequest request) throws B2Exception {
         return retryer.doRetry("b2_list_parts", accountAuthCache, () -> webifier.listParts(accountAuthCache.get(), request), retryPolicySupplier.get());
+    }
+
+    @Override
+    public B2SetBucketNotificationRulesResponse setBucketNotificationRules(B2SetBucketNotificationRulesRequest request) throws B2Exception {
+        return retryer.doRetry("b2_set_bucket_notification_rules", accountAuthCache,
+                () -> webifier.setBucketNotificationRules(accountAuthCache.get(), request),
+                retryPolicySupplier.get());
+    }
+
+    @Override
+    public B2GetBucketNotificationRulesResponse getBucketNotificationRules(B2GetBucketNotificationRulesRequest request) throws B2Exception {
+        return retryer.doRetry("b2_get_bucket_notification_rules", accountAuthCache,
+                () -> webifier.getBucketNotificationRules(accountAuthCache.get(), request),
+                retryPolicySupplier.get());
     }
 }

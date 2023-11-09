@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -22,8 +22,11 @@ import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2EventNotificationRule;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
@@ -38,6 +41,8 @@ import com.backblaze.b2.client.structures.B2ListKeysRequest;
 import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
@@ -1084,6 +1089,50 @@ public interface B2StorageClient extends Closeable {
      * @see <a href="https://www.backblaze.com/b2/docs/b2_update_file_retention.html">b2_update_file_retention</a>
      */
     B2UpdateFileRetentionResponse updateFileRetention(B2UpdateFileRetentionRequest request) throws B2Exception;
+
+    /**
+     * Sets the bucket's event notification rules as described by the request.
+     *
+     * @param request specifies which bucket to update and how to update the event notification rules.
+     * @return the new state of the bucket's event notification rules
+     * @throws B2Exception if there's any trouble.
+     * @see <a href="https://www.backblaze.com/b2/docs/b2_set_bucket_notification_rules.html">b2_set_bucket_notification_rules</a>
+     */
+    B2SetBucketNotificationRulesResponse setBucketNotificationRules(B2SetBucketNotificationRulesRequest request) throws B2Exception;
+
+    /**
+     * Gets the bucket's event notification rules as described by the request.
+     *
+     * @param request specifies which bucket to get the event notification rules from.
+     * @return the current state of the bucket's event notification rules
+     * @throws B2Exception if there's any trouble.
+     * @see <a href="https://www.backblaze.com/b2/docs/b2_get_bucket_notification_rules.html">b2_get_bucket_notification_rules</a>
+     */
+    B2GetBucketNotificationRulesResponse getBucketNotificationRules(B2GetBucketNotificationRulesRequest request) throws B2Exception;
+
+    /**
+     * Just like setBucketNotificationRules(request), except that the request is created from
+     * the specified bucketId and eventNotificationRules.
+     *
+     * @param bucketId                  the bucket whose eventNotificationRules you want to set.
+     * @param eventNotificationRules    the eventNotificationRules to set on the bucket.
+     * @throws B2Exception if there's any trouble.
+     */
+    default B2SetBucketNotificationRulesResponse setBucketNotificationRules(String bucketId,
+                                                                            List<B2EventNotificationRule> eventNotificationRules) throws B2Exception {
+        return setBucketNotificationRules(B2SetBucketNotificationRulesRequest.builder(bucketId, eventNotificationRules).build());
+    }
+
+    /**
+     * Just like getBucketNotificationRules(request), except that the request is created from
+     * the specified bucketId.
+     *
+     * @param bucketId the bucket whose eventNotificationRules you want to get.
+     * @throws B2Exception if there's any trouble.
+     */
+    default B2GetBucketNotificationRulesResponse getBucketNotificationRules(String bucketId) throws B2Exception {
+        return getBucketNotificationRules(B2GetBucketNotificationRulesRequest.builder(bucketId).build());
+    }
 
     /**
      * Closes this instance, releasing resources.
