@@ -39,7 +39,7 @@ public class B2BucketTest extends B2BaseTest {
     private final List<B2ReplicationRule> replicationRules;
     private final Map<String, String> sourceToDestinationKeyMapping;
 
-    private final List<B2EventNotificationRule> eventNotificationRules;
+    private final List<B2EventNotificationRuleForResponse> eventNotificationRuleForResponses;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -83,15 +83,24 @@ public class B2BucketTest extends B2BaseTest {
                 "456a0b9a8a7a6a50000fc614e", "555a0a1a2a3a4a70000bc929a"
         );
 
-        eventNotificationRules = listOf(
-                new B2EventNotificationRule(
+        eventNotificationRuleForResponses = listOf(
+                new B2EventNotificationRuleForResponse(
                         "ruleName",
                         new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
                         "",
-                        new B2WebhookConfiguration("https://www.example.com"),
+                        new B2WebhookConfigurationForResponse(
+                                "https://www.example.com",
+                                new TreeSet<>(
+                                        listOf(
+                                                new B2CustomHeaderForResponse("name1", "val1"),
+                                                new B2CustomHeaderForResponse("name2", "val2")
+                                        )
+                                ),
+                                "hmacSha256SigningSecret"
+                        ),
                         true,
-                        ""
-                )
+                        false,
+                        "")
         );
     }
 
@@ -142,10 +151,10 @@ public class B2BucketTest extends B2BaseTest {
                                 sourceToDestinationKeyMapping
                         )
                 );
-        final B2AuthorizationFilteredResponseField<List<B2EventNotificationRule>> eventNotificationRulesContainer =
+        final B2AuthorizationFilteredResponseField<List<B2EventNotificationRuleForResponse>> eventNotificationRulesContainer =
                 new B2AuthorizationFilteredResponseField<>(
                         true,
-                        eventNotificationRules
+                        eventNotificationRuleForResponses
                 );
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
@@ -239,10 +248,10 @@ public class B2BucketTest extends B2BaseTest {
                                 sourceToDestinationKeyMapping
                         )
                 );
-        final B2AuthorizationFilteredResponseField<List<B2EventNotificationRule>> eventNotificationRulesContainer =
+        final B2AuthorizationFilteredResponseField<List<B2EventNotificationRuleForResponse>> eventNotificationRulesContainer =
                 new B2AuthorizationFilteredResponseField<>(
                         true,
-                        eventNotificationRules
+                        eventNotificationRuleForResponses
                 );
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
@@ -296,14 +305,26 @@ public class B2BucketTest extends B2BaseTest {
                 "    \"isClientAuthorizedToRead\": true,\n" +
                 "    \"value\": [\n" +
                 "      {\n" +
-                "        \"disabledReason\": \"\",\n" +
                 "        \"eventTypes\": [\n" +
                 "          \"b2:ObjectCreated:Copy\"\n" +
                 "        ],\n" +
                 "        \"isEnabled\": true,\n" +
+                "        \"isSuspended\": false,\n" +
                 "        \"name\": \"ruleName\",\n" +
                 "        \"objectNamePrefix\": \"\",\n" +
+                "        \"suspensionReason\": \"\",\n" +
                 "        \"targetConfiguration\": {\n" +
+                "          \"customHeaders\": [\n" +
+                "            {\n" +
+                "              \"name\": \"name1\",\n" +
+                "              \"value\": \"val1\"\n" +
+                "            },\n" +
+                "            {\n" +
+                "              \"name\": \"name2\",\n" +
+                "              \"value\": \"val2\"\n" +
+                "            }\n" +
+                "          ],\n" +
+                "          \"hmacSha256SigningSecret\": \"hmacSha256SigningSecret\",\n" +
                 "          \"targetType\": \"webhook\",\n" +
                 "          \"url\": \"https://www.example.com\"\n" +
                 "        }\n" +

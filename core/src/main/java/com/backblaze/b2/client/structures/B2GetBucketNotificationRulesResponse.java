@@ -16,11 +16,11 @@ public class B2GetBucketNotificationRulesResponse {
     private final String bucketId;
 
     @B2Json.required
-    private final List<B2EventNotificationRule> eventNotificationRules;
+    private final List<B2EventNotificationRuleForResponse> eventNotificationRules;
 
     @B2Json.constructor
     public B2GetBucketNotificationRulesResponse(String bucketId,
-                                                List<B2EventNotificationRule> eventNotificationRules) {
+                                                List<B2EventNotificationRuleForResponse> eventNotificationRules) {
         this.bucketId = bucketId;
         this.eventNotificationRules = eventNotificationRules;
     }
@@ -29,7 +29,7 @@ public class B2GetBucketNotificationRulesResponse {
         return bucketId;
     }
 
-    public List<B2EventNotificationRule> getEventNotificationRules() {
+    public List<B2EventNotificationRuleForResponse> getEventNotificationRules() {
         return new ArrayList<>(eventNotificationRules);
     }
 
@@ -55,16 +55,16 @@ public class B2GetBucketNotificationRulesResponse {
     }
 
     public static B2GetBucketNotificationRulesResponse.Builder builder(String bucketId,
-                                                                       List<B2EventNotificationRule> eventNotificationRules) {
+                                                                       List<B2EventNotificationRuleForResponse> eventNotificationRules) {
         return new B2GetBucketNotificationRulesResponse.Builder(bucketId, eventNotificationRules);
     }
 
     public static class Builder {
         private final String bucketId;
-        private final List<B2EventNotificationRule> eventNotificationRules;
+        private final List<B2EventNotificationRuleForResponse> eventNotificationRules;
 
         public Builder(String bucketId,
-                       List<B2EventNotificationRule> eventNotificationRules) {
+                       List<B2EventNotificationRuleForResponse> eventNotificationRules) {
             this.bucketId = bucketId;
             this.eventNotificationRules = eventNotificationRules;
         }

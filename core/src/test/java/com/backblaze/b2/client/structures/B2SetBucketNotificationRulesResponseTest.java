@@ -22,19 +22,37 @@ public class B2SetBucketNotificationRulesResponseTest extends B2BaseTest {
     @Test
     public void testFullSetBucketNotificationRulesResponse() {
 
-        final List<B2EventNotificationRule> eventNotificationRules = listOf(
-                new B2EventNotificationRule(
+        final List<B2EventNotificationRuleForResponse> eventNotificationRuleForResponseList = listOf(
+                new B2EventNotificationRuleForResponse(
                         "ruleName",
                         new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
                         "",
-                        new B2WebhookConfiguration("https://www.example.com"),
+                        new B2WebhookConfigurationForResponse("https://www.example.com", "dummySigningSecret"),
                         true,
-                        ""
+                        true,
+                        "reason for suspension"
+                ),
+                new B2EventNotificationRuleForResponse(
+                        "ruleNameWithCustomHeaders",
+                        new TreeSet<>(listOf("b2:ObjectCreated:Replica")),
+                        "prefix",
+                        new B2WebhookConfigurationForResponse(
+                                "https://www.example.com",
+                                new TreeSet<>(
+                                        listOf(
+                                                new B2CustomHeaderForResponse("name1", "val1"),
+                                                new B2CustomHeaderForResponse("name2", "val2")
+                                        )
+                                ),
+                                "dummySigningSecret"),
+                        true,
+                        false,
+                        null
                 )
         );
 
         final B2SetBucketNotificationRulesResponse b2SetBucketNotificationRulesResponse =
-                B2SetBucketNotificationRulesResponse.builder(BUCKET_ID, eventNotificationRules)
+                B2SetBucketNotificationRulesResponse.builder(BUCKET_ID, eventNotificationRuleForResponseList)
                         .build();
 
         // Convert from B2SetBucketNotificationRulesResponse -> json
@@ -44,14 +62,42 @@ public class B2SetBucketNotificationRulesResponseTest extends B2BaseTest {
                 "  \"bucketId\": \"" + BUCKET_ID + "\",\n" +
                 "  \"eventNotificationRules\": [\n" +
                 "    {\n" +
-                "      \"disabledReason\": \"\",\n" +
                 "      \"eventTypes\": [\n" +
                 "        \"b2:ObjectCreated:Copy\"\n" +
                 "      ],\n" +
                 "      \"isEnabled\": true,\n" +
+                "      \"isSuspended\": true,\n" +
                 "      \"name\": \"ruleName\",\n" +
                 "      \"objectNamePrefix\": \"\",\n" +
+                "      \"suspensionReason\": \"reason for suspension\",\n" +
                 "      \"targetConfiguration\": {\n" +
+                "        \"customHeaders\": null,\n" +
+                "        \"hmacSha256SigningSecret\": \"dummySigningSecret\",\n" +
+                "        \"targetType\": \"webhook\",\n" +
+                "        \"url\": \"https://www.example.com\"\n" +
+                "      }\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"eventTypes\": [\n" +
+                "        \"b2:ObjectCreated:Replica\"\n" +
+                "      ],\n" +
+                "      \"isEnabled\": true,\n" +
+                "      \"isSuspended\": false,\n" +
+                "      \"name\": \"ruleNameWithCustomHeaders\",\n" +
+                "      \"objectNamePrefix\": \"prefix\",\n" +
+                "      \"suspensionReason\": null,\n" +
+                "      \"targetConfiguration\": {\n" +
+                "        \"customHeaders\": [\n" +
+                "          {\n" +
+                "            \"name\": \"name1\",\n" +
+                "            \"value\": \"val1\"\n" +
+                "          },\n" +
+                "          {\n" +
+                "            \"name\": \"name2\",\n" +
+                "            \"value\": \"val2\"\n" +
+                "          }\n" +
+                "        ],\n" +
+                "        \"hmacSha256SigningSecret\": \"dummySigningSecret\",\n" +
                 "        \"targetType\": \"webhook\",\n" +
                 "        \"url\": \"https://www.example.com\"\n" +
                 "      }\n" +

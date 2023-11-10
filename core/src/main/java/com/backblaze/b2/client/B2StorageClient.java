@@ -22,7 +22,7 @@ import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
-import com.backblaze.b2.client.structures.B2EventNotificationRule;
+import com.backblaze.b2.client.structures.B2EventNotificationRuleForRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
 import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesRequest;
@@ -1119,7 +1119,7 @@ public interface B2StorageClient extends Closeable {
      * @throws B2Exception if there's any trouble.
      */
     default B2SetBucketNotificationRulesResponse setBucketNotificationRules(String bucketId,
-                                                                            List<B2EventNotificationRule> eventNotificationRules) throws B2Exception {
+                                                                            List<B2EventNotificationRuleForRequest> eventNotificationRules) throws B2Exception {
         return setBucketNotificationRules(B2SetBucketNotificationRulesRequest.builder(bucketId, eventNotificationRules).build());
     }
 

@@ -20,11 +20,12 @@ import com.backblaze.b2.client.structures.B2CopyFileRequest;
 import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
+import com.backblaze.b2.client.structures.B2CustomHeaderForRequest;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
-import com.backblaze.b2.client.structures.B2EventNotificationRule;
+import com.backblaze.b2.client.structures.B2EventNotificationRuleForRequest;
 import com.backblaze.b2.client.structures.B2FileRetention;
 import com.backblaze.b2.client.structures.B2FileRetentionMode;
 import com.backblaze.b2.client.structures.B2FileSseForRequest;
@@ -56,7 +57,7 @@ import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
-import com.backblaze.b2.client.structures.B2WebhookConfiguration;
+import com.backblaze.b2.client.structures.B2WebhookConfigurationForRequest;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
@@ -1958,8 +1959,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
     @Test
     public void testSetBucketNotificationRules() throws B2Exception {
-        final List<B2EventNotificationRule> eventNotificationRules = listOf(
-                new B2EventNotificationRule(
+        final List<B2EventNotificationRuleForRequest> eventNotificationRuleForRequestList = listOf(
+                new B2EventNotificationRuleForRequest(
                         "myRule",
                         new TreeSet<>(
                                 listOf(
@@ -1968,11 +1969,18 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                                 )
                         ),
                         "",
-                        new B2WebhookConfiguration("https://www.example.com"),
-                        true,
-                        ""
+                        new B2WebhookConfigurationForRequest(
+                                "https://www.example.com",
+                                new TreeSet<>(
+                                        listOf(
+                                                new B2CustomHeaderForRequest("name1", "val1"),
+                                                new B2CustomHeaderForRequest("name2", "val2")
+                                        )
+                                )
+                        ),
+                        true
                 ),
-                new B2EventNotificationRule(
+                new B2EventNotificationRuleForRequest(
                         "myRule2",
                         new TreeSet<>(
                                 listOf(
@@ -1980,14 +1988,13 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                                 )
                         ),
                         "",
-                        new B2WebhookConfiguration("https://www.example2.com"),
-                        true,
-                        ""
+                        new B2WebhookConfigurationForRequest("https://www.example2.com"),
+                        true
                 )
         );
 
         final B2SetBucketNotificationRulesRequest requestReal = B2SetBucketNotificationRulesRequest
-                .builder(bucketId(1), eventNotificationRules)
+                .builder(bucketId(1), eventNotificationRuleForRequestList)
                 .build();
         webifier.setBucketNotificationRules(ACCOUNT_AUTH, requestReal);
 
@@ -2003,7 +2010,6 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "      \"bucketId\": \"bucket1\",\n" +
                 "      \"eventNotificationRules\": [\n" +
                 "        {\n" +
-                "          \"disabledReason\": \"\",\n" +
                 "          \"eventTypes\": [\n" +
                 "            \"b2:ObjectCreated:Replica\",\n" +
                 "            \"b2:ObjectCreated:Upload\"\n" +
@@ -2012,12 +2018,21 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "          \"name\": \"myRule\",\n" +
                 "          \"objectNamePrefix\": \"\",\n" +
                 "          \"targetConfiguration\": {\n" +
+                "            \"customHeaders\": [\n" +
+                "              {\n" +
+                "                \"name\": \"name1\",\n" +
+                "                \"value\": \"val1\"\n" +
+                "              },\n" +
+                "              {\n" +
+                "                \"name\": \"name2\",\n" +
+                "                \"value\": \"val2\"\n" +
+                "              }\n" +
+                "            ],\n" +
                 "            \"targetType\": \"webhook\",\n" +
                 "            \"url\": \"https://www.example.com\"\n" +
                 "          }\n" +
                 "        },\n" +
                 "        {\n" +
-                "          \"disabledReason\": \"\",\n" +
                 "          \"eventTypes\": [\n" +
                 "            \"b2:ObjectDeleted:LifecycleRule\"\n" +
                 "          ],\n" +
@@ -2025,6 +2040,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "          \"name\": \"myRule2\",\n" +
                 "          \"objectNamePrefix\": \"\",\n" +
                 "          \"targetConfiguration\": {\n" +
+                "            \"customHeaders\": null,\n" +
                 "            \"targetType\": \"webhook\",\n" +
                 "            \"url\": \"https://www.example2.com\"\n" +
                 "          }\n" +

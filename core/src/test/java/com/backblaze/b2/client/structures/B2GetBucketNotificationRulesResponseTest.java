@@ -22,19 +22,28 @@ public class B2GetBucketNotificationRulesResponseTest extends B2BaseTest {
     @Test
     public void testFullGetBucketNotificationRulesResponse() {
 
-        final List<B2EventNotificationRule> eventNotificationRules = listOf(
-                new B2EventNotificationRule(
+        final List<B2EventNotificationRuleForResponse> eventNotificationRuleForResponseList = listOf(
+                new B2EventNotificationRuleForResponse(
                         "ruleName",
                         new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
                         "",
-                        new B2WebhookConfiguration("https://www.example.com"),
+                        new B2WebhookConfigurationForResponse(
+                                "https://www.example.com",
+                                new TreeSet<>(
+                                        listOf(
+                                                new B2CustomHeaderForResponse("name1", "val1"),
+                                                new B2CustomHeaderForResponse("name2", "val2")
+                                        )
+                                ),
+                                "dummySigningSecret"),
                         true,
-                        ""
+                        false,
+                        null
                 )
         );
 
         final B2GetBucketNotificationRulesResponse b2GetBucketNotificationRulesResponse =
-                B2GetBucketNotificationRulesResponse.builder(BUCKET_ID, eventNotificationRules)
+                B2GetBucketNotificationRulesResponse.builder(BUCKET_ID, eventNotificationRuleForResponseList)
                         .build();
 
         // Convert from B2GetBucketNotificationRulesResponse -> json
@@ -44,14 +53,26 @@ public class B2GetBucketNotificationRulesResponseTest extends B2BaseTest {
                 "  \"bucketId\": \"" + BUCKET_ID + "\",\n" +
                 "  \"eventNotificationRules\": [\n" +
                 "    {\n" +
-                "      \"disabledReason\": \"\",\n" +
                 "      \"eventTypes\": [\n" +
                 "        \"b2:ObjectCreated:Copy\"\n" +
                 "      ],\n" +
                 "      \"isEnabled\": true,\n" +
+                "      \"isSuspended\": false,\n" +
                 "      \"name\": \"ruleName\",\n" +
                 "      \"objectNamePrefix\": \"\",\n" +
+                "      \"suspensionReason\": null,\n" +
                 "      \"targetConfiguration\": {\n" +
+                "        \"customHeaders\": [\n" +
+                "          {\n" +
+                "            \"name\": \"name1\",\n" +
+                "            \"value\": \"val1\"\n" +
+                "          },\n" +
+                "          {\n" +
+                "            \"name\": \"name2\",\n" +
+                "            \"value\": \"val2\"\n" +
+                "          }\n" +
+                "        ],\n" +
+                "        \"hmacSha256SigningSecret\": \"dummySigningSecret\",\n" +
                 "        \"targetType\": \"webhook\",\n" +
                 "        \"url\": \"https://www.example.com\"\n" +
                 "      }\n" +

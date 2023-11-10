@@ -9,15 +9,15 @@ import com.backblaze.b2.json.B2JsonException;
 import com.backblaze.b2.json.B2JsonUnionTypeMap;
 
 /**
- * A destination for an event notification.  Used in B2EventNotificationRule.
+ * A destination for an event notification.  Used in B2EventNotificationRuleForResponse.
  */
 @B2Json.union(typeField = "targetType")
-public class B2EventNotificationTargetConfiguration {
+public class B2EventNotificationTargetConfigurationForResponse {
     @SuppressWarnings("unused")  // used by B2Json
     public static B2JsonUnionTypeMap getUnionTypeMap() throws B2JsonException {
         return B2JsonUnionTypeMap
                 .builder()
-                .put("webhook", B2WebhookConfiguration.class)
+                .put("webhook", B2WebhookConfigurationForResponse.class)
                 .build();
     }
 }

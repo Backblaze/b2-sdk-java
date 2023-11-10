@@ -17,7 +17,7 @@ public class B2CreateBucketRequest {
     private final B2BucketServerSideEncryption defaultServerSideEncryption;
     private final B2BucketReplicationConfiguration replicationConfiguration;
 
-    private final List<B2EventNotificationRule> eventNotificationRules;
+    private final List<B2EventNotificationRuleForRequest> eventNotificationRules;
 
     public B2CreateBucketRequest(String bucketName,
                                  String bucketType,
@@ -27,7 +27,7 @@ public class B2CreateBucketRequest {
                                  boolean fileLockEnabled,
                                  B2BucketServerSideEncryption defaultServerSideEncryption,
                                  B2BucketReplicationConfiguration replicationConfiguration,
-                                 List<B2EventNotificationRule> eventNotificationRules) {
+                                 List<B2EventNotificationRuleForRequest> eventNotificationRules) {
         this.bucketName = bucketName;
         this.bucketType = bucketType;
         this.bucketInfo = bucketInfo;
@@ -71,7 +71,7 @@ public class B2CreateBucketRequest {
         return replicationConfiguration;
     }
 
-    public List<B2EventNotificationRule> getEventNotificationRules() {
+    public List<B2EventNotificationRuleForRequest> getEventNotificationRules() {
         return eventNotificationRules;
     }
 
@@ -89,7 +89,7 @@ public class B2CreateBucketRequest {
         private boolean fileLockEnabled;
         private B2BucketServerSideEncryption defaultServerSideEncryption;
         private B2BucketReplicationConfiguration replicationConfiguration;
-        private List<B2EventNotificationRule> eventNotificationRules;
+        private List<B2EventNotificationRuleForRequest> eventNotificationRules;
 
         Builder(String bucketName,
                 String bucketType) {
@@ -127,7 +127,7 @@ public class B2CreateBucketRequest {
             return this;
         }
 
-        public Builder setEventNotificationRules(List<B2EventNotificationRule> eventNotificationRules) {
+        public Builder setEventNotificationRules(List<B2EventNotificationRuleForRequest> eventNotificationRules) {
             this.eventNotificationRules = eventNotificationRules;
             return this;
         }

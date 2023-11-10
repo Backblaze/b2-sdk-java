@@ -48,7 +48,7 @@ public class B2Bucket {
     private final B2AuthorizationFilteredResponseField<B2BucketReplicationConfiguration> replicationConfiguration;
 
     @B2Json.optional
-    private final B2AuthorizationFilteredResponseField<List<B2EventNotificationRule>> eventNotificationRules;
+    private final B2AuthorizationFilteredResponseField<List<B2EventNotificationRuleForResponse>> eventNotificationRules;
 
     @B2Json.required
     private final int revision;
@@ -65,7 +65,7 @@ public class B2Bucket {
                     B2AuthorizationFilteredResponseField<B2BucketFileLockConfiguration> fileLockConfiguration,
                     B2AuthorizationFilteredResponseField<B2BucketServerSideEncryption> defaultServerSideEncryption,
                     B2AuthorizationFilteredResponseField<B2BucketReplicationConfiguration> replicationConfiguration,
-                    B2AuthorizationFilteredResponseField<List<B2EventNotificationRule>> eventNotificationRules,
+                    B2AuthorizationFilteredResponseField<List<B2EventNotificationRuleForResponse>> eventNotificationRules,
                     int revision) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -203,7 +203,7 @@ public class B2Bucket {
      * @return event notification rule settings
      * @throws B2ForbiddenException if client is not authorized to read eventNotificationRules field
      */
-    public List<B2EventNotificationRule> getEventNotificationRules() throws B2ForbiddenException {
+    public List<B2EventNotificationRuleForResponse> getEventNotificationRules() throws B2ForbiddenException {
         B2Preconditions.checkState(eventNotificationRules != null);
 
         // will throw B2ForbiddenException if client is not authorized to read value

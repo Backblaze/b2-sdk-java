@@ -5,7 +5,6 @@
 package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.json.B2Json;
-import com.backblaze.b2.util.B2Preconditions;
 
 import java.util.Comparator;
 import java.util.Objects;
@@ -14,13 +13,12 @@ import java.util.TreeSet;
 /**
  * One rule about under what condition(s) to send notifications for events in a bucket.
  */
-public class B2EventNotificationRule implements Comparable<B2EventNotificationRule> {
-    private static final Comparator<B2EventNotificationRule> COMPARATOR = Comparator.comparing(B2EventNotificationRule::getName)
+public class B2EventNotificationRuleForRequest implements Comparable<B2EventNotificationRuleForRequest> {
+    private static final Comparator<B2EventNotificationRuleForRequest> COMPARATOR = Comparator.comparing(B2EventNotificationRuleForRequest::getName)
             .thenComparing(rule -> String.join(",", rule.getEventTypes()))
-            .thenComparing(B2EventNotificationRule::getObjectNamePrefix)
+            .thenComparing(B2EventNotificationRuleForRequest::getObjectNamePrefix)
             .thenComparing(rule -> rule.getTargetConfiguration().toString())
-            .thenComparing(rule -> String.valueOf(rule.isEnabled()))
-            .thenComparing(B2EventNotificationRule::getDisabledReason);
+            .thenComparing(B2EventNotificationRuleForRequest::isEnabled);
 
     /**
      * A name for identifying the rule. Names must be unique within a bucket.
@@ -50,7 +48,7 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
      * The target configuration for the event notification.
      */
     @B2Json.required
-    private final B2EventNotificationTargetConfiguration targetConfiguration;
+    private final B2EventNotificationTargetConfigurationForRequest targetConfiguration;
 
     /**
      * Indicates if the rule is enabled.
@@ -58,33 +56,18 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
     @B2Json.required
     private final boolean isEnabled;
 
-    /**
-     * If isEnabled is false, specifies the reason the rule was
-     * disabled.
-     * Always set.  "" means not disabled.
-     */
-    @B2Json.required
-    private final String disabledReason;
-
     @B2Json.constructor
-    public B2EventNotificationRule(String name,
-                                   TreeSet<String> eventTypes,
-                                   String objectNamePrefix,
-                                   B2EventNotificationTargetConfiguration targetConfiguration,
-                                   boolean isEnabled,
-                                   String disabledReason) {
-
-        B2Preconditions.checkArgument(
-                !isEnabled || "".equals(disabledReason),
-                "disableReason must only have a value if isEnabled is false"
-        );
+    public B2EventNotificationRuleForRequest(String name,
+                                             TreeSet<String> eventTypes,
+                                             String objectNamePrefix,
+                                             B2EventNotificationTargetConfigurationForRequest targetConfiguration,
+                                             boolean isEnabled) {
 
         this.name = name;
         this.eventTypes = new TreeSet<>(eventTypes);
         this.objectNamePrefix = objectNamePrefix;
         this.targetConfiguration = targetConfiguration;
         this.isEnabled = isEnabled;
-        this.disabledReason = disabledReason;
     }
 
     public String getName() {
@@ -99,7 +82,7 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
         return objectNamePrefix;
     }
 
-    public B2EventNotificationTargetConfiguration getTargetConfiguration() {
+    public B2EventNotificationTargetConfigurationForRequest getTargetConfiguration() {
         return targetConfiguration;
     }
 
@@ -107,37 +90,37 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
         return isEnabled;
     }
 
-    public String getDisabledReason() {
-        return disabledReason;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final B2EventNotificationRule that = (B2EventNotificationRule) o;
+        final B2EventNotificationRuleForRequest that = (B2EventNotificationRuleForRequest) o;
         return isEnabled == that.isEnabled &&
                 name.equals(that.name) &&
                 eventTypes.equals(that.eventTypes) &&
                 objectNamePrefix.equals(that.objectNamePrefix) &&
-                targetConfiguration.equals(that.targetConfiguration) &&
-                disabledReason.equals(that.disabledReason);
+                targetConfiguration.equals(that.targetConfiguration);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, eventTypes, objectNamePrefix, targetConfiguration, isEnabled, disabledReason);
+        return Objects.hash(
+                name,
+                eventTypes,
+                objectNamePrefix,
+                targetConfiguration,
+                isEnabled
+        );
     }
 
     @Override
     public String toString() {
-        return "B2EventNotificationRule{" +
+        return "B2EventNotificationRuleForRequest{" +
                 "name='" + name + '\'' +
                 ", eventTypes=" + eventTypes +
                 ", objectNamePrefix='" + objectNamePrefix + '\'' +
                 ", targetConfiguration=" + targetConfiguration +
                 ", isEnabled=" + isEnabled +
-                ", disabledReason='" + disabledReason + '\'' +
                 '}';
     }
 
@@ -145,7 +128,7 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
      * Rules are sorted by name first, and then additional attributes if necessary.
      */
     @Override
-    public int compareTo(B2EventNotificationRule r) {
+    public int compareTo(B2EventNotificationRuleForRequest r) {
         return COMPARATOR.compare(this, r);
     }
 }

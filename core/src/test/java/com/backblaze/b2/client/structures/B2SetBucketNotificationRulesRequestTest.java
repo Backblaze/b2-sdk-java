@@ -22,19 +22,33 @@ public class B2SetBucketNotificationRulesRequestTest extends B2BaseTest {
     @Test
     public void testFullSetBucketNotificationRulesRequest() {
 
-        final List<B2EventNotificationRule> eventNotificationRules = listOf(
-                new B2EventNotificationRule(
+        final List<B2EventNotificationRuleForRequest> eventNotificationRuleForRequestList = listOf(
+                new B2EventNotificationRuleForRequest(
                         "ruleName",
                         new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
                         "",
-                        new B2WebhookConfiguration("https://www.example.com"),
-                        true,
-                        ""
+                        new B2WebhookConfigurationForRequest("https://www.example.com"),
+                        true
+                ),
+                new B2EventNotificationRuleForRequest(
+                        "ruleNameWithCustomHeaders",
+                        new TreeSet<>(listOf("b2:ObjectCreated:Replica")),
+                        "",
+                        new B2WebhookConfigurationForRequest(
+                                "https://www.example.com",
+                                new TreeSet<>(
+                                        listOf(
+                                                new B2CustomHeaderForRequest("name1", "val1"),
+                                                new B2CustomHeaderForRequest("name2", "val2")
+                                        )
+                                )
+                        ),
+                        true
                 )
         );
 
         final B2SetBucketNotificationRulesRequest b2SetBucketNotificationRulesRequest =
-                B2SetBucketNotificationRulesRequest.builder(BUCKET_ID, eventNotificationRules)
+                B2SetBucketNotificationRulesRequest.builder(BUCKET_ID, eventNotificationRuleForRequestList)
                 .build();
 
         // Convert from B2SetBucketNotificationRulesRequest -> json
@@ -44,7 +58,6 @@ public class B2SetBucketNotificationRulesRequestTest extends B2BaseTest {
                 "  \"bucketId\": \"" + BUCKET_ID + "\",\n" +
                 "  \"eventNotificationRules\": [\n" +
                 "    {\n" +
-                "      \"disabledReason\": \"\",\n" +
                 "      \"eventTypes\": [\n" +
                 "        \"b2:ObjectCreated:Copy\"\n" +
                 "      ],\n" +
@@ -52,6 +65,29 @@ public class B2SetBucketNotificationRulesRequestTest extends B2BaseTest {
                 "      \"name\": \"ruleName\",\n" +
                 "      \"objectNamePrefix\": \"\",\n" +
                 "      \"targetConfiguration\": {\n" +
+                "        \"customHeaders\": null,\n" +
+                "        \"targetType\": \"webhook\",\n" +
+                "        \"url\": \"https://www.example.com\"\n" +
+                "      }\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"eventTypes\": [\n" +
+                "        \"b2:ObjectCreated:Replica\"\n" +
+                "      ],\n" +
+                "      \"isEnabled\": true,\n" +
+                "      \"name\": \"ruleNameWithCustomHeaders\",\n" +
+                "      \"objectNamePrefix\": \"\",\n" +
+                "      \"targetConfiguration\": {\n" +
+                "        \"customHeaders\": [\n" +
+                "          {\n" +
+                "            \"name\": \"name1\",\n" +
+                "            \"value\": \"val1\"\n" +
+                "          },\n" +
+                "          {\n" +
+                "            \"name\": \"name2\",\n" +
+                "            \"value\": \"val2\"\n" +
+                "          }\n" +
+                "        ],\n" +
                 "        \"targetType\": \"webhook\",\n" +
                 "        \"url\": \"https://www.example.com\"\n" +
                 "      }\n" +

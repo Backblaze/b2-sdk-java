@@ -42,7 +42,7 @@ public class B2UpdateBucketRequest {
     private final Boolean fileLockEnabled;
 
     @B2Json.optional
-    private final List<B2EventNotificationRule> eventNotificationRules;
+    private final List<B2EventNotificationRuleForRequest> eventNotificationRules;
 
     @B2Json.optional
     private final Integer ifRevisionIs;
@@ -58,7 +58,7 @@ public class B2UpdateBucketRequest {
                                   B2BucketServerSideEncryption defaultServerSideEncryption,
                                   B2BucketReplicationConfiguration replicationConfiguration,
                                   Boolean fileLockEnabled,
-                                  List<B2EventNotificationRule> eventNotificationRules,
+                                  List<B2EventNotificationRuleForRequest> eventNotificationRules,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -109,7 +109,7 @@ public class B2UpdateBucketRequest {
         return replicationConfiguration;
     }
 
-    public List<B2EventNotificationRule> getEventNotificationRules() {
+    public List<B2EventNotificationRuleForRequest> getEventNotificationRules() {
         return eventNotificationRules;
     }
 
@@ -179,7 +179,7 @@ public class B2UpdateBucketRequest {
         private B2BucketReplicationConfiguration replicationConfiguration;
         private Boolean fileLockEnabled;
 
-        private List<B2EventNotificationRule> eventNotificationRules;
+        private List<B2EventNotificationRuleForRequest> eventNotificationRules;
 
         private Builder(B2Bucket bucket) {
             this.accountId = bucket.getAccountId();
@@ -227,7 +227,7 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
-        public Builder setEventNotificationRules(List<B2EventNotificationRule> eventNotificationRules) {
+        public Builder setEventNotificationRules(List<B2EventNotificationRuleForRequest> eventNotificationRules) {
             this.eventNotificationRules = eventNotificationRules;
             return this;
         }

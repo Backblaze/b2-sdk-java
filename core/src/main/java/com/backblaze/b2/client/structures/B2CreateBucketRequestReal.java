@@ -47,7 +47,7 @@ public class B2CreateBucketRequestReal {
     private final B2BucketReplicationConfiguration replicationConfiguration;
 
     @B2Json.optional
-    private final List<B2EventNotificationRule> eventNotificationRules;
+    private final List<B2EventNotificationRuleForRequest> eventNotificationRules;
 
     @B2Json.constructor
     private B2CreateBucketRequestReal(String accountId,
@@ -59,7 +59,7 @@ public class B2CreateBucketRequestReal {
                                       boolean fileLockEnabled,
                                       B2BucketServerSideEncryption defaultServerSideEncryption,
                                       B2BucketReplicationConfiguration replicationConfiguration,
-                                      List<B2EventNotificationRule> eventNotificationRules) {
+                                      List<B2EventNotificationRuleForRequest> eventNotificationRules) {
         this.accountId = accountId;
         this.bucketName = bucketName;
         this.bucketType = bucketType;

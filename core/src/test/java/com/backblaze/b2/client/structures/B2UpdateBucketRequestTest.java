@@ -113,14 +113,21 @@ public class B2UpdateBucketRequestTest {
                         sourceToDestinationKeyMapping
                 );
 
-        final List<B2EventNotificationRule> eventNotificationRules = listOf(
-                new B2EventNotificationRule(
+        final List<B2EventNotificationRuleForRequest> eventNotificationRules = listOf(
+                new B2EventNotificationRuleForRequest(
                         "ruleName",
                         new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
                         "",
-                        new B2WebhookConfiguration("https://www.example.com"),
-                        true,
-                        ""
+                        new B2WebhookConfigurationForRequest(
+                                "https://www.example.com",
+                                new TreeSet<>(
+                                        listOf(
+                                                new B2CustomHeaderForRequest("name1", "val1"),
+                                                new B2CustomHeaderForRequest("name2", "val2")
+                                        )
+                                )
+                        ),
+                        true
                 )
         );
 
@@ -189,7 +196,6 @@ public class B2UpdateBucketRequestTest {
                 "  },\n" +
                 "  \"eventNotificationRules\": [\n" +
                 "    {\n" +
-                "      \"disabledReason\": \"\",\n" +
                 "      \"eventTypes\": [\n" +
                 "        \"b2:ObjectCreated:Copy\"\n" +
                 "      ],\n" +
@@ -197,6 +203,16 @@ public class B2UpdateBucketRequestTest {
                 "      \"name\": \"ruleName\",\n" +
                 "      \"objectNamePrefix\": \"\",\n" +
                 "      \"targetConfiguration\": {\n" +
+                "        \"customHeaders\": [\n" +
+                "          {\n" +
+                "            \"name\": \"name1\",\n" +
+                "            \"value\": \"val1\"\n" +
+                "          },\n" +
+                "          {\n" +
+                "            \"name\": \"name2\",\n" +
+                "            \"value\": \"val2\"\n" +
+                "          }\n" +
+                "        ],\n" +
                 "        \"targetType\": \"webhook\",\n" +
                 "        \"url\": \"https://www.example.com\"\n" +
                 "      }\n" +
