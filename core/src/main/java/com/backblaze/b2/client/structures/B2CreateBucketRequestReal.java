@@ -46,6 +46,9 @@ public class B2CreateBucketRequestReal {
     @B2Json.optional
     private final B2BucketReplicationConfiguration replicationConfiguration;
 
+    @B2Json.optional
+    private final List<B2EventNotificationRuleForRequest> eventNotificationRules;
+
     @B2Json.constructor
     private B2CreateBucketRequestReal(String accountId,
                                       String bucketName,
@@ -55,7 +58,8 @@ public class B2CreateBucketRequestReal {
                                       List<B2LifecycleRule> lifecycleRules,
                                       boolean fileLockEnabled,
                                       B2BucketServerSideEncryption defaultServerSideEncryption,
-                                      B2BucketReplicationConfiguration replicationConfiguration) {
+                                      B2BucketReplicationConfiguration replicationConfiguration,
+                                      List<B2EventNotificationRuleForRequest> eventNotificationRules) {
         this.accountId = accountId;
         this.bucketName = bucketName;
         this.bucketType = bucketType;
@@ -65,6 +69,7 @@ public class B2CreateBucketRequestReal {
         this.fileLockEnabled = fileLockEnabled;
         this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.replicationConfiguration = replicationConfiguration;
+        this.eventNotificationRules = eventNotificationRules;
     }
 
     public B2CreateBucketRequestReal(String accountId,
@@ -77,8 +82,8 @@ public class B2CreateBucketRequestReal {
                 mostOfRequest.getLifecycleRules(),
                 mostOfRequest.isFileLockEnabled(),
                 mostOfRequest.getDefaultServerSideEncryption(),
-                mostOfRequest.getReplicationConfiguration()
-        );
+                mostOfRequest.getReplicationConfiguration(),
+                mostOfRequest.getEventNotificationRules());
     }
 
     @Override
@@ -94,7 +99,8 @@ public class B2CreateBucketRequestReal {
                 Objects.equals(lifecycleRules, that.lifecycleRules) &&
                 Objects.equals(fileLockEnabled, that.fileLockEnabled) &&
                 Objects.equals(defaultServerSideEncryption, that.defaultServerSideEncryption) &&
-                Objects.equals(replicationConfiguration, that.replicationConfiguration);
+                Objects.equals(replicationConfiguration, that.replicationConfiguration) &&
+                Objects.equals(eventNotificationRules, that.eventNotificationRules);
     }
 
     @Override
@@ -108,7 +114,8 @@ public class B2CreateBucketRequestReal {
                 lifecycleRules,
                 fileLockEnabled,
                 defaultServerSideEncryption,
-                replicationConfiguration
+                replicationConfiguration,
+                eventNotificationRules
         );
     }
 
@@ -124,6 +131,7 @@ public class B2CreateBucketRequestReal {
                 ", fileLockEnabled=" + fileLockEnabled +
                 ", defaultServerSideEncryption=" + defaultServerSideEncryption +
                 ", replicationConfiguration=" + replicationConfiguration +
+                ", eventNotificationRules=" + eventNotificationRules +
                 '}';
     }
 }

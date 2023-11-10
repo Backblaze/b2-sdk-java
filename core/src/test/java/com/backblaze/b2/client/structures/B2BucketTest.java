@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static com.backblaze.b2.client.B2TestHelpers.bucketId;
 import static com.backblaze.b2.util.B2Collections.listOf;
@@ -37,6 +38,8 @@ public class B2BucketTest extends B2BaseTest {
     private final Set<String> optionsSet;
     private final List<B2ReplicationRule> replicationRules;
     private final Map<String, String> sourceToDestinationKeyMapping;
+
+    private final List<B2EventNotificationRuleForResponse> eventNotificationRuleForResponses;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -79,6 +82,26 @@ public class B2BucketTest extends B2BaseTest {
         sourceToDestinationKeyMapping.put(
                 "456a0b9a8a7a6a50000fc614e", "555a0a1a2a3a4a70000bc929a"
         );
+
+        eventNotificationRuleForResponses = listOf(
+                new B2EventNotificationRuleForResponse(
+                        "ruleName",
+                        new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
+                        "",
+                        new B2WebhookConfigurationForResponse(
+                                "https://www.example.com",
+                                new TreeSet<>(
+                                        listOf(
+                                                new B2CustomHeaderForResponse("name1", "val1"),
+                                                new B2CustomHeaderForResponse("name2", "val2")
+                                        )
+                                ),
+                                "hmacSha256SigningSecret"
+                        ),
+                        true,
+                        false,
+                        "")
+        );
     }
 
     @Test
@@ -92,6 +115,7 @@ public class B2BucketTest extends B2BaseTest {
                 b2CorsRules,
                 lifecycleRules,
                 optionsSet,
+                new B2AuthorizationFilteredResponseField<>(false, null),
                 new B2AuthorizationFilteredResponseField<>(false, null),
                 new B2AuthorizationFilteredResponseField<>(false, null),
                 new B2AuthorizationFilteredResponseField<>(false, null),
@@ -127,7 +151,11 @@ public class B2BucketTest extends B2BaseTest {
                                 sourceToDestinationKeyMapping
                         )
                 );
-
+        final B2AuthorizationFilteredResponseField<List<B2EventNotificationRuleForResponse>> eventNotificationRulesContainer =
+                new B2AuthorizationFilteredResponseField<>(
+                        true,
+                        eventNotificationRuleForResponses
+                );
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
                 bucketId(1),
@@ -140,6 +168,7 @@ public class B2BucketTest extends B2BaseTest {
                 bucketFileLockContainer,
                 bucketSseContainer,
                 bucketReplicationConfigurationContainer,
+                eventNotificationRulesContainer,
                 1
         );
         final String bucketJson = B2Json.toJsonOrThrowRuntime(bucket);
@@ -154,6 +183,10 @@ public class B2BucketTest extends B2BaseTest {
                 "  \"bucketId\": \"" + bucketId(1) + "\",\n" +
                 "  \"bucketName\": \"" + BUCKET_NAME + "\",\n" +
                 "  \"defaultServerSideEncryption\": {\n" +
+                "    \"isClientAuthorizedToRead\": false,\n" +
+                "    \"value\": null\n" +
+                "  },\n" +
+                "  \"eventNotificationRules\": {\n" +
                 "    \"isClientAuthorizedToRead\": false,\n" +
                 "    \"value\": null\n" +
                 "  },\n" +
@@ -180,6 +213,7 @@ public class B2BucketTest extends B2BaseTest {
                 null,
                 null,
                 null,
+                new B2AuthorizationFilteredResponseField<>(false, null),
                 new B2AuthorizationFilteredResponseField<>(false, null),
                 new B2AuthorizationFilteredResponseField<>(false, null),
                 new B2AuthorizationFilteredResponseField<>(false, null),
@@ -214,7 +248,11 @@ public class B2BucketTest extends B2BaseTest {
                                 sourceToDestinationKeyMapping
                         )
                 );
-
+        final B2AuthorizationFilteredResponseField<List<B2EventNotificationRuleForResponse>> eventNotificationRulesContainer =
+                new B2AuthorizationFilteredResponseField<>(
+                        true,
+                        eventNotificationRuleForResponses
+                );
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
                 bucketId(1),
@@ -227,6 +265,7 @@ public class B2BucketTest extends B2BaseTest {
                 bucketFileLockContainer,
                 bucketSseContainer,
                 bucketReplicationConfigurationContainer,
+                eventNotificationRulesContainer,
                 1
         );
         // Convert from B2Bucket -> json
@@ -261,6 +300,36 @@ public class B2BucketTest extends B2BaseTest {
                 "      \"algorithm\": \"AES256\",\n" +
                 "      \"mode\": \"SSE-B2\"\n" +
                 "    }\n" +
+                "  },\n" +
+                "  \"eventNotificationRules\": {\n" +
+                "    \"isClientAuthorizedToRead\": true,\n" +
+                "    \"value\": [\n" +
+                "      {\n" +
+                "        \"eventTypes\": [\n" +
+                "          \"b2:ObjectCreated:Copy\"\n" +
+                "        ],\n" +
+                "        \"isEnabled\": true,\n" +
+                "        \"isSuspended\": false,\n" +
+                "        \"name\": \"ruleName\",\n" +
+                "        \"objectNamePrefix\": \"\",\n" +
+                "        \"suspensionReason\": \"\",\n" +
+                "        \"targetConfiguration\": {\n" +
+                "          \"customHeaders\": [\n" +
+                "            {\n" +
+                "              \"name\": \"name1\",\n" +
+                "              \"value\": \"val1\"\n" +
+                "            },\n" +
+                "            {\n" +
+                "              \"name\": \"name2\",\n" +
+                "              \"value\": \"val2\"\n" +
+                "            }\n" +
+                "          ],\n" +
+                "          \"hmacSha256SigningSecret\": \"hmacSha256SigningSecret\",\n" +
+                "          \"targetType\": \"webhook\",\n" +
+                "          \"url\": \"https://www.example.com\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    ]\n" +
                 "  },\n" +
                 "  \"fileLockConfiguration\": {\n" +
                 "    \"isClientAuthorizedToRead\": true,\n" +
