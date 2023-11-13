@@ -40,6 +40,23 @@ public class B2WebhookConfigurationForRequest extends B2EventNotificationTargetC
         this(url, null);
     }
 
+    static B2EventNotificationTargetConfigurationForRequest convertToB2EventNotificationTargetConfigurationForRequest(
+            B2EventNotificationTargetConfigurationForResponse response) {
+        if (!(response instanceof B2WebhookConfigurationForResponse)) {
+            throw new RuntimeException("invalid class type for B2EventNotificationTargetConfigurationForResponse");
+        }
+
+        final B2WebhookConfigurationForResponse b2WebhookConfigurationForResponse =
+                (B2WebhookConfigurationForResponse) response;
+
+        return new B2WebhookConfigurationForRequest(
+                b2WebhookConfigurationForResponse.getUrl(),
+                B2CustomHeaderForRequest.convertToTreeSetOfB2CustomHeaderForRequest(
+                        b2WebhookConfigurationForResponse.getCustomHeaders()
+                )
+        );
+    }
+
     public String getUrl() {
         return url;
     }

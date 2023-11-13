@@ -6,7 +6,9 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.json.B2Json;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
 
@@ -131,4 +133,49 @@ public class B2EventNotificationRuleForRequest implements Comparable<B2EventNoti
     public int compareTo(B2EventNotificationRuleForRequest r) {
         return COMPARATOR.compare(this, r);
     }
+
+    /**
+     * Convenience method to convert a List of B2EventNotificationRuleForResponse to a List of
+     * B2EventNotificationRuleForRequest.
+     * @param rules the List of B2EventNotificationRuleForResponse to convert
+     * @return the converted List of B2EventNotificationRuleForRequest or null if null was supplied as argument.
+     */
+    public static List<B2EventNotificationRuleForRequest> convertToListOfB2EventNotificationRuleForRequest(
+            List<B2EventNotificationRuleForResponse> rules) {
+
+        if (rules == null) {
+            return null;
+        }
+
+        final List<B2EventNotificationRuleForRequest> requestList = new ArrayList<>();
+        for (B2EventNotificationRuleForResponse response : rules) {
+            requestList.add(convertToB2EventNotificationForRequest(response));
+        }
+        return requestList;
+    }
+
+    /**
+     * Convenience method to convert a B2EventNotificationRuleForResponse to a
+     * B2EventNotificationRuleForRequest.
+     * @param rule the B2EventNotificationRuleForResponse to convert
+     * @return the converted B2EventNotificationRuleForRequest or null if null was supplied as argument.
+     */
+    public static B2EventNotificationRuleForRequest convertToB2EventNotificationForRequest(
+            B2EventNotificationRuleForResponse rule) {
+
+        if (rule == null) {
+            return null;
+        }
+
+        return new B2EventNotificationRuleForRequest(
+                rule.getName(),
+                rule.getEventTypes(),
+                rule.getObjectNamePrefix(),
+                B2WebhookConfigurationForRequest.convertToB2EventNotificationTargetConfigurationForRequest(
+                        rule.getTargetConfiguration()
+                ),
+                rule.isEnabled()
+        );
+    }
+
 }

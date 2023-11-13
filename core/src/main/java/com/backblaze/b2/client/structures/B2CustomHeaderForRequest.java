@@ -10,6 +10,7 @@ import com.backblaze.b2.util.B2StringUtil;
 
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.TreeSet;
 
 /**
  * Custom headers for B2WebhookConfigurationForRequest
@@ -40,6 +41,23 @@ public class B2CustomHeaderForRequest implements Comparable<B2CustomHeaderForReq
 
         this.name = name;
         this.value = value;
+    }
+
+    static TreeSet<B2CustomHeaderForRequest> convertToTreeSetOfB2CustomHeaderForRequest(
+            TreeSet<B2CustomHeaderForResponse> customHeaderForResponseSetOrNull) {
+        if (customHeaderForResponseSetOrNull == null) {
+            return null;
+        }
+
+        final TreeSet<B2CustomHeaderForRequest> customHeaderForRequestSet = new TreeSet<>();
+        for (B2CustomHeaderForResponse b2CustomHeaderForResponse : customHeaderForResponseSetOrNull) {
+            customHeaderForRequestSet.add(
+                    new B2CustomHeaderForRequest(
+                            b2CustomHeaderForResponse.getName(), b2CustomHeaderForResponse.getValue()
+                    )
+            );
+        }
+        return customHeaderForRequestSet;
     }
 
     public String getName() {

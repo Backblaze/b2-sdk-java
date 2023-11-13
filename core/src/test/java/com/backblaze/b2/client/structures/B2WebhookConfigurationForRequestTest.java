@@ -21,6 +21,7 @@ public class B2WebhookConfigurationForRequestTest extends B2BaseTest {
     public void testUrlWithIncorrectProtocolThrows() {
         // Must be https://
         try {
+            //noinspection HttpUrlsUsage
             new B2WebhookConfigurationForRequest(
                     "http://www.backblaze.com",
                     new TreeSet<>(
@@ -72,5 +73,37 @@ public class B2WebhookConfigurationForRequestTest extends B2BaseTest {
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
+    }
+
+    @Test
+    public void testConvertToB2EventNotificationTargetConfigurationForRequest() {
+        final B2WebhookConfigurationForResponse original =
+                new B2WebhookConfigurationForResponse(
+                        "https://www.example.com",
+                        new TreeSet<>(
+                                listOf(
+                                        new B2CustomHeaderForResponse("name1", "val1"),
+                                        new B2CustomHeaderForResponse("name2", "val2")
+                                )
+                        ),
+                        "dummyHmacSha256SigningSecret"
+                );
+
+        final B2WebhookConfigurationForRequest converted =
+                (B2WebhookConfigurationForRequest)
+                        B2WebhookConfigurationForRequest.convertToB2EventNotificationTargetConfigurationForRequest(original);
+
+        final B2WebhookConfigurationForRequest expected =
+                        new B2WebhookConfigurationForRequest(
+                                "https://www.example.com",
+                                new TreeSet<>(
+                                        listOf(
+                                                new B2CustomHeaderForRequest("name1", "val1"),
+                                                new B2CustomHeaderForRequest("name2", "val2")
+                                        )
+                                )
+                        );
+
+        assertEquals(expected, converted);
     }
 }
