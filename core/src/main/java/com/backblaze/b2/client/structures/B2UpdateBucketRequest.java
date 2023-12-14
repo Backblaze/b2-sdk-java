@@ -42,9 +42,7 @@ public class B2UpdateBucketRequest {
     private final Boolean fileLockEnabled;
 
     @B2Json.optional
-    private final List<B2EventNotificationRuleForRequest> eventNotificationRules;
 
-    @B2Json.optional
     private final Integer ifRevisionIs;
 
     @B2Json.constructor
@@ -58,7 +56,6 @@ public class B2UpdateBucketRequest {
                                   B2BucketServerSideEncryption defaultServerSideEncryption,
                                   B2BucketReplicationConfiguration replicationConfiguration,
                                   Boolean fileLockEnabled,
-                                  List<B2EventNotificationRuleForRequest> eventNotificationRules,
                                   Integer ifRevisionIs) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -70,7 +67,6 @@ public class B2UpdateBucketRequest {
         this.defaultServerSideEncryption = defaultServerSideEncryption;
         this.replicationConfiguration = replicationConfiguration;
         this.fileLockEnabled = fileLockEnabled;
-        this.eventNotificationRules = eventNotificationRules;
         this.ifRevisionIs = ifRevisionIs;
     }
 
@@ -109,10 +105,6 @@ public class B2UpdateBucketRequest {
         return replicationConfiguration;
     }
 
-    public List<B2EventNotificationRuleForRequest> getEventNotificationRules() {
-        return eventNotificationRules;
-    }
-
     public Boolean getFileLockEnabled() {
         return fileLockEnabled;
     }
@@ -136,8 +128,7 @@ public class B2UpdateBucketRequest {
                 Objects.equals(getDefaultServerSideEncryption(), that.getDefaultServerSideEncryption()) &&
                 Objects.equals(getReplicationConfiguration(), that.getReplicationConfiguration()) &&
                 Objects.equals(getFileLockEnabled() , that.getFileLockEnabled()) &&
-                Objects.equals(getIfRevisionIs(), that.getIfRevisionIs()) &&
-                Objects.equals(getEventNotificationRules(), that.getEventNotificationRules());
+                Objects.equals(getIfRevisionIs(), that.getIfRevisionIs());
     }
 
     @Override
@@ -153,8 +144,7 @@ public class B2UpdateBucketRequest {
                 getDefaultServerSideEncryption(),
                 getReplicationConfiguration(),
                 getFileLockEnabled(),
-                getIfRevisionIs(),
-                getEventNotificationRules()
+                getIfRevisionIs()
         );
     }
 
@@ -178,8 +168,6 @@ public class B2UpdateBucketRequest {
         private B2BucketServerSideEncryption defaultServerSideEncryption;
         private B2BucketReplicationConfiguration replicationConfiguration;
         private Boolean fileLockEnabled;
-
-        private List<B2EventNotificationRuleForRequest> eventNotificationRules;
 
         private Builder(B2Bucket bucket) {
             this.accountId = bucket.getAccountId();
@@ -227,11 +215,6 @@ public class B2UpdateBucketRequest {
             return this;
         }
 
-        public Builder setEventNotificationRules(List<B2EventNotificationRuleForRequest> eventNotificationRules) {
-            this.eventNotificationRules = eventNotificationRules;
-            return this;
-        }
-
         public B2UpdateBucketRequest build() {
             return new B2UpdateBucketRequest(
                     accountId,
@@ -244,7 +227,6 @@ public class B2UpdateBucketRequest {
                     defaultServerSideEncryption,
                     replicationConfiguration,
                     fileLockEnabled,
-                    eventNotificationRules,
                     ifRevisionIs
             );
         }

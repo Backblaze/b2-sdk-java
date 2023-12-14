@@ -6,7 +6,6 @@
 * Added support for b2_set_bucket_notification_rules and b2_get_bucket_notification_rules
 * Added B2Json `fromJson` methods that take a `java.io.Reader` as input for JSON
 * Updated B2Json `fromJson` methods to utilize a BufferedReader when deserializing JSON for performance improvement
-* Added support for event notification rules
 * Added B2StorageClient.storePartsForLargeFile
 * Added support for daysFromStartingToCancelingUnfinishedLargeFiles to B2LifecycleRule
 * Reduced lock contention in B2AccountAuthorizationCache

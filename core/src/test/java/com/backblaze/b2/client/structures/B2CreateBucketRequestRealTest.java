@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 import static com.backblaze.b2.util.B2Collections.listOf;
 import static com.backblaze.b2.util.B2Collections.mapOf;
@@ -91,24 +90,6 @@ public class B2CreateBucketRequestRealTest extends B2BaseTest {
                         sourceToDestinationKeyMapping
                 );
 
-        final List<B2EventNotificationRuleForRequest> eventNotificationRules = listOf(
-                new B2EventNotificationRuleForRequest(
-                        "ruleName",
-                        new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
-                        "",
-                        new B2WebhookConfigurationForRequest(
-                                "https://www.example.com",
-                                new TreeSet<>(
-                                        listOf(
-                                                new B2CustomHeaderForRequest("name1", "val1"),
-                                                new B2CustomHeaderForRequest("name2", "val2")
-                                        )
-                                )
-                        ),
-                        true
-                )
-        );
-
         final B2CreateBucketRequestReal createRequestReal =
                 new B2CreateBucketRequestReal(
                         ACCOUNT_ID,
@@ -120,7 +101,6 @@ public class B2CreateBucketRequestRealTest extends B2BaseTest {
                                 .setFileLockEnabled(true)
                                 .setDefaultServerSideEncryption(defaultServerSideEncryption)
                                 .setReplicationConfiguration(replicationConfiguration)
-                                .setEventNotificationRules(eventNotificationRules)
                                 .build()
                 );
 
@@ -153,30 +133,6 @@ public class B2CreateBucketRequestRealTest extends B2BaseTest {
                 "    \"algorithm\": \"AES256\",\n" +
                 "    \"mode\": \"SSE-B2\"\n" +
                 "  },\n" +
-                "  \"eventNotificationRules\": [\n" +
-                "    {\n" +
-                "      \"eventTypes\": [\n" +
-                "        \"b2:ObjectCreated:Copy\"\n" +
-                "      ],\n" +
-                "      \"isEnabled\": true,\n" +
-                "      \"name\": \"ruleName\",\n" +
-                "      \"objectNamePrefix\": \"\",\n" +
-                "      \"targetConfiguration\": {\n" +
-                "        \"customHeaders\": [\n" +
-                "          {\n" +
-                "            \"name\": \"name1\",\n" +
-                "            \"value\": \"val1\"\n" +
-                "          },\n" +
-                "          {\n" +
-                "            \"name\": \"name2\",\n" +
-                "            \"value\": \"val2\"\n" +
-                "          }\n" +
-                "        ],\n" +
-                "        \"targetType\": \"webhook\",\n" +
-                "        \"url\": \"https://www.example.com\"\n" +
-                "      }\n" +
-                "    }\n" +
-                "  ],\n" +
                 "  \"fileLockEnabled\": true,\n" +
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +
