@@ -29,8 +29,8 @@ public class B2EventNotificationEvent {
     private final String matchedRuleName;
     @B2Json.required
     private final String objectName;
-    @B2Json.required
-    private final long objectSize;
+    @B2Json.optional(omitNull = true)
+    private final Long objectSize;
     @B2Json.required
     private final String objectVersionId;
 
@@ -43,7 +43,7 @@ public class B2EventNotificationEvent {
                                     int eventVersion,
                                     String matchedRuleName,
                                     String objectName,
-                                    long objectSize,
+                                    Long objectSize,
                                     String objectVersionId) {
         this.accountId = accountId;
         this.bucketId = bucketId;
@@ -60,17 +60,17 @@ public class B2EventNotificationEvent {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof B2EventNotificationEvent)) return false;
-        B2EventNotificationEvent that = (B2EventNotificationEvent) o;
+        if (o == null || getClass() != o.getClass()) return false;
+        final B2EventNotificationEvent that = (B2EventNotificationEvent) o;
         return eventTimestamp == that.eventTimestamp &&
                 eventVersion == that.eventVersion &&
-                objectSize == that.objectSize &&
                 Objects.equals(accountId, that.accountId) &&
                 Objects.equals(bucketId, that.bucketId) &&
                 Objects.equals(bucketName, that.bucketName) &&
                 Objects.equals(eventType, that.eventType) &&
                 Objects.equals(matchedRuleName, that.matchedRuleName) &&
                 Objects.equals(objectName, that.objectName) &&
+                Objects.equals(objectSize, that.objectSize) &&
                 Objects.equals(objectVersionId, that.objectVersionId);
     }
 
@@ -146,9 +146,10 @@ public class B2EventNotificationEvent {
     }
 
     /**
-     * The size of bytes of the object that corresponds to the event.  The objectSize would be 0 for hide markers.
+     * The size of bytes of the object that corresponds to the event.  The objectSize would be null for hide marker
+     * and delete events.
      */
-    public long getObjectSize() {
+    public Long getObjectSize() {
         return objectSize;
     }
 
