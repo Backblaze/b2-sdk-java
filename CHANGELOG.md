@@ -2,6 +2,7 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Reduced lock contention in B2Clock
 * Added support for custom headers and suspension in event notification rules
 * Added support for b2_set_bucket_notification_rules and b2_get_bucket_notification_rules
 * Added B2Json `fromJson` methods that take a `java.io.Reader` as input for JSON

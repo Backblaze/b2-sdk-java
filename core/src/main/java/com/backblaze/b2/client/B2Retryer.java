@@ -23,6 +23,8 @@ import java.util.concurrent.Callable;
 class B2Retryer {
     private final B2Sleeper sleeper;
 
+    private static final B2Clock clock = B2Clock.get();
+
     B2Retryer(B2Sleeper sleeper) {
         this.sleeper = sleeper;
     }
@@ -65,7 +67,6 @@ class B2Retryer {
                   B2AccountAuthorizationCache accountAuthCache,
                   RetryableCallable<T> callable,
                   B2RetryPolicy retryPolicy) throws B2Exception {
-        final B2Clock clock = B2Clock.get();
 
         // keeps trying until we hit an unretryable exception or the retryPolicy says to stop.
         int attemptsSoFar = 0; // we haven't attempted it at all yet.
