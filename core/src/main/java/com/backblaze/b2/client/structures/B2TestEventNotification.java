@@ -10,30 +10,30 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * The notification that Backblaze sends when object events occur.
+ * The notification that Backblaze sends for test events.
  */
-public class B2EventNotification {
+public class B2TestEventNotification {
 
     @B2Json.required
-    private final List<B2EventNotificationEvent> events;
+    private final List<B2TestEventNotificationEvent> events;
 
     @B2Json.constructor
-    public B2EventNotification(List<B2EventNotificationEvent> events) {
+    public B2TestEventNotification(List<B2TestEventNotificationEvent> events) {
         this.events = events;
     }
 
     /**
-     * A list of object events.
+     * A list of test events.
      */
-    public List<B2EventNotificationEvent> getEvents() {
+    public List<B2TestEventNotificationEvent> getEvents() {
         return events;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof B2EventNotification)) return false;
-        final B2EventNotification that = (B2EventNotification) o;
+        if (!(o instanceof B2TestEventNotification)) return false;
+        final B2TestEventNotification that = (B2TestEventNotification) o;
         return Objects.equals(events, that.events);
     }
 
@@ -44,7 +44,7 @@ public class B2EventNotification {
 
     @Override
     public String toString() {
-        return "B2EventNotification{" +
+        return "B2TestEventNotification{" +
                 "events=" + events +
                 '}';
     }

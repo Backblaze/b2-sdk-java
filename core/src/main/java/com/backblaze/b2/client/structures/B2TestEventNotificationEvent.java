@@ -11,7 +11,7 @@ import java.util.Objects;
 /**
  * The individual event notification for a test event.
  */
-public class B2EventNotificationTestEvent {
+public class B2TestEventNotificationEvent {
 
     @B2Json.required
     private final String accountId;
@@ -29,7 +29,7 @@ public class B2EventNotificationTestEvent {
     private final String matchedRuleName;
 
     @B2Json.constructor
-    public B2EventNotificationTestEvent(String accountId,
+    public B2TestEventNotificationEvent(String accountId,
                                         String bucketId,
                                         String bucketName,
                                         long eventTimestamp,
@@ -49,7 +49,7 @@ public class B2EventNotificationTestEvent {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        B2EventNotificationTestEvent that = (B2EventNotificationTestEvent) o;
+        final B2TestEventNotificationEvent that = (B2TestEventNotificationEvent) o;
         return eventTimestamp == that.eventTimestamp &&
                 eventVersion == that.eventVersion &&
                 accountId.equals(that.accountId) &&
@@ -122,7 +122,7 @@ public class B2EventNotificationTestEvent {
 
     @Override
     public String toString() {
-        return "B2EventNotificationTestEvent{" +
+        return "B2TestEventNotificationEvent{" +
                 "accountId='" + accountId + '\'' +
                 ", bucketId='" + bucketId + '\'' +
                 ", bucketName='" + bucketName + '\'' +
