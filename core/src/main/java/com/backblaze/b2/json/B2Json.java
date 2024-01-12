@@ -457,10 +457,19 @@ public class B2Json {
     }
 
     public <T> T fromJson(byte[] jsonUtf8Bytes, Class<T> clazz, B2JsonOptions options) throws IOException, B2JsonException {
-        final B2JsonReader reader = new B2JsonReader(
-                new BufferedReader(
-                        new InputStreamReader(
-                                new ByteArrayInputStream(jsonUtf8Bytes), StandardCharsets.UTF_8)));
+        // Use a StringReader instead of BufferedReader and InputerStreamReader for small input,
+        // in order to optimize memory allocations
+        final B2JsonReader reader;
+        if (jsonUtf8Bytes.length <= 8192) {
+            reader = new B2JsonReader(
+                    new StringReader(new String(jsonUtf8Bytes, StandardCharsets.UTF_8))
+            );
+        } else {
+            reader = new B2JsonReader(
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    new ByteArrayInputStream(jsonUtf8Bytes), StandardCharsets.UTF_8)));
+        }
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         //noinspection unchecked
         return (T) handler.deserialize(reader, options);

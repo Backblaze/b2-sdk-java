@@ -2,6 +2,7 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Reduced memory allocation for small input when deserializing byte[] to JSON
 * Reduced lock contention in B2Clock
 * Added support for custom headers and suspension in event notification rules
 * Added support for b2_set_bucket_notification_rules and b2_get_bucket_notification_rules
