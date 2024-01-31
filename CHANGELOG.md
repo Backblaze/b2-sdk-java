@@ -2,6 +2,7 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Optimized B2DateTimeUtil.formatFguidDateTime
 * Reduced memory allocation for small input when deserializing byte[] to JSON
 * Reduced lock contention in B2Clock
 * Added support for custom headers and suspension in event notification rules
