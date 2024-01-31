@@ -5,6 +5,8 @@
 package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.json.B2Json;
+import com.backblaze.b2.util.B2Preconditions;
+import com.backblaze.b2.util.B2StringUtil;
 
 import java.util.Objects;
 
@@ -27,11 +29,11 @@ public class B2EventNotificationEvent {
     private final int eventVersion;
     @B2Json.required
     private final String matchedRuleName;
-    @B2Json.required
+    @B2Json.optional(omitNull = true)
     private final String objectName;
     @B2Json.optional(omitNull = true)
     private final Long objectSize;
-    @B2Json.required
+    @B2Json.optional(omitNull = true)
     private final String objectVersionId;
 
     @B2Json.constructor
@@ -45,6 +47,15 @@ public class B2EventNotificationEvent {
                                     String objectName,
                                     Long objectSize,
                                     String objectVersionId) {
+
+        if (!"b2:TestEvent".equals(eventType)) {
+            B2Preconditions.checkArgument(!B2StringUtil.isEmpty(objectName), "objectName is required");
+            B2Preconditions.checkArgument(!B2StringUtil.isEmpty(objectVersionId), "objectVersionId is required");
+        } else {
+            B2Preconditions.checkArgument(objectName == null, "objectName must be null for test events");
+            B2Preconditions.checkArgument(objectSize == null, "objectSize must be null for test events");
+            B2Preconditions.checkArgument(objectVersionId == null, "objectVersionId must be null for test events");
+        }
         this.accountId = accountId;
         this.bucketId = bucketId;
         this.bucketName = bucketName;
@@ -139,22 +150,23 @@ public class B2EventNotificationEvent {
     }
 
     /**
-     * The name of the object that corresponds to the event.
+     * The name of the object that corresponds to the event.  This will be null for test events.
      */
     public String getObjectName() {
         return objectName;
     }
 
     /**
-     * The size of bytes of the object that corresponds to the event.  The objectSize would be null for hide marker
-     * and delete events.
+     * The size of bytes of the object that corresponds to the event.  The objectSize would be null for hide marker,
+     * delete, and test events.
      */
     public Long getObjectSize() {
         return objectSize;
     }
 
     /**
-     * The unique identifier for the version of the object that corresponds to the event.
+     * The unique identifier for the version of the object that corresponds to the event.  This will be null
+     * for test events.
      */
     public String getObjectVersionId() {
         return objectVersionId;
