@@ -544,12 +544,21 @@ public class B2Json {
     public @interface required {}
 
     /**
-     * Field annotation that says a field is optional.  The value will
-     * always be included, even if it is null, when omitNull is false
-     * (default); when omitNull is true and the field value is null,
-     * the value will not be included. A B2JsonException is thrown
-     * when omitNull is set to true on a primitive field; primitives
-     * are not nullable objects so omitNull does not apply.
+     * Field annotation that says a field is optional.
+     *
+     * The value will almost always be included when serializing, with
+     * two exceptions.  If omitNull is true and the value is null, it will
+     * be left out of the serialized representation.  Similarly, if omitZero
+     * is true and the value is zero, it will be left out of the serialized
+     * representation.  Note that both omitNull and omitZero default to false.
+     *
+     * A B2JsonException is thrown when omitNull is set to true on a primitive field;
+     * primitives are not nullable objects so omitNull does not apply.
+     * Similarly, a B2JsonException is thrown when omitZero is set to true on a
+     * field that's either non-numeric, non-primitive, or not built into B2Json.
+     * Note that they can't both be used on the same field because one only works
+     * on non-primitive fields and the other only works on primitive fields.
+     *
      * When deserializing, null/false/0 will be passed to
      * the constructor if the value is not present in the JSON.
      */
@@ -557,19 +566,33 @@ public class B2Json {
     @Target(ElementType.FIELD)
     public @interface optional {
         boolean omitNull() default false;
+        boolean omitZero() default false;
     }
 
     /**
-     * Field annotation that says a field is optional.  The value will
-     * always be included when serializing, even if it is null.  When
-     * deserializing, the provided default value will be used.  The default
+     * Field annotation that says a field is optional.
+     * When deserializing, the provided default value will be used.  The default
      * provided should be the JSON form of the value, as a string.
+     *
+     * The value will almost always be included when serializing, with
+     * two exceptions.  If omitNull is true and the value is null, it will
+     * be left out of the serialized representation.  Similarly, if omitZero
+     * is true and the value is zero, it will be left out of the serialized
+     * representation.  Note that both omitNull and omitZero default to false.
+     *
+     * A B2JsonException is thrown when omitNull is set to true on a primitive field;
+     * primitives are not nullable objects so omitNull does not apply.
+     * Similarly, a B2JsonException is thrown when omitZero is set to true on a
+     * field that's either non-numeric, non-primitive, or not built into B2Json.
+     * Note that they can't both be used on the same field because one only works
+     * on non-primitive fields and the other only works on primitive fields.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     public @interface optionalWithDefault {
         String defaultValue();
         boolean omitNull() default false;
+        boolean omitZero() default false;
     }
 
     /**

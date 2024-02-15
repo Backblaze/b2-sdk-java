@@ -25,6 +25,7 @@ public final class FieldInfo implements Comparable<FieldInfo> {
     public int constructorArgIndex;
     public final boolean isSensitive;
     public final boolean omitNull;
+    public final boolean omitZero;
 
     /*package*/ FieldInfo(
             String jsonMemberName,
@@ -33,8 +34,8 @@ public final class FieldInfo implements Comparable<FieldInfo> {
             String defaultValueJsonOrNull,
             VersionRange versionRange,
             boolean isSensitive,
-            boolean omitNull
-    ) {
+            boolean omitNull,
+            boolean omitZero) {
         this.jsonMemberName = jsonMemberName;
         this.field = field;
         this.handler =  handler;
@@ -43,6 +44,7 @@ public final class FieldInfo implements Comparable<FieldInfo> {
         this.versionRange = versionRange;
         this.isSensitive = isSensitive;
         this.omitNull = omitNull;
+        this.omitZero = omitZero;
 
         this.field.setAccessible(true);
     }
