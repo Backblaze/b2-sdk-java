@@ -229,7 +229,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
      * for all others omitNull will return false.
      * @param field field definition
      * @return whether the field has the omitNull property
-     * @throws B2JsonException if omitZero is applied on to a field it shouldn't be.
+     * @throws B2JsonException if omitNull is applied on to a field it shouldn't be.
      */
     private boolean omitNull(Field field) throws B2JsonException {
         final B2Json.optional optionalAnnotation = field.getAnnotation(B2Json.optional.class);
