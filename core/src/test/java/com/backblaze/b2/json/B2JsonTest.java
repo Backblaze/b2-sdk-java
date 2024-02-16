@@ -38,13 +38,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for B2Json.
@@ -2366,6 +2360,178 @@ public class B2JsonTest extends B2BaseTest {
         final OmitNullBadTestClass bad = new OmitNullBadTestClass(123);
         B2Json.toJsonOrThrowRuntime(bad);
     }
+
+    /**
+     *
+     */
+    private static class OmitZeroTestClass {
+        @B2Json.optional(omitZero = true)
+        private final byte omitZeroByte;
+
+        @B2Json.optional
+        private final byte regularByte;
+
+        @B2Json.optional(omitZero = true)
+        private final int omitZeroInt;
+
+        @B2Json.optional
+        private final int regularInt;
+
+        @B2Json.optional(omitZero = true)
+        private final long omitZeroLong;
+
+        @B2Json.optional
+        private final long regularLong;
+
+        @B2Json.optional(omitZero = true)
+        private final float omitZeroFloat;
+
+        @B2Json.optional
+        private final float regularFloat;
+
+        @B2Json.optional(omitZero = true)
+        private final double omitZeroDouble;
+
+        @B2Json.optional
+        private final double regularDouble;
+
+        @B2Json.constructor
+        private OmitZeroTestClass(byte omitZeroByte, byte regularByte,
+                                  int omitZeroInt, int regularInt,
+                                  long omitZeroLong, long regularLong,
+                                  float omitZeroFloat, float regularFloat,
+                                  double omitZeroDouble, double regularDouble) {
+            this.omitZeroByte = omitZeroByte;
+            this.regularByte = regularByte;
+            this.omitZeroInt = omitZeroInt;
+            this.regularInt = regularInt;
+            this.omitZeroLong = omitZeroLong;
+            this.regularLong = regularLong;
+            this.omitZeroFloat = omitZeroFloat;
+            this.regularFloat = regularFloat;
+            this.omitZeroDouble = omitZeroDouble;
+            this.regularDouble = regularDouble;
+        }
+    }
+
+    @Test
+    public void testOmitZeroWithZeroInputs() {
+        final OmitZeroTestClass object = new OmitZeroTestClass(
+                (byte) 0, (byte) 0,
+                0, 0,
+                0L, 0L,
+                0.0f, 0.0f,
+                0.0, 0.0
+        );
+        final String actual = B2Json.toJsonOrThrowRuntime(object);
+
+        // The omitNullString and omitNullInteger fields should not be present in the output
+        assertEquals("{\n" +
+                        "  \"regularByte\": 0,\n" +
+                        "  \"regularDouble\": 0.0,\n" +
+                        "  \"regularFloat\": 0.0,\n" +
+                        "  \"regularInt\": 0,\n" +
+                        "  \"regularLong\": 0\n" +
+                        "}",
+                actual);
+    }
+
+    @Test
+    public void testOmitZeroWithNonZeroInputs() {
+        final OmitZeroTestClass object = new OmitZeroTestClass(
+                (byte) 1, (byte) 1,
+                1, 1,
+                1L, 1L,
+                1.1f, 1.1f,
+                1.1, 1.1
+        );
+        final String actual = B2Json.toJsonOrThrowRuntime(object);
+
+        // The omitNullString and omitNullInteger fields should not be present in the output
+        assertEquals("{\n" +
+                        "  \"omitZeroByte\": 1,\n" +
+                        "  \"omitZeroDouble\": 1.1,\n" +
+                        "  \"omitZeroFloat\": 1.1,\n" +
+                        "  \"omitZeroInt\": 1,\n" +
+                        "  \"omitZeroLong\": 1,\n" +
+                        "  \"regularByte\": 1,\n" +
+                        "  \"regularDouble\": 1.1,\n" +
+                        "  \"regularFloat\": 1.1,\n" +
+                        "  \"regularInt\": 1,\n" +
+                        "  \"regularLong\": 1\n" +
+                        "}",
+                actual);
+    }
+
+    @Test
+    public void testOmitZeroCreateFromEmpty() {
+        final OmitZeroTestClass actual = B2Json.fromJsonOrThrowRuntime("{}", OmitZeroTestClass.class);
+
+        assertEquals(0, actual.omitZeroByte);
+        assertEquals(0, actual.regularByte);
+        assertEquals(0, actual.omitZeroInt);
+        assertEquals(0, actual.regularInt);
+        assertEquals(0, actual.omitZeroLong);
+        assertEquals(0, actual.regularLong);
+        assertEquals(0.0f, actual.omitZeroFloat, 0);
+        assertEquals(0.0f, actual.regularFloat, 0);
+        assertEquals(0.0, actual.omitZeroDouble, 0);
+        assertEquals(0.0, actual.regularDouble, 0);
+    }
+
+    private static class OmitZeroBadTestCase {
+        @B2Json.optional(omitZero = true)
+        private final String string;
+
+        @B2Json.constructor
+        OmitZeroBadTestCase(String string) {
+            this.string = string;
+        }
+    }
+    @Test
+    public void testOmitZeroOnPrimitive() throws B2JsonException {
+        thrown.expectMessage("Field OmitZeroBadTestCase.string declared with 'omitZero = true' but is not a primitive, numeric type");
+        final OmitZeroBadTestCase bad = new OmitZeroBadTestCase("foobar");
+        B2Json.toJsonOrThrowRuntime(bad);
+    }
+
+    private static class OmitZeroWithOptionalWithDefaultTestClass {
+        @B2Json.optionalWithDefault(omitZero = true, defaultValue = "0")
+        public final int omitZeroDefaultToZero;
+
+        @B2Json.optionalWithDefault(omitZero = true, defaultValue = "1")
+        public final int omitZeroDefaultToOne;
+
+        @B2Json.optional
+        public final byte nonOmitted;
+
+        @B2Json.constructor
+        private OmitZeroWithOptionalWithDefaultTestClass(int omitZeroDefaultToZero, int omitZeroDefaultToOne, byte nonOmitted) {
+            this.omitZeroDefaultToZero = omitZeroDefaultToZero;
+            this.omitZeroDefaultToOne = omitZeroDefaultToOne;
+            this.nonOmitted = nonOmitted;
+        }
+    }
+
+    @Test
+    public void testOptionalWithDefaultWithOmitZero() {
+        final OmitZeroWithOptionalWithDefaultTestClass obj = B2Json.fromJsonOrThrowRuntime(
+                "{}",
+                OmitZeroWithOptionalWithDefaultTestClass.class
+        );
+
+        assertEquals(0, obj.omitZeroDefaultToZero);
+        assertEquals(1, obj.omitZeroDefaultToOne);
+        assertEquals(0, obj.nonOmitted);
+
+        // The omitNullString and omitNullInteger fields should not be present in the output
+        assertEquals("{\n" +
+                        "  \"nonOmitted\": 0,\n" +
+                        "  \"omitZeroDefaultToOne\": 1\n" +
+                        "}",
+                B2Json.toJsonOrThrowRuntime(obj));
+    }
+
 
     /**
      * Because of serialization, the object returned from B2Json will never be the same object as an

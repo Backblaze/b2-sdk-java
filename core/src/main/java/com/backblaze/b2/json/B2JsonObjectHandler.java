@@ -6,7 +6,6 @@
 package com.backblaze.b2.json;
 
 import com.backblaze.b2.json.FieldInfo.FieldRequirement;
-import com.backblaze.b2.util.B2Collections;
 import com.backblaze.b2.util.B2Preconditions;
 
 import java.io.IOException;
@@ -134,10 +133,11 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             final VersionRange versionRange = getVersionRange(field);
             final boolean isSensitive = field.getAnnotation(B2Json.sensitive.class) != null;
             final boolean omitNull = omitNull(field);
+            final boolean omitZero = omitZero(field);
             final B2Json.serializedName serializedNameAnnotation = field.getAnnotation(B2Json.serializedName.class);
             final String jsonMemberName = serializedNameAnnotation != null ? serializedNameAnnotation.value() : field.getName();
             final FieldInfo fieldInfo =
-                    new FieldInfo(jsonMemberName, field, handler, requirement, defaultValueJsonOrNull, versionRange, isSensitive, omitNull);
+                    new FieldInfo(jsonMemberName, field, handler, requirement, defaultValueJsonOrNull, versionRange, isSensitive, omitNull, omitZero);
 
             if (jsonMemberNameFieldInfoMap.containsKey(jsonMemberName)) {
                 throw new B2JsonException(clazz.getName() + " contains multiple class fields for the json member " + jsonMemberName);
@@ -229,6 +229,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
      * for all others omitNull will return false.
      * @param field field definition
      * @return whether the field has the omitNull property
+     * @throws B2JsonException if omitNull is applied on to a field it shouldn't be.
      */
     private boolean omitNull(Field field) throws B2JsonException {
         final B2Json.optional optionalAnnotation = field.getAnnotation(B2Json.optional.class);
@@ -251,6 +252,39 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             throw new B2JsonException(message);
         }
         return omitNull;
+    }
+
+    /**
+     * Determines whether this field has the omitZero property.
+     * This property can only be set from the 'optional' or
+     * 'optionalWithDefault' annotations,
+     * for all others omitZero will return false.
+     * @param field field definition
+     * @return whether the field has the omitZero property
+     * @throws B2JsonException if omitZero is applied on to a field it shouldn't be.
+     */
+    private boolean omitZero(Field field) throws B2JsonException {
+        final B2Json.optional optionalAnnotation = field.getAnnotation(B2Json.optional.class);
+        final B2Json.optionalWithDefault optionalWithDefaultAnnotation = field.getAnnotation(B2Json.optionalWithDefault.class);
+
+        final boolean omitZero;
+        if (optionalAnnotation != null) {
+            omitZero = optionalAnnotation.omitZero();
+        } else if (optionalWithDefaultAnnotation != null) {
+            omitZero = optionalWithDefaultAnnotation.omitZero();
+        } else {
+            omitZero = false;
+        }
+        // omitZero can only be set on zeroable classes that B2Json innately knows about.
+        if (omitZero && !isBuiltInZeroableType(field.getType())) {
+            final String message = String.format(
+                    "Field %s.%s declared with 'omitZero = true' but is not a primitive, numeric type",
+                    this.clazz.getSimpleName(),
+                    field.getName()
+            );
+            throw new B2JsonException(message);
+        }
+        return omitZero;
     }
 
     /**
@@ -350,7 +384,10 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
                         final Object value = fieldInfo.field.get(obj);
 
                         // Only write the field if the value is not null OR omitNull is not set
-                        if (!fieldInfo.omitNull || value != null) {
+                        final boolean omitValue =
+                                (fieldInfo.omitNull && value == null) ||
+                                (fieldInfo.omitZero && isZero(value));
+                        if (!omitValue) {
                             out.writeObjectFieldNameAndColon(fieldInfo.getJsonMemberName());
                             if (fieldInfo.getIsSensitive() && options.getRedactSensitive()) {
                                 out.writeString("***REDACTED***");
@@ -567,5 +604,32 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
 
     public boolean isStringInJson() {
         return false;
+    }
+    public static boolean isBuiltInZeroableType(Class<?> type) {
+        return (type == byte.class) ||
+                (type == int.class) ||
+                (type == long.class) ||
+                (type == float.class) ||
+                (type == double.class);
+    }
+
+    public static boolean isZero(Object value) {
+        B2Preconditions.checkArgumentIsNotNull(value, value); // because we should only be called for primitives!
+        if (value instanceof Byte) {
+            return ((Byte) value) == 0;
+        }
+        if (value instanceof Integer) {
+            return ((Integer) value) == 0;
+        }
+        if (value instanceof Long) {
+            return ((Long) value) == 0;
+        }
+        if (value instanceof Float) {
+            return ((Float) value) == 0;
+        }
+        if (value instanceof Double) {
+            return ((Double) value) == 0;
+        }
+        throw new RuntimeException("bug: isZero called on " + value.getClass());
     }
 }
