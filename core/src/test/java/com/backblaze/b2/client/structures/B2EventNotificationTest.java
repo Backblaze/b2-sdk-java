@@ -132,5 +132,4 @@ public class B2EventNotificationTest extends B2BaseTest {
         final B2EventNotification parsedEventNotification = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
         assertEquals(parsedEventNotification, b2EventNotification);
     }
-
 }
