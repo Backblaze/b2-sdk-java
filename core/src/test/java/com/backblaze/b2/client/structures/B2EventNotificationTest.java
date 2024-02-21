@@ -163,4 +163,12 @@ public class B2EventNotificationTest extends B2BaseTest {
         assertThrows(IllegalArgumentException.class, () -> B2EventNotification.constructEventNotification(DEFAULT_EVENT_PAYLOAD, null, HMAC_SHA256_SIGNING_SECRET));
         assertThrows(IllegalArgumentException.class, () -> B2EventNotification.constructEventNotification(DEFAULT_EVENT_PAYLOAD, signature, null));
     }
+
+    @Test
+    public void testConstructEventNotificationWithInvalidJson() throws B2SignatureVerificationException {
+        final byte[] jsonBytes = "{\n\"key\":\"value\"\n}".getBytes(StandardCharsets.UTF_8);
+        final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET,
+                jsonBytes);
+        assertThrows(B2JsonException.class, () -> B2EventNotification.constructEventNotification(jsonBytes, signature, HMAC_SHA256_SIGNING_SECRET));
+    }
 }
