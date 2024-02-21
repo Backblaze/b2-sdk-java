@@ -12,7 +12,7 @@ public class B2SignatureVerificationException extends B2Exception {
     public static final String DEFAULT_CODE = "signature_verification_failed";
     public static final int STATUS = 0;
 
-    public B2SignatureVerificationException(String message) {
-        super(DEFAULT_CODE, STATUS, null /* no retries */, message);
+    public B2SignatureVerificationException(String message, Throwable cause) {
+        super(DEFAULT_CODE, STATUS, null /* no retries */, message, cause);
     }
 }
