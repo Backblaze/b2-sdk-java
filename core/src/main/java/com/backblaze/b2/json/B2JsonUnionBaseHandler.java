@@ -108,9 +108,14 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
 
     @Override
     protected void initializeImplementation(B2JsonHandlerMap b2JsonHandlerMap) throws B2JsonException {
-
+        boolean unionTypeFromMethod = false;
         // Get the map of type name to class of all the members of the union.
-        final Map<String, Class<?>> typeNameToClass = getUnionTypeMap(clazz).getTypeNameToClass();
+        B2JsonUnionTypeMap unionTypeMapFromAnnotationOrNull = getUnionTypeMapFromAnnotationOrNull(clazz);
+        if (unionTypeMapFromAnnotationOrNull == null) {
+            unionTypeMapFromAnnotationOrNull = getUnionTypeMapFromMethod(clazz);
+            unionTypeFromMethod = true;
+        }
+        final Map<String, Class<?>> typeNameToClass = unionTypeMapFromAnnotationOrNull.getTypeNameToClass();
 
         // Build the maps from type name and class to handler.
         typeNameToHandler = new HashMap<>();
@@ -119,7 +124,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
         for (Map.Entry<String, Class<?>> entry : typeNameToClass.entrySet()) {
             final String typeName = entry.getKey();
             final Class<?> typeClass = entry.getValue();
-            if (!hasSuperclass(typeClass, clazz)) { // use clazz.isAssignableFrom(typeClass)?
+            if (unionTypeFromMethod && !hasSuperclass(typeClass, clazz)) { // use clazz.isAssignableFrom(typeClass)?
                 throw new B2JsonException(typeClass + " is not a subclass of " + clazz);
             }
             final B2JsonTypeHandler<?> handler = b2JsonHandlerMap.getUninitializedHandler(typeClass);
@@ -127,8 +132,18 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
                 typeNameToHandler.put(typeName, (B2JsonObjectHandler) handler);
                 classToHandler.put(typeClass, (B2JsonObjectHandler) handler);
                 // Add discarded fields to handlerToFieldsToDiscard
-                Constructor<?> b2JsonConstructor = B2JsonDeserializationUtil.findB2JsonConstructor(typeClass);
-                Set<String> fieldsToDiscard = B2JsonDeserializationUtil.getDiscards(b2JsonConstructor);
+                Constructor<?> b2JsonConstructor = B2JsonDeserializationUtil.findConstructor(typeClass);
+
+                final B2Json.B2JsonTypeConfig jsonTypeParams;
+                final B2Json.constructor annotation = b2JsonConstructor.getAnnotation(B2Json.constructor.class);
+                if (annotation == null) {
+                    // must be a record, use @B2Json.type
+                    B2Json.type typeAnnotation = typeClass.getAnnotation(B2Json.type.class);
+                    jsonTypeParams = new B2Json.B2JsonTypeConfig(typeAnnotation);
+                } else{
+                    jsonTypeParams = new B2Json.B2JsonTypeConfig(annotation);
+                }
+                Set<String> fieldsToDiscard = B2JsonDeserializationUtil.getDiscards(jsonTypeParams);
                 handlerToFieldsToDiscard.put((B2JsonObjectHandler) handler, fieldsToDiscard);
             }
             else {
@@ -225,7 +240,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
      * <p>
      * Gets the map by calling the static method getUnionTypeMap on the base class.
      */
-    /*package*/ static B2JsonUnionTypeMap getUnionTypeMap(Class<?> clazz) throws B2JsonException {
+    /*package*/ static B2JsonUnionTypeMap getUnionTypeMapFromMethod(Class<?> clazz) throws B2JsonException {
         // This uses getDeclaredMethod instead of just getMethod so that classes
         // can't inherit the type handler from their superclass.  that seems like
         // a safer starting point.
@@ -248,6 +263,27 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
         } catch (IllegalAccessException e) {
             throw new B2JsonException("illegal access to " + method + ": " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Gets the map by the declared B2Json.unionSubtypes annotation. If the {@code B2Json.unionSubTypes} is not present,
+     * then {@code null} is returned
+     */
+    /*package*/ static B2JsonUnionTypeMap getUnionTypeMapFromAnnotationOrNull(Class<?> clazz) throws B2JsonException {
+
+        B2Json.unionSubtypes annotation = clazz.getAnnotation(B2Json.unionSubtypes.class);
+        if (annotation == null) {
+            return null;
+        }
+        B2Json.unionSubtypes.type[] subTypes = annotation.value();
+        if (subTypes.length == 0) {
+            throw new B2JsonException(clazz.getSimpleName() + " - at least one type must be configured set in @B2Json.unionSubtypes");
+        }
+        final B2JsonUnionTypeMap.Builder builder = B2JsonUnionTypeMap.builder();
+        for (B2Json.unionSubtypes.type type: subTypes) {
+            builder.put(type.name(), type.clazz());
+        }
+        return builder.build();
     }
 
     @Override

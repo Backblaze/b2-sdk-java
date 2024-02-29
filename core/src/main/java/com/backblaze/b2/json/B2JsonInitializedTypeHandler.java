@@ -9,31 +9,31 @@ import com.backblaze.b2.util.B2Preconditions;
 
 /**
  * Base class for all implementations of B2JsonTypeHandler that have an initialize() method.
- *
+ * <p>
  * (De)serialization is expected to be fast, so each implementation class gathers
  * information it needs when it's set up, so when it's time to run it has all of
  * the necessary information at hand.  This gets tricky because dependencies between
  * handlers may have loops.
- *
+ * <p>
  * The plan is to initialize in three phases:
- *
+ * <p>
  * First, the constructor, which must not depend on any other handlers, and which
  * must gather all of the information that other handlers will need.
- *
+ * <p>
  * Second, the initialize() method does any work that needs information from other
  * type handlers.
- *
+ * <p>
  * Third, check the validity of default values, now that all type handlers have
  * gone through at least the second phase.
- *
+ * <p>
  * All phases are protected by the lock on B2JsonHandlerMap, so they don't need to
  * lock, and the data they store in the object is guaranteed to be visible without
  * further locking.
- *
+ * <p>
  * Methods that return data set during initialize() should include this check:
- *
+ * <p>
  *     Preconditions.checkState(isInitialized());
- *
+ * <p>
  * NOTE: adding the initialize() method to BzJsonTypeHandler would change the interface
  * and break any clients who have written their own handlers.
  */

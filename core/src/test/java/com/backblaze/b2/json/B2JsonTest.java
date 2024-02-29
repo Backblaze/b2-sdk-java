@@ -788,7 +788,7 @@ public class B2JsonTest extends B2BaseTest {
         MapWithNullKeyHolder mapWithNullKeyHolder = new MapWithNullKeyHolder(map);
         try {
             b2Json.toJson(mapWithNullKeyHolder);
-            assertTrue("Map with null key should not be allowed to be serialized", false);
+            fail("Map with null key should not be allowed to be serialized");
         } catch (B2JsonException ex) {
             assertEquals("Map key is null", ex.getMessage());
         }
@@ -808,17 +808,17 @@ public class B2JsonTest extends B2BaseTest {
     public void testTreeMap() throws IOException, B2JsonException {
         String json1 =
                 "{\n" +
-                        "  \"treeMap\": {\n" +
-                        "    \"20150101\": 37,\n" +
-                        "    \"20150207\": null\n" +
-                        "  }\n" +
-                        "}" ;
+                "  \"treeMap\": {\n" +
+                "    \"20150101\": 37,\n" +
+                "    \"20150207\": null\n" +
+                "  }\n" +
+                "}" ;
         checkDeserializeSerialize(json1, TreeMapHolder.class);
 
         String json2 =
                 "{\n" +
-                        "  \"treeMap\": null\n" +
-                        "}";
+                "  \"treeMap\": null\n" +
+                "}";
         checkDeserializeSerialize(json2, TreeMapHolder.class);
     }
 
@@ -836,17 +836,17 @@ public class B2JsonTest extends B2BaseTest {
     public void testSortedMap() throws IOException, B2JsonException {
         String json1 =
                 "{\n" +
-                        "  \"sortedMap\": {\n" +
-                        "    \"20150101\": 37,\n" +
-                        "    \"20150207\": null\n" +
-                        "  }\n" +
-                        "}" ;
+                "  \"sortedMap\": {\n" +
+                "    \"20150101\": 37,\n" +
+                "    \"20150207\": null\n" +
+                "  }\n" +
+                "}" ;
         checkDeserializeSerialize(json1, SortedMapHolder.class);
 
         String json2 =
                 "{\n" +
-                        "  \"sortedMap\": null\n" +
-                        "}";
+                "  \"sortedMap\": null\n" +
+                "}";
         checkDeserializeSerialize(json2, SortedMapHolder.class);
     }
 
@@ -1075,8 +1075,8 @@ public class B2JsonTest extends B2BaseTest {
     public void testUnknownEnum_usesDefaultInvalidEnumValue() throws B2JsonException {
         String json =
                 "{\n" +
-                        "  \"flavor\": \"CHARTREUSE\"\n" +
-                        "}";
+                "  \"flavor\": \"CHARTREUSE\"\n" +
+                "}";
 
         final FlavorHolder holder = B2Json.get().fromJson(json, FlavorHolder.class);
         assertEquals(Flavor.STRANGE, holder.flavor);
@@ -2178,7 +2178,7 @@ public class B2JsonTest extends B2BaseTest {
     public void testSerializeIncludeFieldInVersion() throws B2JsonException {
         final B2JsonOptions options = B2JsonOptions.builder().setVersion(5).build();
         assertEquals(
-                "{\n" +
+        "{\n" +
                 "  \"x\": 3\n" +
                 "}",
                 b2Json.toJson(new VersionedContainer(3, 5), options)
@@ -3073,13 +3073,13 @@ public class B2JsonTest extends B2BaseTest {
 
     /* A convenience Json object for testing IOException("Requested array size exceeds maximum limit") */
     private static class ObjectWithSomeName {
-       @B2Json.required
-       private final String name;
+        @B2Json.required
+        private final String name;
 
-       @B2Json.constructor(params = "name")
-       public ObjectWithSomeName(String name) {
-           this.name = name;
-       }
+        @B2Json.constructor(params = "name")
+        public ObjectWithSomeName(String name) {
+            this.name = name;
+        }
     }
 
     @Test
@@ -3190,18 +3190,18 @@ public class B2JsonTest extends B2BaseTest {
     @Test
     public void testMapWithAtomicLongArray() throws IOException, B2JsonException {
         final String json1 =
-                "{\n" +
-                        "  \"map\": {\n" +
-                        "    \"20150207\": null,\n" +
-                        "    \"20230209\": [ 4, 23, 5, 3147483647 ]\n" +  // max int size is 2147483647
-                        "  }\n" +
-                        "}" ;
+            "{\n" +
+            "  \"map\": {\n" +
+            "    \"20150207\": null,\n" +
+            "    \"20230209\": [ 4, 23, 5, 3147483647 ]\n" +  // max int size is 2147483647
+            "  }\n" +
+            "}";
         checkDeserializeSerialize(json1, MapWithAtomicLongArrayHolder.class);
 
         final String json2 =
-                "{\n" +
-                        "  \"map\": null\n" +
-                        "}";
+            "{\n" +
+            "  \"map\": null\n" +
+            "}";
         checkDeserializeSerialize(json2, MapWithAtomicLongArrayHolder.class);
     }
 
@@ -3309,4 +3309,22 @@ public class B2JsonTest extends B2BaseTest {
         assertEquals("com.backblaze.b2.json.B2JsonTest$ContainerWithDuplicateFieldNames contains multiple class fields for the json member a", thrown.getMessage());
     }
 
+    @B2Json.type
+    private static class ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations {
+        @B2Json.required
+        final int a;
+
+        @B2Json.constructor
+        public ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations(int a) {
+            this.a = a;
+        }
+    }
+
+    @Test
+    public void testClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations() {
+        final ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations obj = new ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations(1);
+
+        final B2JsonException thrown = assertThrows(B2JsonException.class, () -> B2Json.get().toJson(obj, compactOptions));
+        assertEquals("com.backblaze.b2.json.B2JsonTest$ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations has both @B2Json.type and @B2Json.constructor annotations", thrown.getMessage());
+    }
 }

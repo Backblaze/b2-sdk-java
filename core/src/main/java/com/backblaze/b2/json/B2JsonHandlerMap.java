@@ -35,12 +35,12 @@ import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * Holds a mapping from Class to B2JsonTypeHandler.
- *
+ * <p>
  * The mapping starts out with initial contents, which must be ALL
  * of the non-default mappings that will be used.  If any other
  * handlers are needed, the default B2JsonObjectHandler will be used
  * for that class.
- *
+ * <p>
  * This class is THREAD SAFE.
  */
 public class B2JsonHandlerMap {
@@ -65,7 +65,7 @@ public class B2JsonHandlerMap {
     /**
      * The getHandler() method is not supposed to be re-entrant.  This flag
      * is used to check that.
-     *
+     * <p>
      * Guarded by: this
      */
     private boolean inGetHandler = false;
@@ -248,10 +248,10 @@ public class B2JsonHandlerMap {
 
     /**
      * Gets the handler for a given type at the top level.
-     *
+     * <p>
      * The type must be resolved. If the type represents a generic class, the type must also
      * have concrete type arguments. Otherwise this will fail.
-     *
+     * <p>
      * The handler MAY NOT BE INITIALIZED.  This method is for use by handlers that need to get
      * a reference to another handler in their initialize() methods.  You cannot assume that any
      * fields set by initialize() have been set.
@@ -316,7 +316,7 @@ public class B2JsonHandlerMap {
             return (B2JsonTypeHandler<T>) new B2JsonObjectArrayHandler(clazz, eltClazz, eltClazzHandler);
         }
 
-        if (isUnionBase(clazz)) {
+        if (hasUnionAnnotation(clazz)) {
             //noinspection unchecked
             return (B2JsonTypeHandler<T>) new B2JsonUnionBaseHandler(clazz);
         }
@@ -438,11 +438,9 @@ public class B2JsonHandlerMap {
     }
 
     /**
-     * Is this class the base class for a union type?
-     *
-     * Union bases have the @union annotation.
+     * Does this class have the @B2Json.union annotation?
      */
-    /*package*/ static <T> boolean isUnionBase(Class<T> clazz) {
+    /*package*/ static <T> boolean hasUnionAnnotation(Class<T> clazz) {
         return clazz.getAnnotation(B2Json.union.class) != null;
     }
 
@@ -486,7 +484,7 @@ public class B2JsonHandlerMap {
 
     /**
      * Saves a handler in the map, remembering to use it for the given class.
-     *
+     * <p>
      * This method is not private because it is needed by B2JsonObjectHandler,
      * so that it can store itself in the map before trying to make handlers
      * for its fields, which may be recursive and be of the same type.  When

@@ -525,6 +525,23 @@ public class B2Json {
         String typeField();
     }
 
+
+    /**
+     * <p>Class annotation that applies to an interface that is a @union.</p>
+     *
+     * <p>Provides a mapping from type name to class</p>
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface unionSubtypes {
+        type[] value();
+
+        @interface type {
+            Class<?> clazz();
+            String name();
+        }
+    }
+
     /**
      * <p>Class annotation that applies to a class that is a @union.</p>
      *
@@ -696,6 +713,63 @@ public class B2Json {
     }
 
     /**
+     * Type annotation used to configure B2Json serialization/deserialization.
+
+     * When versionParam is non-empty, it is the name of a parameter that
+     * is not a field name, and will take the version number being constructed.
+     * This should be included for objects that have multiple versions,
+     * and the code in the constructor should validate the data based on it.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface type {
+
+        /**
+         * When discards is non-empty, is a comma-separated list of field names which are
+         * allowed to be present in the parsed json,
+         * but whose values will be discarded.  The names may be for fields
+         * that don't exist or for fields marked @ignored.  This is useful
+         * for accepting deprecated fields without having to use
+         * ALLOW_EXTRA_FIELDS, which would accept ALL unknown fields.
+         *
+         * @return A comma separated list of fields to discard, or an empty string
+         */
+        String discards() default "";
+
+        /**
+         * When versionParam is non-empty, it is the name of a parameter that
+         * is not a field name, and will take the version number being constructed.
+         * This should be included for objects that have multiple versions,
+         * and the code in the constructor should validate the data based on it.
+         *
+         * @return the version parameter if present, or an empty string
+         */
+        String versionParam() default "";
+    }
+
+    /**
+     * B2Json common configuration object for types (both classes and interfaces)
+     */
+    static class B2JsonTypeConfig {
+
+        public final String discards;
+        public final String versionParam;
+        public final String params;
+
+        public B2JsonTypeConfig(B2Json.type type) {
+            this.discards = type.discards();
+            this.versionParam = type.versionParam();
+            this.params = "";
+        }
+
+        public B2JsonTypeConfig(B2Json.constructor constructor) {
+            this.discards = constructor.discards();
+            this.versionParam = constructor.versionParam();
+            this.params = constructor.params();
+        }
+    }
+
+    /**
      * Field annotation that designates the enum value to use when the
      * value in a field isn't one of the known values.  Use this at most
      * once in an enum.  If no values have this annotation, we will throw
@@ -712,6 +786,8 @@ public class B2Json {
     /*package*/ static final Class<? extends Annotation>[] ALL_ANNOTATIONS =
             new Class[] {
                     union.class,
+                    unionSubtypes.class,
+                    type.class,
                     required.class,
                     optional.class,
                     optionalWithDefault.class,

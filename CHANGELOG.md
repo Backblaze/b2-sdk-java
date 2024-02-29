@@ -2,6 +2,32 @@
 
 ## [Unreleased] - TBD
 ### Added
+* Added support to specify B2Json union types using annotations. Annotation support for union types is required since
+  Java records do not support inheritance. Example usage:
+  ```java
+  @B2Json.union(typeField = "type")
+  @B2Json.unionSubtypes({
+          @B2Json.unionSubtypes.type(name = "email", clazz = Email.class),
+          @B2Json.unionSubtypes.type(name = "sms", clazz = Sms.class)
+  })
+  sealed interface Message permits Email, Sms {
+      String subject();
+  }
+
+  @B2Json.type
+  private record Email(@B2Json.required String subject, @B2Json.required String email) implements Message {
+  }
+
+  @B2Json.type
+  private record Sms(@B2Json.required String subject, @B2Json.required String phoneNumber) implements Message {
+  }
+  ```
+* Added `@B2Json.type` annotation that can be used with Java Records. Using `@B2Json.type` allows for the implicit 
+  Java constructor of Java records to not require the `@B2Json.constructor` annotation. Example usage:
+  ```java
+  @B2Json.type
+  record Point(@B2Json.required int x, @B2Json.required int y) { }
+  ```
 * Optimized B2DateTimeUtil.formatFguidDateTime
 * Reduced memory allocation for small input when deserializing byte[] to JSON
 * Reduced lock contention in B2Clock

@@ -20,7 +20,7 @@ import java.util.Set;
 
 /**
  * (De)serializes Java objects based on field annotations.
- *
+ * <p>
  * See doc comment on B2Json for annotation requirements.
  */
 public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
@@ -99,16 +99,34 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             String fieldName = null;
             String fieldValue = null;
             for (Class<?> parent = clazz.getSuperclass(); parent != null; parent = parent.getSuperclass()) {
-                if (B2JsonHandlerMap.isUnionBase(parent)) {
+                if (B2JsonHandlerMap.hasUnionAnnotation(parent)) {
                     unionClass = parent;
                     fieldName = parent.getAnnotation(B2Json.union.class).typeField();
-                    fieldValue = B2JsonUnionBaseHandler.getUnionTypeMap(parent).getTypeNameOrNullForClass(clazz);
+                    fieldValue = B2JsonUnionBaseHandler.getUnionTypeMapFromMethod(parent).getTypeNameOrNullForClass(clazz);
                     if (fieldValue == null) {
                         throw new B2JsonException("class " + clazz + " inherits from " + parent + ", but is not in the type map");
                     }
                     break;
                 }
             }
+
+            if (unionClass == null) {
+                for (Class<?> interfaze : clazz.getInterfaces()) {
+                    if (B2JsonHandlerMap.hasUnionAnnotation(interfaze)) {
+                        fieldName = interfaze.getAnnotation(B2Json.union.class).typeField();
+                        final B2JsonUnionTypeMap unionTypeMapOrNull = B2JsonUnionBaseHandler.getUnionTypeMapFromAnnotationOrNull(interfaze);
+                        if (unionTypeMapOrNull == null) {
+                            throw new B2JsonException(interfaze + " has B2Json.union annotation, but does not have @B2Json.unionSubtypes annotation");
+                        }
+                        fieldValue = unionTypeMapOrNull.getTypeNameOrNullForClass(clazz);
+                        if (fieldValue == null) {
+                            throw new B2JsonException(interfaze + " does not contain mapping for " + clazz + " in the @B2Json.unionSubtypes annotation");
+                        }
+                        break;
+                    }
+                }
+            }
+
             this.unionClass = unionClass;
             this.unionTypeFieldName = fieldName;
             this.unionTypeFieldValue = fieldValue;
@@ -145,22 +163,30 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
             jsonMemberNameFieldInfoMap.put(jsonMemberName, fieldInfo);
             javaFieldNameFieldInfoMap.put(field.getName(), fieldInfo);
         }
-        fields = jsonMemberNameFieldInfoMap.values().toArray(new FieldInfo[jsonMemberNameFieldInfoMap.size()]);
+        fields = jsonMemberNameFieldInfoMap.values().toArray(new FieldInfo[0]);
         Arrays.sort(fields);
+        this.constructor = B2JsonDeserializationUtil.findConstructor(clazz);
 
-        this.constructor = B2JsonDeserializationUtil.findB2JsonConstructor(clazz);
-
-        // Does the constructor take the version number as a parameter?
         final B2Json.constructor annotation = this.constructor.getAnnotation(B2Json.constructor.class);
-        final String versionParamOrEmpty = annotation.versionParam();
+        B2Json.B2JsonTypeConfig b2JsonTypeConfig;
+        if (annotation == null) {
+            // use @B2Json.type to get type information
+            B2Json.type typeAnnotation = clazz.getAnnotation(B2Json.type.class);
+            b2JsonTypeConfig = new B2Json.B2JsonTypeConfig(typeAnnotation);
+
+        } else {
+            b2JsonTypeConfig = new B2Json.B2JsonTypeConfig(annotation);
+        }
+        // Does the constructor take the version number as a parameter?
+        final String versionParamOrEmpty = b2JsonTypeConfig.versionParam;
         final int numberOfVersionParams = versionParamOrEmpty.isEmpty() ? 0 : 1;
 
         // Figure out the argument positions for the constructor.
         {
             // Parse @B2Json.constructor#params into an array
-            String paramsWithCommas = annotation.params().replace(" ", "");
+            String paramsWithCommas = b2JsonTypeConfig.params.replace(" ", "");
             String[] annotationParamNames = paramsWithCommas.split(",");
-            if (annotationParamNames.length == 1 && annotationParamNames[0].length() == 0) {
+            if (annotationParamNames.length == 1 && annotationParamNames[0].isEmpty()) {
                 annotationParamNames = null;
             }
 
@@ -212,7 +238,7 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
 
         // figure out which names to discard, if any
         {
-            this.fieldsToDiscard = B2JsonDeserializationUtil.getDiscards(this.constructor);
+            this.fieldsToDiscard = B2JsonDeserializationUtil.getDiscards(b2JsonTypeConfig);
             for (String name : fieldsToDiscard) {
                 final FieldInfo fieldInfo = javaFieldNameFieldInfoMap.get(name);
                 if (fieldInfo != null && fieldInfo.requirement != FieldRequirement.IGNORED) {
@@ -359,9 +385,9 @@ public class B2JsonObjectHandler<T> extends B2JsonTypeHandlerWithDefaults<T> {
 
     /**
      * Serializes the object, adding all fields to the JSON.
-     *
+     * <p>
      * Optional fields are always present, and set to null/0 when not present.
-     *
+     * <p>
      * The type name field for a member of a union type is added alphabetically in sequence, if needed.
      */
     public void serialize(T obj, B2JsonOptions options, B2JsonWriter out) throws IOException, B2JsonException {
