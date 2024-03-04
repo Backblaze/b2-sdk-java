@@ -113,7 +113,7 @@ public class B2EventNotificationTest extends B2BaseTest {
     @Test
     public void testConstructEventNotificationSuccess() throws B2JsonException, B2SignatureVerificationException {
         final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET, DEFAULT_EVENT_PAYLOAD.getBytes(StandardCharsets.UTF_8));
-        final B2EventNotification b2EventNotification = B2EventNotification.constructEventNotification(DEFAULT_EVENT_PAYLOAD, signature, HMAC_SHA256_SIGNING_SECRET);
+        final B2EventNotification b2EventNotification = B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, signature, HMAC_SHA256_SIGNING_SECRET);
         final B2EventNotification parsedEventNotification = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
         assertEquals(parsedEventNotification, b2EventNotification);
     }
@@ -121,14 +121,14 @@ public class B2EventNotificationTest extends B2BaseTest {
     @Test
     public void testConstructEventNotificationSignatureFailure() throws B2SignatureVerificationException {
         final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET2, DEFAULT_EVENT_PAYLOAD.getBytes(StandardCharsets.UTF_8));
-        assertThrows(B2SignatureVerificationException.class,() -> B2EventNotification.constructEventNotification(DEFAULT_EVENT_PAYLOAD, signature, HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(B2SignatureVerificationException.class,() -> B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, signature, HMAC_SHA256_SIGNING_SECRET));
     }
 
     @Test
     public void testConstructEventNotificationBytesSuccess() throws B2JsonException, IOException, B2SignatureVerificationException {
         final byte[] jsonBytes = DEFAULT_EVENT_PAYLOAD.getBytes(StandardCharsets.UTF_8);
         final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET, jsonBytes);
-        final B2EventNotification b2EventNotification = B2EventNotification.constructEventNotification(jsonBytes, signature, HMAC_SHA256_SIGNING_SECRET);
+        final B2EventNotification b2EventNotification = B2EventNotification.parse(jsonBytes, signature, HMAC_SHA256_SIGNING_SECRET);
         final B2EventNotification parsedEventNotification = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
         assertEquals(parsedEventNotification, b2EventNotification);
     }
@@ -138,7 +138,7 @@ public class B2EventNotificationTest extends B2BaseTest {
         final byte[] jsonBytes = DEFAULT_EVENT_PAYLOAD.getBytes(StandardCharsets.UTF_8);
         final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET,
                 "HelloWorld".getBytes(StandardCharsets.UTF_8));
-        assertThrows(B2SignatureVerificationException.class, () -> B2EventNotification.constructEventNotification(jsonBytes, signature, HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(B2SignatureVerificationException.class, () -> B2EventNotification.parse(jsonBytes, signature, HMAC_SHA256_SIGNING_SECRET));
     }
 
     @Test
@@ -146,22 +146,22 @@ public class B2EventNotificationTest extends B2BaseTest {
         final byte[] jsonBytes = DEFAULT_EVENT_PAYLOAD.getBytes(StandardCharsets.UTF_8);
         final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET,
                 jsonBytes);
-        assertThrows(B2SignatureVerificationException.class, () -> B2EventNotification.constructEventNotification(jsonBytes, signature, "Hello World"));
+        assertThrows(B2SignatureVerificationException.class, () -> B2EventNotification.parse(jsonBytes, signature, "Hello World"));
     }
 
     @Test
     public void testConstructEventNotificationWithInvalidParameters() throws B2SignatureVerificationException {
         final byte[] jsonBytes = DEFAULT_EVENT_PAYLOAD.getBytes(StandardCharsets.UTF_8);
         final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET, jsonBytes);
-        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.constructEventNotification((byte[])null, signature, HMAC_SHA256_SIGNING_SECRET));
-        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.constructEventNotification(new byte[0], signature, HMAC_SHA256_SIGNING_SECRET));
-        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.constructEventNotification(jsonBytes, null, HMAC_SHA256_SIGNING_SECRET));
-        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.constructEventNotification(jsonBytes, signature, null));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse((byte[])null, signature, HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(new byte[0], signature, HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(jsonBytes, null, HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(jsonBytes, signature, null));
 
-        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.constructEventNotification((String)null, signature, HMAC_SHA256_SIGNING_SECRET));
-        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.constructEventNotification("", signature, HMAC_SHA256_SIGNING_SECRET));
-        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.constructEventNotification(DEFAULT_EVENT_PAYLOAD, null, HMAC_SHA256_SIGNING_SECRET));
-        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.constructEventNotification(DEFAULT_EVENT_PAYLOAD, signature, null));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse((String)null, signature, HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse("", signature, HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, null, HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, signature, null));
     }
 
     @Test
@@ -169,6 +169,6 @@ public class B2EventNotificationTest extends B2BaseTest {
         final byte[] jsonBytes = "{\n\"key\":\"value\"\n}".getBytes(StandardCharsets.UTF_8);
         final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET,
                 jsonBytes);
-        assertThrows(B2JsonException.class, () -> B2EventNotification.constructEventNotification(jsonBytes, signature, HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(B2JsonException.class, () -> B2EventNotification.parse(jsonBytes, signature, HMAC_SHA256_SIGNING_SECRET));
     }
 }
