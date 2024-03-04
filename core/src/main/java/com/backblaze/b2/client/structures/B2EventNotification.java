@@ -70,8 +70,8 @@ public class B2EventNotification {
      * @throws B2SignatureVerificationException - if the content does not match the signature from header.
      */
     public static B2EventNotification parse(byte[] json,
-                                                                 String signatureFromHeader,
-                                                                 String signingSecret)
+                                            String signatureFromHeader,
+                                            String signingSecret)
             throws B2JsonException, IOException, B2SignatureVerificationException {
         B2Preconditions.checkArgumentIsNotNull(json, "json");
         B2Preconditions.checkArgument(json.length > 0);
@@ -91,8 +91,8 @@ public class B2EventNotification {
      * @throws B2SignatureVerificationException - if the content does not match the signature from header.
      */
     public static B2EventNotification parse(String json,
-                                                                 String signatureFromHeader,
-                                                                 String signingSecret)
+                                            String signatureFromHeader,
+                                            String signingSecret)
             throws B2JsonException, B2SignatureVerificationException {
         B2Preconditions.checkArgumentIsNotNull(json, "json");
         B2Preconditions.checkArgument(json.length() > 0);
