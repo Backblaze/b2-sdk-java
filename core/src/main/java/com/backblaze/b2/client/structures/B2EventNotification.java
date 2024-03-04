@@ -61,7 +61,7 @@ public class B2EventNotification {
     }
 
     /**
-     * Construct a new EventNotification from JSON content
+     * Create a new EventNotification from JSON content with signature check.
      * @param json - The JSON content to create an B2EventNotification object from. The byte array should be UTF-8 encoded
      * @param signatureFromHeader - The value of the X-Bz-Event-Notification-Signature header
      * @param signingSecret - The secret for computing the signature.
@@ -69,7 +69,7 @@ public class B2EventNotification {
      * @throws B2JsonException - If the content is not valid JSON
      * @throws B2SignatureVerificationException - if the content does not match the signature from header.
      */
-    public static B2EventNotification constructEventNotification(byte[] json,
+    public static B2EventNotification parse(byte[] json,
                                                                  String signatureFromHeader,
                                                                  String signingSecret)
             throws B2JsonException, IOException, B2SignatureVerificationException {
@@ -82,7 +82,7 @@ public class B2EventNotification {
     }
 
     /**
-     * Construct a new EventNotification from JSON content
+     * Create a new EventNotification from JSON content with signature check.
      * @param json - The JSON content to create an B2EventNotification object from.
      * @param signatureFromHeader - The value of the X-Bz-Event-Notification-Signature header
      * @param signingSecret - The secret for computing the signature.
@@ -90,7 +90,7 @@ public class B2EventNotification {
      * @throws B2JsonException - If the content is not valid JSON
      * @throws B2SignatureVerificationException - if the content does not match the signature from header.
      */
-    public static B2EventNotification constructEventNotification(String json,
+    public static B2EventNotification parse(String json,
                                                                  String signatureFromHeader,
                                                                  String signingSecret)
             throws B2JsonException, B2SignatureVerificationException {
