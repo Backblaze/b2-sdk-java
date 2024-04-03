@@ -62,6 +62,34 @@ public class B2EventNotification {
 
     /**
      * Create a new EventNotification from JSON content with signature check.
+     *
+     * @param json - The JSON content to create an B2EventNotification object from. The byte array should be UTF-8 encoded
+     * @return The B2EventNotification object
+     * @throws B2JsonException - If the content is not valid JSON
+     */
+    public static B2EventNotification parse(byte[] json) throws IOException, B2JsonException {
+        B2Preconditions.checkArgumentIsNotNull(json, "json");
+        B2Preconditions.checkArgument(json.length > 0);
+
+        return B2Json.get().fromJson(json , B2EventNotification.class);
+    }
+
+    /**
+     * Create a new EventNotification from JSON content with signature check.
+     *
+     * @param json - The JSON content to create an B2EventNotification object from.
+     * @return The B2EventNotification object
+     * @throws B2JsonException - If the content is not valid JSON
+     */
+    public static B2EventNotification parse(String json) throws B2JsonException {
+        B2Preconditions.checkArgument(!B2StringUtil.isEmpty(json), "json is required");
+
+        return B2Json.get().fromJson(json, B2EventNotification.class);
+    }
+
+    /**
+     * Create a new EventNotification from JSON content with signature check.
+     *
      * @param json - The JSON content to create an B2EventNotification object from. The byte array should be UTF-8 encoded
      * @param signatureFromHeader - The value of the X-Bz-Event-Notification-Signature header
      * @param signingSecret - The secret for computing the signature.
@@ -75,14 +103,17 @@ public class B2EventNotification {
             throws B2JsonException, IOException, B2SignatureVerificationException {
         B2Preconditions.checkArgumentIsNotNull(json, "json");
         B2Preconditions.checkArgument(json.length > 0);
-        B2Preconditions.checkArgumentIsNotNull(signatureFromHeader, "signatureFromHeader");
-        B2Preconditions.checkArgumentIsNotNull(signingSecret, "signingSecret");
-        SignatureUtils.verifySignature(json, signatureFromHeader, signingSecret);
+
+        // Only validate the signature if signature and secret are both provided
+        if (signatureFromHeader != null && signingSecret != null) {
+            SignatureUtils.verifySignature(json, signatureFromHeader, signingSecret);
+        }
         return B2Json.get().fromJson(json , B2EventNotification.class);
     }
 
     /**
      * Create a new EventNotification from JSON content with signature check.
+     *
      * @param json - The JSON content to create an B2EventNotification object from.
      * @param signatureFromHeader - The value of the X-Bz-Event-Notification-Signature header
      * @param signingSecret - The secret for computing the signature.
@@ -94,12 +125,14 @@ public class B2EventNotification {
                                             String signatureFromHeader,
                                             String signingSecret)
             throws B2JsonException, B2SignatureVerificationException {
-        B2Preconditions.checkArgumentIsNotNull(json, "json");
-        B2Preconditions.checkArgument(json.length() > 0);
-        B2Preconditions.checkArgumentIsNotNull(signatureFromHeader, "signatureFromHeader");
-        B2Preconditions.checkArgumentIsNotNull(signingSecret, "signingSecret");
-        SignatureUtils.verifySignature(json.getBytes(StandardCharsets.UTF_8), signatureFromHeader, signingSecret);
-        return B2Json.get().fromJson(json, B2EventNotification.class);
+        B2Preconditions.checkArgument(!B2StringUtil.isEmpty(json), "json is required");
+
+        // Only validate the signature if signature and secret are both provided
+        if (signatureFromHeader != null && signingSecret != null) {
+            SignatureUtils.verifySignature(
+                    json.getBytes(StandardCharsets.UTF_8), signatureFromHeader, signingSecret);
+        }
+        return B2Json.get().fromJson(json , B2EventNotification.class);
     }
 
     /*testing*/

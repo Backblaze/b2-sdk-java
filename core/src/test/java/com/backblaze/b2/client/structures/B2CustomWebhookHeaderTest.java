@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class B2CustomHeaderForResponseTest extends B2BaseTest {
+public class B2CustomWebhookHeaderTest extends B2BaseTest {
 
     @Test
     public void testToJsonAndBack() {
@@ -19,14 +19,14 @@ public class B2CustomHeaderForResponseTest extends B2BaseTest {
                 "  \"name\": \"name1\",\n" +
                 "  \"value\": \"val1\"\n" +
                 "}";
-        final B2CustomHeaderForResponse converted =
+        final B2WebhookCustomHeader converted =
                 B2Json.fromJsonOrThrowRuntime(
                         jsonString,
-                        B2CustomHeaderForResponse.class,
+                        B2WebhookCustomHeader.class,
                         B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS    // for targetType
                 );
-        final B2CustomHeaderForResponse defaultConfig =
-                new B2CustomHeaderForResponse("name1", "val1");
+        final B2WebhookCustomHeader defaultConfig =
+                new B2WebhookCustomHeader("name1", "val1");
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);

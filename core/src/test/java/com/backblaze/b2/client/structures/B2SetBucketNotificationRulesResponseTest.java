@@ -22,26 +22,26 @@ public class B2SetBucketNotificationRulesResponseTest extends B2BaseTest {
     @Test
     public void testFullSetBucketNotificationRulesResponse() {
 
-        final List<B2EventNotificationRuleForResponse> eventNotificationRuleForResponseList = listOf(
-                new B2EventNotificationRuleForResponse(
+        final List<B2EventNotificationRule> eventNotificationRuleList = listOf(
+                new B2EventNotificationRule(
                         "ruleName",
                         new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
                         "",
-                        new B2WebhookConfigurationForResponse("https://www.example.com", "dummySigningSecret"),
+                        new B2WebhookConfiguration("https://www.example.com", "dummySigningSecret"),
                         true,
                         true,
                         "reason for suspension"
                 ),
-                new B2EventNotificationRuleForResponse(
+                new B2EventNotificationRule(
                         "ruleNameWithCustomHeaders",
                         new TreeSet<>(listOf("b2:ObjectCreated:Replica")),
                         "prefix",
-                        new B2WebhookConfigurationForResponse(
+                        new B2WebhookConfiguration(
                                 "https://www.example.com",
                                 new TreeSet<>(
                                         listOf(
-                                                new B2CustomHeaderForResponse("name1", "val1"),
-                                                new B2CustomHeaderForResponse("name2", "val2")
+                                                new B2WebhookCustomHeader("name1", "val1"),
+                                                new B2WebhookCustomHeader("name2", "val2")
                                         )
                                 ),
                                 "dummySigningSecret"),
@@ -52,7 +52,7 @@ public class B2SetBucketNotificationRulesResponseTest extends B2BaseTest {
         );
 
         final B2SetBucketNotificationRulesResponse b2SetBucketNotificationRulesResponse =
-                B2SetBucketNotificationRulesResponse.builder(BUCKET_ID, eventNotificationRuleForResponseList)
+                B2SetBucketNotificationRulesResponse.builder(BUCKET_ID, eventNotificationRuleList)
                         .build();
 
         // Convert from B2SetBucketNotificationRulesResponse -> json

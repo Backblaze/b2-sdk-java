@@ -22,17 +22,17 @@ public class B2GetBucketNotificationRulesResponseTest extends B2BaseTest {
     @Test
     public void testFullGetBucketNotificationRulesResponse() {
 
-        final List<B2EventNotificationRuleForResponse> eventNotificationRuleForResponseList = listOf(
-                new B2EventNotificationRuleForResponse(
+        final List<B2EventNotificationRule> eventNotificationRuleList = listOf(
+                new B2EventNotificationRule(
                         "ruleName",
                         new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
                         "",
-                        new B2WebhookConfigurationForResponse(
+                        new B2WebhookConfiguration(
                                 "https://www.example.com",
                                 new TreeSet<>(
                                         listOf(
-                                                new B2CustomHeaderForResponse("name1", "val1"),
-                                                new B2CustomHeaderForResponse("name2", "val2")
+                                                new B2WebhookCustomHeader("name1", "val1"),
+                                                new B2WebhookCustomHeader("name2", "val2")
                                         )
                                 ),
                                 "dummySigningSecret"),
@@ -43,7 +43,7 @@ public class B2GetBucketNotificationRulesResponseTest extends B2BaseTest {
         );
 
         final B2GetBucketNotificationRulesResponse b2GetBucketNotificationRulesResponse =
-                B2GetBucketNotificationRulesResponse.builder(BUCKET_ID, eventNotificationRuleForResponseList)
+                B2GetBucketNotificationRulesResponse.builder(BUCKET_ID, eventNotificationRuleList)
                         .build();
 
         // Convert from B2GetBucketNotificationRulesResponse -> json

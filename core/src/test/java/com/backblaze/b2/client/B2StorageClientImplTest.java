@@ -28,8 +28,7 @@ import com.backblaze.b2.client.structures.B2DeleteFileVersionResponse;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
-import com.backblaze.b2.client.structures.B2EventNotificationRuleForRequest;
-import com.backblaze.b2.client.structures.B2EventNotificationRuleForResponse;
+import com.backblaze.b2.client.structures.B2EventNotificationRule;
 import com.backblaze.b2.client.structures.B2FileRetention;
 import com.backblaze.b2.client.structures.B2FileRetentionMode;
 import com.backblaze.b2.client.structures.B2FileVersion;
@@ -70,8 +69,7 @@ import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
-import com.backblaze.b2.client.structures.B2WebhookConfigurationForRequest;
-import com.backblaze.b2.client.structures.B2WebhookConfigurationForResponse;
+import com.backblaze.b2.client.structures.B2WebhookConfiguration;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Clock;
@@ -1192,8 +1190,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
 
     @Test
     public void testSetBucketNotificationRules() throws B2Exception {
-        final List<B2EventNotificationRuleForRequest> eventNotificationRuleForRequestList = listOf(
-                new B2EventNotificationRuleForRequest(
+        final List<B2EventNotificationRule> eventNotificationRuleList = listOf(
+                new B2EventNotificationRule(
                         "myRule",
                         new TreeSet<>(
                                 listOf(
@@ -1202,10 +1200,10 @@ public class B2StorageClientImplTest extends B2BaseTest {
                                 )
                         ),
                         "",
-                        new B2WebhookConfigurationForRequest("https://www.example.com"),
+                        new B2WebhookConfiguration("https://www.example.com"),
                         true
                 ),
-                new B2EventNotificationRuleForRequest(
+                new B2EventNotificationRule(
                         "myRule2",
                         new TreeSet<>(
                                 listOf(
@@ -1213,13 +1211,13 @@ public class B2StorageClientImplTest extends B2BaseTest {
                                 )
                         ),
                         "",
-                        new B2WebhookConfigurationForRequest("https://www.example2.com"),
+                        new B2WebhookConfiguration("https://www.example2.com"),
                         true
                 )
         );
 
-        final List<B2EventNotificationRuleForResponse> eventNotificationRuleForResponseList = listOf(
-                new B2EventNotificationRuleForResponse(
+        final List<B2EventNotificationRule> expectedEventNotificationRuleList = listOf(
+                new B2EventNotificationRule(
                         "myRule",
                         new TreeSet<>(
                                 listOf(
@@ -1228,11 +1226,11 @@ public class B2StorageClientImplTest extends B2BaseTest {
                                 )
                         ),
                         "",
-                        new B2WebhookConfigurationForResponse("https://www.example.com", "dummySigningSecret"),
+                        new B2WebhookConfiguration("https://www.example.com", "dummySigningSecret"),
                         true,
                         false,
                         ""),
-                new B2EventNotificationRuleForResponse(
+                new B2EventNotificationRule(
                         "myRule2",
                         new TreeSet<>(
                                 listOf(
@@ -1240,7 +1238,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                                 )
                         ),
                         "",
-                        new B2WebhookConfigurationForResponse("https://www.example2.com", "dummySigningSecret"),
+                        new B2WebhookConfiguration("https://www.example2.com", "dummySigningSecret"),
                         true,
                         false,
                         "")
@@ -1248,10 +1246,10 @@ public class B2StorageClientImplTest extends B2BaseTest {
 
 
         final B2SetBucketNotificationRulesRequest request = B2SetBucketNotificationRulesRequest
-                .builder(bucketId(1), eventNotificationRuleForRequestList)
+                .builder(bucketId(1), eventNotificationRuleList)
                 .build();
         final B2SetBucketNotificationRulesResponse response =
-                new B2SetBucketNotificationRulesResponse(bucketId(1), eventNotificationRuleForResponseList);
+                new B2SetBucketNotificationRulesResponse(bucketId(1), expectedEventNotificationRuleList);
         when(webifier.setBucketNotificationRules(any(), eq(request))).thenReturn(response);
 
         assertSame(response, client.setBucketNotificationRules(request));
@@ -1262,8 +1260,8 @@ public class B2StorageClientImplTest extends B2BaseTest {
 
     @Test
     public void testGetBucketNotificationRules() throws B2Exception {
-        final List<B2EventNotificationRuleForResponse> eventNotificationRuleForResponseList = listOf(
-                new B2EventNotificationRuleForResponse(
+        final List<B2EventNotificationRule> eventNotificationRuleList = listOf(
+                new B2EventNotificationRule(
                         "myRule",
                         new TreeSet<>(
                                 listOf(
@@ -1272,11 +1270,11 @@ public class B2StorageClientImplTest extends B2BaseTest {
                                 )
                         ),
                         "",
-                        new B2WebhookConfigurationForResponse("https://www.example.com", "dummySigningSecret"),
+                        new B2WebhookConfiguration("https://www.example.com", "dummySigningSecret"),
                         true,
                         false,
                         ""),
-                new B2EventNotificationRuleForResponse(
+                new B2EventNotificationRule(
                         "myRule2",
                         new TreeSet<>(
                                 listOf(
@@ -1284,7 +1282,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                                 )
                         ),
                         "",
-                        new B2WebhookConfigurationForResponse("https://www.example2.com", "dummySigningSecret"),
+                        new B2WebhookConfiguration("https://www.example2.com", "dummySigningSecret"),
                         true,
                         false,
                         "")
@@ -1294,7 +1292,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 .builder(bucketId(1))
                 .build();
         final B2GetBucketNotificationRulesResponse response =
-                new B2GetBucketNotificationRulesResponse(bucketId(1), eventNotificationRuleForResponseList);
+                new B2GetBucketNotificationRulesResponse(bucketId(1), eventNotificationRuleList);
         when(webifier.getBucketNotificationRules(any(), eq(request))).thenReturn(response);
 
         assertSame(response, client.getBucketNotificationRules(request));

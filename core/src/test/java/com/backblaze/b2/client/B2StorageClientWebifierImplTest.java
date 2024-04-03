@@ -20,12 +20,12 @@ import com.backblaze.b2.client.structures.B2CopyFileRequest;
 import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
-import com.backblaze.b2.client.structures.B2CustomHeaderForRequest;
+import com.backblaze.b2.client.structures.B2WebhookCustomHeader;
 import com.backblaze.b2.client.structures.B2DeleteBucketRequestReal;
 import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
-import com.backblaze.b2.client.structures.B2EventNotificationRuleForRequest;
+import com.backblaze.b2.client.structures.B2EventNotificationRule;
 import com.backblaze.b2.client.structures.B2FileRetention;
 import com.backblaze.b2.client.structures.B2FileRetentionMode;
 import com.backblaze.b2.client.structures.B2FileSseForRequest;
@@ -57,7 +57,7 @@ import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
-import com.backblaze.b2.client.structures.B2WebhookConfigurationForRequest;
+import com.backblaze.b2.client.structures.B2WebhookConfiguration;
 import com.backblaze.b2.client.webApiClients.B2WebApiClient;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
@@ -1957,8 +1957,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
 
     @Test
     public void testSetBucketNotificationRules() throws B2Exception {
-        final List<B2EventNotificationRuleForRequest> eventNotificationRuleForRequestList = listOf(
-                new B2EventNotificationRuleForRequest(
+        final List<B2EventNotificationRule> eventNotificationRuleList = listOf(
+                new B2EventNotificationRule(
                         "myRule",
                         new TreeSet<>(
                                 listOf(
@@ -1967,18 +1967,19 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                                 )
                         ),
                         "",
-                        new B2WebhookConfigurationForRequest(
+                        new B2WebhookConfiguration(
                                 "https://www.example.com",
                                 new TreeSet<>(
                                         listOf(
-                                                new B2CustomHeaderForRequest("name1", "val1"),
-                                                new B2CustomHeaderForRequest("name2", "val2")
+                                                new B2WebhookCustomHeader("name1", "val1"),
+                                                new B2WebhookCustomHeader("name2", "val2")
                                         )
-                                )
+                                ),
+                                "3XDfkdQte2OgA78qCtSD17LAzpj6ay9H"
                         ),
                         true
                 ),
-                new B2EventNotificationRuleForRequest(
+                new B2EventNotificationRule(
                         "myRule2",
                         new TreeSet<>(
                                 listOf(
@@ -1986,13 +1987,13 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                                 )
                         ),
                         "",
-                        new B2WebhookConfigurationForRequest("https://www.example2.com"),
+                        new B2WebhookConfiguration("https://www.example2.com"),
                         true
                 )
         );
 
         final B2SetBucketNotificationRulesRequest requestReal = B2SetBucketNotificationRulesRequest
-                .builder(bucketId(1), eventNotificationRuleForRequestList)
+                .builder(bucketId(1), eventNotificationRuleList)
                 .build();
         webifier.setBucketNotificationRules(ACCOUNT_AUTH, requestReal);
 
@@ -2013,8 +2014,10 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "            \"b2:ObjectCreated:Upload\"\n" +
                 "          ],\n" +
                 "          \"isEnabled\": true,\n" +
+                "          \"isSuspended\": null,\n" +
                 "          \"name\": \"myRule\",\n" +
                 "          \"objectNamePrefix\": \"\",\n" +
+                "          \"suspensionReason\": null,\n" +
                 "          \"targetConfiguration\": {\n" +
                 "            \"customHeaders\": [\n" +
                 "              {\n" +
@@ -2026,6 +2029,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "                \"value\": \"val2\"\n" +
                 "              }\n" +
                 "            ],\n" +
+                "            \"hmacSha256SigningSecret\": \"3XDfkdQte2OgA78qCtSD17LAzpj6ay9H\",\n" +
                 "            \"targetType\": \"webhook\",\n" +
                 "            \"url\": \"https://www.example.com\"\n" +
                 "          }\n" +
@@ -2035,10 +2039,13 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "            \"b2:ObjectDeleted:LifecycleRule\"\n" +
                 "          ],\n" +
                 "          \"isEnabled\": true,\n" +
+                "          \"isSuspended\": null,\n" +
                 "          \"name\": \"myRule2\",\n" +
                 "          \"objectNamePrefix\": \"\",\n" +
+                "          \"suspensionReason\": null,\n" +
                 "          \"targetConfiguration\": {\n" +
                 "            \"customHeaders\": null,\n" +
+                "            \"hmacSha256SigningSecret\": null,\n" +
                 "            \"targetType\": \"webhook\",\n" +
                 "            \"url\": \"https://www.example2.com\"\n" +
                 "          }\n" +

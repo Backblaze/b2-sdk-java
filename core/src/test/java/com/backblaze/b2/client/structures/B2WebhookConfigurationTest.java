@@ -15,22 +15,22 @@ import static com.backblaze.b2.util.B2Collections.listOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class B2WebhookConfigurationForResponseTest extends B2BaseTest {
+public class B2WebhookConfigurationTest extends B2BaseTest {
 
     @Test
     public void testUrlWithIncorrectProtocolThrows() {
         // Must be https://
         try {
             //noinspection HttpUrlsUsage
-            new B2WebhookConfigurationForResponse(
-                    "http://www.example.com",
+            new B2WebhookConfiguration(
+                    "http://www.backblaze.com",
                     new TreeSet<>(
                             listOf(
-                                    new B2CustomHeaderForResponse("name1", "val1"),
-                                    new B2CustomHeaderForResponse("name2", "val2")
+                                    new B2WebhookCustomHeader("name1", "val1"),
+                                    new B2WebhookCustomHeader("name2", "val2")
                             )
                     ),
-                    "dummySigningSecret"
+                    null
             );
             fail("should have thrown");
         }
@@ -52,26 +52,26 @@ public class B2WebhookConfigurationForResponseTest extends B2BaseTest {
                 "      \"value\": \"val2\"\n" +
                 "    }\n" +
                 "  ],\n" +
-                "  \"hmacSha256SigningSecret\": \"dummySigningSecret\",\n" +
+                "  \"hmacSha256SigningSecret\": \"rrzaVL6BqYt83s2Q5R2I79AilaxVBJUS\",\n" +
                 "  \"targetType\": \"webhook\",\n" +
                 "  \"url\": \"https://www.example.com\"\n" +
                 "}";
-        final B2WebhookConfigurationForResponse converted =
+        final B2WebhookConfiguration converted =
                 B2Json.fromJsonOrThrowRuntime(
                         jsonString,
-                        B2WebhookConfigurationForResponse.class,
+                        B2WebhookConfiguration.class,
                         B2JsonOptions.DEFAULT_AND_ALLOW_EXTRA_FIELDS    // for targetType
                 );
-        final B2WebhookConfigurationForResponse defaultConfig =
-                new B2WebhookConfigurationForResponse(
+        final B2WebhookConfiguration defaultConfig =
+                new B2WebhookConfiguration(
                         "https://www.example.com",
                         new TreeSet<>(
                                 listOf(
-                                        new B2CustomHeaderForResponse("name1", "val1"),
-                                        new B2CustomHeaderForResponse("name2", "val2")
+                                        new B2WebhookCustomHeader("name1", "val1"),
+                                        new B2WebhookCustomHeader("name2", "val2")
                                 )
                         ),
-                        "dummySigningSecret"
+                        "rrzaVL6BqYt83s2Q5R2I79AilaxVBJUS"
                 );
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);

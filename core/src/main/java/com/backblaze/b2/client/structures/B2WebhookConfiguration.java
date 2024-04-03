@@ -11,9 +11,9 @@ import java.util.Objects;
 import java.util.TreeSet;
 
 /**
- * Webhook destination for B2EventNotificationRuleForResponse
+ * Webhook destination for B2EventNotificationRule
  */
-public class B2WebhookConfigurationForResponse extends B2EventNotificationTargetConfigurationForResponse {
+public class B2WebhookConfiguration extends B2EventNotificationTargetConfiguration {
     /**
      * The URL endpoint for the webhook, including the protocol, which
      * must be "https://".
@@ -22,16 +22,15 @@ public class B2WebhookConfigurationForResponse extends B2EventNotificationTarget
     private final String url;
 
     @B2Json.optional
-    private final TreeSet<B2CustomHeaderForResponse> customHeaders;
+    private final TreeSet<B2WebhookCustomHeader> customHeaders;
 
-    @B2Json.required
+    @B2Json.optional
     private final String hmacSha256SigningSecret;
 
     @B2Json.constructor
-    public B2WebhookConfigurationForResponse(String url,
-                                             TreeSet<B2CustomHeaderForResponse> customHeaders,
-                                             String hmacSha256SigningSecret) {
-
+    public B2WebhookConfiguration(String url,
+            TreeSet<B2WebhookCustomHeader> customHeaders,
+            String hmacSha256SigningSecret) {
         B2Preconditions.checkArgument(
                 url != null && url.startsWith("https://"),
                 "The protocol for the url must be https://"
@@ -42,8 +41,15 @@ public class B2WebhookConfigurationForResponse extends B2EventNotificationTarget
         this.hmacSha256SigningSecret = hmacSha256SigningSecret;
     }
 
-    public B2WebhookConfigurationForResponse(String url,
-                                             String hmacSha256SigningSecret) {
+    public B2WebhookConfiguration(String url) {
+        this(url, null, null);
+    }
+
+    public B2WebhookConfiguration(String url, TreeSet<B2WebhookCustomHeader> customHeaders) {
+        this(url, customHeaders, null);
+    }
+
+    public B2WebhookConfiguration(String url, String hmacSha256SigningSecret) {
         this(url, null, hmacSha256SigningSecret);
     }
 
@@ -51,7 +57,7 @@ public class B2WebhookConfigurationForResponse extends B2EventNotificationTarget
         return url;
     }
 
-    public TreeSet<B2CustomHeaderForResponse> getCustomHeaders() {
+    public TreeSet<B2WebhookCustomHeader> getCustomHeaders() {
         if (customHeaders == null) {
             return null;
         }
@@ -66,10 +72,10 @@ public class B2WebhookConfigurationForResponse extends B2EventNotificationTarget
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final B2WebhookConfigurationForResponse that = (B2WebhookConfigurationForResponse) o;
+        final B2WebhookConfiguration that = (B2WebhookConfiguration) o;
         return url.equals(that.url) &&
                 Objects.equals(customHeaders, that.customHeaders) &&
-                hmacSha256SigningSecret.equals(that.hmacSha256SigningSecret);
+                Objects.equals(hmacSha256SigningSecret, that.hmacSha256SigningSecret);
     }
 
     @Override
@@ -79,7 +85,7 @@ public class B2WebhookConfigurationForResponse extends B2EventNotificationTarget
 
     @Override
     public String toString() {
-        return "B2WebhookConfigurationForResponse{" +
+        return "B2WebhookConfiguration{" +
                 "url='" + url + '\'' +
                 ", customHeaders=" + customHeaders +
                 ", hmacSha256SigningSecret='" + hmacSha256SigningSecret + '\'' +

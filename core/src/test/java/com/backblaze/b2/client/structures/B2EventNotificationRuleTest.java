@@ -14,37 +14,7 @@ import static com.backblaze.b2.util.B2Collections.listOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class B2EventNotificationRuleForResponseTest extends B2BaseTest {
-
-    @Test
-    public void testIsSuspendedWithoutSuspensionReasonThrows() {
-        try {
-            new B2EventNotificationRuleForResponse(
-                    "myRule",
-                    new TreeSet<>(
-                            listOf("b2:ObjectCreated:Replica", "b2:ObjectCreated:Upload")
-                    ),
-                    "",
-                    new B2WebhookConfigurationForResponse("" +
-                            "https://www.example.com",
-                            new TreeSet<>(
-                                    listOf(
-                                            new B2CustomHeaderForResponse("name1", "val1"),
-                                            new B2CustomHeaderForResponse("name2", "val2")
-                                    )
-                            ),
-                            "dummySigningSecret"
-                    ),
-                    true,
-                    true,
-                    ""
-            );
-            fail("should have thrown");
-        }
-        catch (IllegalArgumentException e) {
-            assertEquals("A suspension reason is required if isSuspended is true", e.getMessage());
-        }
-    }
+public class B2EventNotificationRuleTest extends B2BaseTest {
 
     @Test
     public void testToJsonAndBack() {
@@ -69,34 +39,34 @@ public class B2EventNotificationRuleForResponseTest extends B2BaseTest {
                 "        \"value\": \"val2\"\n" +
                 "      }\n" +
                 "    ],\n" +
-                "    \"hmacSha256SigningSecret\": \"dummySigningSecret\",\n" +
+                "    \"hmacSha256SigningSecret\": \"3XDfkdQte2OgA78qCtSD17LAzpj6ay9H\",\n" +
                 "    \"targetType\": \"webhook\",\n" +
                 "    \"url\": \"https://www.example.com\"\n" +
                 "  }\n" +
                 "}";
-        final B2EventNotificationRuleForResponse converted =
+        final B2EventNotificationRule converted =
                 B2Json.fromJsonOrThrowRuntime(
                         jsonString,
-                        B2EventNotificationRuleForResponse.class
+                        B2EventNotificationRule.class
                 );
 
         final TreeSet<String> eventTypes = new TreeSet<>();
         eventTypes.add("b2:ObjectCreated:Replica");
         eventTypes.add("b2:ObjectCreated:Upload");
-        final B2EventNotificationRuleForResponse defaultConfig =
-                new B2EventNotificationRuleForResponse(
+        final B2EventNotificationRule defaultConfig =
+                new B2EventNotificationRule(
                         "myRule",
                         eventTypes,
                         "",
-                        new B2WebhookConfigurationForResponse("" +
+                        new B2WebhookConfiguration("" +
                                 "https://www.example.com",
                                 new TreeSet<>(
                                         listOf(
-                                                new B2CustomHeaderForResponse("name1", "val1"),
-                                                new B2CustomHeaderForResponse("name2", "val2")
+                                                new B2WebhookCustomHeader("name1", "val1"),
+                                                new B2WebhookCustomHeader("name2", "val2")
                                         )
                                 ),
-                                "dummySigningSecret"
+                                "3XDfkdQte2OgA78qCtSD17LAzpj6ay9H"
                         ),
                         true,
                         false,

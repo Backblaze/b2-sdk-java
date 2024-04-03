@@ -6,21 +6,21 @@ package com.backblaze.b2.client.structures;
 
 import com.backblaze.b2.json.B2Json;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
 
 /**
  * One rule about under what condition(s) to send notifications for events in a bucket.
  */
-public class B2EventNotificationRuleForRequest implements Comparable<B2EventNotificationRuleForRequest> {
-    private static final Comparator<B2EventNotificationRuleForRequest> COMPARATOR = Comparator.comparing(B2EventNotificationRuleForRequest::getName)
+public class B2EventNotificationRule implements Comparable<B2EventNotificationRule> {
+    private static final Comparator<B2EventNotificationRule> COMPARATOR = Comparator.comparing(B2EventNotificationRule::getName)
             .thenComparing(rule -> String.join(",", rule.getEventTypes()))
-            .thenComparing(B2EventNotificationRuleForRequest::getObjectNamePrefix)
+            .thenComparing(B2EventNotificationRule::getObjectNamePrefix)
             .thenComparing(rule -> rule.getTargetConfiguration().toString())
-            .thenComparing(B2EventNotificationRuleForRequest::isEnabled);
+            .thenComparing(B2EventNotificationRule::isEnabled)
+            .thenComparing(B2EventNotificationRule::isSuspended)
+            .thenComparing(B2EventNotificationRule::getSuspensionReason);
 
     /**
      * A name for identifying the rule. Names must be unique within a bucket.
@@ -50,7 +50,7 @@ public class B2EventNotificationRuleForRequest implements Comparable<B2EventNoti
      * The target configuration for the event notification.
      */
     @B2Json.required
-    private final B2EventNotificationTargetConfigurationForRequest targetConfiguration;
+    private final B2EventNotificationTargetConfiguration targetConfiguration;
 
     /**
      * Indicates if the rule is enabled.
@@ -58,18 +58,43 @@ public class B2EventNotificationRuleForRequest implements Comparable<B2EventNoti
     @B2Json.required
     private final boolean isEnabled;
 
+    /**
+     * Indicates if the rule is suspended.
+     */
+    @B2Json.optional
+    private final Boolean isSuspended;
+
+    /**
+     * If isSuspended is true, specifies the reason the rule was
+     * suspended.
+     */
+    @B2Json.optional
+    private final String suspensionReason;
+
     @B2Json.constructor
-    public B2EventNotificationRuleForRequest(String name,
-                                             TreeSet<String> eventTypes,
-                                             String objectNamePrefix,
-                                             B2EventNotificationTargetConfigurationForRequest targetConfiguration,
-                                             boolean isEnabled) {
+    public B2EventNotificationRule(String name,
+            TreeSet<String> eventTypes,
+            String objectNamePrefix,
+            B2EventNotificationTargetConfiguration targetConfiguration,
+            boolean isEnabled,
+            Boolean isSuspended,
+            String suspensionReason) {
 
         this.name = name;
         this.eventTypes = new TreeSet<>(eventTypes);
         this.objectNamePrefix = objectNamePrefix;
         this.targetConfiguration = targetConfiguration;
         this.isEnabled = isEnabled;
+        this.isSuspended = isSuspended;
+        this.suspensionReason = suspensionReason;
+    }
+
+    public B2EventNotificationRule(String name,
+            TreeSet<String> eventTypes,
+            String objectNamePrefix,
+            B2EventNotificationTargetConfiguration targetConfiguration,
+            boolean isEnabled) {
+        this(name, eventTypes, objectNamePrefix, targetConfiguration, isEnabled, null, null);
     }
 
     public String getName() {
@@ -84,7 +109,7 @@ public class B2EventNotificationRuleForRequest implements Comparable<B2EventNoti
         return objectNamePrefix;
     }
 
-    public B2EventNotificationTargetConfigurationForRequest getTargetConfiguration() {
+    public B2EventNotificationTargetConfiguration getTargetConfiguration() {
         return targetConfiguration;
     }
 
@@ -92,16 +117,26 @@ public class B2EventNotificationRuleForRequest implements Comparable<B2EventNoti
         return isEnabled;
     }
 
+    public boolean isSuspended() {
+        return isSuspended;
+    }
+
+    public String getSuspensionReason() {
+        return suspensionReason;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final B2EventNotificationRuleForRequest that = (B2EventNotificationRuleForRequest) o;
+        final B2EventNotificationRule that = (B2EventNotificationRule) o;
         return isEnabled == that.isEnabled &&
                 name.equals(that.name) &&
                 eventTypes.equals(that.eventTypes) &&
                 objectNamePrefix.equals(that.objectNamePrefix) &&
-                targetConfiguration.equals(that.targetConfiguration);
+                targetConfiguration.equals(that.targetConfiguration) &&
+                Objects.equals(isSuspended, that.isSuspended) &&
+                Objects.equals(suspensionReason, that.suspensionReason);
     }
 
     @Override
@@ -111,18 +146,22 @@ public class B2EventNotificationRuleForRequest implements Comparable<B2EventNoti
                 eventTypes,
                 objectNamePrefix,
                 targetConfiguration,
-                isEnabled
+                isEnabled,
+                isSuspended,
+                suspensionReason
         );
     }
 
     @Override
     public String toString() {
-        return "B2EventNotificationRuleForRequest{" +
+        return "B2EventNotificationRule{" +
                 "name='" + name + '\'' +
                 ", eventTypes=" + eventTypes +
                 ", objectNamePrefix='" + objectNamePrefix + '\'' +
                 ", targetConfiguration=" + targetConfiguration +
                 ", isEnabled=" + isEnabled +
+                ", isSuspended=" + isSuspended +
+                ", suspensionReason='" + suspensionReason + '\'' +
                 '}';
     }
 
@@ -130,52 +169,7 @@ public class B2EventNotificationRuleForRequest implements Comparable<B2EventNoti
      * Rules are sorted by name first, and then additional attributes if necessary.
      */
     @Override
-    public int compareTo(B2EventNotificationRuleForRequest r) {
+    public int compareTo(B2EventNotificationRule r) {
         return COMPARATOR.compare(this, r);
     }
-
-    /**
-     * Convenience method to convert a List of B2EventNotificationRuleForResponse to a List of
-     * B2EventNotificationRuleForRequest.
-     * @param rules the List of B2EventNotificationRuleForResponse to convert
-     * @return the converted List of B2EventNotificationRuleForRequest or null if null was supplied as argument.
-     */
-    public static List<B2EventNotificationRuleForRequest> convertToListOfB2EventNotificationRuleForRequest(
-            List<B2EventNotificationRuleForResponse> rules) {
-
-        if (rules == null) {
-            return null;
-        }
-
-        final List<B2EventNotificationRuleForRequest> requestList = new ArrayList<>();
-        for (B2EventNotificationRuleForResponse response : rules) {
-            requestList.add(convertToB2EventNotificationForRequest(response));
-        }
-        return requestList;
-    }
-
-    /**
-     * Convenience method to convert a B2EventNotificationRuleForResponse to a
-     * B2EventNotificationRuleForRequest.
-     * @param rule the B2EventNotificationRuleForResponse to convert
-     * @return the converted B2EventNotificationRuleForRequest or null if null was supplied as argument.
-     */
-    public static B2EventNotificationRuleForRequest convertToB2EventNotificationForRequest(
-            B2EventNotificationRuleForResponse rule) {
-
-        if (rule == null) {
-            return null;
-        }
-
-        return new B2EventNotificationRuleForRequest(
-                rule.getName(),
-                rule.getEventTypes(),
-                rule.getObjectNamePrefix(),
-                B2WebhookConfigurationForRequest.convertToB2EventNotificationTargetConfigurationForRequest(
-                        rule.getTargetConfiguration()
-                ),
-                rule.isEnabled()
-        );
-    }
-
 }

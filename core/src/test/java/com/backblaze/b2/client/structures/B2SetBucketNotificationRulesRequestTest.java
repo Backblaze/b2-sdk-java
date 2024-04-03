@@ -22,33 +22,34 @@ public class B2SetBucketNotificationRulesRequestTest extends B2BaseTest {
     @Test
     public void testFullSetBucketNotificationRulesRequest() {
 
-        final List<B2EventNotificationRuleForRequest> eventNotificationRuleForRequestList = listOf(
-                new B2EventNotificationRuleForRequest(
+        final List<B2EventNotificationRule> eventNotificationRuleList = listOf(
+                new B2EventNotificationRule(
                         "ruleName",
                         new TreeSet<>(listOf("b2:ObjectCreated:Copy")),
                         "",
-                        new B2WebhookConfigurationForRequest("https://www.example.com"),
+                        new B2WebhookConfiguration("https://www.example.com"),
                         true
                 ),
-                new B2EventNotificationRuleForRequest(
+                new B2EventNotificationRule(
                         "ruleNameWithCustomHeaders",
                         new TreeSet<>(listOf("b2:ObjectCreated:Replica")),
                         "",
-                        new B2WebhookConfigurationForRequest(
+                        new B2WebhookConfiguration(
                                 "https://www.example.com",
                                 new TreeSet<>(
                                         listOf(
-                                                new B2CustomHeaderForRequest("name1", "val1"),
-                                                new B2CustomHeaderForRequest("name2", "val2")
+                                                new B2WebhookCustomHeader("name1", "val1"),
+                                                new B2WebhookCustomHeader("name2", "val2")
                                         )
-                                )
+                                ),
+                                "rrzaVL6BqYt83s2Q5R2I79AilaxVBJUS"
                         ),
                         true
                 )
         );
 
         final B2SetBucketNotificationRulesRequest b2SetBucketNotificationRulesRequest =
-                B2SetBucketNotificationRulesRequest.builder(BUCKET_ID, eventNotificationRuleForRequestList)
+                B2SetBucketNotificationRulesRequest.builder(BUCKET_ID, eventNotificationRuleList)
                 .build();
 
         // Convert from B2SetBucketNotificationRulesRequest -> json
@@ -62,10 +63,13 @@ public class B2SetBucketNotificationRulesRequestTest extends B2BaseTest {
                 "        \"b2:ObjectCreated:Copy\"\n" +
                 "      ],\n" +
                 "      \"isEnabled\": true,\n" +
+                "      \"isSuspended\": null,\n" +
                 "      \"name\": \"ruleName\",\n" +
                 "      \"objectNamePrefix\": \"\",\n" +
+                "      \"suspensionReason\": null,\n" +
                 "      \"targetConfiguration\": {\n" +
                 "        \"customHeaders\": null,\n" +
+                "        \"hmacSha256SigningSecret\": null,\n" +
                 "        \"targetType\": \"webhook\",\n" +
                 "        \"url\": \"https://www.example.com\"\n" +
                 "      }\n" +
@@ -75,8 +79,10 @@ public class B2SetBucketNotificationRulesRequestTest extends B2BaseTest {
                 "        \"b2:ObjectCreated:Replica\"\n" +
                 "      ],\n" +
                 "      \"isEnabled\": true,\n" +
+                "      \"isSuspended\": null,\n" +
                 "      \"name\": \"ruleNameWithCustomHeaders\",\n" +
                 "      \"objectNamePrefix\": \"\",\n" +
+                "      \"suspensionReason\": null,\n" +
                 "      \"targetConfiguration\": {\n" +
                 "        \"customHeaders\": [\n" +
                 "          {\n" +
@@ -88,6 +94,7 @@ public class B2SetBucketNotificationRulesRequestTest extends B2BaseTest {
                 "            \"value\": \"val2\"\n" +
                 "          }\n" +
                 "        ],\n" +
+                "        \"hmacSha256SigningSecret\": \"rrzaVL6BqYt83s2Q5R2I79AilaxVBJUS\",\n" +
                 "        \"targetType\": \"webhook\",\n" +
                 "        \"url\": \"https://www.example.com\"\n" +
                 "      }\n" +
