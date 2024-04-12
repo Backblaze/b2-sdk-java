@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -184,6 +184,7 @@ public class B2TestHelpers {
                 .builder("/prefix" + i + "/")
                 .setDaysFromUploadingToHiding(i)
                 .setDaysFromHidingToDeleting(2 * i)
+                .setDaysFromStartingToCancelingUnfinishedLargeFiles(3 * i)
                 .build();
     }
 

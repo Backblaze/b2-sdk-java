@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -22,8 +22,11 @@ import com.backblaze.b2.client.structures.B2DeleteKeyRequest;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2EventNotificationRule;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
@@ -37,6 +40,9 @@ import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2ListKeysRequest;
 import com.backblaze.b2.client.structures.B2ListPartsRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
+import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2StoreLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
@@ -247,9 +253,9 @@ public interface B2StorageClient extends Closeable {
      *
      * This method assumes you have already called startLargeFile(). The return value
      * of that call needs to be passed into this method. However, this method will
-     * currently call finish file.
+     * call finish file.
      *
-     * XXX: should we switch to letting the caller finish the large file?
+     * XXX: add storePartsForLargeFileFromLocalContent that stores parts but doesn't finish the file.
      *
      * @param fileVersion The B2FileVersion for the large file getting stored.
      *                    This is the return value of startLargeFile().
@@ -276,9 +282,9 @@ public interface B2StorageClient extends Closeable {
      *
      * This method assumes you have already called startLargeFile(). The return value
      * of that call needs to be passed into this method as part of a
-     * B2StoreLargeFileRequest. However, this method will currently call finish file.
+     * B2StoreLargeFileRequest. However, this method will call finish file.
      *
-     * XXX: should we switch to letting the caller finish the large file?
+     * XXX: add storePartsForLargeFileFromLocalContent that stores parts but doesn't finish the file.
      *
      * @param storeLargeFileRequest The B2StoreLargeFileRequest for the large file
      *                              getting stored. This is built from the return
@@ -371,22 +377,20 @@ public interface B2StorageClient extends Closeable {
     /**
      * Stores a large file, where storing each part may involve different behavior
      * or byte sources.
-     *
+     * <p>
      * For example, this method supports the use case of making a copy of a file
      * that mostly has not changed, and the user only wishes to upload the parts
      * that have changed. In this case partStorers would be a mix of
      * B2CopyingPartStorers and one or more B2UploadingPartStorers.
-     *
+     * <p>
      * Another use case would be reattempting an upload of a large file where some
      * parts have completed, and some haven't. In this case, partStorers would
      * be a mix of B2AlreadyStoredPartStorer and B2UploadingPartStorers.
-     *
+     * <p>
      * This method assumes you have already called startLargeFile(). The return value
      * of that call needs to be passed into this method. However, this method will
-     * currently call finish file. Note that each part, whether copied or uploaded,
-     * is still subject to the minimum part size.
-     *
-     * XXX: should we switch to letting the caller finish the large file?
+     * call finish file. Note that each part, whether copied or uploaded, is still
+     * subject to the minimum part size.
      *
      * @param fileVersion The B2FileVersion for the large file getting stored.
      *                    This is the return value of startLargeFile().
@@ -411,19 +415,19 @@ public interface B2StorageClient extends Closeable {
      * Stores a large file, where storing each part may involve different behavior
      * or byte sources, optionally allowing caller to pass SSE-C parameters to match
      * those given to startLargeFile().
-     *
+     * <p>
      * For example, this method supports the use case of making a copy of a file
      * that mostly has not changed, and the user only wishes to upload the parts
      * that have changed. In this case partStorers would be a mix of
      * B2CopyingPartStorers and one or more B2UploadingPartStorers.
-     *
+     * <p>
      * Another use case would be reattempting an upload of a large file where some
      * parts have completed, and some haven't. In this case, partStorers would
      * be a mix of B2AlreadyStoredPartStorer and B2UploadingPartStorers.
-     *
+     * <p>
      * This method assumes you have already called startLargeFile(). The return value
      * of that call needs to be passed into this method as part of a
-     * B2StoreLargeFileRequest. However, this method will currently call finish file.
+     * B2StoreLargeFileRequest. However, this method will call finish file.
      * Note that each part, whether copied or uploaded,
      * is still subject to the minimum part size.
      *
@@ -443,6 +447,84 @@ public interface B2StorageClient extends Closeable {
      * @throws B2Exception If there's trouble.
      */
     B2FileVersion storeLargeFile(
+            B2StoreLargeFileRequest storeLargeFileRequest,
+            List<B2PartStorer> partStorers,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception;
+
+    /**
+     * Stores large file parts, where storing each part may involve different behavior
+     * or byte sources.
+     * <p>
+     * For example, this method supports the use case of preparing to make a copy
+     * of a file that mostly has not changed, and the user only wishes to upload
+     * the parts that have changed. In this case partStorers would be a mix of
+     * B2CopyingPartStorers and one or more B2UploadingPartStorers.
+     * <p>
+     * Another use case would be reattempting some part uploads for an unfinished
+     * large file for which some parts have completed, and some haven't. In this case,
+     * partStorers would be a mix of B2AlreadyStoredPartStorer and B2UploadingPartStorers.
+     * <p>
+     * This method assumes you have already called startLargeFile(). The return value
+     * of that call needs to be passed into this method. Note that each part, whether
+     * copied or uploaded, is still subject to the minimum part size. Note also that
+     * this method does <b>not</b> finish the large file.
+     *
+     * @param fileVersion The B2FileVersion for the large file for which these parts
+     *                    are being uploaded. This is the return value of startLargeFile().
+     * @param partStorers The list of objects that know how to store the part
+     *                    they are responsible for.
+     * @param uploadListenerOrNull The object that handles upload progress events.
+     *                             This may be null if you do not need to be notified
+     *                             of progress events.
+     * @param executor The executor for uploading parts in parallel. The caller
+     *                 retains ownership of the executor and is responsible for
+     *                 shutting it down.
+     * @return The list of parts after all have been stored.
+     * @throws B2Exception If there's trouble.
+     */
+    List<B2Part> storePartsForLargeFile(
+            B2FileVersion fileVersion,
+            List<B2PartStorer> partStorers,
+            B2UploadListener uploadListenerOrNull,
+            ExecutorService executor) throws B2Exception;
+
+    /**
+     * Stores large file parts, where storing each part may involve different behavior
+     * or byte sources, optionally allowing caller to pass SSE-C parameters to match
+     * those given to startLargeFile().
+     * <p>
+     * For example, this method supports the use case of making a copy of a file
+     * that mostly has not changed, and the user only wishes to upload the parts
+     * that have changed. In this case partStorers would be a mix of
+     * B2CopyingPartStorers and one or more B2UploadingPartStorers.
+     * <p>
+     * Another use case would be reattempting some part uploads for an unfinished
+     * large file for which some parts have completed, and some haven't. In this case,
+     * partStorers would be a mix of B2AlreadyStoredPartStorer and B2UploadingPartStorers.
+     * <p>
+     * This method assumes you have already called startLargeFile(). The return value
+     * of that call needs to be passed into this method as part of a
+     * B2StoreLargeFileRequest. Note that each part, whether copied or uploaded,
+     * is still subject to the minimum part size. Note also that this method does
+     * <b>not</b> finish the large file.
+     *
+     * @param storeLargeFileRequest The B2StoreLargeFileRequest for the large file
+     *                              for which these parts are being stored. This is
+     *                              built from the return value of startLargeFile() and
+     *                              any other relevant parameters.
+     * @param partStorers The list of objects that know how to store the part
+     *                    they are responsible for.
+     * @param uploadListenerOrNull The object that handles upload progress events.
+     *                             This may be null if you do not need to be notified
+     *                             of progress events.
+     * @param executor The executor for uploading parts in parallel. The caller
+     *                 retains ownership of the executor and is responsible for
+     *                 shutting it down.
+     * @return The list of parts after all have been stored.
+     * @throws B2Exception If there's trouble.
+     */
+    List<B2Part> storePartsForLargeFile(
             B2StoreLargeFileRequest storeLargeFileRequest,
             List<B2PartStorer> partStorers,
             B2UploadListener uploadListenerOrNull,
@@ -1007,6 +1089,50 @@ public interface B2StorageClient extends Closeable {
      * @see <a href="https://www.backblaze.com/b2/docs/b2_update_file_retention.html">b2_update_file_retention</a>
      */
     B2UpdateFileRetentionResponse updateFileRetention(B2UpdateFileRetentionRequest request) throws B2Exception;
+
+    /**
+     * Sets the bucket's event notification rules as described by the request.
+     *
+     * @param request specifies which bucket to update and how to update the event notification rules.
+     * @return the new state of the bucket's event notification rules
+     * @throws B2Exception if there's any trouble.
+     * @see <a href="https://www.backblaze.com/b2/docs/b2_set_bucket_notification_rules.html">b2_set_bucket_notification_rules</a>
+     */
+    B2SetBucketNotificationRulesResponse setBucketNotificationRules(B2SetBucketNotificationRulesRequest request) throws B2Exception;
+
+    /**
+     * Gets the bucket's event notification rules as described by the request.
+     *
+     * @param request specifies which bucket to get the event notification rules from.
+     * @return the current state of the bucket's event notification rules
+     * @throws B2Exception if there's any trouble.
+     * @see <a href="https://www.backblaze.com/b2/docs/b2_get_bucket_notification_rules.html">b2_get_bucket_notification_rules</a>
+     */
+    B2GetBucketNotificationRulesResponse getBucketNotificationRules(B2GetBucketNotificationRulesRequest request) throws B2Exception;
+
+    /**
+     * Just like setBucketNotificationRules(request), except that the request is created from
+     * the specified bucketId and eventNotificationRules.
+     *
+     * @param bucketId                  the bucket whose eventNotificationRules you want to set.
+     * @param eventNotificationRules    the eventNotificationRules to set on the bucket.
+     * @throws B2Exception if there's any trouble.
+     */
+    default B2SetBucketNotificationRulesResponse setBucketNotificationRules(String bucketId,
+                                                                            List<B2EventNotificationRule> eventNotificationRules) throws B2Exception {
+        return setBucketNotificationRules(B2SetBucketNotificationRulesRequest.builder(bucketId, eventNotificationRules).build());
+    }
+
+    /**
+     * Just like getBucketNotificationRules(request), except that the request is created from
+     * the specified bucketId.
+     *
+     * @param bucketId the bucket whose eventNotificationRules you want to get.
+     * @throws B2Exception if there's any trouble.
+     */
+    default B2GetBucketNotificationRulesResponse getBucketNotificationRules(String bucketId) throws B2Exception {
+        return getBucketNotificationRules(B2GetBucketNotificationRulesRequest.builder(bucketId).build());
+    }
 
     /**
      * Closes this instance, releasing resources.

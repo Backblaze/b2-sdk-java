@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -50,8 +50,7 @@ public class B2Bucket {
     @B2Json.required
     private final int revision;
 
-    @B2Json.constructor(params = "accountId,bucketId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules," +
-            "options,fileLockConfiguration,defaultServerSideEncryption,replicationConfiguration,revision")
+    @B2Json.constructor
     public B2Bucket(String accountId,
                     String bucketId,
                     String bucketName,
@@ -196,7 +195,7 @@ public class B2Bucket {
                 fileLockConfiguration + "," +
                 defaultServerSideEncryption + "," +
                 replicationConfiguration + "," +
-                "v" + revision +
+                   "v" + revision +
                 ')';
     }
 
@@ -214,7 +213,7 @@ public class B2Bucket {
                 Objects.equals(getCorsRules(), b2Bucket.getCorsRules()) &&
                 Objects.equals(getLifecycleRules(), b2Bucket.getLifecycleRules()) &&
                 Objects.equals(getOptions(), b2Bucket.getOptions()) &&
-                // don't use getter for these two fields because they can throw B2ForbiddenException
+                // don't use getter for these fields because they can throw B2ForbiddenException
                 Objects.equals(fileLockConfiguration, b2Bucket.fileLockConfiguration) &&
                 Objects.equals(defaultServerSideEncryption, b2Bucket.defaultServerSideEncryption) &&
                 Objects.equals(replicationConfiguration, b2Bucket.replicationConfiguration);
@@ -232,7 +231,7 @@ public class B2Bucket {
                 getLifecycleRules(),
                 getOptions(),
                 getRevision(),
-                // don't use getter for these two fields because they can throw B2ForbiddenException
+                // don't use getter for these fields because they can throw B2ForbiddenException
                 fileLockConfiguration,
                 defaultServerSideEncryption,
                 replicationConfiguration

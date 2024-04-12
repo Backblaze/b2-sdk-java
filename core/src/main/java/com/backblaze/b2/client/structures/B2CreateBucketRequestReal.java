@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -46,8 +46,7 @@ public class B2CreateBucketRequestReal {
     @B2Json.optional
     private final B2BucketReplicationConfiguration replicationConfiguration;
 
-    @B2Json.constructor(params = "accountId,bucketName,bucketType,bucketInfo,corsRules,lifecycleRules,fileLockEnabled,"+
-            "defaultServerSideEncryption, replicationConfiguration")
+    @B2Json.constructor
     private B2CreateBucketRequestReal(String accountId,
                                       String bucketName,
                                       String bucketType,

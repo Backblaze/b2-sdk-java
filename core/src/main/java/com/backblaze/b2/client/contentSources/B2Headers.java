@@ -77,6 +77,8 @@ public interface B2Headers {
     // header for Cloud Replication
     String REPLICATION_STATUS = "X-Bz-Replication-Status";
 
+    String CUSTOM_UPLOAD_TIMESTAMP = "X-Bz-Custom-Upload-Timestamp";
+
     /**
      * @return a collection with the names of all the headers in this object.  never null.
      */

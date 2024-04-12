@@ -23,7 +23,7 @@ public class B2StringUtil {
      * @param str the string to check
      * @return true if str is null or zero-length.
      */
-    static boolean isEmpty(String str) {
+    public static boolean isEmpty(String str) {
         if (str == null) {
             return true;
         }

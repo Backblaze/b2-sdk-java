@@ -14,8 +14,11 @@ import org.junit.rules.ExpectedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -32,14 +35,10 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for B2Json.
@@ -49,6 +48,10 @@ import static org.junit.Assert.fail;
         "WeakerAccess"  // A lot of the test classes could have weaker access, but we don't care.
 })
 public class B2JsonTest extends B2BaseTest {
+
+    private final B2JsonOptions compactOptions = B2JsonOptions.builder()
+            .setSerializationOption(B2JsonOptions.SerializationOption.COMPACT)
+            .build();
 
     @Rule
     public ExpectedException thrown  = ExpectedException.none();
@@ -64,11 +67,16 @@ public class B2JsonTest extends B2BaseTest {
         @B2Json.ignored
         public int c;
 
-        @B2Json.constructor(params = "a, b")
-        public Container(int a, String b) {
+        @B2Json.optional
+        @B2Json.serializedName(value = "@d")
+        public final String d;
+
+        @B2Json.constructor(params = "a, b, d")
+        public Container(int a, String b, String d) {
             this.a = a;
             this.b = b;
             this.c = 5;
+            this.d = d;
         }
 
         @Override
@@ -153,12 +161,107 @@ public class B2JsonTest extends B2BaseTest {
     public void testObject() throws B2JsonException {
         String json =
                 "{\n" +
+                "  \"@d\": \"goodbye\",\n" +
                 "  \"a\": 41,\n" +
                 "  \"b\": \"hello\"\n" +
                 "}";
-        Container obj = new Container(41, "hello");
+        Container obj = new Container(41, "hello", "goodbye");
         assertEquals(json, b2Json.toJson(obj));
         assertEquals(obj, b2Json.fromJson(json, Container.class));
+
+        final String alternateJson = "{\n" +
+                "  \"a\": 41,\n" +
+                "  \"b\": \"hello\",\n" +
+                "  \"\\u0040d\": \"goodbye\"\n" +
+                "}";
+        assertEquals(obj, b2Json.fromJson(alternateJson, Container.class));
+    }
+
+    @Test
+    public void testFromJsonWithReader() throws B2JsonException, IOException {
+        final String json =
+                "{\n" +
+                        "  \"@d\": \"goodbye\",\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\"\n" +
+                        "}";
+        final Container obj = new Container(41, "hello", "goodbye");
+        assertEquals(json, b2Json.toJson(obj));
+
+        assertEquals(obj, b2Json.fromJson(new StringReader(json), Container.class, B2JsonOptions.DEFAULT));
+        assertEquals(obj, b2Json.fromJson(new StringReader(json), Container.class));
+    }
+
+    @Test
+    public void testFromJsonWithInputStream() throws B2JsonException, IOException {
+        String json =
+                "{\n" +
+                        "  \"@d\": \"goodbye\",\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\"\n" +
+                        "}";
+        Container obj = new Container(41, "hello", "goodbye");
+        assertEquals(json, b2Json.toJson(obj));
+        InputStream jsonInputStream = new ByteArrayInputStream(json.getBytes());
+
+        assertEquals(obj, b2Json.fromJson(jsonInputStream, Container.class));
+    }
+
+    @Test
+    public void testFromJsonUntilEof() throws B2JsonException, IOException {
+        String json =
+                "{\n" +
+                        "  \"@d\": \"goodbye\",\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\"\n" +
+                        "}";
+        Container obj = new Container(41, "hello", "goodbye");
+
+        InputStream jsonInputStream = new ByteArrayInputStream(json.getBytes());
+        assertEquals(obj, b2Json.fromJsonUntilEof(jsonInputStream, Container.class));
+    }
+
+    @Test
+    public void testFromJsonUntilEofWithCharacterAfterEof() throws B2JsonException, IOException {
+        String json =
+                "{\n" +
+                        "  \"@d\": \"goodbye\",\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\"\n" +
+                        "}}";
+        Container obj = new Container(41, "hello", "goodbye");
+
+        InputStream jsonInputStream = new ByteArrayInputStream(json.getBytes());
+        thrown.expect(B2JsonException.class);
+        thrown.expectMessage("non-whitespace characters after JSON value");
+        b2Json.fromJsonUntilEof(jsonInputStream, Container.class);
+    }
+
+    @Test
+    public void testFromJsonWithByteArray() throws B2JsonException, IOException {
+        String json =
+                "{\n" +
+                        "  \"@d\": \"goodbye\",\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\"\n" +
+                        "}";
+        Container obj = new Container(41, "hello", "goodbye");
+
+        assertEquals(obj, b2Json.fromJson(json.getBytes(), Container.class));
+    }
+
+    @Test
+    public void testMalformedFieldName() throws B2JsonException {
+        String json =
+                "{\n" +
+                        "  \"a\": 41,\n" +
+                        "  \"b\": \"hello\",\n" +
+                        "  \"\\u04d\": \"goodbye\"\n" +
+                        "}";
+
+        thrown.expect(B2JsonException.class);
+        thrown.expectMessage("bad hex digit: \"");
+        b2Json.fromJson(json, Container.class);
     }
 
     @Test
@@ -206,14 +309,16 @@ public class B2JsonTest extends B2BaseTest {
         String json =
                 "{ // this is a comment\n" +
                 "  \"a\": 41,\n" +
-                "  \"b\": \"hello\"\n" +
+                "  \"b\": \"hello\",\n" +
+                "  \"@d\": \"goodbye\"\n" +
                 "} // comment to eof";
         String jsonWithoutComment =
                 "{\n" +
+                "  \"@d\": \"goodbye\",\n" +
                 "  \"a\": 41,\n" +
                 "  \"b\": \"hello\"\n" +
                 "}";
-        Container obj = new Container(41, "hello");
+        Container obj = new Container(41, "hello", "goodbye");
         assertEquals(jsonWithoutComment, b2Json.toJson(obj));
         assertEquals(obj, b2Json.fromJson(json, Container.class));
     }
@@ -222,10 +327,11 @@ public class B2JsonTest extends B2BaseTest {
     public void testNoCommentInString() throws B2JsonException {
         String json =
                 "{\n" +
+                "  \"@d\": \"goodbye\",\n" +
                 "  \"a\": 41,\n" +
                 "  \"b\": \"he//o\"\n" +
                 "}";
-        Container obj = new Container(41, "he//o");
+        Container obj = new Container(41, "he//o", "goodbye");
         assertEquals(json, b2Json.toJson(obj));
         assertEquals(obj, b2Json.fromJson(json, Container.class));
     }
@@ -364,6 +470,7 @@ public class B2JsonTest extends B2BaseTest {
 
         String expectedJson =
                 "{\n" +
+                "  \"@d\": null,\n" +
                 "  \"a\": 41,\n" +
                 "  \"b\": \"hello\"\n" +
                 "}";
@@ -681,7 +788,7 @@ public class B2JsonTest extends B2BaseTest {
         MapWithNullKeyHolder mapWithNullKeyHolder = new MapWithNullKeyHolder(map);
         try {
             b2Json.toJson(mapWithNullKeyHolder);
-            assertTrue("Map with null key should not be allowed to be serialized", false);
+            fail("Map with null key should not be allowed to be serialized");
         } catch (B2JsonException ex) {
             assertEquals("Map key is null", ex.getMessage());
         }
@@ -701,17 +808,17 @@ public class B2JsonTest extends B2BaseTest {
     public void testTreeMap() throws IOException, B2JsonException {
         String json1 =
                 "{\n" +
-                        "  \"treeMap\": {\n" +
-                        "    \"20150101\": 37,\n" +
-                        "    \"20150207\": null\n" +
-                        "  }\n" +
-                        "}" ;
+                "  \"treeMap\": {\n" +
+                "    \"20150101\": 37,\n" +
+                "    \"20150207\": null\n" +
+                "  }\n" +
+                "}" ;
         checkDeserializeSerialize(json1, TreeMapHolder.class);
 
         String json2 =
                 "{\n" +
-                        "  \"treeMap\": null\n" +
-                        "}";
+                "  \"treeMap\": null\n" +
+                "}";
         checkDeserializeSerialize(json2, TreeMapHolder.class);
     }
 
@@ -729,17 +836,17 @@ public class B2JsonTest extends B2BaseTest {
     public void testSortedMap() throws IOException, B2JsonException {
         String json1 =
                 "{\n" +
-                        "  \"sortedMap\": {\n" +
-                        "    \"20150101\": 37,\n" +
-                        "    \"20150207\": null\n" +
-                        "  }\n" +
-                        "}" ;
+                "  \"sortedMap\": {\n" +
+                "    \"20150101\": 37,\n" +
+                "    \"20150207\": null\n" +
+                "  }\n" +
+                "}" ;
         checkDeserializeSerialize(json1, SortedMapHolder.class);
 
         String json2 =
                 "{\n" +
-                        "  \"sortedMap\": null\n" +
-                        "}";
+                "  \"sortedMap\": null\n" +
+                "}";
         checkDeserializeSerialize(json2, SortedMapHolder.class);
     }
 
@@ -968,8 +1075,8 @@ public class B2JsonTest extends B2BaseTest {
     public void testUnknownEnum_usesDefaultInvalidEnumValue() throws B2JsonException {
         String json =
                 "{\n" +
-                        "  \"flavor\": \"CHARTREUSE\"\n" +
-                        "}";
+                "  \"flavor\": \"CHARTREUSE\"\n" +
+                "}";
 
         final FlavorHolder holder = B2Json.get().fromJson(json, FlavorHolder.class);
         assertEquals(Flavor.STRANGE, holder.flavor);
@@ -2071,7 +2178,7 @@ public class B2JsonTest extends B2BaseTest {
     public void testSerializeIncludeFieldInVersion() throws B2JsonException {
         final B2JsonOptions options = B2JsonOptions.builder().setVersion(5).build();
         assertEquals(
-                "{\n" +
+        "{\n" +
                 "  \"x\": 3\n" +
                 "}",
                 b2Json.toJson(new VersionedContainer(3, 5), options)
@@ -2253,6 +2360,178 @@ public class B2JsonTest extends B2BaseTest {
         final OmitNullBadTestClass bad = new OmitNullBadTestClass(123);
         B2Json.toJsonOrThrowRuntime(bad);
     }
+
+    /**
+     *
+     */
+    private static class OmitZeroTestClass {
+        @B2Json.optional(omitZero = true)
+        private final byte omitZeroByte;
+
+        @B2Json.optional
+        private final byte regularByte;
+
+        @B2Json.optional(omitZero = true)
+        private final int omitZeroInt;
+
+        @B2Json.optional
+        private final int regularInt;
+
+        @B2Json.optional(omitZero = true)
+        private final long omitZeroLong;
+
+        @B2Json.optional
+        private final long regularLong;
+
+        @B2Json.optional(omitZero = true)
+        private final float omitZeroFloat;
+
+        @B2Json.optional
+        private final float regularFloat;
+
+        @B2Json.optional(omitZero = true)
+        private final double omitZeroDouble;
+
+        @B2Json.optional
+        private final double regularDouble;
+
+        @B2Json.constructor
+        private OmitZeroTestClass(byte omitZeroByte, byte regularByte,
+                                  int omitZeroInt, int regularInt,
+                                  long omitZeroLong, long regularLong,
+                                  float omitZeroFloat, float regularFloat,
+                                  double omitZeroDouble, double regularDouble) {
+            this.omitZeroByte = omitZeroByte;
+            this.regularByte = regularByte;
+            this.omitZeroInt = omitZeroInt;
+            this.regularInt = regularInt;
+            this.omitZeroLong = omitZeroLong;
+            this.regularLong = regularLong;
+            this.omitZeroFloat = omitZeroFloat;
+            this.regularFloat = regularFloat;
+            this.omitZeroDouble = omitZeroDouble;
+            this.regularDouble = regularDouble;
+        }
+    }
+
+    @Test
+    public void testOmitZeroWithZeroInputs() {
+        final OmitZeroTestClass object = new OmitZeroTestClass(
+                (byte) 0, (byte) 0,
+                0, 0,
+                0L, 0L,
+                0.0f, 0.0f,
+                0.0, 0.0
+        );
+        final String actual = B2Json.toJsonOrThrowRuntime(object);
+
+        // The omitNullString and omitNullInteger fields should not be present in the output
+        assertEquals("{\n" +
+                        "  \"regularByte\": 0,\n" +
+                        "  \"regularDouble\": 0.0,\n" +
+                        "  \"regularFloat\": 0.0,\n" +
+                        "  \"regularInt\": 0,\n" +
+                        "  \"regularLong\": 0\n" +
+                        "}",
+                actual);
+    }
+
+    @Test
+    public void testOmitZeroWithNonZeroInputs() {
+        final OmitZeroTestClass object = new OmitZeroTestClass(
+                (byte) 1, (byte) 1,
+                1, 1,
+                1L, 1L,
+                1.1f, 1.1f,
+                1.1, 1.1
+        );
+        final String actual = B2Json.toJsonOrThrowRuntime(object);
+
+        // The omitNullString and omitNullInteger fields should not be present in the output
+        assertEquals("{\n" +
+                        "  \"omitZeroByte\": 1,\n" +
+                        "  \"omitZeroDouble\": 1.1,\n" +
+                        "  \"omitZeroFloat\": 1.1,\n" +
+                        "  \"omitZeroInt\": 1,\n" +
+                        "  \"omitZeroLong\": 1,\n" +
+                        "  \"regularByte\": 1,\n" +
+                        "  \"regularDouble\": 1.1,\n" +
+                        "  \"regularFloat\": 1.1,\n" +
+                        "  \"regularInt\": 1,\n" +
+                        "  \"regularLong\": 1\n" +
+                        "}",
+                actual);
+    }
+
+    @Test
+    public void testOmitZeroCreateFromEmpty() {
+        final OmitZeroTestClass actual = B2Json.fromJsonOrThrowRuntime("{}", OmitZeroTestClass.class);
+
+        assertEquals(0, actual.omitZeroByte);
+        assertEquals(0, actual.regularByte);
+        assertEquals(0, actual.omitZeroInt);
+        assertEquals(0, actual.regularInt);
+        assertEquals(0, actual.omitZeroLong);
+        assertEquals(0, actual.regularLong);
+        assertEquals(0.0f, actual.omitZeroFloat, 0);
+        assertEquals(0.0f, actual.regularFloat, 0);
+        assertEquals(0.0, actual.omitZeroDouble, 0);
+        assertEquals(0.0, actual.regularDouble, 0);
+    }
+
+    private static class OmitZeroBadTestCase {
+        @B2Json.optional(omitZero = true)
+        private final String string;
+
+        @B2Json.constructor
+        OmitZeroBadTestCase(String string) {
+            this.string = string;
+        }
+    }
+    @Test
+    public void testOmitZeroOnPrimitive() throws B2JsonException {
+        thrown.expectMessage("Field OmitZeroBadTestCase.string declared with 'omitZero = true' but is not a primitive, numeric type");
+        final OmitZeroBadTestCase bad = new OmitZeroBadTestCase("foobar");
+        B2Json.toJsonOrThrowRuntime(bad);
+    }
+
+    private static class OmitZeroWithOptionalWithDefaultTestClass {
+        @B2Json.optionalWithDefault(omitZero = true, defaultValue = "0")
+        public final int omitZeroDefaultToZero;
+
+        @B2Json.optionalWithDefault(omitZero = true, defaultValue = "1")
+        public final int omitZeroDefaultToOne;
+
+        @B2Json.optional
+        public final byte nonOmitted;
+
+        @B2Json.constructor
+        private OmitZeroWithOptionalWithDefaultTestClass(int omitZeroDefaultToZero, int omitZeroDefaultToOne, byte nonOmitted) {
+            this.omitZeroDefaultToZero = omitZeroDefaultToZero;
+            this.omitZeroDefaultToOne = omitZeroDefaultToOne;
+            this.nonOmitted = nonOmitted;
+        }
+    }
+
+    @Test
+    public void testOptionalWithDefaultWithOmitZero() {
+        final OmitZeroWithOptionalWithDefaultTestClass obj = B2Json.fromJsonOrThrowRuntime(
+                "{}",
+                OmitZeroWithOptionalWithDefaultTestClass.class
+        );
+
+        assertEquals(0, obj.omitZeroDefaultToZero);
+        assertEquals(1, obj.omitZeroDefaultToOne);
+        assertEquals(0, obj.nonOmitted);
+
+        // The omitNullString and omitNullInteger fields should not be present in the output
+        assertEquals("{\n" +
+                        "  \"nonOmitted\": 0,\n" +
+                        "  \"omitZeroDefaultToOne\": 1\n" +
+                        "}",
+                B2Json.toJsonOrThrowRuntime(obj));
+    }
+
 
     /**
      * Because of serialization, the object returned from B2Json will never be the same object as an
@@ -2794,13 +3073,13 @@ public class B2JsonTest extends B2BaseTest {
 
     /* A convenience Json object for testing IOException("Requested array size exceeds maximum limit") */
     private static class ObjectWithSomeName {
-       @B2Json.required
-       private final String name;
+        @B2Json.required
+        private final String name;
 
-       @B2Json.constructor(params = "name")
-       public ObjectWithSomeName(String name) {
-           this.name = name;
-       }
+        @B2Json.constructor(params = "name")
+        public ObjectWithSomeName(String name) {
+            this.name = name;
+        }
     }
 
     @Test
@@ -2896,5 +3175,156 @@ public class B2JsonTest extends B2BaseTest {
         public ItemArray(T[] values) {
             this.values = values;
         }
+    }
+
+    private static class MapWithAtomicLongArrayHolder {
+        @B2Json.optional
+        Map<String, AtomicLongArray> map;
+
+        @B2Json.constructor
+        MapWithAtomicLongArrayHolder(Map<String, AtomicLongArray> map) {
+            this.map = map;
+        }
+    }
+
+    @Test
+    public void testMapWithAtomicLongArray() throws IOException, B2JsonException {
+        final String json1 =
+            "{\n" +
+            "  \"map\": {\n" +
+            "    \"20150207\": null,\n" +
+            "    \"20230209\": [ 4, 23, 5, 3147483647 ]\n" +  // max int size is 2147483647
+            "  }\n" +
+            "}";
+        checkDeserializeSerialize(json1, MapWithAtomicLongArrayHolder.class);
+
+        final String json2 =
+            "{\n" +
+            "  \"map\": null\n" +
+            "}";
+        checkDeserializeSerialize(json2, MapWithAtomicLongArrayHolder.class);
+    }
+
+    /**
+     * the JSON serialized fieldnames "a" and "b" map to Java object fields
+     * "b" and "a" respectively.
+     */
+    private static class ContainerWithCrossedFieldNames {
+        @B2Json.required
+        @B2Json.serializedName(value = "b")
+        private final int a;
+
+        @B2Json.required
+        @B2Json.serializedName(value = "a")
+        private final int b;
+
+        @B2Json.constructor
+        public ContainerWithCrossedFieldNames(int a, int b) {
+            this.a = a;
+            this.b = b;
+        }
+    }
+
+    @Test
+    public void testCrossedFieldNamesDeserialization() {
+        final String json = "{\"a\": 1, \"b\": 2}";
+
+        final ContainerWithCrossedFieldNames obj = B2Json.fromJsonOrThrowRuntime(json, ContainerWithCrossedFieldNames.class);
+
+        assertEquals(2, obj.a);
+        assertEquals(1, obj.b);
+    }
+
+    @Test
+    public void testCrossedFieldNamesSerialization() {
+
+        final ContainerWithCrossedFieldNames obj = new ContainerWithCrossedFieldNames(2, 1);
+
+        final String json = B2Json.toJsonOrThrowRuntime(obj, compactOptions);
+        final String expectedJson = "{\"a\":1,\"b\":2}";
+
+        assertEquals(expectedJson, json);
+    }
+
+    private static class ContainerWithHiddenIgnoredField {
+        @B2Json.required
+        @B2Json.serializedName(value = "b")
+        private final int a;
+
+        @B2Json.ignored
+        private final int b;
+
+        public ContainerWithHiddenIgnoredField(int a, int b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        @B2Json.constructor
+        public ContainerWithHiddenIgnoredField(int a) {
+            this.a = a;
+            this.b = 0;
+        }
+    }
+
+    @Test
+    public void testHiddenIgnoredFieldDeserialization() {
+        final String json = "{\"b\": 1}";
+
+        final ContainerWithHiddenIgnoredField obj = B2Json.fromJsonOrThrowRuntime(json, ContainerWithHiddenIgnoredField.class);
+
+        assertEquals(1, obj.a);
+        assertEquals(0, obj.b);
+    }
+
+    @Test
+    public void testHiddenIgnoredFieldSerialization() {
+        final ContainerWithHiddenIgnoredField obj = new ContainerWithHiddenIgnoredField(1, 2);
+
+        final String json = B2Json.toJsonOrThrowRuntime(obj, compactOptions);
+        final String expectedJson = "{\"b\":1}";
+
+        assertEquals(expectedJson, json);
+    }
+
+    private static class ContainerWithDuplicateFieldNames {
+        @B2Json.required
+        final int a;
+
+        @B2Json.required
+        @B2Json.serializedName(value = "a")
+        final int b;
+
+        @B2Json.constructor
+        public ContainerWithDuplicateFieldNames(int a, int b) {
+            this.a = a;
+            this.b = b;
+        }
+    }
+
+    @Test
+    public void testClassWithDuplicateFieldNames() {
+        final ContainerWithDuplicateFieldNames obj = new ContainerWithDuplicateFieldNames(1, 2);
+
+        final B2JsonException thrown = assertThrows(B2JsonException.class, () -> B2Json.get().toJson(obj, compactOptions));
+        assertEquals("com.backblaze.b2.json.B2JsonTest$ContainerWithDuplicateFieldNames contains multiple class fields for the json member a", thrown.getMessage());
+    }
+
+    @B2Json.type
+    private static class ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations {
+        @B2Json.required
+        final int a;
+
+        @B2Json.constructor
+        public ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations(int a) {
+            this.a = a;
+        }
+    }
+
+    @Test
+    public void testClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations() {
+        final ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations obj = new ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations(1);
+
+        final B2JsonException thrown = assertThrows(B2JsonException.class, () -> B2Json.get().toJson(obj, compactOptions));
+        assertEquals("com.backblaze.b2.json.B2JsonTest$ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations has both @B2Json.type and @B2Json.constructor annotations", thrown.getMessage());
     }
 }

@@ -1,6 +1,50 @@
 # Changelog
 
 ## [Unreleased] - TBD
+### Added
+* Added support to specify B2Json union types using annotations. Annotation support for union types is required because 
+  Java records do not support inheritance. Example usage:
+  ```java
+  @B2Json.union(typeField = "type")
+  @B2Json.unionSubtypes({
+          @B2Json.unionSubtypes.type(name = "email", clazz = Email.class),
+          @B2Json.unionSubtypes.type(name = "sms", clazz = Sms.class)
+  })
+  sealed interface Message permits Email, Sms {
+      String subject();
+  }
+
+  @B2Json.type
+  private record Email(@B2Json.required String subject, @B2Json.required String email) implements Message {
+  }
+
+  @B2Json.type
+  private record Sms(@B2Json.required String subject, @B2Json.required String phoneNumber) implements Message {
+  }
+  ```
+* Added `@B2Json.type` annotation that can be used with Java records. Using `@B2Json.type` allows for the implicit 
+  Java constructor of Java records to not require the `@B2Json.constructor` annotation. Example usage:
+  ```java
+  @B2Json.type
+  record Point(@B2Json.required int x, @B2Json.required int y) { }
+  ```
+* Optimized B2DateTimeUtil.formatFguidDateTime
+* Reduced memory allocation for small input when deserializing byte[] to JSON
+* Reduced lock contention in B2Clock
+* Added support for B2 Event Notifications
+* Added B2Json `fromJson` methods that take a `java.io.Reader` as input for JSON
+* Updated B2Json `fromJson` methods to utilize a BufferedReader when deserializing JSON for performance improvement
+* Added B2StorageClient.storePartsForLargeFile
+* Added support for daysFromStartingToCancelingUnfinishedLargeFiles to B2LifecycleRule
+* Reduced lock contention in B2AccountAuthorizationCache
+* Added the `serializedName` annotation to rename the serialized Json member name
+* Added support for AtomicLongArray in B2Json
+* Reduced lock contention in B2Json
+* Updated internal python for building to python3
+* Added support for custom upload timestamps
+
+### Fixed
+* Fixed union types to ignore extra and discarded fields when deserializing JSON to Java objects
 
 ## [6.1.1] - 2022-11-10
 ### Added
@@ -11,8 +55,9 @@
 * Fixed B2ListFilesIterableBase assuming a response with 0 results was the end. It now looks for
   `nextFileName` being null to indicate the end.
 
-## [6.1.0] - 2022-09-19
+### [6.1.0] - 2022-09-19
 ### Added
+* Added support for custom upload timestamps
 * Added support for Java 8's `-parameters` option so constructor parameters do not need to be reiterated in `B2Json.constructor#params`
 * Added `fileLockEnabled` to `B2UpdateBucketRequest` to support enabling file lock on existing buckets
 

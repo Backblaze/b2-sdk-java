@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -12,8 +12,8 @@ import com.backblaze.b2.client.structures.B2AuthorizeAccountRequest;
 import com.backblaze.b2.client.structures.B2Bucket;
 import com.backblaze.b2.client.structures.B2CancelLargeFileRequest;
 import com.backblaze.b2.client.structures.B2CancelLargeFileResponse;
-import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2CopyFileRequest;
+import com.backblaze.b2.client.structures.B2CopyPartRequest;
 import com.backblaze.b2.client.structures.B2CreateBucketRequestReal;
 import com.backblaze.b2.client.structures.B2CreateKeyRequestReal;
 import com.backblaze.b2.client.structures.B2CreatedApplicationKey;
@@ -26,6 +26,8 @@ import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
@@ -45,6 +47,8 @@ import com.backblaze.b2.client.structures.B2ListPartsResponse;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
@@ -175,6 +179,12 @@ public interface B2StorageClientWebifier extends AutoCloseable {
 
     B2UpdateFileRetentionResponse updateFileRetention(B2AccountAuthorization accountAuth,
                                                       B2UpdateFileRetentionRequest request) throws B2Exception;
+
+    B2SetBucketNotificationRulesResponse setBucketNotificationRules(B2AccountAuthorization accountAuth,
+                                                                    B2SetBucketNotificationRulesRequest request) throws B2Exception;
+
+    B2GetBucketNotificationRulesResponse getBucketNotificationRules(B2AccountAuthorization accountAuth,
+                                                                    B2GetBucketNotificationRulesRequest request) throws B2Exception;
 
     /**
      * Closes this object and its underlying resources.

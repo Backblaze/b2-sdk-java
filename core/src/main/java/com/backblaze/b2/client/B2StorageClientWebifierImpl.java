@@ -1,5 +1,5 @@
 /*
- * Copyright 2020, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -37,6 +37,8 @@ import com.backblaze.b2.client.structures.B2FileSseForRequest;
 import com.backblaze.b2.client.structures.B2FileSseForResponse;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
@@ -57,6 +59,8 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2OverrideableHeaders;
 import com.backblaze.b2.client.structures.B2Part;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
@@ -93,7 +97,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
 
     // This path specifies which version of the B2 APIs to use.
     // See: https://www.backblaze.com/b2/docs/versions.html
-    private static String API_VERSION_PATH = "b2api/v2/";
+    private static final String API_VERSION_PATH = "b2api/v2/";
 
     private final B2WebApiClient webApiClient;
     private final String userAgent;
@@ -315,6 +319,12 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
             for (Map.Entry<String, String> entry : request.getFileInfo().entrySet()) {
                 validateFileInfoName(entry.getKey());
                 headersBuilder.set(B2Headers.FILE_INFO_PREFIX + entry.getKey(), percentEncode(entry.getValue()));
+            }
+
+            // Add custom upload timestamp if necessary
+            final Long customUploadTimestamp = request.getCustomUploadTimestamp();
+            if (customUploadTimestamp != null) {
+                headersBuilder.set(B2Headers.CUSTOM_UPLOAD_TIMESTAMP, customUploadTimestamp.toString());
             }
 
             final B2ByteProgressListener progressAdapter = new B2UploadProgressAdapter(uploadListener, 0, 1, 0, contentLen);
@@ -663,6 +673,26 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                 makeHeaders(accountAuth),
                 request,
                 B2UpdateFileRetentionResponse.class);
+    }
+
+    @Override
+    public B2SetBucketNotificationRulesResponse setBucketNotificationRules(B2AccountAuthorization accountAuth,
+                                                                           B2SetBucketNotificationRulesRequest request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeUrl(accountAuth, "b2_set_bucket_notification_rules"),
+                makeHeaders(accountAuth),
+                request,
+                B2SetBucketNotificationRulesResponse.class);
+    }
+
+    @Override
+    public B2GetBucketNotificationRulesResponse getBucketNotificationRules(B2AccountAuthorization accountAuth,
+                                                                           B2GetBucketNotificationRulesRequest request) throws B2Exception {
+        return webApiClient.postJsonReturnJson(
+                makeUrl(accountAuth, "b2_get_bucket_notification_rules"),
+                makeHeaders(accountAuth),
+                request,
+                B2GetBucketNotificationRulesResponse.class);
     }
 
     private void addAuthHeader(B2HeadersImpl.Builder builder,

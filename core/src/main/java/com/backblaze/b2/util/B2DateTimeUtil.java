@@ -141,15 +141,50 @@ public class B2DateTimeUtil {
      * Returns a date-time in FGUID form: "d20150315_m092654"
      */
     public static String formatFguidDateTime(LocalDateTime dateTime) {
-        return String.format(
-                "d%04d%02d%02d_m%02d%02d%02d",
-                dateTime.getYear(),
-                dateTime.getMonthValue(),
-                dateTime.getDayOfMonth(),
-                dateTime.getHour(),
-                dateTime.getMinute(),
-                dateTime.getSecond()
-        );
+        final int year = dateTime.getYear();
+        final int month = dateTime.getMonthValue();
+        final int day = dateTime.getDayOfMonth();
+        final int hour = dateTime.getHour();
+        final int min = dateTime.getMinute();
+        final int sec = dateTime.getSecond();
+
+        final char[] buf = new char[17];
+
+        ////////////////////////////////////////////////
+        // date
+        ////////////////////////////////////////////////
+
+        buf[0] = 'd';
+
+        // year
+        buf[ 1] = (char) getDigit(year, 1000);
+        buf[ 2] = (char) getDigit(year, 100);
+        buf[ 3] = (char) getDigit(year, 10);
+        buf[ 4] = (char) getDigit(year, 1);
+        // month
+        buf[ 5] = (char) getDigit(month, 10);
+        buf[ 6] = (char) getDigit(month, 1);
+        // day
+        buf[ 7] = (char) getDigit(day, 10);
+        buf[ 8] = (char) getDigit(day, 1);
+
+        ////////////////////////////////////////////////
+        // time
+        ////////////////////////////////////////////////
+
+        buf[ 9] = '_';
+        buf[10] = 'm';
+        // hour
+        buf[11] = (char) getDigit(hour, 10);
+        buf[12] = (char) getDigit(hour, 1);
+        // minute
+        buf[13] = (char) getDigit(min, 10);
+        buf[14] = (char) getDigit(min, 1);
+        // second
+        buf[15] = (char) getDigit(sec, 10);
+        buf[16] = (char) getDigit(sec, 1);
+
+        return new String(buf);
     }
 
     private static class DurationParser {
@@ -272,5 +307,13 @@ public class B2DateTimeUtil {
     // this exists so it can be called for code coverage purposes in the unit test.
     // it is package-private so that no one else can call it.
     B2DateTimeUtil() {
+    }
+
+    /**
+     * @return the specified column of the given integer, as a character.
+     *         for instance, getDigit(2019, 1000) returns '2' because that's in the 1000s column of 2019.
+     */
+    private static int getDigit(int value, int whichColumn) {
+        return '0' + ((value  / whichColumn) % 10);
     }
 }

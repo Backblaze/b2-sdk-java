@@ -7,7 +7,6 @@ package com.backblaze.b2.client;
 import com.backblaze.b2.client.structures.B2TestMode;
 import com.backblaze.b2.util.B2Preconditions;
 
-import java.io.Closeable;
 import java.util.Objects;
 
 /**
@@ -21,15 +20,24 @@ public class B2ClientConfig {
     private final String masterUrl;
     private final B2TestMode testModeOrNull;
 
+    /**
+     * Must large file part numbers start with 1 and be contiguous? This is only for internal use; regardless
+     * of this variable's value, the B2 Native API requires part numbers start with 1 and be contiguous when
+     * finishing a large file.
+     */
+    private final boolean partNumberGapsAllowed;
+
     private B2ClientConfig(B2AccountAuthorizer accountAuthorizer,
                            String userAgent,
                            String masterUrl,
-                           B2TestMode testModeOrNull) {
-        B2Preconditions.checkArgument(userAgent != null && userAgent.length() > 0);
+                           B2TestMode testModeOrNull,
+                           boolean partNumberGapsAllowed) {
+        B2Preconditions.checkArgument(userAgent != null && !userAgent.isEmpty());
         this.accountAuthorizer = accountAuthorizer;
         this.userAgent = userAgent;
         this.masterUrl = masterUrl;
         this.testModeOrNull = testModeOrNull;
+        this.partNumberGapsAllowed = partNumberGapsAllowed;
     }
 
     public B2AccountAuthorizer getAccountAuthorizer() {
@@ -48,6 +56,10 @@ public class B2ClientConfig {
         return testModeOrNull;
     }
 
+    public boolean isPartNumberGapsAllowed() {
+        return partNumberGapsAllowed;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -56,12 +68,19 @@ public class B2ClientConfig {
         return Objects.equals(getAccountAuthorizer(), that.getAccountAuthorizer()) &&
                 Objects.equals(getUserAgent(), that.getUserAgent()) &&
                 Objects.equals(getMasterUrl(), that.getMasterUrl()) &&
-                getTestModeOrNull() == that.getTestModeOrNull();
+                getTestModeOrNull() == that.getTestModeOrNull() &&
+                isPartNumberGapsAllowed() == that.isPartNumberGapsAllowed();
+
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getAccountAuthorizer(), getUserAgent(), getMasterUrl(), getTestModeOrNull());
+        return Objects.hash(
+                getAccountAuthorizer(),
+                getUserAgent(),
+                getMasterUrl(),
+                getTestModeOrNull(),
+                isPartNumberGapsAllowed());
     }
 
     public static Builder builder(B2AccountAuthorizer accountAuthorizer, String userAgent) {
@@ -83,6 +102,7 @@ public class B2ClientConfig {
         private final String userAgent;
         private String masterUrl;
         private B2TestMode testModeOrNull;
+        private boolean partNumberGapsAllowed = false;
 
         public Builder(B2AccountAuthorizer accountAuthorizer,
                        String userAgent) {
@@ -100,12 +120,19 @@ public class B2ClientConfig {
             return this;
         }
 
+        @SuppressWarnings("unused")
+        public Builder setPartNumberGapsAllowed(boolean partNumberGapsAllowed) {
+            this.partNumberGapsAllowed = partNumberGapsAllowed;
+            return this;
+        }
+
         public B2ClientConfig build() {
             return new B2ClientConfig(
                     accountAuthorizer,
                     userAgent,
                     masterUrl,
-                    testModeOrNull);
+                    testModeOrNull,
+                    partNumberGapsAllowed);
         }
     }
 }

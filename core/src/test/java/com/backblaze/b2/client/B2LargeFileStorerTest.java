@@ -18,10 +18,7 @@ import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadState;
 import com.backblaze.b2.util.B2BaseTest;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.mockito.Matchers;
 
@@ -30,13 +27,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -108,14 +99,20 @@ public class B2LargeFileStorerTest extends B2BaseTest {
     }
 
     public List<B2PartStorer> createB2LargeFileStorerAndGetSortedPartStorers(List<B2PartStorer> outOfOrderPartStorers) {
+        return createB2LargeFileStorerAndGetSortedPartStorers(outOfOrderPartStorers, false);
+    }
+
+    public List<B2PartStorer> createB2LargeFileStorerAndGetSortedPartStorers(List<B2PartStorer> outOfOrderPartStorers,
+                                                                             boolean partNumberGapsAllowed) {
         return new B2LargeFileStorer(
-                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
+                B2StoreLargeFileRequest.builder(largeFileVersion.getFileId()).build(),
                 outOfOrderPartStorers,
                 authCache,
                 webifier,
                 retryer,
                 retryPolicySupplier,
-                executor).getPartStorers();
+                singleThreadedExecutor,
+                partNumberGapsAllowed).getPartStorers();
     }
 
     @Test
@@ -159,6 +156,47 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         createB2LargeFileStorerAndGetSortedPartStorers(partStorers);
     }
 
+    @Test
+    public void testPartStorers_missingPartNumber_gapsAllowed() throws IOException {
+        final List<B2PartStorer> partStorers = Arrays.asList(
+                new B2AlreadyStoredPartStorer(part2),
+                new B2UploadingPartStorer(1, createContentSourceWithSize(100)),
+                new B2CopyingPartStorer(4, fileId(4)));
+
+        final List<B2PartStorer> sortedPartStorers = createB2LargeFileStorerAndGetSortedPartStorers(partStorers, true);
+        assertEquals(
+                Arrays.asList(1, 2, 4),
+                sortedPartStorers.stream().map(B2PartStorer::getPartNumber).collect(Collectors.toList())
+        );
+    }
+
+    @Test
+    public void testPartStorers_partNumbersStartWithTwo() {
+        final List<B2PartStorer> partStorers = Arrays.asList(
+                new B2AlreadyStoredPartStorer(part2),
+                new B2AlreadyStoredPartStorer(part3),
+                new B2CopyingPartStorer(4, fileId(4)));
+
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("part number 1 has no part storers");
+
+        createB2LargeFileStorerAndGetSortedPartStorers(partStorers);
+    }
+
+    @Test
+    public void testPartStorers_partNumbersStartWithTwo_gapsAllowed() {
+        final List<B2PartStorer> partStorers = Arrays.asList(
+                new B2AlreadyStoredPartStorer(part2),
+                new B2AlreadyStoredPartStorer(part3),
+                new B2CopyingPartStorer(4, fileId(4)));
+
+        final List<B2PartStorer> sortedPartStorers = createB2LargeFileStorerAndGetSortedPartStorers(partStorers, true);
+        assertEquals(
+                Arrays.asList(2, 3, 4),
+                sortedPartStorers.stream().map(B2PartStorer::getPartNumber).collect(Collectors.toList())
+        );
+    }
+
     private B2LargeFileStorer createFromLocalContent() throws B2Exception {
         final B2ContentSource contentSource = new TestContentSource(0, FILE_SIZE);
 
@@ -180,7 +218,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         return contentSource;
     }
 
-    private B2LargeFileStorer createLargeFileStorerForStartByteTests() throws IOException {
+    private B2LargeFileStorer createLargeFileStorerForStartByteTests(boolean partNumberGapsAllowed) throws IOException {
         final List<B2PartStorer> partStorers = Arrays.asList(
                 new B2UploadingPartStorer(1, createContentSourceWithSize(100)),
                 new B2AlreadyStoredPartStorer(part2),
@@ -188,18 +226,19 @@ public class B2LargeFileStorerTest extends B2BaseTest {
                 new B2UploadingPartStorer(4, createContentSourceWithSize(900)));
 
         return new B2LargeFileStorer(
-                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
+                B2StoreLargeFileRequest.builder(largeFileVersion.getFileId()).build(),
                 partStorers,
                 authCache,
                 webifier,
                 retryer,
                 retryPolicySupplier,
-                executor);
+                executor,
+                partNumberGapsAllowed);
     }
 
     @Test
     public void testStartByte() throws IOException {
-        final B2LargeFileStorer largeFileStorer = createLargeFileStorerForStartByteTests();
+        final B2LargeFileStorer largeFileStorer = createLargeFileStorerForStartByteTests(false);
 
         assertEquals(0, largeFileStorer.getStartByteOrUnknown(1));
         assertEquals(100, largeFileStorer.getStartByteOrUnknown(2));
@@ -207,14 +246,34 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         assertEquals(B2UploadProgress.UNKNOWN_PART_START_BYTE, largeFileStorer.getStartByteOrUnknown(4));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void testStartByte_partNumberTooLow() throws IOException {
-        createLargeFileStorerForStartByteTests().getStartByteOrUnknown(0);
+    @Test
+    public void testStartByte_partNumberGapsAllowed() throws IOException {
+        final B2LargeFileStorer largeFileStorer = createLargeFileStorerForStartByteTests(true);
+
+        assertEquals(0, largeFileStorer.getStartByteOrUnknown(1));
+        assertEquals(100, largeFileStorer.getStartByteOrUnknown(2));
+        assertEquals(100 + PART_SIZE_FOR_FIRST_TWO, largeFileStorer.getStartByteOrUnknown(3));
+        assertEquals(B2UploadProgress.UNKNOWN_PART_START_BYTE, largeFileStorer.getStartByteOrUnknown(4));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test(expected = IllegalArgumentException.class)
+    public void testStartByte_partNumberTooLow() throws IOException {
+        createLargeFileStorerForStartByteTests(false).getStartByteOrUnknown(0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStartByte_partNumberTooLow_partNumberGapsAllowed() throws IOException {
+        createLargeFileStorerForStartByteTests(true).getStartByteOrUnknown(0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void testStartByte_partNumberTooHigh() throws IOException {
-        createLargeFileStorerForStartByteTests().getStartByteOrUnknown(5);
+        createLargeFileStorerForStartByteTests(false).getStartByteOrUnknown(5);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStartByte_partNumberTooHigh_partNumberGapsAllowed() throws IOException {
+        createLargeFileStorerForStartByteTests(true).getStartByteOrUnknown(5);
     }
 
     @Test
@@ -246,13 +305,14 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         partStorers.add(new B2AlreadyStoredPartStorer(part3));
 
         final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
+                B2StoreLargeFileRequest.builder(largeFileVersion.getFileId()).build(),
                 partStorers,
                 authCache,
                 webifier,
                 retryer,
                 retryPolicySupplier,
-                executor);
+                executor,
+                false);
 
         assertEquals(partStorers, largeFileStorer.getPartStorers());
 
@@ -271,13 +331,14 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         partStorers.add(new B2AlreadyStoredPartStorer(part3));
 
         final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
+                B2StoreLargeFileRequest.builder(largeFileVersion.getFileId()).build(),
                 partStorers,
                 authCache,
                 webifier,
                 retryer,
                 retryPolicySupplier,
-                executor);
+                executor,
+                false);
 
         assertEquals(partStorers, largeFileStorer.getPartStorers());
 
@@ -359,6 +420,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
            fail("should have thrown B2InternalErrorException");
         }
     }
+
     @Test
     public void testStoreFileAsync_cannotUpload() throws B2Exception {
         when(webifier.uploadPart(anyObject(), anyObject())).thenThrow(new B2InternalErrorException("error"));
@@ -429,10 +491,12 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         when(contentSourceForPart1.getContentLength()).thenReturn(PART_SIZE_FOR_FIRST_TWO);
         when(contentSourceForPart2.getContentLength()).thenReturn(PART_SIZE_FOR_FIRST_TWO);
 
-        // when the first call to  uploadPart is called, we will cancel the request
+        // when the first call to uploadPart is called, we will cancel the request
         when(webifier.uploadPart(any(), any())).thenAnswer(invocation -> {
-            future.get().cancel(true);
-            return null;
+            // this method could be called before value is assigned to future, so we need to use
+            // waitForReferenceValue() instead of directly calling future.get()
+            waitForReferenceValue(future).cancel(true);
+            return mock(B2Part.class);
         });
 
         partStorers.add(new B2UploadingPartStorer(1, contentSourceForPart1));
@@ -440,30 +504,124 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         partStorers.add(new B2AlreadyStoredPartStorer(part3));
 
         final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
-                B2StoreLargeFileRequest.builder(largeFileVersion).build(),
+                B2StoreLargeFileRequest.builder(largeFileVersion.getFileId()).build(),
                 partStorers,
                 authCache,
                 webifier,
                 retryer,
                 retryPolicySupplier,
-                singleThreadedExecutor);
+                singleThreadedExecutor,
+                false);
 
         assertEquals(partStorers, largeFileStorer.getPartStorers());
 
         future.set(largeFileStorer.storeFileAsync(uploadListenerMock));
 
         try {
-
             future.get().get();
             Assert.fail("we should have gotten a CancellationException");
         } catch (CancellationException e) {
-
             // upload part should only be called once
             verify(webifier, times(1)).uploadPart(anyObject(), anyObject());
             verify(webifier, times(0)).finishLargeFile(anyObject(), anyObject());
-
         } catch (Exception e) {
             Assert.fail("we should have gotten a CancellationException");
+        }
+    }
+
+    @Test
+    public void testStorePartsAsyncCancelled() throws B2Exception, IOException {
+        final List<B2PartStorer> partStorers = new ArrayList<>();
+        final B2ContentSource contentSourceForPart1 = mock(B2ContentSource.class);
+        final B2ContentSource contentSourceForPart2 = mock(B2ContentSource.class);
+
+        final AtomicReference<CompletableFuture<List<B2Part>>> future = new AtomicReference<>();
+
+        when(contentSourceForPart1.getContentLength()).thenReturn(PART_SIZE_FOR_FIRST_TWO);
+        when(contentSourceForPart2.getContentLength()).thenReturn(PART_SIZE_FOR_FIRST_TWO);
+
+        // when the first call to uploadPart is called, we will cancel the request
+        when(webifier.uploadPart(any(), any())).thenAnswer(invocation -> {
+            // this method could be called before value is assigned to future, so we need to use
+            // waitForReferenceValue() instead of directly calling future.get()
+            waitForReferenceValue(future).cancel(true);
+            return mock(B2Part.class);
+        });
+
+        partStorers.add(new B2UploadingPartStorer(1, contentSourceForPart1));
+        partStorers.add(new B2UploadingPartStorer(2, contentSourceForPart2));
+        partStorers.add(new B2AlreadyStoredPartStorer(part3));
+
+        final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
+                B2StoreLargeFileRequest.builder(largeFileVersion.getFileId()).build(),
+                partStorers,
+                authCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                singleThreadedExecutor,
+                false);
+
+        assertEquals(partStorers, largeFileStorer.getPartStorers());
+
+        future.set(largeFileStorer.storePartsAsync(uploadListenerMock));
+
+        try {
+            future.get().get();
+            Assert.fail("we should have gotten a CancellationException");
+        } catch (CancellationException e) {
+            // upload part should only be called once
+            verify(webifier, times(1)).uploadPart(anyObject(), anyObject());
+        } catch (Exception e) {
+            Assert.fail("we should have gotten a CancellationException");
+        }
+    }
+
+    @Test
+    public void testStorePartsAsyncCannotUpload_SingleThreaded()
+            throws B2Exception, IOException, InterruptedException {
+        testStorePartsAsyncCannotUpload(singleThreadedExecutor);
+    }
+
+    @Test
+    public void testStorePartsAsyncCannotUpload_MultiThreaded()
+            throws B2Exception, IOException, InterruptedException {
+        testStorePartsAsyncCannotUpload(Executors.newFixedThreadPool(3));
+    }
+
+    private void testStorePartsAsyncCannotUpload(ExecutorService executor)
+            throws B2Exception, IOException, InterruptedException {
+        final List<B2PartStorer> partStorers = new ArrayList<>();
+        final B2ContentSource contentSourceForPart = mock(B2ContentSource.class);
+
+        when(contentSourceForPart.getContentLength()).thenReturn(FIVE_MEGABYTES);
+
+        // every time uploadPart is called, we throw an exception to simulate a failed upload
+        when(webifier.uploadPart(any(), any())).thenThrow(new B2InternalErrorException("test"));
+
+        partStorers.add(new B2UploadingPartStorer(1, contentSourceForPart));
+        partStorers.add(new B2UploadingPartStorer(2, contentSourceForPart));
+        partStorers.add(new B2UploadingPartStorer(3, contentSourceForPart));
+
+        final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
+                B2StoreLargeFileRequest.builder(largeFileVersion.getFileId()).build(),
+                partStorers,
+                authCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                executor,
+                false);
+
+        assertEquals(partStorers, largeFileStorer.getPartStorers());
+
+        try {
+            largeFileStorer.storePartsAsync(uploadListenerMock).get();
+            Assert.fail("should have thrown ExecutionException");
+        } catch (ExecutionException e) {
+            assertEquals(B2InternalErrorException.class, e.getCause().getClass());
+            // all three parts should be attempted even though each fails (8x each because of default retry policy)
+            verify(webifier, times(24)).uploadPart(anyObject(), anyObject());
         }
     }
 
@@ -471,7 +629,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
     public void testStoreLargeFileRequest_withSseB2_throwsIllegalArgumentException() {
         thrown.expect(IllegalArgumentException.class);
 
-        B2StoreLargeFileRequest.builder(largeFileVersion)
+        B2StoreLargeFileRequest.builder(largeFileVersion.getFileId())
                 .setServerSideEncryption(B2FileSseForRequest.createSseB2Aes256())
                 .build();
     }
@@ -493,7 +651,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
     /**
      * A content source that can be ranged once.
      */
-    class TestContentSource implements B2ContentSource {
+    static class TestContentSource implements B2ContentSource {
 
         private final long start;
         private final long length;
@@ -556,7 +714,7 @@ public class B2LargeFileStorerTest extends B2BaseTest {
      * thread. This is done so our assertions can assume a specific order of progress events. This works because the
      * tasks are all independent of each other and the main thread has no work to do while the tasks are running.
      */
-    private class ExecutorThatUsesMainThread extends AbstractExecutorService {
+    private static class ExecutorThatUsesMainThread extends AbstractExecutorService {
         @Override
         public void shutdown() {
         }
@@ -585,5 +743,28 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         public void execute(Runnable command) {
             command.run();
         }
+    }
+
+    /**
+     * Repeatedly sleeps and retries until the value of reference.get() is non-null, and then returns that
+     * value.
+     */
+    private <T> T waitForReferenceValue(AtomicReference<T> reference) {
+        final long startTime = System.currentTimeMillis();
+        T value = reference.get();
+        while (value == null) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Interrupted", e);
+            }
+            // just in case, let's set a 30s timeout so that we don't spin forever waiting for a reference value
+            if (System.currentTimeMillis() - startTime > 30_000) {
+                throw new RuntimeException("timed out while waiting for reference to be set!");
+            }
+
+            value = reference.get();
+        }
+        return value;
     }
 }

@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
  */
 public abstract class B2Clock {
     // only access with while synchronized(B2Clock.class).
-    private static B2Clock theClock;
+    private static volatile B2Clock theClock;
 
     /**
      * If theClock is null, this will create a B2ClockSim with the desiredNow.
@@ -48,9 +48,13 @@ public abstract class B2Clock {
     /**
      * @return theClock to use.
      */
-    public static synchronized B2Clock get() {
+    public static B2Clock get() {
         if (theClock == null) {
-            theClock = new B2ClockImpl();
+            synchronized (B2Clock.class) {
+                if (theClock == null) {
+                    theClock = new B2ClockImpl();
+                }
+            }
         }
         return theClock;
     }

@@ -36,6 +36,14 @@ public class B2LifecycleRule {
     @B2Json.optional
     private final Integer daysFromHidingToDeleting;
 
+    /**
+     * Number of days from the time an unfinished large file is started
+     * until it is canceled.
+     * Null means never cancel.
+     */
+    @B2Json.optional
+    private final Integer daysFromStartingToCancelingUnfinishedLargeFiles;
+
     public static Builder builder(String fileNamePrefix) {
         return new Builder(fileNamePrefix);
     }
@@ -52,30 +60,41 @@ public class B2LifecycleRule {
         return daysFromHidingToDeleting;
     }
 
+    public Integer getDaysFromStartingToCancelingUnfinishedLargeFiles() {
+        return daysFromStartingToCancelingUnfinishedLargeFiles;
+    }
+
     /**
      * Initializes a new, immutable rule.
      */
-    @B2Json.constructor(params = "fileNamePrefix, daysFromUploadingToHiding, daysFromHidingToDeleting")
+    @B2Json.constructor
     private B2LifecycleRule(String fileNamePrefix,
                             Integer daysFromUploadingToHiding,
-                            Integer daysFromHidingToDeleting) {
+                            Integer daysFromHidingToDeleting,
+                            Integer daysFromStartingToCancelingUnfinishedLargeFiles) {
         B2Preconditions.checkArgument(fileNamePrefix != null, "fileNamePrefix must not be null");
         B2Preconditions.checkArgument(isNullOrPositive(daysFromUploadingToHiding), "daysFromUploadingToHiding must be positive");
         B2Preconditions.checkArgument(isNullOrPositive(daysFromHidingToDeleting), "daysFromHidingToDeleting must be positive");
+        B2Preconditions.checkArgument(isNullOrPositive(daysFromStartingToCancelingUnfinishedLargeFiles),
+                                 "daysFromStartingToCancelingUnfinishedLargeFiles must be positive");
 
         this.daysFromUploadingToHiding = daysFromUploadingToHiding;
         this.daysFromHidingToDeleting = daysFromHidingToDeleting;
+        this.daysFromStartingToCancelingUnfinishedLargeFiles = daysFromStartingToCancelingUnfinishedLargeFiles;
         this.fileNamePrefix = fileNamePrefix;
     }
 
     @Override
     public String toString() {
-        return String.format(
-                "%s:%s:%s",
-                fileNamePrefix,
-                daysFromUploadingToHiding,
-                daysFromHidingToDeleting
-        );
+        return new StringBuilder(32)
+                .append(fileNamePrefix)
+                .append(":")
+                .append(daysFromUploadingToHiding)
+                .append(":")
+                .append(daysFromHidingToDeleting)
+                .append(":")
+                .append(daysFromStartingToCancelingUnfinishedLargeFiles)
+                .toString();
     }
 
     @Override
@@ -85,12 +104,18 @@ public class B2LifecycleRule {
         B2LifecycleRule that = (B2LifecycleRule) o;
         return Objects.equals(fileNamePrefix, that.fileNamePrefix) &&
                 Objects.equals(daysFromUploadingToHiding, that.daysFromUploadingToHiding) &&
-                Objects.equals(daysFromHidingToDeleting, that.daysFromHidingToDeleting);
+                Objects.equals(daysFromHidingToDeleting, that.daysFromHidingToDeleting) &&
+                Objects.equals(daysFromStartingToCancelingUnfinishedLargeFiles, that.daysFromStartingToCancelingUnfinishedLargeFiles);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fileNamePrefix, daysFromUploadingToHiding, daysFromHidingToDeleting);
+        return Objects.hash(
+                fileNamePrefix,
+                daysFromUploadingToHiding,
+                daysFromHidingToDeleting,
+                daysFromStartingToCancelingUnfinishedLargeFiles
+        );
     }
 
     /**
@@ -104,6 +129,7 @@ public class B2LifecycleRule {
         private final String fileNamePrefix;
         private Integer daysFromUploadingToHiding;
         private Integer daysFromHidingToDeleting;
+        private Integer daysFromStartingToCancelingUnfinishedLargeFiles;
 
         public Builder(String fileNamePrefix) {
             this.fileNamePrefix = fileNamePrefix;
@@ -119,8 +145,16 @@ public class B2LifecycleRule {
             return this;
         }
 
+        public Builder setDaysFromStartingToCancelingUnfinishedLargeFiles(Integer daysFromStartingToCancelingUnfinishedLargeFiles) {
+            this.daysFromStartingToCancelingUnfinishedLargeFiles = daysFromStartingToCancelingUnfinishedLargeFiles;
+            return this;
+        }
+
         public B2LifecycleRule build() {
-            return new B2LifecycleRule(fileNamePrefix, daysFromUploadingToHiding, daysFromHidingToDeleting);
+            return new B2LifecycleRule(fileNamePrefix,
+                                       daysFromUploadingToHiding,
+                                       daysFromHidingToDeleting,
+                                       daysFromStartingToCancelingUnfinishedLargeFiles);
         }
     }
 }
