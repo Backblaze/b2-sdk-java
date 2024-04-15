@@ -2,7 +2,7 @@
 // License https://www.backblaze.com/using_b2_code.html
 
 plugins {
-    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
 
 nexusPublishing {
