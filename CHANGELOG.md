@@ -1,4 +1,5 @@
 # Changelog
+## [Unreleased] - TBD
 
 ### [6.2.0] - 2024-04-15
 * Added support to specify B2Json union types using annotations. Annotation support for union types is required because 
