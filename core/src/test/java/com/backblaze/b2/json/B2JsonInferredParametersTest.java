@@ -69,8 +69,18 @@ public class B2JsonInferredParametersTest extends B2BaseTest {
                         "  \"c\": 101\n" +
                         "}",
                 MismatchingOrderContainer.class);
+        assertEquals(41, actual.a);
+        assertEquals("hello", actual.b);
+        assertEquals(101, actual.c);
     }
 
+    @Test
+    public void testSeralizedFieldName() {
+        String json = "{\"b\": 41}";
+        final ContainerWithDifferentserializedName obj = B2Json.fromJsonOrThrowRuntime(json, ContainerWithDifferentserializedName.class);
+
+        assertEquals(41, obj.a);
+    }
 
     private static class Empty {
         @B2Json.constructor Empty() {}
@@ -175,6 +185,17 @@ public class B2JsonInferredParametersTest extends B2BaseTest {
             }
             Container other = (Container) o;
             return a == other.a && (b == null ? other.b == null : b.equals(other.b));
+        }
+    }
+
+    private static class ContainerWithDifferentserializedName {
+        @B2Json.required
+        @B2Json.serializedName(value = "b")
+        public int a;
+
+        @B2Json.constructor
+        public ContainerWithDifferentserializedName(int a) {
+            this.a = a;
         }
     }
 

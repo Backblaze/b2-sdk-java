@@ -18,10 +18,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Handler for the class that is the base class for a union type.
- *
+ * <p>
  * This handler is used only for deserialization, where it finds the
  * type name in the JSON object, and this dispatches to the subclass
  * for that type.
@@ -61,6 +62,11 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
      * the fields before we know which subclass they belong to.
      */
     private Map<String, B2JsonTypeHandler<?>> fieldNameToHandler;
+
+    /**
+     * Set containing the names of fields to discard during parsing.
+     */
+    private Map<B2JsonObjectHandler<?>, Set<String>> handlerToFieldsToDiscard;
 
 
     /*package*/ B2JsonUnionBaseHandler(Class<T> clazz) throws B2JsonException {
@@ -102,23 +108,43 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
 
     @Override
     protected void initializeImplementation(B2JsonHandlerMap b2JsonHandlerMap) throws B2JsonException {
-
+        boolean unionTypeFromMethod = false;
         // Get the map of type name to class of all the members of the union.
-        final Map<String, Class<?>> typeNameToClass = getUnionTypeMap(clazz).getTypeNameToClass();
+        B2JsonUnionTypeMap unionTypeMapFromAnnotationOrNull = getUnionTypeMapFromAnnotationOrNull(clazz);
+        if (unionTypeMapFromAnnotationOrNull == null) {
+            unionTypeMapFromAnnotationOrNull = getUnionTypeMapFromMethod(clazz);
+            unionTypeFromMethod = true;
+        }
+        final Map<String, Class<?>> typeNameToClass = unionTypeMapFromAnnotationOrNull.getTypeNameToClass();
 
         // Build the maps from type name and class to handler.
         typeNameToHandler = new HashMap<>();
         classToHandler = new HashMap<>();
+        handlerToFieldsToDiscard = new HashMap<>();
         for (Map.Entry<String, Class<?>> entry : typeNameToClass.entrySet()) {
             final String typeName = entry.getKey();
             final Class<?> typeClass = entry.getValue();
-            if (!hasSuperclass(typeClass, clazz)) { // use clazz.isAssignableFrom(typeClass)?
+            if (unionTypeFromMethod && !hasSuperclass(typeClass, clazz)) { // use clazz.isAssignableFrom(typeClass)?
                 throw new B2JsonException(typeClass + " is not a subclass of " + clazz);
             }
             final B2JsonTypeHandler<?> handler = b2JsonHandlerMap.getUninitializedHandler(typeClass);
             if (handler instanceof B2JsonObjectHandler) {
                 typeNameToHandler.put(typeName, (B2JsonObjectHandler) handler);
                 classToHandler.put(typeClass, (B2JsonObjectHandler) handler);
+                // Add discarded fields to handlerToFieldsToDiscard
+                Constructor<?> b2JsonConstructor = B2JsonDeserializationUtil.findConstructor(typeClass);
+
+                final B2Json.B2JsonTypeConfig jsonTypeParams;
+                final B2Json.constructor annotation = b2JsonConstructor.getAnnotation(B2Json.constructor.class);
+                if (annotation == null) {
+                    // must be a record, use @B2Json.type
+                    B2Json.type typeAnnotation = typeClass.getAnnotation(B2Json.type.class);
+                    jsonTypeParams = new B2Json.B2JsonTypeConfig(typeAnnotation);
+                } else{
+                    jsonTypeParams = new B2Json.B2JsonTypeConfig(annotation);
+                }
+                Set<String> fieldsToDiscard = B2JsonDeserializationUtil.getDiscards(jsonTypeParams);
+                handlerToFieldsToDiscard.put((B2JsonObjectHandler) handler, fieldsToDiscard);
             }
             else {
                 throw new B2JsonException("BUG: handler for subclass of union is not B2JsonObjectHandler");
@@ -141,7 +167,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
                                 "In union type " + clazz + ", field " + fieldName + " has two different types.  " +
                                         fieldNameToSourceClassName.get(fieldName) + " has " +
                                         fieldNameToHandler.get(fieldName).getHandledType() + " and " +
-                                        subclass.toString() + " has " + handler.getHandledType()
+                                        subclass + " has " + handler.getHandledType()
                         );
                     }
                 }
@@ -211,10 +237,10 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
 
     /**
      * Returns the mapping from type name to class for all members of the union.
-     *
+     * <p>
      * Gets the map by calling the static method getUnionTypeMap on the base class.
      */
-    /*package*/ static B2JsonUnionTypeMap getUnionTypeMap(Class<?> clazz) throws B2JsonException {
+    /*package*/ static B2JsonUnionTypeMap getUnionTypeMapFromMethod(Class<?> clazz) throws B2JsonException {
         // This uses getDeclaredMethod instead of just getMethod so that classes
         // can't inherit the type handler from their superclass.  that seems like
         // a safer starting point.
@@ -239,6 +265,27 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
         }
     }
 
+    /**
+     * Gets the map by the declared B2Json.unionSubtypes annotation. If the {@code B2Json.unionSubTypes} is not present,
+     * then {@code null} is returned
+     */
+    /*package*/ static B2JsonUnionTypeMap getUnionTypeMapFromAnnotationOrNull(Class<?> clazz) throws B2JsonException {
+
+        B2Json.unionSubtypes annotation = clazz.getAnnotation(B2Json.unionSubtypes.class);
+        if (annotation == null) {
+            return null;
+        }
+        B2Json.unionSubtypes.type[] subTypes = annotation.value();
+        if (subTypes.length == 0) {
+            throw new B2JsonException(clazz.getSimpleName() + " - at least one type must be configured set in @B2Json.unionSubtypes");
+        }
+        final B2JsonUnionTypeMap.Builder builder = B2JsonUnionTypeMap.builder();
+        for (B2Json.unionSubtypes.type type: subTypes) {
+            builder.put(type.name(), type.clazz());
+        }
+        return builder.build();
+    }
+
     @Override
     public Type getHandledType() {
         // TODO not sure what to do here...
@@ -253,7 +300,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
 
         if (obj.getClass() == clazz) {
             // the union base class is basically "abstract" and can't be serialized.
-            throw new B2JsonException("" + clazz + " is a union base class, and cannot be serialized");
+            throw new B2JsonException(clazz + " is a union base class, and cannot be serialized");
         }
 
         //
@@ -264,7 +311,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
         //noinspection unchecked
         final B2JsonObjectHandler<T> objHandler = (B2JsonObjectHandler<T>) classToHandler.get(obj.getClass());
         if (objHandler == null) {
-            throw new B2JsonException("" + obj.getClass() + " isn't a registered part of union " + clazz);
+            throw new B2JsonException(obj.getClass() + " isn't a registered part of union " + clazz);
         }
 
         // we have the right handler, so make it do the work.
@@ -299,7 +346,9 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
                 else {
                     final B2JsonTypeHandler<?> handler = fieldNameToHandler.get(fieldName);
                     if (handler == null) {
-                        unknownFieldNameOrNull = fieldName;
+                        if (options.getExtraFieldOption() == B2JsonOptions.ExtraFieldOption.ERROR) {
+                            unknownFieldNameOrNull = fieldName;
+                        }
                         in.skipValue();
                     }
                     else {
@@ -332,7 +381,8 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
         }
 
         // Throw errors for unknown fields.  (Actually, we'll just throw for one.)
-        if (unknownFieldNameOrNull != null) {
+        if (unknownFieldNameOrNull != null &&
+                !handlerToFieldsToDiscard.get(handler).contains(unknownFieldNameOrNull)) {
             throw new B2JsonException("unknown field '" + unknownFieldNameOrNull + "' in union type " + clazz.getSimpleName());
         }
         
@@ -353,7 +403,7 @@ public class B2JsonUnionBaseHandler<T> extends B2JsonTypeHandlerWithDefaults<T> 
 
     /**
      * Remembers that the default value is bad.
-     *
+     * <p>
      * We propagate this error to all members of the union, because they
      * are unusable if the union base cannot be deserialized.
      */

@@ -21,6 +21,8 @@ public class B2UploadFileRequest {
     private final Map<String, String> fileInfo;
     private final B2UploadListener listener;
 
+    private final Long customUploadTimestamp;
+
 
     private B2UploadFileRequest(String bucketId,
                                 String fileName,
@@ -30,7 +32,8 @@ public class B2UploadFileRequest {
                                 String legalHold,
                                 Map<String, String> fileInfo,
                                 B2ContentSource contentSource,
-                                B2UploadListener listener) {
+                                B2UploadListener listener,
+                                Long customUploadTimestamp) {
         this.bucketId = bucketId;
         this.fileName = fileName;
         this.contentType = contentType;
@@ -38,6 +41,7 @@ public class B2UploadFileRequest {
         this.fileRetention = fileRetention;
 
         this.legalHold = legalHold;
+        this.customUploadTimestamp = customUploadTimestamp;
         validateLegalHold(legalHold);
 
         this.fileInfo = fileInfo;  // make sorted, immutable copyOf?!
@@ -89,6 +93,10 @@ public class B2UploadFileRequest {
         return listener;
     }
 
+    public Long getCustomUploadTimestamp() {
+        return customUploadTimestamp;
+    }
+
     public static Builder builder(String bucketId,
                                   String fileName,
                                   String contentType,
@@ -106,6 +114,8 @@ public class B2UploadFileRequest {
         private String legalHold;
         private Map<String, String> info;
         private B2UploadListener listener;
+
+        private Long customUploadTimestamp;
 
         Builder(String bucketId,
                 String fileName,
@@ -150,6 +160,11 @@ public class B2UploadFileRequest {
             return this;
         }
 
+        public Builder setCustomUploadTimestamp(Long customUploadTimestamp) {
+            this.customUploadTimestamp = customUploadTimestamp;
+            return this;
+        }
+
         public B2UploadFileRequest build() {
             return new B2UploadFileRequest(bucketId,
                     fileName,
@@ -159,7 +174,9 @@ public class B2UploadFileRequest {
                     legalHold,
                     info,
                     source,
-                    listener);
+                    listener,
+                    customUploadTimestamp
+            );
         }
     }
 }

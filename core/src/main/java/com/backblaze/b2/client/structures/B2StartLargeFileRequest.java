@@ -35,15 +35,18 @@ public class B2StartLargeFileRequest {
     @B2Json.optional(omitNull = true)
     private final String legalHold;
 
-    @B2Json.constructor(params = "bucketId,fileName,contentType,serverSideEncryption,fileInfo," +
-            "fileRetention,legalHold")
+    @B2Json.optional(omitNull = true)
+    private final Long customUploadTimestamp;
+
+    @B2Json.constructor
     private B2StartLargeFileRequest(String bucketId,
                                     String fileName,
                                     String contentType,
                                     B2FileSseForRequest serverSideEncryption,
                                     Map<String, String> fileInfo,
                                     B2FileRetention fileRetention,
-                                    String legalHold) {
+                                    String legalHold,
+                                    Long customUploadTimestamp) {
         this.bucketId = bucketId;
         this.fileName = fileName;
         this.contentType = contentType;
@@ -51,6 +54,7 @@ public class B2StartLargeFileRequest {
         this.fileInfo = B2Collections.unmodifiableMap(fileInfo);
         this.fileRetention = fileRetention;
         this.legalHold = legalHold;
+        this.customUploadTimestamp = customUploadTimestamp;
     }
 
     public String getBucketId() {
@@ -81,6 +85,10 @@ public class B2StartLargeFileRequest {
         return legalHold;
     }
 
+    public Long getCustomUploadTimestamp() {
+        return customUploadTimestamp;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -92,7 +100,8 @@ public class B2StartLargeFileRequest {
                 Objects.equals(getServerSideEncryption(), that.getServerSideEncryption()) &&
                 Objects.equals(getFileInfo(), that.getFileInfo()) &&
                 Objects.equals(getFileRetention(), that.getFileRetention()) &&
-                Objects.equals(getLegalHold(), that.getLegalHold());
+                Objects.equals(getLegalHold(), that.getLegalHold()) &&
+                Objects.equals(getCustomUploadTimestamp(), that.getCustomUploadTimestamp());
     }
 
     @Override
@@ -104,7 +113,8 @@ public class B2StartLargeFileRequest {
                 getServerSideEncryption(),
                 getFileInfo(),
                 getFileRetention(),
-                getLegalHold()
+                getLegalHold(),
+                getCustomUploadTimestamp()
         );
     }
 
@@ -127,6 +137,9 @@ public class B2StartLargeFileRequest {
 
             // we always start with the original fileInfo.
             builder.setCustomFields(orig.getFileInfo());
+
+            // copy custom upload timestamp (if any) from original
+            builder.setCustomUploadTimestamp(orig.getCustomUploadTimestamp());
 
             final String largeFileSha1 = orig.getContentSource().getSha1OrNull();
             if (largeFileSha1 != null) {
@@ -163,6 +176,8 @@ public class B2StartLargeFileRequest {
         private Map<String, String> fileInfo;
         private B2FileRetention fileRetention;
         private String legalHold;
+
+        private Long customUploadTimestamp;
 
         Builder(String bucketId,
                 String fileName,
@@ -213,6 +228,11 @@ public class B2StartLargeFileRequest {
             return this;
         }
 
+        public Builder setCustomUploadTimestamp(Long customUploadTimestamp) {
+            this.customUploadTimestamp = customUploadTimestamp;
+            return this;
+        }
+
         public B2StartLargeFileRequest build() {
             return new B2StartLargeFileRequest(bucketId,
                     fileName,
@@ -220,7 +240,9 @@ public class B2StartLargeFileRequest {
                     serverSideEncryption,
                     fileInfo,
                     fileRetention,
-                    legalHold);
+                    legalHold,
+                    customUploadTimestamp
+            );
         }
     }
 }

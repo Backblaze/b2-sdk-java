@@ -34,6 +34,8 @@ class B2ByteProgressFilteringListener implements B2ByteProgressListener {
     // what's the most recent bytesSoFar we've seen?
     private long bytesSoFar;
 
+    private static final B2Clock b2Clock = B2Clock.get();
+
     /**
      * @param listener the listener to forward notifications to.
      * @param nMillisBetween if this much time has passed since previous progress() was forwarded, forward it.
@@ -55,7 +57,7 @@ class B2ByteProgressFilteringListener implements B2ByteProgressListener {
     public void progress(long nBytesSoFar) {
         this.bytesSoFar = nBytesSoFar;
 
-        final long monoMillis = B2Clock.get().monotonicMillis();
+        final long monoMillis = b2Clock.monotonicMillis();
 
         // only send if enough time has gone by.
         if (monoMillis >= millisThreshold) {

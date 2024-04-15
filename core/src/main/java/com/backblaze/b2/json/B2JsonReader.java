@@ -10,7 +10,7 @@ import java.io.Reader;
 
 /**
  * Reads a stream of characters and converts them to JSON tokens.
- *
+ * <p>
  * This class is NOT thread safe.
  */
 public class B2JsonReader {

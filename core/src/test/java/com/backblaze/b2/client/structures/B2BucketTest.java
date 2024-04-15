@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 
@@ -127,6 +127,7 @@ public class B2BucketTest extends B2BaseTest {
                                 sourceToDestinationKeyMapping
                         )
                 );
+
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
                 bucketId(1),
@@ -213,6 +214,7 @@ public class B2BucketTest extends B2BaseTest {
                                 sourceToDestinationKeyMapping
                         )
                 );
+
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
                 bucketId(1),
@@ -276,6 +278,7 @@ public class B2BucketTest extends B2BaseTest {
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +
                 "      \"daysFromHidingToDeleting\": null,\n" +
+                "      \"daysFromStartingToCancelingUnfinishedLargeFiles\": null,\n" +
                 "      \"daysFromUploadingToHiding\": null,\n" +
                 "      \"fileNamePrefix\": \"files/\"\n" +
                 "    }\n" +

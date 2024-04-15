@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client.structures;
@@ -137,6 +137,7 @@ public class B2CreateBucketRequestRealTest extends B2BaseTest {
                 "  \"lifecycleRules\": [\n" +
                 "    {\n" +
                 "      \"daysFromHidingToDeleting\": null,\n" +
+                "      \"daysFromStartingToCancelingUnfinishedLargeFiles\": null,\n" +
                 "      \"daysFromUploadingToHiding\": null,\n" +
                 "      \"fileNamePrefix\": \"files/\"\n" +
                 "    }\n" +

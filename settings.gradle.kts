@@ -3,7 +3,7 @@
 
 rootProject.name = "b2-sdk-java"
 
-val projects = listOf("core", "httpclient", "samples")
+val projects = listOf("core", "httpclient", "samples", "core-test-jdk17")
 for (proj in projects) {
     include(proj)
     findProject(":$proj")?.name = "b2-sdk-$proj"

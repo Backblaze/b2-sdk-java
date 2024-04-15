@@ -7,18 +7,22 @@ package com.backblaze.b2.json;
 
 import com.backblaze.b2.util.B2StringUtil;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.io.StringReader;
+
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -71,7 +75,6 @@ public class B2Json {
      * relying on the shape of a class for which you don't own the
      * source code?
      */
-    private static String UTF8 = "UTF-8";
 
     /**
      * A simple instance that can be shared.
@@ -80,7 +83,7 @@ public class B2Json {
 
     /**
      * Bit map values for the options parameter to the constructor.
-     *
+     * <p>
      * Deprecated in favor of using B2JsonOptions.
      */
     @Deprecated
@@ -115,11 +118,7 @@ public class B2Json {
     }
 
     public byte[] toJsonUtf8Bytes(Object obj, B2JsonOptions options) throws B2JsonException {
-        try {
-            return toJson(obj, options).getBytes(UTF8);
-        } catch (IOException e) {
-            throw new RuntimeException("error writing to byte array: " + e.getMessage());
-        }
+        return toJson(obj, options).getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -159,17 +158,17 @@ public class B2Json {
     /**
      * Turn an object into JSON, writing the results to given
      * output stream.
-     *
+     * <p>
      * objTypeOrNull can be set to null if obj is not a parameterized class. However,
      * if obj contains type parameters (like if obj is a {@literal List<String>}, then
      * you will need to pass in its type information via objTypeOrNull. This will instruct
      * B2Json to derive the B2JsonTypeHandler from the type information instead of the
      * object's class.
-     *
+     * <p>
      * Getting the Type of obj can be done in at least two ways:
      * 1. If it is a member of an enclosing class, EnclosingClass.getDeclaredField(...).getGenericType()
      * 2. By constructing a class that implements Type.
-     *
+     * <p>
      * Note that the output stream is NOT closed as a side-effect of calling this.
      * It was a bug that it was being closed in version 1.1.1 and earlier.
      */
@@ -333,7 +332,7 @@ public class B2Json {
     }
 
     public <T> T fromJsonUntilEof(InputStream in, Class<T> clazz, B2JsonOptions options) throws IOException, B2JsonException {
-        B2JsonReader reader = new B2JsonReader(new InputStreamReader(in, "UTF-8"));
+        final B2JsonReader reader = new B2JsonReader(new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)));
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         //noinspection unchecked
         T result = (T) handler.deserialize(reader, options);
@@ -360,25 +359,48 @@ public class B2Json {
 
     /**
      * Parse the bytes from an InputStream as JSON using the supplied options, returning the parsed object.
-     *
+     * <p>
      * The Type parameter will usually be a class, which is straightforward to supply. However,
      * if you are trying to deserialize a parameterized type (like if obj is a
      * {@literal List<String>}, then you will need to supply a proper Type instance.
-     *
+     * <p>
      * Getting the Type can be done in at least two ways:
      * 1. If it is a member of an enclosing class, EnclosingClass.getDeclaredField(...).getGenericType()
      * 2. By constructing a class that implements Type.
      */
     public <T> T fromJson(InputStream in, Type type, B2JsonOptions options) throws IOException, B2JsonException {
-        B2JsonReader reader = new B2JsonReader(new InputStreamReader(in, "UTF-8"));
-        final B2JsonTypeHandler handler = handlerMap.getHandler(type);
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+        return fromJson(reader, type, options);
+    }
+
+    /**
+     * Parse JSON as an object of the given class with the given options.
+     */
+    public <T> T fromJson(Reader reader, Class<T> clazz) throws IOException, B2JsonException {
+        return fromJson(reader, clazz, B2JsonOptions.DEFAULT);
+    }
+
+    /**
+     * Parse the bytes from a Reader as JSON using the supplied options, returning the parsed object.
+     * <p>
+     * The Type parameter will usually be a class, which is straightforward to supply. However,
+     * if you are trying to deserialize a parameterized type (for instance, if the object is a
+     * {@literal List<String>}), then you will need to supply a proper Type instance.
+     * <p>
+     * Getting the Type can be done in at least two ways:
+     * 1. If it is a member of an enclosing class, EnclosingClass.getDeclaredField(...).getGenericType()
+     * 2. By constructing a class that implements Type.
+     */
+    public <T> T fromJson(Reader reader, Type type, B2JsonOptions options) throws IOException, B2JsonException {
+        final B2JsonReader b2JsonReader = new B2JsonReader(reader);
+        final B2JsonTypeHandler<Object> handler = handlerMap.getHandler(type);
 
         if (handler == null) {
             throw new B2JsonException("B2Json.fromJson called with handler not in handlerMap");
 
         }
         //noinspection unchecked
-        return (T) handler.deserialize(reader, options);
+        return (T) handler.deserialize(b2JsonReader, options);
     }
 
     /**
@@ -435,7 +457,19 @@ public class B2Json {
     }
 
     public <T> T fromJson(byte[] jsonUtf8Bytes, Class<T> clazz, B2JsonOptions options) throws IOException, B2JsonException {
-        B2JsonReader reader = new B2JsonReader(new InputStreamReader(new ByteArrayInputStream(jsonUtf8Bytes), "UTF-8"));
+        // Use a StringReader instead of BufferedReader and InputerStreamReader for small input,
+        // in order to optimize memory allocations
+        final B2JsonReader reader;
+        if (jsonUtf8Bytes.length <= 8192) {
+            reader = new B2JsonReader(
+                    new StringReader(new String(jsonUtf8Bytes, StandardCharsets.UTF_8))
+            );
+        } else {
+            reader = new B2JsonReader(
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    new ByteArrayInputStream(jsonUtf8Bytes), StandardCharsets.UTF_8)));
+        }
         final B2JsonTypeHandler handler = handlerMap.getHandler(clazz);
         //noinspection unchecked
         return (T) handler.deserialize(reader, options);
@@ -443,7 +477,7 @@ public class B2Json {
 
     /**
      * Parse a URL parameter map as an object of the given class.
-     *
+     * <p>
      * The values in the map are the values that will be used in the
      * object.  The caller is responsible for URL-decoding them
      * before passing them to this method.
@@ -491,6 +525,23 @@ public class B2Json {
         String typeField();
     }
 
+
+    /**
+     * <p>Class annotation that applies to an interface that is a @union.</p>
+     *
+     * <p>Provides a mapping from type name to class</p>
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface unionSubtypes {
+        type[] value();
+
+        @interface type {
+            Class<?> clazz();
+            String name();
+        }
+    }
+
     /**
      * <p>Class annotation that applies to a class that is a @union.</p>
      *
@@ -510,12 +561,21 @@ public class B2Json {
     public @interface required {}
 
     /**
-     * Field annotation that says a field is optional.  The value will
-     * always be included, even if it is null, when omitNull is false
-     * (default); when omitNull is true and the field value is null,
-     * the value will not be included. A B2JsonException is thrown
-     * when omitNull is set to true on a primitive field; primitives
-     * are not nullable objects so omitNull does not apply.
+     * Field annotation that says a field is optional.
+     *
+     * The value will almost always be included when serializing, with
+     * two exceptions.  If omitNull is true and the value is null, it will
+     * be left out of the serialized representation.  Similarly, if omitZero
+     * is true and the value is zero, it will be left out of the serialized
+     * representation.  Note that both omitNull and omitZero default to false.
+     *
+     * A B2JsonException is thrown when omitNull is set to true on a primitive field;
+     * primitives are not nullable objects so omitNull does not apply.
+     * Similarly, a B2JsonException is thrown when omitZero is set to true on a
+     * field that's either non-numeric, non-primitive, or not built into B2Json.
+     * Note that they can't both be used on the same field because one only works
+     * on non-primitive fields and the other only works on primitive fields.
+     *
      * When deserializing, null/false/0 will be passed to
      * the constructor if the value is not present in the JSON.
      */
@@ -523,19 +583,33 @@ public class B2Json {
     @Target(ElementType.FIELD)
     public @interface optional {
         boolean omitNull() default false;
+        boolean omitZero() default false;
     }
 
     /**
-     * Field annotation that says a field is optional.  The value will
-     * always be included when serializing, even if it is null.  When
-     * deserializing, the provided default value will be used.  The default
+     * Field annotation that says a field is optional.
+     * When deserializing, the provided default value will be used.  The default
      * provided should be the JSON form of the value, as a string.
+     *
+     * The value will almost always be included when serializing, with
+     * two exceptions.  If omitNull is true and the value is null, it will
+     * be left out of the serialized representation.  Similarly, if omitZero
+     * is true and the value is zero, it will be left out of the serialized
+     * representation.  Note that both omitNull and omitZero default to false.
+     *
+     * A B2JsonException is thrown when omitNull is set to true on a primitive field;
+     * primitives are not nullable objects so omitNull does not apply.
+     * Similarly, a B2JsonException is thrown when omitZero is set to true on a
+     * field that's either non-numeric, non-primitive, or not built into B2Json.
+     * Note that they can't both be used on the same field because one only works
+     * on non-primitive fields and the other only works on primitive fields.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     public @interface optionalWithDefault {
         String defaultValue();
         boolean omitNull() default false;
+        boolean omitZero() default false;
     }
 
     /**
@@ -573,21 +647,55 @@ public class B2Json {
     public @interface sensitive {}
 
     /**
+     * Annotation to declare that this member will be serialized to JSON
+     * with the specified name, instead of the field name in the Java class.
+     * <p>
+     * The Java class's field name is used for the params list in the
+     * B2Json.constructor annotation
+     * <p>
+     * For example:
+     * <pre>
+     * class Example {
+     *     {@literal @}B2Json.serializedName(value = "@field")
+     *      private String field;
+     *
+     *     {@literal @}B2Json.constructor(params = "field")
+     *      public Example(String field) {
+     *          this.field = field;
+     *      }
+     * }
+     * </pre>
+     * will serialize to the following JSON:
+     * <pre>
+     *     {
+     *         "@field": "value"
+     *     }
+     * </pre>
+     *
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface serializedName {
+        String value();
+    }
+
+
+    /**
      * Constructor annotation saying that this is the constructor B2Json
      * should use.  This constructor must take ALL of the serializable
      * fields as parameters.
-     *
+     * <p>
      * You must either compile classes with the '-parameters' javac option
      * or else provide a "params" parameter that lists the order of
      * the parameters to the constructor.
-     *
+     * <p>
      * If present, the "discards" parameter is a comma-separated list of
      * field names which are allowed to be present in the parsed json,
      * but whose values will be discarded.  The names may be for fields
      * that don't exist or for fields marked @ignored.  This is useful
      * for accepting deprecated fields without having to use
      * ALLOW_EXTRA_FIELDS, which would accept ALL unknown fields.
-     *
+     * <p>
      * When versionParam is non-empty, it is the name of a parameter that
      * is not a field name, and will take the version number being constructed.
      * This should be included for objects that have multiple versions,
@@ -602,6 +710,63 @@ public class B2Json {
         String params() default "";
         String discards() default "";
         String versionParam() default "";
+    }
+
+    /**
+     * Type annotation used to configure B2Json serialization/deserialization.
+
+     * When versionParam is non-empty, it is the name of a parameter that
+     * is not a field name, and will take the version number being constructed.
+     * This should be included for objects that have multiple versions,
+     * and the code in the constructor should validate the data based on it.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface type {
+
+        /**
+         * When discards is non-empty, is a comma-separated list of field names which are
+         * allowed to be present in the parsed json,
+         * but whose values will be discarded.  The names may be for fields
+         * that don't exist or for fields marked @ignored.  This is useful
+         * for accepting deprecated fields without having to use
+         * ALLOW_EXTRA_FIELDS, which would accept ALL unknown fields.
+         *
+         * @return A comma separated list of fields to discard, or an empty string
+         */
+        String discards() default "";
+
+        /**
+         * When versionParam is non-empty, it is the name of a parameter that
+         * is not a field name, and will take the version number being constructed.
+         * This should be included for objects that have multiple versions,
+         * and the code in the constructor should validate the data based on it.
+         *
+         * @return the version parameter if present, or an empty string
+         */
+        String versionParam() default "";
+    }
+
+    /**
+     * B2Json common configuration object for types (both classes and interfaces)
+     */
+    static class B2JsonTypeConfig {
+
+        public final String discards;
+        public final String versionParam;
+        public final String params;
+
+        public B2JsonTypeConfig(B2Json.type type) {
+            this.discards = type.discards();
+            this.versionParam = type.versionParam();
+            this.params = "";
+        }
+
+        public B2JsonTypeConfig(B2Json.constructor constructor) {
+            this.discards = constructor.discards();
+            this.versionParam = constructor.versionParam();
+            this.params = constructor.params();
+        }
     }
 
     /**
@@ -621,6 +786,8 @@ public class B2Json {
     /*package*/ static final Class<? extends Annotation>[] ALL_ANNOTATIONS =
             new Class[] {
                     union.class,
+                    unionSubtypes.class,
+                    type.class,
                     required.class,
                     optional.class,
                     optionalWithDefault.class,
@@ -633,7 +800,7 @@ public class B2Json {
 
     /**
      * Convert from deprecated options flags to options object.
-     *
+     * <p>
      * Called a lot, so optimized to always return the same objects.
      */
     private static B2JsonOptions optionsFromFlags(int optionFlags) {

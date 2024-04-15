@@ -78,7 +78,7 @@ tasks.build {
 val checkCode by tasks.registering(Exec::class) {
     val script = rootProject.layout.projectDirectory.file("check_code").asFile.absolutePath
     val targetDir = layout.projectDirectory.dir("src/main").asFile.absolutePath
-    commandLine("python", script, targetDir)
+    commandLine("python3", script, targetDir)
 }
 tasks.classes {
     dependsOn(checkCode)

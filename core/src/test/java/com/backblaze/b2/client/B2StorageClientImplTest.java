@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Backblaze Inc. All Rights Reserved.
+ * Copyright 2023, Backblaze Inc. All Rights Reserved.
  * License https://www.backblaze.com/using_b2_code.html
  */
 package com.backblaze.b2.client;
@@ -28,10 +28,13 @@ import com.backblaze.b2.client.structures.B2DeleteFileVersionResponse;
 import com.backblaze.b2.client.structures.B2DownloadAuthorization;
 import com.backblaze.b2.client.structures.B2DownloadByIdRequest;
 import com.backblaze.b2.client.structures.B2DownloadByNameRequest;
+import com.backblaze.b2.client.structures.B2EventNotificationRule;
 import com.backblaze.b2.client.structures.B2FileRetention;
 import com.backblaze.b2.client.structures.B2FileRetentionMode;
 import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2FinishLargeFileRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2GetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2GetDownloadAuthorizationRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoByNameRequest;
 import com.backblaze.b2.client.structures.B2GetFileInfoRequest;
@@ -52,6 +55,8 @@ import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesRequest;
 import com.backblaze.b2.client.structures.B2ListUnfinishedLargeFilesResponse;
 import com.backblaze.b2.client.structures.B2Part;
 import com.backblaze.b2.client.structures.B2ReplicationRule;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesRequest;
+import com.backblaze.b2.client.structures.B2SetBucketNotificationRulesResponse;
 import com.backblaze.b2.client.structures.B2StartLargeFileRequest;
 import com.backblaze.b2.client.structures.B2UpdateBucketRequest;
 import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
@@ -64,6 +69,7 @@ import com.backblaze.b2.client.structures.B2UploadPartRequest;
 import com.backblaze.b2.client.structures.B2UploadPartUrlResponse;
 import com.backblaze.b2.client.structures.B2UploadProgress;
 import com.backblaze.b2.client.structures.B2UploadUrlResponse;
+import com.backblaze.b2.client.structures.B2WebhookConfiguration;
 import com.backblaze.b2.util.B2BaseTest;
 import com.backblaze.b2.util.B2ByteRange;
 import com.backblaze.b2.util.B2Clock;
@@ -82,6 +88,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -205,7 +212,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
         final B2Bucket response = client.createBucket(BUCKET_NAME, BUCKET_TYPE);
         assertEquals(bucket, response);
 
-        B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(
+        final B2CreateBucketRequestReal expectedRequest = new B2CreateBucketRequestReal(
                 ACCOUNT_ID,
                 new B2CreateBucketRequest(
                         BUCKET_NAME,
@@ -270,6 +277,7 @@ public class B2StorageClientImplTest extends B2BaseTest {
                 .setLifecycleRules(lifecycleRules)
                 .setDefaultServerSideEncryption(defaultServerSideEncryption)
                 .build();
+
         final B2Bucket bucket = new B2Bucket(
                 ACCOUNT_ID,
                 bucketId(1),
@@ -1178,6 +1186,119 @@ public class B2StorageClientImplTest extends B2BaseTest {
         // closing the client should do nothing the second time.
         client.close();
         verify(webifier, times(1)).close();
+    }
+
+    @Test
+    public void testSetBucketNotificationRules() throws B2Exception {
+        final List<B2EventNotificationRule> eventNotificationRuleList = listOf(
+                new B2EventNotificationRule(
+                        "myRule",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectCreated:Replica",
+                                        "b2:ObjectCreated:Upload"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example.com"),
+                        true
+                ),
+                new B2EventNotificationRule(
+                        "myRule2",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectDeleted:LifecycleRule"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example2.com"),
+                        true
+                )
+        );
+
+        final List<B2EventNotificationRule> expectedEventNotificationRuleList = listOf(
+                new B2EventNotificationRule(
+                        "myRule",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectCreated:Replica",
+                                        "b2:ObjectCreated:Upload"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example.com", "dummySigningSecret"),
+                        true,
+                        false,
+                        ""),
+                new B2EventNotificationRule(
+                        "myRule2",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectDeleted:LifecycleRule"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example2.com", "dummySigningSecret"),
+                        true,
+                        false,
+                        "")
+        );
+
+
+        final B2SetBucketNotificationRulesRequest request = B2SetBucketNotificationRulesRequest
+                .builder(bucketId(1), eventNotificationRuleList)
+                .build();
+        final B2SetBucketNotificationRulesResponse response =
+                new B2SetBucketNotificationRulesResponse(bucketId(1), expectedEventNotificationRuleList);
+        when(webifier.setBucketNotificationRules(any(), eq(request))).thenReturn(response);
+
+        assertSame(response, client.setBucketNotificationRules(request));
+
+        verify(webifier, times(1)).authorizeAccount(any());
+        verify(webifier, times(1)).setBucketNotificationRules(any(), eq(request));
+    }
+
+    @Test
+    public void testGetBucketNotificationRules() throws B2Exception {
+        final List<B2EventNotificationRule> eventNotificationRuleList = listOf(
+                new B2EventNotificationRule(
+                        "myRule",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectCreated:Replica",
+                                        "b2:ObjectCreated:Upload"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example.com", "dummySigningSecret"),
+                        true,
+                        false,
+                        ""),
+                new B2EventNotificationRule(
+                        "myRule2",
+                        new TreeSet<>(
+                                listOf(
+                                        "b2:ObjectDeleted:LifecycleRule"
+                                )
+                        ),
+                        "",
+                        new B2WebhookConfiguration("https://www.example2.com", "dummySigningSecret"),
+                        true,
+                        false,
+                        "")
+        );
+
+        final B2GetBucketNotificationRulesRequest request = B2GetBucketNotificationRulesRequest
+                .builder(bucketId(1))
+                .build();
+        final B2GetBucketNotificationRulesResponse response =
+                new B2GetBucketNotificationRulesResponse(bucketId(1), eventNotificationRuleList);
+        when(webifier.getBucketNotificationRules(any(), eq(request))).thenReturn(response);
+
+        assertSame(response, client.getBucketNotificationRules(request));
+
+        verify(webifier, times(1)).authorizeAccount(any());
+        verify(webifier, times(1)).getBucketNotificationRules(any(), eq(request));
     }
 
 }
