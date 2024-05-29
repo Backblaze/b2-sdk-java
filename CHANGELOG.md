@@ -1,8 +1,8 @@
 # Changelog
-
 ## [Unreleased] - TBD
-### Added
-* Added support to specify B2Json union types using annotations. Annotation support for union types is required since
+
+### [6.2.0] - 2024-04-15
+* Added support to specify B2Json union types using annotations. Annotation support for union types is required because 
   Java records do not support inheritance. Example usage:
   ```java
   @B2Json.union(typeField = "type")
@@ -22,7 +22,7 @@
   private record Sms(@B2Json.required String subject, @B2Json.required String phoneNumber) implements Message {
   }
   ```
-* Added `@B2Json.type` annotation that can be used with Java Records. Using `@B2Json.type` allows for the implicit 
+* Added `@B2Json.type` annotation that can be used with Java records. Using `@B2Json.type` allows for the implicit 
   Java constructor of Java records to not require the `@B2Json.constructor` annotation. Example usage:
   ```java
   @B2Json.type
@@ -31,8 +31,7 @@
 * Optimized B2DateTimeUtil.formatFguidDateTime
 * Reduced memory allocation for small input when deserializing byte[] to JSON
 * Reduced lock contention in B2Clock
-* Added support for custom headers and suspension in event notification rules
-* Added support for b2_set_bucket_notification_rules and b2_get_bucket_notification_rules
+* Added support for B2 Event Notifications
 * Added B2Json `fromJson` methods that take a `java.io.Reader` as input for JSON
 * Updated B2Json `fromJson` methods to utilize a BufferedReader when deserializing JSON for performance improvement
 * Added B2StorageClient.storePartsForLargeFile
@@ -59,9 +58,6 @@
 ## [6.1.0] - 2022-09-19
 ### Added
 * Added support for custom upload timestamps
-
-### [6.1.0] - 2022-09-19
-### Added
 * Added support for Java 8's `-parameters` option so constructor parameters do not need to be reiterated in `B2Json.constructor#params`
 * Added `fileLockEnabled` to `B2UpdateBucketRequest` to support enabling file lock on existing buckets
 
@@ -231,7 +227,8 @@
 * These changes were driven by switching our internal b2-sdk uses to use the http client from the sdk instead of a 
 different, custom interface.
 
-[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.1.1...HEAD
+[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.2.0...HEAD
+[6.2.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.2.0
 [6.1.1]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.1.1
 [6.1.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.1.0
 [6.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.0.0
