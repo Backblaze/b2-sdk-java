@@ -1,7 +1,10 @@
 # Changelog
 ## [Unreleased] - TBD
+### Added
+* Added `eventId` field to `B2EventNotificationEvent`.
 
-### [6.2.0] - 2024-04-15
+## [6.2.0] - 2024-04-15
+### Added
 * Added support to specify B2Json union types using annotations. Annotation support for union types is required because 
   Java records do not support inheritance. Example usage:
   ```java
@@ -28,20 +31,22 @@
   @B2Json.type
   record Point(@B2Json.required int x, @B2Json.required int y) { }
   ```
-* Optimized B2DateTimeUtil.formatFguidDateTime
-* Reduced memory allocation for small input when deserializing byte[] to JSON
-* Reduced lock contention in B2Clock
 * Added support for B2 Event Notifications
 * Added B2Json `fromJson` methods that take a `java.io.Reader` as input for JSON
-* Updated B2Json `fromJson` methods to utilize a BufferedReader when deserializing JSON for performance improvement
 * Added B2StorageClient.storePartsForLargeFile
 * Added support for daysFromStartingToCancelingUnfinishedLargeFiles to B2LifecycleRule
-* Reduced lock contention in B2AccountAuthorizationCache
 * Added the `serializedName` annotation to rename the serialized Json member name
 * Added support for AtomicLongArray in B2Json
+* Added support for custom upload timestamps
+
+### Changed
+* Optimized `B2DateTimeUtil.formatFguidDateTime`
+* Reduced memory allocation for small input when deserializing byte[] to JSON
+* Reduced lock contention in B2Clock
+* Updated B2Json `fromJson` methods to utilize a BufferedReader when deserializing JSON for performance improvement
+* Reduced lock contention in B2AccountAuthorizationCache
 * Reduced lock contention in B2Json
 * Updated internal python for building to python3
-* Added support for custom upload timestamps
 
 ### Fixed
 * Fixed union types to ignore extra and discarded fields when deserializing JSON to Java objects

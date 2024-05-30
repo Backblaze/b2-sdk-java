@@ -15,6 +15,7 @@ public class B2EventNotificationEventTest extends B2BaseTest {
                 "  \"accountId\": \"e85c6a500333\",\n" +
                 "  \"bucketId\": \"aea8c5bc362ae55070130333\",\n" +
                 "  \"bucketName\": \"mySampleBucket\",\n" +
+                "  \"eventId\": \"eventId\",\n" +
                 "  \"eventTimestamp\": 1684793309123,\n" +
                 "  \"eventType\": \"b2:ObjectCreated:Upload\",\n" +
                 "  \"eventVersion\": 1,\n" +
@@ -29,11 +30,19 @@ public class B2EventNotificationEventTest extends B2BaseTest {
                         B2EventNotificationEvent.class
                 );
 
-        final B2EventNotificationEvent expectedEvent = new B2EventNotificationEvent("e85c6a500333", "aea8c5bc362ae55070130333", "mySampleBucket", 1684793309123L, "b2:ObjectCreated:Upload", 1,
+        final B2EventNotificationEvent expectedEvent = new B2EventNotificationEvent(
+                "e85c6a500333",
+                "aea8c5bc362ae55070130333",
+                "mySampleBucket",
+                1684793309123L,
+                "b2:ObjectCreated:Upload",
+                "eventId",
+                1,
                 "mySampleRule1",
                 "objectName.txt",
                 10495842L,
-                "4_zaea8c5bc362ae55070130333_f117c7bd5d6c6597c_d20230521_m235957_c001_v0001044_t0052_u01684713597235");
+                "4_zaea8c5bc362ae55070130333_f117c7bd5d6c6597c_d20230521_m235957_c001_v0001044_t0052_u01684713597235"
+        );
         final String convertedJson = B2Json.toJsonOrThrowRuntime(expectedEvent);
         assertEquals(expectedEvent, event);
         assertEquals(jsonString, convertedJson);
@@ -45,6 +54,7 @@ public class B2EventNotificationEventTest extends B2BaseTest {
                 "  \"accountId\": \"e85c6a500333\",\n" +
                 "  \"bucketId\": \"aea8c5bc362ae55070130333\",\n" +
                 "  \"bucketName\": \"mySampleBucket\",\n" +
+                "  \"eventId\": \"eventId\",\n" +
                 "  \"eventTimestamp\": 1684793309123,\n" +
                 "  \"eventType\": \"b2:TestEvent\",\n" +
                 "  \"eventVersion\": 1,\n" +
@@ -62,6 +72,7 @@ public class B2EventNotificationEventTest extends B2BaseTest {
                 "mySampleBucket",
                 1684793309123L,
                 "b2:TestEvent",
+                "eventId",
                 1,
                 "mySampleRule1",
                 null,
@@ -83,6 +94,7 @@ public class B2EventNotificationEventTest extends B2BaseTest {
                         "mySampleBucket",
                         1684793309123L,
                         "b2:TestEvent",
+                        "eventId",
                         1,
                         "mySampleRule1",
                         "objectName.txt",
@@ -103,6 +115,7 @@ public class B2EventNotificationEventTest extends B2BaseTest {
                         "mySampleBucket",
                         1684793309123L,
                         "b2:TestEvent",
+                        "eventId",
                         1,
                         "mySampleRule1",
                         null,
@@ -123,6 +136,7 @@ public class B2EventNotificationEventTest extends B2BaseTest {
                         "mySampleBucket",
                         1684793309123L,
                         "b2:TestEvent",
+                        "eventId",
                         1,
                         "mySampleRule1",
                         null,
@@ -143,6 +157,7 @@ public class B2EventNotificationEventTest extends B2BaseTest {
                         "mySampleBucket",
                         1684793309123L,
                         "b2:ObjectCreated:Upload",
+                        "eventId",
                         1,
                         "mySampleRule1",
                         null,
@@ -163,6 +178,7 @@ public class B2EventNotificationEventTest extends B2BaseTest {
                         "mySampleBucket",
                         1684793309123L,
                         "b2:ObjectCreated:Upload",
+                        "eventId",
                         1,
                         "mySampleRule1",
                         "objectName.txt",
