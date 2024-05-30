@@ -26,6 +26,8 @@ public class B2EventNotificationEvent {
     @B2Json.required
     private final String eventType;
     @B2Json.required
+    String eventId;
+    @B2Json.required
     private final int eventVersion;
     @B2Json.required
     private final String matchedRuleName;
@@ -42,6 +44,7 @@ public class B2EventNotificationEvent {
                                     String bucketName,
                                     long eventTimestamp,
                                     String eventType,
+                                    String eventId,
                                     int eventVersion,
                                     String matchedRuleName,
                                     String objectName,
@@ -61,6 +64,7 @@ public class B2EventNotificationEvent {
         this.bucketName = bucketName;
         this.eventTimestamp = eventTimestamp;
         this.eventType = eventType;
+        this.eventId = eventId;
         this.eventVersion = eventVersion;
         this.matchedRuleName = matchedRuleName;
         this.objectName = objectName;
@@ -79,6 +83,7 @@ public class B2EventNotificationEvent {
                 Objects.equals(bucketId, that.bucketId) &&
                 Objects.equals(bucketName, that.bucketName) &&
                 Objects.equals(eventType, that.eventType) &&
+                Objects.equals(eventId, that.eventId) &&
                 Objects.equals(matchedRuleName, that.matchedRuleName) &&
                 Objects.equals(objectName, that.objectName) &&
                 Objects.equals(objectSize, that.objectSize) &&
@@ -93,6 +98,7 @@ public class B2EventNotificationEvent {
                 bucketName,
                 eventTimestamp,
                 eventType,
+                eventId,
                 eventVersion,
                 matchedRuleName,
                 objectName,
@@ -147,6 +153,13 @@ public class B2EventNotificationEvent {
      */
     public String getEventType() {
         return eventType;
+    }
+
+    /**
+     * The unique ID of the event.
+     */
+    public String getEventId() {
+        return eventId;
     }
 
     /**

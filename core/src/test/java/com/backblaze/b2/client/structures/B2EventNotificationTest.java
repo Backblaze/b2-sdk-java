@@ -26,6 +26,7 @@ public class B2EventNotificationTest extends B2BaseTest {
             "      \"accountId\": \"e85c6a500333\",\n" +
             "      \"bucketId\": \"aea8c5bc362ae55070130333\",\n" +
             "      \"bucketName\": \"mySampleBucket\",\n" +
+            "      \"eventId\": \"eventId\",\n" +
             "      \"eventTimestamp\": 1684793309123,\n" +
             "      \"eventType\": \"b2:ObjectCreated:Upload\",\n" +
             "      \"eventVersion\": 1,\n" +
@@ -54,6 +55,7 @@ public class B2EventNotificationTest extends B2BaseTest {
                 "mySampleBucket",
                 1684793309123L,
                 "b2:ObjectCreated:Upload",
+                "eventId",
                 1,
                 "mySampleRule1",
                 "objectName.txt",
@@ -76,6 +78,7 @@ public class B2EventNotificationTest extends B2BaseTest {
                 "      \"accountId\": \"e85c6a500333\",\n" +
                 "      \"bucketId\": \"aea8c5bc362ae55070130333\",\n" +
                 "      \"bucketName\": \"mySampleBucket\",\n" +
+                "      \"eventId\": \"eventId\",\n" +
                 "      \"eventTimestamp\": 1684793309123,\n" +
                 "      \"eventType\": \"b2:ObjectCreated:Upload\",\n" +
                 "      \"eventVersion\": 1,\n" +
@@ -98,6 +101,7 @@ public class B2EventNotificationTest extends B2BaseTest {
                 "mySampleBucket",
                 1684793309123L,
                 "b2:ObjectCreated:Upload",
+                "eventId",
                 1,
                 "mySampleRule1",
                 "objectName.txt",
