@@ -191,6 +191,7 @@ public class B2EventNotificationEvent {
                 "accountId='" + accountId + '\'' +
                 ", bucketId='" + bucketId + '\'' +
                 ", bucketName='" + bucketName + '\'' +
+                ", eventId=" + eventId + '\'' +
                 ", eventTimestamp=" + eventTimestamp +
                 ", eventType='" + eventType + '\'' +
                 ", eventVersion=" + eventVersion +
