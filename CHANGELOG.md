@@ -1,5 +1,5 @@
 # Changelog
-## [Unreleased] - TBD
+## [6.2.1] - 2024-07-16
 ### Added
 * Added `eventId` field to `B2EventNotificationEvent`.
 
@@ -232,7 +232,9 @@
 * These changes were driven by switching our internal b2-sdk uses to use the http client from the sdk instead of a 
 different, custom interface.
 
-[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.1.1...HEAD
+[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.2.1...HEAD
+[6.2.1]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.2.1
+[6.2.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.2.0
 [6.1.1]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.1.1
 [6.1.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.1.0
 [6.0.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.0.0
