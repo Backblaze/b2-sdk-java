@@ -26,7 +26,7 @@ if test ! -f $SRC; then
 fi
 
 # verify that b2 works
-b2 version
+b2v3 version
 
 if test -z "$B2_ACCOUNT_ID" -o -z "$B2_APPLICATION_KEY"; then
     echo "NOT uploading build results because no credentials are provided."
@@ -44,7 +44,7 @@ if test -z "$B2_UPLOAD_BUCKET"; then
 fi
 
 echo authorizing account
-b2 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
+b2v3 authorize_account $B2_ACCOUNT_ID $B2_APPLICATION_KEY
 status=$?
 if test $status != "0"; then
     echo "failed to authorize with b2 server"
@@ -56,7 +56,7 @@ fi
 unset B2_APPLICATION_KEY
 
 echo uploading $SRC to bucket: $B2_UPLOAD_BUCKET
-b2 upload_file --contentType application/octet $B2_UPLOAD_BUCKET $SRC $DEST
+b2v3 upload_file --contentType application/octet $B2_UPLOAD_BUCKET $SRC $DEST
 status=$?
 if test $status != "0"; then
     echo "failed to upload $SRC to b2"
