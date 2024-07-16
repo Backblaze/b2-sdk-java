@@ -3,6 +3,10 @@
 ### Added
 * Added `eventId` field to `B2EventNotificationEvent`.
 
+## [6.2.1] - 2024-07-16
+### Added
+* Added `eventId` field to `B2EventNotificationEvent`.
+
 ## [6.2.0] - 2024-04-15
 ### Added
 * Added support to specify B2Json union types using annotations. Annotation support for union types is required because 
@@ -232,7 +236,8 @@
 * These changes were driven by switching our internal b2-sdk uses to use the http client from the sdk instead of a 
 different, custom interface.
 
-[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.2.0...HEAD
+[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.2.1...HEAD
+[6.2.1]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.2.1
 [6.2.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.2.0
 [6.1.1]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.1.1
 [6.1.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.1.0
