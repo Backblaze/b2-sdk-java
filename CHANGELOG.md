@@ -2,6 +2,7 @@
 ## [Unreleased] - TBD
 ### Added
 * Added `eventId` field to `B2EventNotificationEvent`.
+* Fixed `B2StorageClient.deleteAllFilesInBucket` so it uses `fileVersions` instead of `fileNames`.
 
 ## [6.2.1] - 2024-07-16
 ### Added
