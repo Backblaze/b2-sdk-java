@@ -775,7 +775,7 @@ public interface B2StorageClient extends Closeable {
      * file versions have been deleted (if any) and which haven't (if any).
      */
     default void deleteAllFilesInBucket(String bucketId) throws B2Exception {
-        for (B2FileVersion fileVersion: fileNames(bucketId)) {
+        for (B2FileVersion fileVersion: fileVersions(bucketId)) {
            deleteFileVersion(fileVersion);
         }
     }
