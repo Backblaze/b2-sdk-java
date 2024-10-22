@@ -30,12 +30,70 @@ public class B2WebhookConfigurationTest extends B2BaseTest {
                                     new B2WebhookCustomHeader("name2", "val2")
                             )
                     ),
+                    null,
                     null
             );
             fail("should have thrown");
         }
         catch (IllegalArgumentException e) {
             assertEquals("The protocol for the url must be https://", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testUrlWithHighMaxEventsPerBatchThrows() {
+        try {
+            new B2WebhookConfiguration(
+                    "https://www.backblaze.com",
+                    new TreeSet<>(
+                            listOf(
+                                    new B2WebhookCustomHeader("name1", "val1"),
+                                    new B2WebhookCustomHeader("name2", "val2")
+                            )
+                    ),
+                    null,
+                    500
+            );
+            fail("should have thrown");
+        }
+        catch (IllegalArgumentException e) {
+            assertEquals("The events per batch must be between 1 and 50", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testUrlWith50EventsPerBatchSucceeds() {
+        new B2WebhookConfiguration(
+                "https://www.backblaze.com",
+                new TreeSet<>(
+                        listOf(
+                                new B2WebhookCustomHeader("name1", "val1"),
+                                new B2WebhookCustomHeader("name2", "val2")
+                        )
+                ),
+                null,
+                50
+        );
+    }
+
+    @Test
+    public void testUrlWithZeroMaxEventsPerBatchThrows() {
+        try {
+            new B2WebhookConfiguration(
+                    "https://www.backblaze.com",
+                    new TreeSet<>(
+                            listOf(
+                                    new B2WebhookCustomHeader("name1", "val1"),
+                                    new B2WebhookCustomHeader("name2", "val2")
+                            )
+                    ),
+                    null,
+                    0
+            );
+            fail("should have thrown");
+        }
+        catch (IllegalArgumentException e) {
+            assertEquals("The events per batch must be between 1 and 50", e.getMessage());
         }
     }
 
@@ -53,6 +111,7 @@ public class B2WebhookConfigurationTest extends B2BaseTest {
                 "    }\n" +
                 "  ],\n" +
                 "  \"hmacSha256SigningSecret\": \"rrzaVL6BqYt83s2Q5R2I79AilaxVBJUS\",\n" +
+                "  \"maxEventsPerBatch\": 20,\n" +
                 "  \"targetType\": \"webhook\",\n" +
                 "  \"url\": \"https://www.example.com\"\n" +
                 "}";
@@ -71,7 +130,8 @@ public class B2WebhookConfigurationTest extends B2BaseTest {
                                         new B2WebhookCustomHeader("name2", "val2")
                                 )
                         ),
-                        "rrzaVL6BqYt83s2Q5R2I79AilaxVBJUS"
+                        "rrzaVL6BqYt83s2Q5R2I79AilaxVBJUS",
+                        20
                 );
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);

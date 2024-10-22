@@ -35,7 +35,8 @@ public class B2GetBucketNotificationRulesResponseTest extends B2BaseTest {
                                                 new B2WebhookCustomHeader("name2", "val2")
                                         )
                                 ),
-                                "dummySigningSecret"),
+                                "dummySigningSecret",
+                                20),
                         true,
                         false,
                         null
@@ -73,6 +74,7 @@ public class B2GetBucketNotificationRulesResponseTest extends B2BaseTest {
                 "          }\n" +
                 "        ],\n" +
                 "        \"hmacSha256SigningSecret\": \"dummySigningSecret\",\n" +
+                "        \"maxEventsPerBatch\": 20,\n" +
                 "        \"targetType\": \"webhook\",\n" +
                 "        \"url\": \"https://www.example.com\"\n" +
                 "      }\n" +

@@ -1975,7 +1975,8 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                                                 new B2WebhookCustomHeader("name2", "val2")
                                         )
                                 ),
-                                "3XDfkdQte2OgA78qCtSD17LAzpj6ay9H"
+                                "3XDfkdQte2OgA78qCtSD17LAzpj6ay9H",
+                                20
                         ),
                         true
                 ),
@@ -2030,6 +2031,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "              }\n" +
                 "            ],\n" +
                 "            \"hmacSha256SigningSecret\": \"3XDfkdQte2OgA78qCtSD17LAzpj6ay9H\",\n" +
+                "            \"maxEventsPerBatch\": 20,\n" +
                 "            \"targetType\": \"webhook\",\n" +
                 "            \"url\": \"https://www.example.com\"\n" +
                 "          }\n" +
