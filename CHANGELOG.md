@@ -5,6 +5,9 @@
 * Fixed `B2StorageClient.deleteAllFilesInBucket` so it uses `fileVersions` instead of `fileNames`.
 * Added `maxEventsPerBatch` field to `B2WebhookConfiguration`.
 
+### Changed
+* Validate idle connections after 2 seconds of inactivity
+
 ## [6.2.1] - 2024-07-16
 ### Added
 * Added `eventId` field to `B2EventNotificationEvent`.
