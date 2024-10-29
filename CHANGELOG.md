@@ -1,7 +1,6 @@
 # Changelog
 ## [Unreleased] - TBD
 ### Added
-* Added `eventId` field to `B2EventNotificationEvent`.
 * Fixed `B2StorageClient.deleteAllFilesInBucket` so it uses `fileVersions` instead of `fileNames`.
 * Added `maxEventsPerBatch` field to `B2WebhookConfiguration`.
 
