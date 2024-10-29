@@ -27,30 +27,42 @@ public class B2WebhookConfiguration extends B2EventNotificationTargetConfigurati
     @B2Json.optional
     private final String hmacSha256SigningSecret;
 
+    /**
+     * An optional maximum number of events to batch into a single webhook request.
+     */
+    @B2Json.optional(omitNull = true)
+    private final Integer maxEventsPerBatch;
+
     @B2Json.constructor
     public B2WebhookConfiguration(String url,
             TreeSet<B2WebhookCustomHeader> customHeaders,
-            String hmacSha256SigningSecret) {
+            String hmacSha256SigningSecret,
+            Integer maxEventsPerBatch) {
         B2Preconditions.checkArgument(
                 url != null && url.startsWith("https://"),
                 "The protocol for the url must be https://"
+        );
+        B2Preconditions.checkArgument(
+                maxEventsPerBatch == null || (maxEventsPerBatch > 0 && maxEventsPerBatch <= 50),
+                "The events per batch must be between 1 and 50"
         );
 
         this.url = url;
         this.customHeaders = customHeaders;
         this.hmacSha256SigningSecret = hmacSha256SigningSecret;
+        this.maxEventsPerBatch = maxEventsPerBatch;
     }
 
     public B2WebhookConfiguration(String url) {
-        this(url, null, null);
+        this(url, null, null, null);
     }
 
     public B2WebhookConfiguration(String url, TreeSet<B2WebhookCustomHeader> customHeaders) {
-        this(url, customHeaders, null);
+        this(url, customHeaders, null, null);
     }
 
     public B2WebhookConfiguration(String url, String hmacSha256SigningSecret) {
-        this(url, null, hmacSha256SigningSecret);
+        this(url, null, hmacSha256SigningSecret, null);
     }
 
     public String getUrl() {
@@ -68,6 +80,10 @@ public class B2WebhookConfiguration extends B2EventNotificationTargetConfigurati
         return hmacSha256SigningSecret;
     }
 
+    public Integer getMaxEventsPerBatch() {
+        return maxEventsPerBatch;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -75,7 +91,8 @@ public class B2WebhookConfiguration extends B2EventNotificationTargetConfigurati
         final B2WebhookConfiguration that = (B2WebhookConfiguration) o;
         return url.equals(that.url) &&
                 Objects.equals(customHeaders, that.customHeaders) &&
-                Objects.equals(hmacSha256SigningSecret, that.hmacSha256SigningSecret);
+                Objects.equals(hmacSha256SigningSecret, that.hmacSha256SigningSecret) &&
+                Objects.equals(maxEventsPerBatch, that.maxEventsPerBatch);
     }
 
     @Override

@@ -207,6 +207,7 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
             final PoolingHttpClientConnectionManager mgr = new PoolingHttpClientConnectionManager(registry);
             mgr.setMaxTotal(maxTotalConnectionsInPool);
             mgr.setDefaultMaxPerRoute(maxConnectionsPerRoute);
+            mgr.setValidateAfterInactivity(2000);
             return mgr;
         }
     }

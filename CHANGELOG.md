@@ -1,5 +1,11 @@
 # Changelog
 ## [Unreleased] - TBD
+### Added
+* Fixed `B2StorageClient.deleteAllFilesInBucket` so it uses `fileVersions` instead of `fileNames`.
+* Added `maxEventsPerBatch` field to `B2WebhookConfiguration`.
+
+### Changed
+* Validate idle connections after 2 seconds of inactivity
 
 ## [6.2.1] - 2024-07-16
 ### Added
@@ -62,7 +68,7 @@
 * Fixed B2ListFilesIterableBase assuming a response with 0 results was the end. It now looks for
   `nextFileName` being null to indicate the end.
 
-### [6.1.0] - 2022-09-19
+## [6.1.0] - 2022-09-19
 ### Added
 * Added support for custom upload timestamps
 * Added support for Java 8's `-parameters` option so constructor parameters do not need to be reiterated in `B2Json.constructor#params`

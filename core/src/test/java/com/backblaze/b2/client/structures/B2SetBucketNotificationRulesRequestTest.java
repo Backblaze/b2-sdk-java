@@ -42,7 +42,8 @@ public class B2SetBucketNotificationRulesRequestTest extends B2BaseTest {
                                                 new B2WebhookCustomHeader("name2", "val2")
                                         )
                                 ),
-                                "rrzaVL6BqYt83s2Q5R2I79AilaxVBJUS"
+                                "rrzaVL6BqYt83s2Q5R2I79AilaxVBJUS",
+                                20
                         ),
                         true
                 )
@@ -95,6 +96,7 @@ public class B2SetBucketNotificationRulesRequestTest extends B2BaseTest {
                 "          }\n" +
                 "        ],\n" +
                 "        \"hmacSha256SigningSecret\": \"rrzaVL6BqYt83s2Q5R2I79AilaxVBJUS\",\n" +
+                "        \"maxEventsPerBatch\": 20,\n" +
                 "        \"targetType\": \"webhook\",\n" +
                 "        \"url\": \"https://www.example.com\"\n" +
                 "      }\n" +

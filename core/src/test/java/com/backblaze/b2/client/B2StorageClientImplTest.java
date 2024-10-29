@@ -522,6 +522,24 @@ public class B2StorageClientImplTest extends B2BaseTest {
     }
 
     @Test
+    public void testDeleteAllFilesInBucket() throws B2Exception {
+        final B2ListFileVersionsRequest request = B2ListFileVersionsRequest.builder(bucketId(1)).setMaxFileCount(1000).build();
+        final List<B2FileVersion> versions = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            versions.add(makeVersion(i, i));
+        }
+        final B2ListFileVersionsResponse response = new B2ListFileVersionsResponse(versions, null, null);
+        when(webifier.listFileVersions(anyObject(), eq(request))).thenReturn(response);
+
+        client.deleteAllFilesInBucket(bucketId(1));
+
+        for (B2FileVersion version : versions) {
+            final B2DeleteFileVersionRequest deleteRequest = B2DeleteFileVersionRequest.builder(version.getFileName(), version.getFileId()).build();
+            verify(webifier, times(1)).deleteFileVersion(anyObject(), eq(deleteRequest));
+        }
+    }
+
+    @Test
     public void testGetDownloadAuthorization() throws B2Exception {
         final B2DownloadAuthorization downloadAuth = new B2DownloadAuthorization(bucketId(1), FILE_PREFIX, "downloadAuthToken");
         final B2GetDownloadAuthorizationRequest request = B2GetDownloadAuthorizationRequest.builder(bucketId(1), FILE_PREFIX, 100).build();
