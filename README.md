@@ -4,6 +4,7 @@
 | [![Build Status](https://travis-ci.org/Backblaze/b2-sdk-java.svg?branch=master)](https://travis-ci.org/Backblaze/b2-sdk-java) |
 | [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://www.backblaze.com/using_b2_code.html)
 
+Don't merge these sweet changes please.
 
 INTRO
 =====
@@ -42,7 +43,7 @@ FEATURES
 * The SDK provides three jars:
   * **b2-sdk-core** provides almost all of the SDK.  it does not contain the code for making HTTP requests (B2WebApiClient).
   * **b2-sdk-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.
-  * **b2-sdk-samples** has some samples. 
+  * **b2-sdk-samples** has some samples.
 
 SAMPLE
 ======
@@ -57,7 +58,7 @@ SAMPLE
     * B2_APPLICATION_KEY_ID
     * B2_APPLICATION_KEY
 
-  * Be sure to add the jars to your class path along with their dependencies.  
+  * Be sure to add the jars to your class path along with their dependencies.
     If you put all the jar files into one directory and change to the directory,
     here's a sample command line to run (after replacing 'N.N.N' with the version
     of the sdk you're using):
@@ -210,15 +211,15 @@ FAQ
 ===
 
   * How do I get the accountId?
-  
+
     You can use B2StorageClient.getAccountId() to get the accountId.
-    
-    In previous versions of the SDK you were able to get the accountId from 
+
+    In previous versions of the SDK you were able to get the accountId from
     B2AuthorizeAccountRequest.getAccountId() and B2Credentials.getAccountId().
     Now that the SDK supports B2 Application Keys, those structures
-    no longer always have access to the accountId. The accountId is 
+    no longer always have access to the accountId. The accountId is
     always available in the response to b2_authorize_account.
-  
+
   * Can I add metadata to the files I upload?  How?
 
     You can add some immutable name-value pairs to each file at the time you upload it.
@@ -445,7 +446,7 @@ Here are some things we could do someday, in no particular order:
 
   * deleting all versions of one filename.
     that's pretty easy with the SDK, so i don't think it needs
-    a built-in method.  See B2Sample.java.  
+    a built-in method.  See B2Sample.java.
 
     XXX: actually it's slightly more annoying than i thought because we don't have
     a way to get only versions of a given file name.  here's my
