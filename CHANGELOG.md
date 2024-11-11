@@ -1,7 +1,7 @@
 # Changelog
 ## [Unreleased] - TBD
+## [6.3.0] - 2024-11-08
 ### Added
-* Added `eventId` field to `B2EventNotificationEvent`.
 * Fixed `B2StorageClient.deleteAllFilesInBucket` so it uses `fileVersions` instead of `fileNames`.
 * Added `maxEventsPerBatch` field to `B2WebhookConfiguration`.
 
@@ -242,6 +242,7 @@
 different, custom interface.
 
 [Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.2.1...HEAD
+[6.3.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.3.0
 [6.2.1]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.2.1
 [6.2.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.2.0
 [6.1.1]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.1.1
