@@ -103,6 +103,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -1190,7 +1191,9 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         final B2DownloadByIdRequest request = B2DownloadByIdRequest
                 .builder(fileId(1))
                 .build();
-        webifier.downloadById(ACCOUNT_AUTH, request, noopContentHandler);
+        final B2StorageClientWebifierImpl webifierSpy = spy(webifier);
+        webifierSpy.downloadById(ACCOUNT_AUTH, request, noopContentHandler);
+        verify(webifierSpy).getDownloadByIdUrl(ACCOUNT_AUTH, request);
 
         webApiClient.check("getContent.\n" +
                 "url:\n" +
@@ -1201,7 +1204,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
 
-        assertEquals(expectedUrl, webifier.getDownloadByIdUrl(ACCOUNT_AUTH, request));
+        assertEquals(expectedUrl, webifierSpy.getDownloadByIdUrl(ACCOUNT_AUTH, request));
 
         checkRequestCategory(OTHER, w -> w.downloadById(ACCOUNT_AUTH, request, noopContentHandler));
     }
@@ -1303,7 +1306,9 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
         final B2DownloadByNameRequest request = B2DownloadByNameRequest
                 .builder(bucketName(1), fileName(1))
                 .build();
-        webifier.downloadByName(ACCOUNT_AUTH, request, noopContentHandler);
+        final B2StorageClientWebifierImpl webifierSpy = spy(webifier);
+        webifierSpy.downloadByName(ACCOUNT_AUTH, request, noopContentHandler);
+        verify(webifierSpy).getDownloadByNameUrl(ACCOUNT_AUTH, request);
 
         webApiClient.check("getContent.\n" +
                 "url:\n" +
@@ -1313,7 +1318,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
-        assertEquals(expectedUrl, webifier.getDownloadByNameUrl(ACCOUNT_AUTH, request));
+        assertEquals(expectedUrl, webifierSpy.getDownloadByNameUrl(ACCOUNT_AUTH, request));
 
         checkRequestCategory(OTHER, w -> w.downloadByName(ACCOUNT_AUTH, request, noopContentHandler));
     }

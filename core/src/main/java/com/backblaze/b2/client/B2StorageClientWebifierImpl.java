@@ -488,7 +488,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                              B2DownloadByIdRequest request,
                              B2ContentSink handler) throws B2Exception {
         downloadGuts(accountAuth,
-                makeDownloadByIdUrl(accountAuth, request),
+                getDownloadByIdUrl(accountAuth, request),
                 request.getRange(),
                 request.getServerSideEncryption(),
                 handler);
@@ -505,7 +505,7 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
                                B2DownloadByNameRequest request,
                                B2ContentSink handler) throws B2Exception {
         downloadGuts(accountAuth,
-                makeDownloadByNameUrl(accountAuth, request.getBucketName(), request.getFileName(), request),
+                getDownloadByNameUrl(accountAuth, request),
                 request.getRange(),
                 request.getServerSideEncryption(),
                 handler);
