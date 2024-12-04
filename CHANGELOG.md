@@ -1,5 +1,9 @@
 # Changelog
 ## [Unreleased] - TBD
+### Changed
+Updated `downloadByName()` and `downloadById()` to use their respective `getDownloadByNameUrl()` and 
+`getDownloadByIdUrl()` methods for improved extensibility 
+
 ## [6.3.0] - 2024-11-08
 ### Added
 * Fixed `B2StorageClient.deleteAllFilesInBucket` so it uses `fileVersions` instead of `fileNames`.
