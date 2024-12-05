@@ -1204,7 +1204,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
 
-        assertEquals(expectedUrl, webifierSpy.getDownloadByIdUrl(ACCOUNT_AUTH, request));
+        assertEquals(expectedUrl, webifier.getDownloadByIdUrl(ACCOUNT_AUTH, request));
 
         checkRequestCategory(OTHER, w -> w.downloadById(ACCOUNT_AUTH, request, noopContentHandler));
     }
@@ -1318,7 +1318,7 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
                 "    User-Agent: SecretAgentMan/3.19.28\n" +
                 "    X-Bz-Test-Mode: force_cap_exceeded\n"
         );
-        assertEquals(expectedUrl, webifierSpy.getDownloadByNameUrl(ACCOUNT_AUTH, request));
+        assertEquals(expectedUrl, webifier.getDownloadByNameUrl(ACCOUNT_AUTH, request));
 
         checkRequestCategory(OTHER, w -> w.downloadByName(ACCOUNT_AUTH, request, noopContentHandler));
     }
