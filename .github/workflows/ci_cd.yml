@@ -12,7 +12,6 @@ on:
     - 7.x # TODO: This is temporary and will be removed once we merge this branch to master branch
 
 env:
-  PYTHON_DEFAULT_VERSION: 3.8
   OUTPUT_DIR: $GITHUB_WORKSPACE/build/outputs
   OUTPUT_ZIP: b2-sdk-build-${GITHUB_RUN_NUMBER}.zip
   BUILD_NUMBER: ${{ github.run_number }}
@@ -23,7 +22,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,16 +37,14 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Set up Python ${{ env.PYTHON_DEFAULT_VERSION }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
-
-      - name: Install dependencies
+      - name: Set up Python
         run: |
+          python3.8 -m venv env
+          source env/bin/activate
+          echo "VIRTUAL ENV:" $VIRTUAL_ENV
           # upgrade pip and setuptools so that b2 CLI can be properly installed
-          python -m pip install --upgrade pip setuptools
-          python -m pip install b2
+          pip install --upgrade pip setuptools
+          pip install b2 pysqlite3
 
       - name: Build the distribution
         run: |
@@ -76,8 +73,10 @@ jobs:
       - name: Upload to b2
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x'
         # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
-        # This should be using python 3.4
-        run: $GITHUB_WORKSPACE/maybe_upload_build_results ${{ env.OUTPUT_ZIP }}
+        # This should be using python 3.8
+        run: |
+          source $GITHUB_WORKSPACE/env/bin/activate
+          $GITHUB_WORKSPACE/maybe_upload_build_results ${{ env.OUTPUT_ZIP }}
 
       - name: Check GitHub Pages status
         if: github.ref == 'refs/heads/master'
