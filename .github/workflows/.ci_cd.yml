@@ -8,6 +8,8 @@ on:
   pull_request:
     branches:
     - master
+    - api-v2
+    - 7.x # TODO: This is temporary and will be removed once we merge this branch to master branch
 
 env:
   PYTHON_DEFAULT_VERSION: 3.8
@@ -63,7 +65,7 @@ jobs:
           zip -r $GITHUB_WORKSPACE/build/${{ env.OUTPUT_ZIP }} *
 
       - name: Deploy to internal Maven repo
-        if: github.ref == 'refs/heads/master' && github.repository == 'Backblaze/b2-sdk-java-private'
+        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x') && github.repository == 'Backblaze/b2-sdk-java-private'
         run: $GITHUB_WORKSPACE/gradlew publishMavenPublicationToBzArtifactoryRepository publishMavenPublicationToBzGithubPackagesRepository
         env:
           ORG_GRADLE_PROJECT_bzArtifactoryUsername: ${{ secrets.ARTIFACTORY_USERNAME }}
@@ -72,7 +74,7 @@ jobs:
           ORG_GRADLE_PROJECT_bzGithubPackagesPassword: ${{ secrets.PACKAGES_TOKEN }}
 
       - name: Upload to b2
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x'
         # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
         # This should be using python 3.4
         run: $GITHUB_WORKSPACE/maybe_upload_build_results ${{ env.OUTPUT_ZIP }}
@@ -87,7 +89,7 @@ jobs:
         # note that i'm only uploading the javadocs for b2-sdk-core.
         # that's because i'm lame and building separate javadocs for
         # each jar and only uploading one set of javadocs.
-        if: github.ref == 'refs/heads/master' && success()
+        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x') && success()
         uses: crazy-max/ghaction-github-pages@v3
         with:
           target_branch: gh-pages
