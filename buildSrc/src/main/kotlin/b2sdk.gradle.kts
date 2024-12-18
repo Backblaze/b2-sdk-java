@@ -90,10 +90,10 @@ publishing {
             groupId = project.group.toString()
             artifactId = project.name
 
-            if (System.getenv("RELEASE_BUILD") != null) {
-                version = project.version.toString()
+            version = if (System.getenv("RELEASE_BUILD") != null) {
+                project.version.toString()
             } else {
-                version = when (val buildNum = System.getenv("BUILD_NUMBER")) {
+                when (val buildNum = System.getenv("BUILD_NUMBER")) {
                     null -> project.version.toString()
                     else -> "${project.version}+$buildNum"
                 }
@@ -134,6 +134,10 @@ publishing {
     }
 
     repositories {
+        maven("https://artifactory.backblaze.com/artifactory/maven-private/") {
+            name = "bzArtifactory"
+            credentials(PasswordCredentials::class)
+        }
         maven("https://maven.pkg.github.com/Backblaze/repo") {
             name = "bzGithubPackages"
             credentials(PasswordCredentials::class)
@@ -144,8 +148,8 @@ publishing {
 val sonatypeUsername = findProperty("sonatypeUsername")
 val sonatypePassword = findProperty("sonatypePassword")
 
-val gpgSigningKey = System.getenv("GPG_SIGNING_KEY")
-val gpgPassphrase = System.getenv("GPG_PASSPHRASE")
+val gpgSigningKey: String? = System.getenv("GPG_SIGNING_KEY")
+val gpgPassphrase: String? = System.getenv("GPG_PASSPHRASE")
 
 if (sonatypeUsername != null && sonatypePassword != null) {
     signing {
