@@ -28,6 +28,8 @@ public class B2ApplicationKeyTest extends B2BaseTest {
         capabilities.add(B2Capabilities.WRITE_BUCKET_RETENTIONS);
         capabilities.add(B2Capabilities.READ_FILE_RETENTIONS);
         capabilities.add(B2Capabilities.WRITE_FILE_RETENTIONS);
+        capabilities.add(B2Capabilities.READ_BUCKET_LOGGING);
+        capabilities.add(B2Capabilities.WRITE_BUCKET_LOGGING);
         capabilities.add(B2Capabilities.READ_FILE_LEGAL_HOLDS);
         capabilities.add(B2Capabilities.WRITE_FILE_LEGAL_HOLDS);
         capabilities.add(B2Capabilities.READ_BUCKET_REPLICATIONS);

@@ -37,6 +37,9 @@ public interface B2Capabilities {
 
     String READ_BUCKET_ENCRYPTION = "readBucketEncryption";
     String WRITE_BUCKET_ENCRYPTION = "writeBucketEncryption";
+    
+    String READ_BUCKET_LOGGING = "readBucketLogging";
+    String WRITE_BUCKET_LOGGING = "writeBucketLogging";
 
     String BYPASS_GOVERNANCE = "bypassGovernance";
     String READ_BUCKET_RETENTIONS = "readBucketRetentions";
