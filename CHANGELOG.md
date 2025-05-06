@@ -1,5 +1,9 @@
 # Changelog
 ## [Unreleased] - TBD
+### Added
+* Close idle connections after 4 seconds.
+* Add `readBucketLogging` and `writeBucketLogging` capabilities.
+
 ## [6.3.0] - 2024-11-08
 ### Added
 * Fixed `B2StorageClient.deleteAllFilesInBucket` so it uses `fileVersions` instead of `fileNames`.
