@@ -63,12 +63,19 @@ jobs:
 
       - name: Deploy to internal Maven repo
         if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x') && github.repository == 'Backblaze/b2-sdk-java-private'
-        run: $GITHUB_WORKSPACE/gradlew publishMavenPublicationToBzArtifactoryRepository publishMavenPublicationToBzGithubPackagesRepository
+        run: $GITHUB_WORKSPACE/gradlew publishMavenPublicationToRemoteRepository
         env:
-          ORG_GRADLE_PROJECT_bzArtifactoryUsername: ${{ secrets.ARTIFACTORY_USERNAME }}
-          ORG_GRADLE_PROJECT_bzArtifactoryPassword: ${{ secrets.ARTIFACTORY_TOKEN }}
-          ORG_GRADLE_PROJECT_bzGithubPackagesUsername: ${{ secrets.PACKAGES_USERNAME }}
-          ORG_GRADLE_PROJECT_bzGithubPackagesPassword: ${{ secrets.PACKAGES_TOKEN }}
+          ORG_GRADLE_PROJECT_remoteUsername: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ORG_GRADLE_PROJECT_remotePassword: ${{ secrets.ARTIFACTORY_TOKEN }}
+          ORG_GRADLE_PROJECT_publishingUrl: "${{ secrets.JF }}/maven-private/"
+
+      - name: Deploy to GH packages
+        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x') && github.repository == 'Backblaze/b2-sdk-java-private'
+        run: $GITHUB_WORKSPACE/gradlew publishMavenPublicationToRemoteRepository
+        env:
+          ORG_GRADLE_PROJECT_remoteUsername: ${{ secrets.PACKAGES_USERNAME }}
+          ORG_GRADLE_PROJECT_remotePassword: ${{ secrets.PACKAGES_TOKEN }}
+          ORG_GRADLE_PROJECT_publishingUrl: "https://maven.pkg.github.com/Backblaze/repo"
 
       - name: Upload to b2
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x'

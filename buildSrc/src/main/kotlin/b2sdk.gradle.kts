@@ -134,12 +134,13 @@ publishing {
     }
 
     repositories {
-        maven("https://artifactory.backblaze.com/artifactory/maven-private/") {
-            name = "bzArtifactory"
-            credentials(PasswordCredentials::class)
+        var publishingUrl = findProperty("publishingUrl")
+        if (publishingUrl == null) {
+            publishingUrl = "https://maven.pkg.github.com/Backblaze/repo"
         }
-        maven("https://maven.pkg.github.com/Backblaze/repo") {
-            name = "bzGithubPackages"
+        
+        maven(publishingUrl.toString()) {
+            name = "remote"
             credentials(PasswordCredentials::class)
         }
     }
