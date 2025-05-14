@@ -246,7 +246,8 @@
 * These changes were driven by switching our internal b2-sdk uses to use the http client from the sdk instead of a 
 different, custom interface.
 
-[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.2.1...HEAD
+[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.4.0...HEAD
+[6.4.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.4.0
 [6.3.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.3.0
 [6.2.1]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.2.1
 [6.2.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.2.0
