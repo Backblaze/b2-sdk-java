@@ -76,6 +76,10 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
                 .setUserAgent(APACHE_HTTP_CLIENT_USER_AGENT)
                 .setConnectionManager(connectionManager)
                 .setDefaultRequestConfig(requestConfig)
+                // Allow connections to be idle for up to 4 seconds before not reusing. This strategy is needed
+                // because we are seeing connections being closed by the server after 4 seconds, then when we attempt
+                // to use, the call fails.
+                .setKeepAliveStrategy((httpResponse, httpContext) -> 4000)
                 .build();
     }
 
