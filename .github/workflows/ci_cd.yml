@@ -23,6 +23,7 @@ env:
 jobs:
   build:
     runs-on: ${{ github.repository == 'Backblaze/b2-sdk-java-private' && 'self-hosted'|| 'ubuntu-latest' }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,34 +31,42 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '11'
 
       - uses: gradle/actions/wrapper-validation@v4
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Set up Python
+      # --- uv + Python 3.13, then create a venv in $RUNNER_TEMP ---
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+
+      - name: Install Python 3.13 and create venv
+        shell: bash
         run: |
-          python3.8 -m venv env
-          source env/bin/activate
-          echo "VIRTUAL ENV:" $VIRTUAL_ENV
-          # upgrade pip and setuptools so that b2 CLI can be properly installed
-          pip install --upgrade pip setuptools
-          pip install b2 pysqlite3
+          set -euxo pipefail
+          uv python install 3.13
+          # Create a throwaway venv for this job
+          UV_VENV="$RUNNER_TEMP/py313"
+          uv venv "$UV_VENV"
+          echo "UV_VENV=$UV_VENV" >> "$GITHUB_ENV"
+          # Prove it's 3.13
+          "$UV_VENV/bin/python" --version
+
+      - name: Install Python deps into venv (uv)
+        shell: bash
+        run: |
+          uv pip install --python "$UV_VENV/bin/python" --upgrade pip setuptools wheel
+          uv pip install --python "$UV_VENV/bin/python" b2 pysqlite3-binary
 
       - name: Build the distribution
         run: |
           $GITHUB_WORKSPACE/gradlew build
-          #
-          # Prepare the outputs
-          #
-
-          # make the directory
           mkdir -p ${{ env.OUTPUT_DIR }}
           cp -v */build/libs/b2-sdk-*.{jar,pom,module} ${{ env.OUTPUT_DIR }}
-
-          # zip up the outputs
           cd ${{ env.OUTPUT_DIR }}
           zip -r $GITHUB_WORKSPACE/build/${{ env.OUTPUT_ZIP }} *
 
@@ -79,11 +88,9 @@ jobs:
 
       - name: Upload to b2
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x'
-        # upload to b2 (if credentials are provided, as they will be for backblaze's builds, but not pull requests)
-        # This should be using python 3.8
         run: |
-          source $GITHUB_WORKSPACE/env/bin/activate
-          $GITHUB_WORKSPACE/maybe_upload_build_results ${{ env.OUTPUT_ZIP }}
+          export PATH="$UV_VENV/bin:$PATH"
+          "$GITHUB_WORKSPACE/maybe_upload_build_results" "${{ env.OUTPUT_ZIP }}"
 
       - name: Check GitHub Pages status
         if: github.ref == 'refs/heads/master'
@@ -92,9 +99,6 @@ jobs:
           pages_threshold: major_outage
 
       - name: Deploy Javadoc
-        # note that i'm only uploading the javadocs for b2-sdk-core.
-        # that's because i'm lame and building separate javadocs for
-        # each jar and only uploading one set of javadocs.
         if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x') && success()
         uses: crazy-max/ghaction-github-pages@v3
         with:
