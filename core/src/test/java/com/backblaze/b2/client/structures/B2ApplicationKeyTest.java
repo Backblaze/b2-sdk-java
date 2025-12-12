@@ -36,6 +36,8 @@ public class B2ApplicationKeyTest extends B2BaseTest {
         capabilities.add(B2Capabilities.WRITE_BUCKET_REPLICATIONS);
         capabilities.add(B2Capabilities.READ_BUCKET_NOTIFICATIONS);
         capabilities.add(B2Capabilities.WRITE_BUCKET_NOTIFICATIONS);
+        capabilities.add(B2Capabilities.READ_BUCKET_LIFECYCLE_RULES);
+        capabilities.add(B2Capabilities.WRITE_BUCKET_LIFECYCLE_RULES);
         final B2ApplicationKey applicationKey =
                 new B2ApplicationKey(
                         "accountId",

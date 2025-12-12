@@ -54,4 +54,7 @@ public interface B2Capabilities {
 
     String READ_BUCKET_NOTIFICATIONS = "readBucketNotifications";
     String WRITE_BUCKET_NOTIFICATIONS = "writeBucketNotifications";
+
+    String READ_BUCKET_LIFECYCLE_RULES = "readBucketLifecycleRules";
+    String WRITE_BUCKET_LIFECYCLE_RULES = "writeBucketLifecycleRules";
 }
