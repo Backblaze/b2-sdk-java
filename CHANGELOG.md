@@ -1,5 +1,6 @@
 # Changelog
-## [6.5.0] - TBD
+## [6.5.0] - 2025-12-15
+* Add `readBucketLifecycleRules` and `writeBucketLifecycleRules` capabilities. 
 ## [6.4.0] - 2025-05-14
 ### Added
 * Add `readBucketLogging` and `writeBucketLogging` capabilities.
