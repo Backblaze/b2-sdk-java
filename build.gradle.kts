@@ -8,7 +8,7 @@ plugins {
 nexusPublishing {
     repositories {
         sonatype {
-            nexusUrl.set(uri("https://oss.sonatype.org/service/local/"))
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
         }
     }
 }
