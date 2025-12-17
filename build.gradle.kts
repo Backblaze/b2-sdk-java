@@ -7,9 +7,6 @@ plugins {
 
 nexusPublishing {
     repositories {
-        sonatype()
-    }
-    repositories {
         sonatype {
             // see https://central.sonatype.org/publish/publish-portal-ossrh-staging-api/#configuration
             nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
