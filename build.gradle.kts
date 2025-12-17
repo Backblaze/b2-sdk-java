@@ -2,13 +2,17 @@
 // License https://www.backblaze.com/using_b2_code.html
 
 plugins {
-    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
 
 nexusPublishing {
     repositories {
+        sonatype()
+    }
+    repositories {
         sonatype {
-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            // see https://central.sonatype.org/publish/publish-portal-ossrh-staging-api/#configuration
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
         }
     }
 }
