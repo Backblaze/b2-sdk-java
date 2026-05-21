@@ -1,0 +1,1 @@
+Harmless external probe for stale-branch legacy CI validation. Do not merge.
