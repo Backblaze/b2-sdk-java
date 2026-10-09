@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Copyright 2026, Backblaze Inc. All Rights Reserved.
+# License https://www.backblaze.com/using_b2_code.html
+#
+# sdkharness customer health (golden path) for this checkout. See ../README.md.
+set -u
+
+LEVEL=health
+SCENARIO=golden-path
+HERE="$(cd "$(dirname "$0")" && pwd -P)"
+result() { printf 'SDKHARNESS_RESULT\t%s\t%s\t%s\t%s\n' "$LEVEL" "$SCENARIO" "$1" "$2"; }
+fail() { result FAIL "$1"; exit 1; }
+
+[ "${SDKHARNESS_TEST_LEVEL:-}" = "$LEVEL" ] && [ "${SDKHARNESS_SCENARIO:-}" = "$SCENARIO" ] \
+  || fail 'configuration: unexpected contract identity'
+[[ "${SDKHARNESS_SIMULATOR_URL:-}" =~ ^http://127\.0\.0\.1:[0-9]{1,5}/?$ ]] \
+  || fail 'configuration: simulator URL must be an IPv4 loopback HTTP origin'
+[ -n "${B2_BUCKET_NAME:-}" ] || fail 'configuration: B2_BUCKET_NAME is unset'
+[ -n "${SDKHARNESS_JAVA_CLASSPATH:-}" ] \
+  || fail 'configuration: SDKHARNESS_JAVA_CLASSPATH is unset (the core and httpclient jars built from this checkout, plus their runtime dependencies)'
+command -v java >/dev/null 2>&1 || { result SKIP 'missing-runtime: no java on PATH'; exit 0; }
+
+# Only the simulator's fixed credential (in GoldenPath.java) reaches the SDK: every ambient B2_*
+# is dropped. The bucket name is kept; it is a name, not a secret, and the harness creates it.
+bucket="$B2_BUCKET_NAME"
+for name in $(compgen -e); do case "$name" in B2_*) unset "$name" ;; esac; done
+export B2_BUCKET_NAME="$bucket"
+
+log="$(mktemp "${TMPDIR:-/tmp}/sdkharness-java-health.XXXXXX")" || fail 'setup: could not create a log file'
+trap 'rm -f "$log"' EXIT
+if java -cp "$SDKHARNESS_JAVA_CLASSPATH" "$HERE/health/GoldenPath.java" >"$log" 2>&1; then rc=0; else rc=$?; fi
+grep -v '^GOLDEN-PATH ' "$log" || true
+verdicts="$(grep -c '^GOLDEN-PATH ' "$log" || true)"
+[ "$verdicts" = 1 ] || fail "contract: expected one verdict, got $verdicts (exit $rc)"
+verdict="$(grep '^GOLDEN-PATH ' "$log")"
+case "$verdict" in
+  'GOLDEN-PATH PASS') [ "$rc" = 0 ] || fail "contract: PASS exited $rc"; result PASS - ;;
+  'GOLDEN-PATH FAIL '*) fail "${verdict#GOLDEN-PATH FAIL }" ;;
+  *) fail 'contract: malformed verdict' ;;
+esac
