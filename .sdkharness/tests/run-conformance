@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Copyright 2026, Backblaze Inc. All Rights Reserved.
+# License https://www.backblaze.com/using_b2_code.html
+#
+# sdkharness conformance checks for this checkout: one scenario per run, named by
+# SDKHARNESS_SCENARIO (a capability id). See ../README.md.
+#
+# Each check is a Java program in conformance/ that shares conformance/Support.java. A JDK 11
+# single-file launch cannot import a second source file, so both are compiled here with javac
+# against the SDK jars the harness built, then the check class is run.
+set -u
+
+LEVEL=conformance
+SLUG=b2-sdk-java
+SCENARIO="${SDKHARNESS_SCENARIO:-}"
+HERE="$(cd "$(dirname "$0")" && pwd -P)"
+result() { printf 'SDKHARNESS_RESULT\t%s\t%s\t%s\t%s\n' "$LEVEL" "$SCENARIO" "$1" "$2"; }
+fail() { result FAIL "$1"; exit 1; }
+# A detail is one printable line, capped: a compiler diagnostic never goes into a result as a block.
+tidy() { printf '%s' "$1" | tr '\n\r\t' '   ' | tr -cd '[:print:]' | cut -c1-200; }
+
+[ "${SDKHARNESS_TEST_LEVEL:-}" = "$LEVEL" ] || fail 'configuration: unexpected test level'
+case "$SCENARIO" in
+  files.upload) class=FilesUpload ;;
+  files.download_content) class=FilesDownloadContent ;;
+  files.download_by_id) class=FilesDownloadById ;;
+  files.list) class=FilesList ;;
+  files.delete_version) class=FilesDeleteVersion ;;
+  files.hide) class=FilesHide ;;
+  files.metadata) class=FilesMetadata ;;
+  bucket.crud) class=BucketCrud ;;
+  *) fail 'configuration: no check for this scenario' ;;
+esac
+[[ "${SDKHARNESS_SIMULATOR_URL:-}" =~ ^http://127\.0\.0\.1:[0-9]{1,5}/?$ ]] \
+  || fail 'configuration: simulator URL must be an IPv4 loopback HTTP origin'
+[ -n "${SDKHARNESS_JAVA_CLASSPATH:-}" ] \
+  || fail 'configuration: SDKHARNESS_JAVA_CLASSPATH is unset (the core and httpclient jars built from this checkout, plus their runtime dependencies)'
+command -v javac >/dev/null 2>&1 && command -v java >/dev/null 2>&1 \
+  || { result SKIP 'missing-runtime -- no JDK (javac and java) on PATH'; exit 0; }
+
+# Only the simulator's fixed credential (in Support.java) reaches the SDK: every ambient B2_* is dropped.
+for name in $(compgen -e); do case "$name" in B2_*) unset "$name" ;; esac; done
+
+work="$(mktemp -d "${TMPDIR:-/tmp}/sdkharness-java-conformance.XXXXXX")" || fail 'setup: could not create a scratch directory'
+trap 'rm -rf "$work"' EXIT
+
+if ! javac --release 11 -nowarn -d "$work/classes" -cp "$SDKHARNESS_JAVA_CLASSPATH" \
+    "$HERE/conformance/Support.java" "$HERE/conformance/$class.java" >"$work/javac.log" 2>&1; then
+  fail "build: the check did not compile against this checkout: $(tidy "$(head -c 400 "$work/javac.log")")"
+fi
+
+log="$work/check.log"
+if java -cp "$work/classes:$SDKHARNESS_JAVA_CLASSPATH" "$class" >"$log" 2>&1; then rc=0; else rc=$?; fi
+
+prefix="CONFORMANCE $SLUG $SCENARIO @"
+grep -Fv "$prefix" "$log" || true
+count="$(grep -Fc "$prefix" "$log" 2>/dev/null || true)"
+[ "$count" = 1 ] || fail "contract: expected one result line, got $count (exit $rc)"
+verdict="$(grep -F "$prefix" "$log")"; verdict="${verdict#*: }"
+case "$verdict" in
+  PASS) [ "$rc" = 0 ] || fail "contract: PASS exited $rc"; result PASS - ;;
+  'FAIL ('*')') reason="${verdict#FAIL (}"; result FAIL "${reason%)}"; exit 1 ;;
+  *) fail 'contract: malformed result line' ;;
+esac
