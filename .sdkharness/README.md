@@ -5,7 +5,7 @@
 assertions in `tests/`; the harness builds this checkout, starts a fresh local B2 simulator,
 and retains and reports the evidence.
 
-Scenarios so far: `health/golden-path` and eight `conformance` scenarios (below). `tests/run-health` runs
+Scenarios so far: `health/golden-path` and eight `conformance` and sixteen `resilience` scenarios (below). `tests/run-health` runs
 `tests/health/GoldenPath.java` as a single-file Java program that authorizes, uploads a small
 file, downloads it and compares the bytes, lists it, deletes it and confirms it is gone, then
 prints one result line:
@@ -41,18 +41,53 @@ formatted to one capped printable line from exception class names, status codes 
 assertions; that is formatting, not redaction, and other lines the check prints are forwarded as they
 are. The only credential in play is the simulator's fixed test one.
 
+## Resilience
+
+`tests/run-resilience` runs one scenario per call, named by `SDKHARNESS_SCENARIO`; every
+`resilience` row in `tests.tsv` points at it. Each scenario is a Java program in
+`tests/resilience/` that arms **one** documented fault through the simulator's control listener
+(`SDKHARNESS_SIMULATOR_CONTROL_URL`), makes one SDK call with the SDK's own default retry policy,
+and asserts two things: the end state (the bytes read back intact, the listing succeeds, or the
+error reaches the caller) and the recovery path, read from the simulator's request journal
+(`GET /journal`: endpoint, status, fault, an opaque upload URL id; never a header, token or body).
+Each file cites the B2 pages it asserts. They share `tests/resilience/Support.java`; as for
+conformance, the wrapper compiles `Support.java` and the check with `javac` against the
+harness-built jars, then runs the check class. Each check creates its own `sdkharness-res-*`
+bucket, clears every fault it armed, and deletes everything it made, on failure too.
+
+| Scenario | Fault, and what it asserts |
+|---|---|
+| `upload.retry_503`, `upload.retry_500`, `upload.retry_408` | status on `b2_upload_file`: a fresh `b2_get_upload_url`, the retried upload on a different upload URL id, one stored version, bytes intact |
+| `upload.expired_token_401` | 401 `expired_auth_token` on `b2_upload_file`: a fresh upload URL, then the file lands intact |
+| `upload.get_url_503` | 503 on `b2_get_upload_url`, armed before the first upload in the bucket (the SDK pools upload URLs, so after any earlier upload the fault would never fire): retried, then the file lands |
+| `upload.cap_exceeded_403` | 403 `cap_exceeded`: the error reaches the caller, exactly one `b2_upload_file`, nothing stored |
+| `upload.reset_mid_request`, `upload.reset_before_response` | connection reset: a fresh upload URL, the file reads back intact (a second version is accepted after a reset before the response) |
+| `upload.stall` | the server holds the connection for 60 s: the check sets a 2 s socket timeout (`HttpClientFactoryImpl.Builder.setSocketTimeoutSeconds`, the default is 20 s), the stalled request is abandoned and retried on a new upload URL |
+| `part.retry_503` | 503 on `b2_upload_part`: a successful part on a different URL id, `b2_finish_large_file`, bytes intact |
+| `auth.expired_401` | 401 `expired_auth_token` on `b2_list_file_names`: `b2_authorize_account` again, then the listing succeeds |
+| `auth.clock_expiry` | the simulator's clock moves 24 h and 1 ms: the real 401, a new authorization, the listing succeeds, all on one long-lived client |
+| `api.retry_after_429`, `api.retry_after_503` | `Retry-After: 2`: one retry, the whole call took at least 2 s |
+| `api.backoff_503` | no `Retry-After`: one retry, the whole call took at least 1 s |
+| `download.retry_503` | 503 on `b2_download_file_by_id`: retried, the bytes are intact |
+
+Timing is a lower bound only, never an upper bound (a busy runner would make that flaky). A check
+that is still running after 60 s is killed and reported as a failure: the slowest scenario takes
+about 3 s, so a minute means the SDK never gave up on something.
+
+A failing scenario prints one `SDKHARNESS_RESULT ... FAIL` line with the step and the reason.
+
 ## What the check can and cannot reach
 
-- **Only the loopback simulator.** `run-health` and `run-conformance` refuse any
-  `SDKHARNESS_SIMULATOR_URL` that is not `http://127.0.0.1:<port>`. In conformance the SDK is also
+- **Only the loopback simulator.** `run-health`, `run-conformance` and `run-resilience` refuse any
+  `SDKHARNESS_SIMULATOR_URL` (and, for resilience, `SDKHARNESS_SIMULATOR_CONTROL_URL`) that is not `http://127.0.0.1:<port>`. In conformance the SDK is also
   held to it at request time: every check builds its client from one guarded HTTP client factory
   (`Support.guardedFactory`, plain HTTP only) that refuses any request whose target host is not
   `127.0.0.1`, redirect hops included, and a refused request fails the verdict
   (`loopback guard -- blocked a request to non-loopback host ...`). `health` is guarded by its origin
   check only. `conformance/GuardSelfTest.java` proves the guard (see below).
 - **Only the simulator's fixed test credential** (`test-key-id` / `test-key`, in the source).
-  Every ambient `B2_*` variable except `B2_BUCKET_NAME` is dropped first (conformance drops all of
-  them and makes its own buckets).
+  Every ambient `B2_*` variable except `B2_BUCKET_NAME` is dropped first (conformance and resilience drop all of
+  them and make their own buckets).
 - **No build.** The harness builds the `core` and `httpclient` jars from this checkout and
   passes them, with their runtime dependencies, as `SDKHARNESS_JAVA_CLASSPATH`. The build
   files here are not changed. A missing `java` on `PATH` reports `SKIP`, which the harness
@@ -69,6 +104,12 @@ To re-prove the loopback guard (no simulator needed; `$CP` is the same class pat
 javac --release 11 -d /tmp/guard -cp "$CP" .sdkharness/tests/conformance/Support.java .sdkharness/tests/conformance/GuardSelfTest.java
 java -cp "/tmp/guard:$CP" GuardSelfTest   # GUARD-SELFTEST b2-sdk-java: PASS
 ```
+
+For resilience, start the simulator with its control listener (`serve.mjs --control`), set
+`SDKHARNESS_TEST_LEVEL=resilience`, `SDKHARNESS_SCENARIO=<scenario>`,
+`SDKHARNESS_SIMULATOR_URL`, `SDKHARNESS_SIMULATOR_CONTROL_URL` and `SDKHARNESS_JAVA_CLASSPATH`
+(as below), and run `.sdkharness/tests/run-resilience` (needs `javac`, and a fresh simulator per
+scenario: a fault is armed once and a stalled connection is held for a minute).
 
 Requires JDK 11 or later and a simulator (`backblaze-labs/b2-simulator`) with a bucket named
 `sdkharness-healthcheck`:

@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# Copyright 2026, Backblaze Inc. All Rights Reserved.
+# License https://www.backblaze.com/using_b2_code.html
+#
+# sdkharness resilience (failure recovery) checks for this checkout: one scenario per run, named by
+# SDKHARNESS_SCENARIO. See ../README.md.
+#
+# Each check is a Java program in resilience/ that shares resilience/Support.java. A JDK 11
+# single-file launch cannot import a second source file, so both are compiled here with javac
+# against the SDK jars the harness built, then the check class is run. The check arms exactly one
+# fault through the simulator's control listener (SDKHARNESS_SIMULATOR_CONTROL_URL) and asserts the
+# recovery from the simulator's request journal.
+#
+# A check that outlives WATCHDOG_SECONDS is killed and reported as a FAIL: the slowest scenario
+# (upload.stall, with its 2 s socket timeout) takes about 3 s, so a minute means the SDK never
+# gave up on something.
+set -u
+
+LEVEL=resilience
+SLUG=b2-sdk-java
+WATCHDOG_SECONDS=60
+SCENARIO="${SDKHARNESS_SCENARIO:-}"
+HERE="$(cd "$(dirname "$0")" && pwd -P)"
+result() { printf 'SDKHARNESS_RESULT\t%s\t%s\t%s\t%s\n' "$LEVEL" "$SCENARIO" "$1" "$2"; }
+fail() { result FAIL "$1"; exit 1; }
+# A detail is one printable line, capped: a compiler diagnostic never goes into a result as a block.
+tidy() { printf '%s' "$1" | tr '\n\r\t' '   ' | tr -cd '[:print:]' | cut -c1-200; }
+
+[ "${SDKHARNESS_TEST_LEVEL:-}" = "$LEVEL" ] || fail 'configuration: unexpected test level'
+case "$SCENARIO" in
+  upload.retry_503) class=UploadRetry503 ;;
+  upload.retry_500) class=UploadRetry500 ;;
+  upload.retry_408) class=UploadRetry408 ;;
+  upload.expired_token_401) class=UploadExpiredToken401 ;;
+  upload.get_url_503) class=UploadGetUrl503 ;;
+  upload.cap_exceeded_403) class=UploadCapExceeded403 ;;
+  upload.reset_mid_request) class=UploadResetMidRequest ;;
+  upload.reset_before_response) class=UploadResetBeforeResponse ;;
+  upload.stall) class=UploadStall ;;
+  part.retry_503) class=PartRetry503 ;;
+  auth.expired_401) class=AuthExpired401 ;;
+  auth.clock_expiry) class=AuthClockExpiry ;;
+  api.retry_after_429) class=ApiRetryAfter429 ;;
+  api.retry_after_503) class=ApiRetryAfter503 ;;
+  api.backoff_503) class=ApiBackoff503 ;;
+  download.retry_503) class=DownloadRetry503 ;;
+  *) fail 'configuration: no check for this scenario' ;;
+esac
+[[ "${SDKHARNESS_SIMULATOR_URL:-}" =~ ^http://127\.0\.0\.1:[0-9]{1,5}/?$ ]] \
+  || fail 'configuration: simulator URL must be an IPv4 loopback HTTP origin'
+[[ "${SDKHARNESS_SIMULATOR_CONTROL_URL:-}" =~ ^http://127\.0\.0\.1:[0-9]{1,5}/?$ ]] \
+  || fail 'configuration: simulator control URL must be an IPv4 loopback HTTP origin'
+[ -n "${SDKHARNESS_JAVA_CLASSPATH:-}" ] \
+  || fail 'configuration: SDKHARNESS_JAVA_CLASSPATH is unset (the core and httpclient jars built from this checkout, plus their runtime dependencies)'
+command -v javac >/dev/null 2>&1 && command -v java >/dev/null 2>&1 \
+  || { result SKIP 'missing-runtime -- no JDK (javac and java) on PATH'; exit 0; }
+
+# Only the simulator's fixed credential (in Support.java) reaches the SDK: every ambient B2_* is dropped.
+for name in $(compgen -e); do case "$name" in B2_*) unset "$name" ;; esac; done
+
+work="$(mktemp -d "${TMPDIR:-/tmp}/sdkharness-java-resilience.XXXXXX")" || fail 'setup: could not create a scratch directory'
+watchdog=""
+cleanup() {
+  [ -z "$watchdog" ] || { pkill -P "$watchdog" 2>/dev/null; kill "$watchdog" 2>/dev/null; wait "$watchdog" 2>/dev/null; }
+  rm -rf "$work"
+}
+trap cleanup EXIT
+
+if ! javac --release 11 -nowarn -d "$work/classes" -cp "$SDKHARNESS_JAVA_CLASSPATH" \
+    "$HERE/resilience/Support.java" "$HERE/resilience/$class.java" >"$work/javac.log" 2>&1; then
+  fail "build: the check did not compile against this checkout: $(tidy "$(head -c 400 "$work/javac.log")")"
+fi
+
+log="$work/check.log"
+java -cp "$work/classes:$SDKHARNESS_JAVA_CLASSPATH" "$class" >"$log" 2>&1 &
+check_pid=$!
+# The watchdog is a background shell that kills the check (and records that it did) after the limit.
+(
+  sleep "$WATCHDOG_SECONDS"
+  : >"$work/timed-out"
+  kill -TERM "$check_pid" 2>/dev/null
+  sleep 2
+  kill -KILL "$check_pid" 2>/dev/null
+) >/dev/null 2>&1 &
+watchdog=$!
+if wait "$check_pid"; then rc=0; else rc=$?; fi
+
+# The check's own output is evidence: pass everything but the result line through.
+prefix="RESILIENCE $SLUG $SCENARIO @"
+grep -Fv "$prefix" "$log" || true
+if [ -e "$work/timed-out" ]; then
+  fail "timeout: the check was still running after ${WATCHDOG_SECONDS} s and was killed"
+fi
+count="$(grep -Fc "$prefix" "$log" 2>/dev/null || true)"
+[ "$count" = 1 ] || fail "contract: expected one result line, got $count (exit $rc)"
+verdict="$(grep -F "$prefix" "$log")"; verdict="${verdict#*: }"
+case "$verdict" in
+  PASS) [ "$rc" = 0 ] || fail "contract: PASS exited $rc"; result PASS - ;;
+  'FAIL ('*')') reason="${verdict#FAIL (}"; result FAIL "${reason%)}"; exit 1 ;;
+  *) fail 'contract: malformed result line' ;;
+esac
