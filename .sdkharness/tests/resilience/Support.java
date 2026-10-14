@@ -12,7 +12,20 @@ import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
+import com.backblaze.b2.client.webApiHttpClient.HttpClientFactory;
 import com.backblaze.b2.client.webApiHttpClient.HttpClientFactoryImpl;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.protocol.HttpCoreContext;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -21,6 +34,7 @@ import java.net.http.HttpResponse;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -39,8 +53,14 @@ import java.util.regex.Pattern;
  * journal ({@code GET /journal}: sequence, endpoint, status, fault, an opaque upload URL id; never a
  * header, token or body). {@link #run} prints exactly one result line,
  * {@code RESILIENCE b2-sdk-java <scenario> @simulator: PASS | FAIL (<step> -- <detail>)}, after it
- * has cleared every fault and deleted every bucket and file the check created. Anything else it
- * prints is a {@code NOTE} line. It never prints a response body or a credential.
+ * has cleared every fault and tried to delete every bucket and file the check created; a step that
+ * fails turns the verdict into a FAIL. Anything else it prints is a {@code NOTE} line. Its own lines
+ * are one capped printable line ({@link #tidy}) built from exception class names, status codes and the
+ * check's own assertions, never from a response body; this is formatting, not redaction (the only
+ * credential is the simulator's fixed test one).
+ *
+ * <p>Every SDK request goes through {@link #guardedFactory}, which refuses any request whose target
+ * host is not 127.0.0.1 and fails the verdict if one was attempted. {@code GuardSelfTest} proves it.
  */
 public final class Support {
     static final String SLUG = "b2-sdk-java";
@@ -100,6 +120,10 @@ public final class Support {
     private static String step = "configuration";
     private static final List<B2Bucket> created = new ArrayList<>();
     private static int journalMark;
+    private static final String LOOPBACK_HOST = "127.0.0.1";
+    /** Hosts of requests the guard refused (the SDK may swallow the exception, so the verdict reads this). */
+    static final List<String> blocked = Collections.synchronizedList(new ArrayList<>());
+    private static final List<String> cleanupErrors = new ArrayList<>();
 
     private Support() {
     }
@@ -122,7 +146,7 @@ public final class Support {
         try {
             final String url = System.getenv("SDKHARNESS_SIMULATOR_URL");
             control = System.getenv("SDKHARNESS_SIMULATOR_CONTROL_URL");
-            // run-resilience checked both already; the SDK's http switch must never reach anything else.
+            // run-resilience checked both already; the guard in newClient enforces it again on every SDK request.
             if (url == null || !url.matches(LOOPBACK) || control == null || !control.matches(LOOPBACK)) {
                 throw new Failure("the simulator and control URLs must be IPv4 loopback HTTP origins");
             }
@@ -136,6 +160,11 @@ public final class Support {
         } finally {
             cleanup();
         }
+        if (!blocked.isEmpty()) {
+            failure = "loopback guard -- blocked a request to non-loopback host " + tidy(blocked.get(0));
+        } else if (failure == null && !cleanupErrors.isEmpty()) {
+            failure = "cleanup -- " + cleanupErrors.size() + " step(s) failed: " + tidy(String.join("; ", cleanupErrors));
+        }
         if (failure == null) {
             System.out.println("RESILIENCE " + SLUG + " " + scenario + " @simulator: PASS");
         } else {
@@ -148,13 +177,73 @@ public final class Support {
         final B2ClientConfig config = B2ClientConfig.builder(KEY_ID, KEY, "b2-sdk-java-sdkharness-resilience")
                 .setMasterUrl(masterUrl)
                 .build();
-        // The simulator speaks plain HTTP on loopback, so this enables the SDK's documented
-        // test-environment switch; the SDK's own retry policy and every other default stay as shipped.
+        // The SDK's own request settings (timeouts, no URI normalization), with the one setting a check
+        // may change; the SDK's own retry policy and every other default stay as shipped. The guarded
+        // factory below supplies plain HTTP for the simulator, the SDK's documented test-environment switch.
         final HttpClientFactoryImpl.Builder httpBuilder = HttpClientFactoryImpl.builder().setSupportInsecureHttp(true);
         if (socketTimeoutSeconds > 0) {
             httpBuilder.setSocketTimeoutSeconds(socketTimeoutSeconds);
         }
-        return B2StorageHttpClientBuilder.builder(config).setHttpClientFactory(httpBuilder.build()).build();
+        return B2StorageHttpClientBuilder.builder(config)
+                .setHttpClientFactory(guardedFactory(httpBuilder.createRequestConfig())).build();
+    }
+
+    /**
+     * The one HTTP client factory every check uses. It mirrors HttpClientFactoryImpl (same request
+     * config, pooled connections revalidated after 2 s, 4 s keep-alive) with plain HTTP only, and an
+     * interceptor that refuses any request whose target host is not 127.0.0.1 before it is sent,
+     * including each hop of a redirect. A refused request is recorded in {@link #blocked}, which fails
+     * the verdict even if the SDK handles the exception.
+     */
+    static HttpClientFactory guardedFactory(RequestConfig requestConfig) {
+        final Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", new PlainConnectionSocketFactory()).build();
+        final PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(registry);
+        connectionManager.setMaxTotal(100);
+        connectionManager.setDefaultMaxPerRoute(100);
+        connectionManager.setValidateAfterInactivity(2000);
+        return new HttpClientFactory() {
+            @Override
+            public CloseableHttpClient create() {
+                return HttpClients.custom()
+                        .setConnectionManager(connectionManager)
+                        .setConnectionManagerShared(true)
+                        .setDefaultRequestConfig(requestConfig)
+                        .setKeepAliveStrategy((response, context) -> 4000)
+                        .addInterceptorFirst((HttpRequestInterceptor) (request, context) ->
+                                requireLoopback(request, (HttpHost) context.getAttribute(HttpCoreContext.HTTP_TARGET_HOST)))
+                        .build();
+            }
+
+            @Override
+            public void close() {
+                connectionManager.shutdown();
+            }
+        };
+    }
+
+    /**
+     * Throws, and records the host, unless the request's target is 127.0.0.1. The target host is the
+     * one the client is about to connect to (set on the context before interceptors run, also on each
+     * redirect hop); an absolute request URI is checked as well, and a missing target fails closed.
+     */
+    static void requireLoopback(org.apache.http.HttpRequest request, HttpHost target) throws HttpException {
+        String host = target == null ? null : target.getHostName();
+        if (LOOPBACK_HOST.equals(host)) {
+            final String uri = request.getRequestLine().getUri();
+            try {
+                final URI parsed = URI.create(uri);
+                if (parsed.isAbsolute()) {
+                    host = parsed.getHost();
+                }
+            } catch (IllegalArgumentException e) {
+                host = "unparseable-uri";
+            }
+        }
+        if (!LOOPBACK_HOST.equals(host)) {
+            blocked.add(String.valueOf(host));
+            throw new HttpException("blocked non-loopback host: " + host);
+        }
     }
 
     /**
@@ -167,7 +256,7 @@ public final class Support {
                 send("DELETE", "/faults", null);
             }
         } catch (Exception e) {
-            note("clearing the faults failed: " + describe(e));
+            cleanupErrors.add("clearing the faults: " + describe(e));
         }
         if (client == null) {
             return;
@@ -177,7 +266,7 @@ public final class Support {
                 client.deleteAllFilesInBucket(bucket.getBucketId());
                 client.deleteBucket(bucket.getBucketId());
             } catch (B2Exception | RuntimeException e) {
-                note("cleanup of " + bucket.getBucketName() + " failed: " + describe(e));
+                cleanupErrors.add(bucket.getBucketName() + ": " + describe(e));
             }
         }
         try {
@@ -226,7 +315,12 @@ public final class Support {
     // ---- the simulator's control listener ------------------------------------------------------
 
     private static String send(String method, String path, String json) throws Exception {
-        final HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(control + path));
+        final URI uri = URI.create(control + path);
+        if (!LOOPBACK_HOST.equals(uri.getHost())) {
+            blocked.add(String.valueOf(uri.getHost()));
+            fail("the control request would leave loopback");
+        }
+        final HttpRequest.Builder request = HttpRequest.newBuilder(uri);
         if (json == null) {
             request.method(method, HttpRequest.BodyPublishers.noBody());
         } else {

@@ -53,7 +53,8 @@ error reaches the caller) and the recovery path, read from the simulator's reque
 Each file cites the B2 pages it asserts. They share `tests/resilience/Support.java`; as for
 conformance, the wrapper compiles `Support.java` and the check with `javac` against the
 harness-built jars, then runs the check class. Each check creates its own `sdkharness-res-*`
-bucket, clears every fault it armed, and deletes everything it made, on failure too.
+bucket, clears every fault it armed, and tries to delete everything it made, on failure too; it attempts
+every step, and one that fails turns the verdict into a `FAIL` (`cleanup -- N step(s) failed`).
 
 | Scenario | Fault, and what it asserts |
 |---|---|
@@ -74,17 +75,21 @@ Timing is a lower bound only, never an upper bound (a busy runner would make tha
 that is still running after 60 s is killed and reported as a failure: the slowest scenario takes
 about 3 s, so a minute means the SDK never gave up on something.
 
-A failing scenario prints one `SDKHARNESS_RESULT ... FAIL` line with the step and the reason.
+A failing resilience scenario prints one `SDKHARNESS_RESULT ... FAIL` line with the step and the reason,
+formatted and capped as described under Conformance (formatting, not redaction).
 
 ## What the check can and cannot reach
 
 - **Only the loopback simulator.** `run-health`, `run-conformance` and `run-resilience` refuse any
-  `SDKHARNESS_SIMULATOR_URL` (and, for resilience, `SDKHARNESS_SIMULATOR_CONTROL_URL`) that is not `http://127.0.0.1:<port>`. In conformance the SDK is also
-  held to it at request time: every check builds its client from one guarded HTTP client factory
-  (`Support.guardedFactory`, plain HTTP only) that refuses any request whose target host is not
-  `127.0.0.1`, redirect hops included, and a refused request fails the verdict
+  `SDKHARNESS_SIMULATOR_URL` (and, for resilience, `SDKHARNESS_SIMULATOR_CONTROL_URL`) that is not
+  `http://127.0.0.1:<port>`. In conformance and resilience the SDK is also held to it at request time:
+  every check builds its client from one guarded HTTP client factory (`Support.guardedFactory`, plain
+  HTTP only; in resilience it carries the SDK's request settings including the per-check socket
+  timeout, and the control-listener requests are held to the same host) that refuses any request whose
+  target host is not `127.0.0.1`, redirect hops included, and a refused request fails the verdict
   (`loopback guard -- blocked a request to non-loopback host ...`). `health` is guarded by its origin
-  check only. `conformance/GuardSelfTest.java` proves the guard (see below).
+  check only. `conformance/GuardSelfTest.java` and `resilience/GuardSelfTest.java` prove the guard (see
+  below).
 - **Only the simulator's fixed test credential** (`test-key-id` / `test-key`, in the source).
   Every ambient `B2_*` variable except `B2_BUCKET_NAME` is dropped first (conformance and resilience drop all of
   them and make their own buckets).
@@ -98,7 +103,8 @@ A failing scenario prints one `SDKHARNESS_RESULT ... FAIL` line with the step an
 For conformance, set `SDKHARNESS_TEST_LEVEL=conformance`, `SDKHARNESS_SCENARIO=<capability>` and run
 `.sdkharness/tests/run-conformance` (needs `javac`, and no `B2_BUCKET_NAME`).
 
-To re-prove the loopback guard (no simulator needed; `$CP` is the same class path):
+To re-prove the loopback guard (no simulator needed; `$CP` is the same class path; use `resilience`
+in place of `conformance` for the resilience copy):
 
 ```bash
 javac --release 11 -d /tmp/guard -cp "$CP" .sdkharness/tests/conformance/Support.java .sdkharness/tests/conformance/GuardSelfTest.java
