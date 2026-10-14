@@ -53,10 +53,11 @@ log="$work/check.log"
 if java -cp "$work/classes:$SDKHARNESS_JAVA_CLASSPATH" "$class" >"$log" 2>&1; then rc=0; else rc=$?; fi
 
 prefix="CONFORMANCE $SLUG $SCENARIO @"
-grep -Fv "$prefix" "$log" || true
-count="$(grep -Fc "$prefix" "$log" 2>/dev/null || true)"
+# A result line starts at column 1 (index(), not a regex: the dots in a scenario id are literal).
+awk -v p="$prefix" 'index($0, p) != 1' "$log" || true
+count="$(awk -v p="$prefix" 'index($0, p) == 1 { n++ } END { print n + 0 }' "$log")"
 [ "$count" = 1 ] || fail "contract: expected one result line, got $count (exit $rc)"
-verdict="$(grep -F "$prefix" "$log")"; verdict="${verdict#*: }"
+verdict="$(awk -v p="$prefix" 'index($0, p) == 1' "$log")"; verdict="${verdict#*: }"
 case "$verdict" in
   PASS) [ "$rc" = 0 ] || fail "contract: PASS exited $rc"; result PASS - ;;
   'FAIL ('*')') reason="${verdict#FAIL (}"; result FAIL "${reason%)}"; exit 1 ;;

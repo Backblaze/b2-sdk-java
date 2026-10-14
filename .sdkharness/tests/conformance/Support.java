@@ -13,11 +13,21 @@ import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
 import com.backblaze.b2.client.webApiHttpClient.HttpClientFactory;
 import com.backblaze.b2.client.webApiHttpClient.HttpClientFactoryImpl;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.protocol.HttpCoreContext;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -33,8 +43,14 @@ import java.util.UUID;
  *
  * <p>Each check is one {@code main} that calls {@link #run}. This prints exactly one result line,
  * {@code CONFORMANCE b2-sdk-java <capability> @simulator: PASS | FAIL (<step> -- <detail>)}, after
- * deleting every bucket and file the check created. Anything else it prints is a {@code NOTE} line.
- * It never prints a response body or a credential.
+ * deleting every bucket and file the check created; a deletion that fails turns the verdict into a
+ * FAIL. Anything else it prints is a {@code NOTE} line. Its own lines are one capped printable line
+ * ({@link #tidy}) built from exception class names, status codes and the check's own assertions, never
+ * from a response body; this is formatting, not redaction (the only credential is the simulator's fixed
+ * test one).
+ *
+ * <p>Every SDK request goes through {@link #guardedFactory}, which refuses any request whose target
+ * host is not 127.0.0.1 and fails the verdict if one was attempted. {@code GuardSelfTest} proves it.
  */
 public final class Support {
     static final String SLUG = "b2-sdk-java";
@@ -72,6 +88,10 @@ public final class Support {
     private static String capability = "unknown";
     private static String step = "configuration";
     private static final List<B2Bucket> created = new ArrayList<>();
+    private static final String LOOPBACK_HOST = "127.0.0.1";
+    /** Hosts of requests the guard refused (the SDK may swallow the exception, so the verdict reads this). */
+    static final List<String> blocked = Collections.synchronizedList(new ArrayList<>());
+    private static final List<String> cleanupErrors = new ArrayList<>();
 
     private Support() {
     }
@@ -87,7 +107,7 @@ public final class Support {
         String failure = null;
         try {
             final String url = System.getenv("SDKHARNESS_SIMULATOR_URL");
-            // run-conformance checked this already; the SDK's http switch must never reach anything else.
+            // run-conformance checked this already; the guard in newClient enforces it again on every request.
             if (url == null || !url.matches("http://127\\.0\\.0\\.1:[0-9]{1,5}/?")) {
                 throw new Failure("simulator URL must be an IPv4 loopback HTTP origin");
             }
@@ -99,6 +119,11 @@ public final class Support {
             failure = step + " -- " + describe(t);
         } finally {
             cleanup();
+        }
+        if (!blocked.isEmpty()) {
+            failure = "loopback guard -- blocked a request to non-loopback host " + tidy(blocked.get(0));
+        } else if (failure == null && !cleanupErrors.isEmpty()) {
+            failure = "cleanup -- left " + cleanupErrors.size() + " bucket(s) behind: " + tidy(String.join("; ", cleanupErrors));
         }
         if (failure == null) {
             System.out.println("CONFORMANCE " + SLUG + " " + capability + " @simulator: PASS");
@@ -112,33 +137,75 @@ public final class Support {
         final B2ClientConfig config = B2ClientConfig.builder(KEY_ID, KEY, "b2-sdk-java-sdkharness-conformance")
                 .setMasterUrl(masterUrl)
                 .build();
-        // The simulator speaks plain HTTP on loopback, so this enables the SDK's documented
-        // test-environment switch; everything else is the default client.
-        final HttpClientFactoryImpl.Builder httpBuilder = HttpClientFactoryImpl.builder().setSupportInsecureHttp(true);
-        final HttpClientFactory factory = recordWire ? recordingFactory(httpBuilder.createRequestConfig())
-                                                      : httpBuilder.build();
-        return B2StorageHttpClientBuilder.builder(config).setHttpClientFactory(factory).build();
+        // The SDK's own request settings (timeouts, no URI normalization); the guarded factory below
+        // supplies plain HTTP for the simulator, which is the SDK's documented test-environment switch.
+        final RequestConfig requestConfig = HttpClientFactoryImpl.builder().setSupportInsecureHttp(true).createRequestConfig();
+        return B2StorageHttpClientBuilder.builder(config).setHttpClientFactory(guardedFactory(requestConfig, recordWire)).build();
     }
 
-    /** The SDK's own request settings, plus a record of each request's method and URI. */
-    private static HttpClientFactory recordingFactory(RequestConfig requestConfig) {
+    /**
+     * The one HTTP client factory every check uses. It mirrors HttpClientFactoryImpl (same request
+     * config, pooled connections revalidated after 2 s, 4 s keep-alive) with plain HTTP only, and an
+     * interceptor that refuses any request whose target host is not 127.0.0.1 before it is sent,
+     * including each hop of a redirect. A refused request is recorded in {@link #blocked}, which fails
+     * the verdict even if the SDK handles the exception.
+     */
+    static HttpClientFactory guardedFactory(RequestConfig requestConfig, boolean recordWire) {
+        final Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", new PlainConnectionSocketFactory()).build();
+        final PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(registry);
+        connectionManager.setMaxTotal(100);
+        connectionManager.setDefaultMaxPerRoute(100);
+        connectionManager.setValidateAfterInactivity(2000);
         return new HttpClientFactory() {
             @Override
             public CloseableHttpClient create() {
                 return HttpClients.custom()
+                        .setConnectionManager(connectionManager)
+                        .setConnectionManagerShared(true)
                         .setDefaultRequestConfig(requestConfig)
-                        .addInterceptorFirst((HttpRequestInterceptor) (request, context) ->
-                                wire.add(request.getRequestLine().getMethod() + " " + request.getRequestLine().getUri()))
+                        .setKeepAliveStrategy((response, context) -> 4000)
+                        .addInterceptorFirst((HttpRequestInterceptor) (request, context) -> {
+                            requireLoopback(request, (HttpHost) context.getAttribute(HttpCoreContext.HTTP_TARGET_HOST));
+                            if (recordWire) {
+                                wire.add(request.getRequestLine().getMethod() + " " + request.getRequestLine().getUri());
+                            }
+                        })
                         .build();
             }
 
             @Override
             public void close() {
+                connectionManager.shutdown();
             }
         };
     }
 
-    /** Deletes every file version and bucket this check created, on the error path too. */
+    /**
+     * Throws, and records the host, unless the request's target is 127.0.0.1. The target host is the
+     * one the client is about to connect to (set on the context before interceptors run, also on each
+     * redirect hop); an absolute request URI is checked as well, and a missing target fails closed.
+     */
+    static void requireLoopback(HttpRequest request, HttpHost target) throws HttpException {
+        String host = target == null ? null : target.getHostName();
+        if (LOOPBACK_HOST.equals(host)) {
+            final String uri = request.getRequestLine().getUri();
+            try {
+                final URI parsed = URI.create(uri);
+                if (parsed.isAbsolute()) {
+                    host = parsed.getHost();
+                }
+            } catch (IllegalArgumentException e) {
+                host = "unparseable-uri";
+            }
+        }
+        if (!LOOPBACK_HOST.equals(host)) {
+            blocked.add(String.valueOf(host));
+            throw new HttpException("blocked non-loopback host: " + host);
+        }
+    }
+
+    /** Tries to delete every file version and bucket this check created, on the error path too; a failure is collected, and {@link #run} turns it into a FAIL. */
     private static void cleanup() {
         if (client == null) {
             return;
@@ -148,7 +215,7 @@ public final class Support {
                 client.deleteAllFilesInBucket(bucket.getBucketId());
                 client.deleteBucket(bucket.getBucketId());
             } catch (B2Exception | RuntimeException e) {
-                note("cleanup of " + bucket.getBucketName() + " failed: " + describe(e));
+                cleanupErrors.add(bucket.getBucketName() + ": " + describe(e));
             }
         }
         try {
