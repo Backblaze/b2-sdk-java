@@ -7,8 +7,12 @@ import com.backblaze.b2.client.contentSources.B2ByteArrayContentSource;
 import com.backblaze.b2.client.contentSources.B2Headers;
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.client.structures.B2Bucket;
+import com.backblaze.b2.client.structures.B2CreateBucketRequest;
+import com.backblaze.b2.client.structures.B2DeleteFileVersionRequest;
 import com.backblaze.b2.client.structures.B2FileVersion;
+import com.backblaze.b2.client.structures.B2LegalHold;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
+import com.backblaze.b2.client.structures.B2UpdateFileLegalHoldRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
 import com.backblaze.b2.client.webApiHttpClient.B2StorageHttpClientBuilder;
 import com.backblaze.b2.client.webApiHttpClient.HttpClientFactory;
@@ -17,6 +21,7 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -36,6 +41,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Shared plumbing for the sdkharness conformance checks. Compiled together with one check class
@@ -85,9 +94,20 @@ public final class Support {
     /** "METHOD uri" of every HTTP request the SDK sent, when the check asked for the recording client. */
     static final List<String> wire = Collections.synchronizedList(new ArrayList<>());
 
+    /**
+     * With the recording client, requests whose URI contains {@link #inFlightMarker} are counted while they are in
+     * flight (from the moment the SDK starts sending to the moment the response arrives); {@link #maxInFlight} is the
+     * most that overlapped.
+     */
+    static volatile String inFlightMarker;
+    static final AtomicInteger inFlight = new AtomicInteger();
+    static final AtomicInteger maxInFlight = new AtomicInteger();
+
+    private static final List<ExecutorService> executors = new ArrayList<>();
     private static String capability = "unknown";
     private static String step = "configuration";
     private static final List<B2Bucket> created = new ArrayList<>();
+    private static final java.util.Set<String> lockEnabled = new java.util.HashSet<>();
     private static final String LOOPBACK_HOST = "127.0.0.1";
     /** Hosts of requests the guard refused (the SDK may swallow the exception, so the verdict reads this). */
     static final List<String> blocked = Collections.synchronizedList(new ArrayList<>());
@@ -133,8 +153,24 @@ public final class Support {
         }
     }
 
+    /**
+     * A second client, authorized with a key the check itself created (keys.crud), through the same guarded factory.
+     * It is closed with the check. The credential is the caller's; nothing here prints it.
+     */
+    static B2StorageClient clientFor(String keyId, String key) {
+        final B2StorageClient other = newClient(System.getenv("SDKHARNESS_SIMULATOR_URL"), keyId, key, false);
+        extraClients.add(other);
+        return other;
+    }
+
+    private static final List<B2StorageClient> extraClients = new ArrayList<>();
+
     private static B2StorageClient newClient(String masterUrl, boolean recordWire) {
-        final B2ClientConfig config = B2ClientConfig.builder(KEY_ID, KEY, "b2-sdk-java-sdkharness-conformance")
+        return newClient(masterUrl, KEY_ID, KEY, recordWire);
+    }
+
+    private static B2StorageClient newClient(String masterUrl, String keyId, String key, boolean recordWire) {
+        final B2ClientConfig config = B2ClientConfig.builder(keyId, key, "b2-sdk-java-sdkharness-conformance")
                 .setMasterUrl(masterUrl)
                 .build();
         // The SDK's own request settings (timeouts, no URI normalization); the guarded factory below
@@ -169,6 +205,16 @@ public final class Support {
                             requireLoopback(request, (HttpHost) context.getAttribute(HttpCoreContext.HTTP_TARGET_HOST));
                             if (recordWire) {
                                 wire.add(request.getRequestLine().getMethod() + " " + request.getRequestLine().getUri());
+                                if (matchesInFlight(request)) {
+                                    final int now = inFlight.incrementAndGet();
+                                    maxInFlight.accumulateAndGet(now, Math::max);
+                                }
+                            }
+                        })
+                        .addInterceptorLast((HttpResponseInterceptor) (response, context) -> {
+                            final HttpRequest request = (HttpRequest) context.getAttribute(HttpCoreContext.HTTP_REQUEST);
+                            if (recordWire && request != null && matchesInFlight(request)) {
+                                inFlight.decrementAndGet();
                             }
                         })
                         .build();
@@ -179,6 +225,11 @@ public final class Support {
                 connectionManager.shutdown();
             }
         };
+    }
+
+    private static boolean matchesInFlight(HttpRequest request) {
+        final String marker = inFlightMarker;
+        return marker != null && request.getRequestLine().getUri().contains(marker);
     }
 
     /**
@@ -210,9 +261,43 @@ public final class Support {
         if (client == null) {
             return;
         }
+        for (ExecutorService executor : executors) {
+            executor.shutdownNow();
+        }
+        for (B2StorageClient other : extraClients) {
+            try {
+                other.close();
+            } catch (RuntimeException e) {
+                // nothing left to release
+            }
+        }
+        for (String keyId : createdKeys) {
+            try {
+                client.deleteKey(com.backblaze.b2.client.structures.B2DeleteKeyRequest.builder(keyId).build());
+            } catch (B2Exception | RuntimeException e) {
+                cleanupErrors.add("key " + keyId + ": " + describe(e));
+            }
+        }
         for (B2Bucket bucket : created) {
             try {
-                client.deleteAllFilesInBucket(bucket.getBucketId());
+                // A large file left unfinished would keep the bucket from being deleted.
+                for (B2FileVersion unfinished : client.unfinishedLargeFiles(bucket.getBucketId())) {
+                    client.cancelLargeFile(unfinished.getFileId());
+                }
+                if (lockEnabled.contains(bucket.getBucketId())) {
+                    // Files under a lock: a legal hold is released and governance retention is bypassed (the simulator's
+                    // key holds that capability). Compliance retention is never set by a check, since nothing can lift it.
+                    for (B2FileVersion version : client.fileVersions(bucket.getBucketId())) {
+                        try {
+                            client.updateFileLegalHold(B2UpdateFileLegalHoldRequest.builder(version.getFileName(), version.getFileId(), B2LegalHold.OFF).build());
+                        } catch (B2Exception e) {
+                            // a hide marker has no legal hold to release
+                        }
+                        client.deleteFileVersion(B2DeleteFileVersionRequest.builder(version.getFileName(), version.getFileId()).setBypassGovernance(true).build());
+                    }
+                } else {
+                    client.deleteAllFilesInBucket(bucket.getBucketId());
+                }
                 client.deleteBucket(bucket.getBucketId());
             } catch (B2Exception | RuntimeException e) {
                 cleanupErrors.add(bucket.getBucketName() + ": " + describe(e));
@@ -291,8 +376,42 @@ public final class Support {
         return bucket;
     }
 
+    /** A fresh private bucket with Object Lock enabled; cleanup releases legal holds and bypasses governance retention. */
+    static B2Bucket lockedBucket() throws B2Exception {
+        return bucket(true, null);
+    }
+
+    /** A fresh private bucket made from a request the caller may customize; {@code lock} also enables Object Lock. */
+    static B2Bucket bucket(boolean lock, java.util.function.Consumer<B2CreateBucketRequest.Builder> customize) throws B2Exception {
+        final B2CreateBucketRequest.Builder builder = B2CreateBucketRequest.builder(newBucketName(), "allPrivate");
+        if (lock) {
+            builder.setFileLockEnabled(true);
+        }
+        if (customize != null) {
+            customize.accept(builder);
+        }
+        final B2Bucket bucket = client.createBucket(builder.build());
+        created.add(bucket);
+        if (lock) {
+            lockEnabled.add(bucket.getBucketId());
+        }
+        return bucket;
+    }
+
     static String newBucketName() {
         return "sdkharness-conf-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+    }
+
+    private static final List<String> createdKeys = new ArrayList<>();
+
+    /** Records an application key the check created, so cleanup deletes it if the check does not. */
+    static void trackKey(String keyId) {
+        createdKeys.add(keyId);
+    }
+
+    /** The check deleted this key itself. */
+    static void untrackKey(String keyId) {
+        createdKeys.remove(keyId);
     }
 
     /** Records a bucket the check created itself, so cleanup deletes it if the check does not. */
@@ -303,6 +422,37 @@ public final class Support {
     /** The check deleted this bucket itself, so cleanup has nothing left to do for it. */
     static void untrack(B2Bucket bucket) {
         created.removeIf(b -> b.getBucketId().equals(bucket.getBucketId()));
+    }
+
+    /** A thread pool the SDK's large-file calls run on; shut down when the check ends. */
+    static ExecutorService executor(int threads) {
+        final ExecutorService executor = Executors.newFixedThreadPool(threads);
+        executors.add(executor);
+        return executor;
+    }
+
+    /** The part size to use: the larger of the account's recommended and absolute minimum part size, as the realm reports them. */
+    static long partSize() {
+        try {
+            final long recommended = client.getAccountAuthorization().getRecommendedPartSize();
+            final long minimum = client.getAccountAuthorization().getAbsoluteMinimumPartSize();
+            return Math.max(recommended, minimum);
+        } catch (B2Exception e) {
+            throw new Failure("could not read the account's part sizes: " + describe(e));
+        }
+    }
+
+    /** How many recorded requests were "METHOD uri" with the given method and a URI containing {@code part}. */
+    static int wireCount(String method, String part) {
+        int n = 0;
+        synchronized (wire) {
+            for (String line : wire) {
+                if (line.startsWith(method + " ") && line.contains(part)) {
+                    n++;
+                }
+            }
+        }
+        return n;
     }
 
     static B2FileVersion upload(B2Bucket bucket, String name, byte[] data, String contentType,
@@ -346,6 +496,17 @@ public final class Support {
         return got;
     }
 
+    /** Download by id with server-side-encryption request headers (an SSE-C key); {@code sse} may be null. */
+    static Downloaded downloadById(String fileId, com.backblaze.b2.client.structures.B2FileSseForRequest sse) throws B2Exception {
+        final Downloaded got = new Downloaded();
+        client.downloadById(com.backblaze.b2.client.structures.B2DownloadByIdRequest.builder(fileId).setServerSideEncryption(sse).build(),
+                (headers, in) -> {
+                    got.headers = headers;
+                    got.bytes = in.readAllBytes();
+                });
+        return got;
+    }
+
     static Downloaded downloadByName(String bucketName, String fileName) throws B2Exception {
         final Downloaded got = new Downloaded();
         client.downloadByName(bucketName, fileName, (headers, in) -> {
@@ -370,6 +531,42 @@ public final class Support {
             names.add(version.getFileName());
         }
         return names;
+    }
+
+    /** What a plain HTTP GET answered. */
+    static final class Raw {
+        int status;
+        byte[] bytes;
+    }
+
+    /**
+     * A GET made by the check itself, not by the SDK (a share link is used by someone who has no SDK): refused
+     * unless its host is 127.0.0.1, recorded in {@link #blocked} like the SDK's own requests. {@code authorization}
+     * is sent as the Authorization header when not null.
+     */
+    static Raw rawGet(String url, String authorization) throws java.io.IOException {
+        final String host = URI.create(url).getHost();
+        if (!LOOPBACK_HOST.equals(host)) {
+            blocked.add(String.valueOf(host));
+            throw new Failure("blocked non-loopback host: " + host);
+        }
+        final java.net.HttpURLConnection connection = (java.net.HttpURLConnection) URI.create(url).toURL().openConnection();
+        try {
+            connection.setInstanceFollowRedirects(false);
+            connection.setConnectTimeout(10_000);
+            connection.setReadTimeout(30_000);
+            if (authorization != null) {
+                connection.setRequestProperty("Authorization", authorization);
+            }
+            final Raw raw = new Raw();
+            raw.status = connection.getResponseCode();
+            try (java.io.InputStream in = raw.status < 400 ? connection.getInputStream() : connection.getErrorStream()) {
+                raw.bytes = in == null ? new byte[0] : in.readAllBytes();
+            }
+            return raw;
+        } finally {
+            connection.disconnect();
+        }
     }
 
     static byte[] utf8(String s) {

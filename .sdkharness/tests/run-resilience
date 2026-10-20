@@ -66,7 +66,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if ! javac --release 11 -nowarn -d "$work/classes" -cp "$SDKHARNESS_JAVA_CLASSPATH" \
+if ! javac --release 11 -encoding UTF-8 -nowarn -d "$work/classes" -cp "$SDKHARNESS_JAVA_CLASSPATH" \
     "$HERE/resilience/Support.java" "$HERE/resilience/$class.java" >"$work/javac.log" 2>&1; then
   fail "build: the check did not compile against this checkout: $(tidy "$(head -c 400 "$work/javac.log")")"
 fi

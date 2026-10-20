@@ -5,7 +5,7 @@
 assertions in `tests/`; the harness builds this checkout, starts a fresh local B2 simulator,
 and retains and reports the evidence.
 
-Scenarios so far: `health/golden-path` and eight `conformance` and sixteen `resilience` scenarios (below). `tests/run-health` runs
+Scenarios so far: `health/golden-path` and 27 `conformance` (one per capability the SDK claims) and sixteen `resilience` scenarios (below). `tests/run-health` runs
 `tests/health/GoldenPath.java` as a single-file Java program that authorizes, uploads a small
 file, downloads it and compares the bytes, lists it, deletes it and confirms it is gone, then
 prints one result line:
@@ -35,6 +35,36 @@ deletion, and a deletion that fails turns the verdict into a `FAIL` (`cleanup --
 | `files.hide` | hide marker is a new version; not in the default listing, visible in the version listing; 404 by name; the original still downloads by id |
 | `bucket.crud` | create, duplicate name refused, list, update type and info (revision grows), delete refused while non-empty, delete |
 | `files.metadata` | by id (`b2_get_file_info`) and by name (an HTTP HEAD of the download URL: the cell is `partial`); the check records the SDK's own requests and asserts that boundary |
+| `files.server_side_copy` | `b2_copy_file` sends no bytes (no `b2_upload_file`), same sha1 under a new fileId, the COPY and REPLACE metadata directives, a ranged copy |
+| `large.multipart` | `uploadLargeFile` of three parts' worth: one start, more than one `b2_upload_part`, one finish, contentSha1 `none`, `large_file_sha1` carried, bytes intact |
+| `large.concurrent_parts` | the same eight-part file on a one-thread and a four-thread executor: the SDK's own HTTP client counts `b2_upload_part` requests in flight (1 with one worker, more than 1 with four; wall time is only a `NOTE`) |
+| `large.resume` | a first upload interrupted after two parts, then `finishUploadingLargeFile` on the unfinished file: no new `b2_start_large_file`, only the missing parts, same fileId, bytes intact; run with and without a known sha1 (see the note below) |
+| `large.compose_mixed` | one large file from local bytes, a copied byte range and a whole copied file (`storeLargeFile` with `B2UploadingPartStorer` and `B2CopyingPartStorer`), equal to their ordered concatenation |
+| `urls.native_download` | `getDownloadByNameUrl` is a native `/file/<bucket>/<name>` URL (no `X-Amz-*`); 401 without a token, 200 with a download authorization, 401 outside its prefix and after it expires |
+| `client.progress` | a `B2UploadListener` on a large upload (one worker): it fires, every part's bytes and the running total never go down, every part ends SUCCEEDED, the total equals the byte count |
+| `lock.bucket_default` | a default retention of governance, 1 day on a lock-enabled bucket: read back, and an uploaded file inherits a retention of about now + 1 day |
+| `lock.per_file_retention` | governance retention now + 2 days on a file: read back, and a delete without bypass is refused (401 `access_denied`) and leaves the file |
+| `lock.legal_hold` | hold on: read back and the delete is refused; hold off: read back and the delete succeeds |
+| `lock.bypass_governance` | under governance retention a delete is refused (401 `access_denied`), `setBypassGovernance(true)` deletes the version |
+| `enc.sse_b2` | an SSE-B2 upload reports SSE-B2 / AES256 and downloads as plaintext; a bucket default of SSE-B2 applies to a plain upload |
+| `enc.sse_c` | an SSE-C upload reports SSE-C / AES256; download with the key returns the plaintext and the key's MD5; without it and with another key it is refused (403 for a wrong key) |
+| `keys.crud` | a bucket-restricted key is created (secret returned), listed (no secret anywhere in what the SDK returns), used by a second client, deleted (gone, and its secret no longer authorizes) |
+| `bucket.cors` | typed `B2CorsRule`: set at create, replaced by update, cleared; read back field for field |
+| `bucket.lifecycle` | `daysFromHidingToDeleting` 1 round trips with no other field populated; a replacement list replaces; an empty list clears |
+| `bucket.notification_rules` | a webhook rule with a signing secret is set, read back (the secret unchanged) and deleted |
+| `bucket.inbound_webhook` | offline: a payload signed in the check with the documented HMAC is accepted and parsed by `B2EventNotification.parse`; a wrong secret, a changed payload and a malformed signature are refused; a test event parses |
+| `bucket.replication_config` | a source rule (destination bucket, prefix, priority, flags) with a replication key is set and read back field for field |
+
+`large.resume` records one SDK behavior on a `NOTE ... FINDING` line. When the content source knows its sha1, the
+SDK stores it as the file info `large_file_sha1`; `finishUploadingLargeFile` then compares the request's file info
+with the stored one after removing the key `X-Bz-Info-large_file_sha1` (`B2Headers.LARGE_FILE_SHA1`,
+`B2LargeFileUploader.throwIfLargeFileVersionDoesntSeemToMatchRequest`), but the stored key is
+`large_file_sha1` (`B2Headers.LARGE_FILE_SHA1_INFO_NAME`), so the same request that started the file is refused with a
+`mismatch` error. The check then resumes with `large_file_sha1` added to the request's custom fields, which the SDK
+accepts, and asserts the rest of the scenario; if the SDK is fixed the first attempt succeeds and the note disappears.
+
+Every check that locks files releases them on exit (legal hold off, governance retention bypassed); none uses
+compliance mode, which nothing could lift.
 
 A failing scenario prints one `SDKHARNESS_RESULT ... FAIL` line with the step and the reason. Details are
 formatted to one capped printable line from exception class names, status codes and the check's own
