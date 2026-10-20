@@ -55,13 +55,13 @@ deletion, and a deletion that fails turns the verdict into a `FAIL` (`cleanup --
 | `bucket.inbound_webhook` | offline: a payload signed in the check with the documented HMAC is accepted and parsed by `B2EventNotification.parse`; a wrong secret, a changed payload and a malformed signature are refused; a test event parses |
 | `bucket.replication_config` | a source rule (destination bucket, prefix, priority, flags) with a replication key is set and read back field for field |
 
-`large.resume` records one SDK behavior on a `NOTE ... FINDING` line. When the content source knows its sha1, the
+`large.resume` reports one SDK behavior as a `FAIL` whose reason starts with `FINDING`. When the content source knows its sha1, the
 SDK stores it as the file info `large_file_sha1`; `finishUploadingLargeFile` then compares the request's file info
 with the stored one after removing the key `X-Bz-Info-large_file_sha1` (`B2Headers.LARGE_FILE_SHA1`,
 `B2LargeFileUploader.throwIfLargeFileVersionDoesntSeemToMatchRequest`), but the stored key is
 `large_file_sha1` (`B2Headers.LARGE_FILE_SHA1_INFO_NAME`), so the same request that started the file is refused with a
-`mismatch` error. The check then resumes with `large_file_sha1` added to the request's custom fields, which the SDK
-accepts, and asserts the rest of the scenario; if the SDK is fixed the first attempt succeeds and the note disappears.
+`mismatch` error. The check does not work around that refusal: the scenario fails with the finding as its reason (the
+harness detects, it does not fix the SDK) and passes once the SDK accepts the same request.
 
 Every check that locks files releases them on exit (legal hold off, governance retention bypassed); none uses
 compliance mode, which nothing could lift.

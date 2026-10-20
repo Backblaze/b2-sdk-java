@@ -38,9 +38,9 @@ import java.util.List;
  * <p>Two legs, because the SDK treats the two content shapes differently. Leg "no sha1": the content source does
  * not know its sha1, so the large file carries no large_file_sha1 and the rerun is the same request as the first
  * run. Leg "sha1": the content source knows its sha1 (the SDK records it as the large_file_sha1 file info); the
- * same request is first tried as-is, and, if the SDK refuses it with a "mismatch" error, the check records that on
- * a NOTE line and resumes with the large_file_sha1 custom field added to the request (which the SDK then accepts).
- * The NOTE is a finding about the SDK, not about B2: B2LargeFileUploader removes the key
+ * rerun is again the same request as the first run. If the SDK refuses it with a "mismatch" error, the scenario
+ * FAILS with a FINDING as the reason: the check detects, it does not work around the refusal. The finding is about
+ * the SDK, not about B2: B2LargeFileUploader removes the key
  * {@code X-Bz-Info-large_file_sha1} (B2Headers.LARGE_FILE_SHA1) from the file info before comparing it with the
  * request's, but the info map is keyed {@code large_file_sha1} (B2Headers.LARGE_FILE_SHA1_INFO_NAME).
  */
@@ -68,7 +68,7 @@ public class LargeResume {
 
         Support.wire.clear();
         try {
-            Support.client.uploadLargeFile(request(bucket, name, new Source(data, sha1, 2 * partSize), null), Support.executor(1));
+            Support.client.uploadLargeFile(request(bucket, name, new Source(data, sha1, 2 * partSize)), Support.executor(1));
             Support.fail(leg + "the interrupted upload finished instead of failing");
         } catch (B2Exception expected) {
             Support.note(leg + "the first upload stopped as intended: " + Support.describe(expected));
@@ -88,20 +88,16 @@ public class LargeResume {
         Support.check(storedBefore < PARTS, leg + "all " + PARTS + " parts were stored; nothing is left to resume");
 
         Support.wire.clear();
-        B2FileVersion finished = null;
+        final B2FileVersion finished;
         try {
-            finished = Support.client.finishUploadingLargeFile(pending, request(bucket, name, new Source(data, sha1, -1), null), Support.executor(2));
+            finished = Support.client.finishUploadingLargeFile(pending, request(bucket, name, new Source(data, sha1, -1)), Support.executor(2));
         } catch (B2LocalException e) {
             if (sha1 == null || !"mismatch".equals(e.getCode())) {
                 throw e;
             }
-            Support.note("FINDING b2-sdk-java: finishUploadingLargeFile refused the same request that started the large file: "
-                    + e.getMessage() + ". It resumes only when the request carries the large_file_sha1 custom field itself.");
-        }
-        if (finished == null) {
-            Support.eq(leg + "b2_upload_part requests after the refused resume", 0, Support.wireCount("POST", "b2_upload_part"));
-            finished = Support.client.finishUploadingLargeFile(pending,
-                    request(bucket, name, new Source(data, sha1, -1), sha1), Support.executor(2));
+            Support.fail("FINDING b2-sdk-java: finishUploadingLargeFile refused the same request that started the large file: "
+                    + e.getMessage());
+            return;
         }
         Support.eq(leg + "b2_start_large_file requests in the rerun", 0, Support.wireCount("POST", "b2_start_large_file"));
         Support.eq(leg + "finished fileId is the unfinished one", pending.getFileId(), finished.getFileId());
@@ -122,13 +118,8 @@ public class LargeResume {
         return all;
     }
 
-    /** {@code sha1Field}, when not null, is added to the request as the large_file_sha1 custom field. */
-    private static B2UploadFileRequest request(B2Bucket bucket, String name, B2ContentSource source, String sha1Field) {
-        final B2UploadFileRequest.Builder builder = B2UploadFileRequest.builder(bucket.getBucketId(), name, "application/octet-stream", source);
-        if (sha1Field != null) {
-            builder.setCustomField("large_file_sha1", sha1Field);
-        }
-        return builder.build();
+    private static B2UploadFileRequest request(B2Bucket bucket, String name, B2ContentSource source) {
+        return B2UploadFileRequest.builder(bucket.getBucketId(), name, "application/octet-stream", source).build();
     }
 
     /** The content; with {@code failAt >= 0}, reading past that byte offset fails the way an interrupted run would. */

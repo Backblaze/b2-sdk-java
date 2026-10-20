@@ -50,6 +50,7 @@ public class LargeConcurrentParts {
 
             Support.step("four workers");
             Support.maxInFlight.set(0);
+            Support.inFlight.set(0);
             final long fourMillis = upload(bucket, "st/large/parallel.bin", data, sha1, Support.executor(4));
             final int parallelMax = Support.maxInFlight.get();
             Support.check(parallelMax > 1, "with four workers at most " + parallelMax + " b2_upload_part request(s) were ever in flight at once");

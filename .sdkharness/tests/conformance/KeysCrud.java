@@ -80,8 +80,10 @@ public class KeysCrud {
             Support.client.deleteKey(B2DeleteKeyRequest.builder(created.getApplicationKeyId()).build());
             Support.untrackKey(created.getApplicationKeyId());
             Support.check(find(created.getApplicationKeyId()) == null, "the deleted key is still listed");
+            // Revocation is asserted through authorization itself (a fresh b2_authorize_account). A bucket-restricted key
+            // calling buckets() gets 401 even when valid, so that call cannot tell a revoked key from a restricted one.
             Support.eq("status of authorizing with a deleted key", 401, Support.expectError("authorizing with a deleted key",
-                    () -> Support.clientFor(created.getApplicationKeyId(), secret).buckets()).getStatus());
+                    () -> Support.clientFor(created.getApplicationKeyId(), secret).getAccountAuthorization()).getStatus());
         });
     }
 

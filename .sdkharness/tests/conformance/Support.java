@@ -545,12 +545,13 @@ public final class Support {
      * is sent as the Authorization header when not null.
      */
     static Raw rawGet(String url, String authorization) throws java.io.IOException {
-        final String host = URI.create(url).getHost();
+        final URI uri = URI.create(url);
+        final String host = uri.getHost();
         if (!LOOPBACK_HOST.equals(host)) {
             blocked.add(String.valueOf(host));
             throw new Failure("blocked non-loopback host: " + host);
         }
-        final java.net.HttpURLConnection connection = (java.net.HttpURLConnection) URI.create(url).toURL().openConnection();
+        final java.net.HttpURLConnection connection = (java.net.HttpURLConnection) uri.toURL().openConnection();
         try {
             connection.setInstanceFollowRedirects(false);
             connection.setConnectTimeout(10_000);
