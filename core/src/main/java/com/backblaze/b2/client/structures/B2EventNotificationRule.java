@@ -7,6 +7,7 @@ package com.backblaze.b2.client.structures;
 import com.backblaze.b2.json.B2Json;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.TreeSet;
 
@@ -17,7 +18,7 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
     private static final Comparator<B2EventNotificationRule> COMPARATOR = Comparator.comparing(B2EventNotificationRule::getName)
             .thenComparing(rule -> String.join(",", rule.getEventTypes()))
             .thenComparing(B2EventNotificationRule::getObjectNamePrefix)
-            .thenComparing(rule -> rule.getTargetConfiguration().toString())
+            .thenComparing(B2EventNotificationRule::getTargetConfiguration, B2EventNotificationRule::compareTargetConfigurations)
             .thenComparing(B2EventNotificationRule::isEnabled)
             .thenComparing(B2EventNotificationRule::isSuspended)
             .thenComparing(B2EventNotificationRule::getSuspensionReason);
@@ -171,5 +172,99 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
     @Override
     public int compareTo(B2EventNotificationRule r) {
         return COMPARATOR.compare(this, r);
+    }
+
+    private static int compareTargetConfigurations(B2EventNotificationTargetConfiguration first,
+                                                   B2EventNotificationTargetConfiguration second) {
+        if (first == second) {
+            return 0;
+        }
+        if (first == null) {
+            return -1;
+        }
+        if (second == null) {
+            return 1;
+        }
+        if (first instanceof B2WebhookConfiguration && second instanceof B2WebhookConfiguration) {
+            return compareWebhookConfigurations((B2WebhookConfiguration) first, (B2WebhookConfiguration) second);
+        }
+
+        final int classComparison = first.getClass().getName().compareTo(second.getClass().getName());
+        if (classComparison != 0) {
+            return classComparison;
+        }
+        if (first.equals(second)) {
+            return 0;
+        }
+        return first.toString().compareTo(second.toString());
+    }
+
+    private static int compareWebhookConfigurations(B2WebhookConfiguration first,
+                                                    B2WebhookConfiguration second) {
+        int comparison = first.getUrl().compareTo(second.getUrl());
+        if (comparison != 0) {
+            return comparison;
+        }
+
+        comparison = compareCustomHeaders(first.getCustomHeaders(), second.getCustomHeaders());
+        if (comparison != 0) {
+            return comparison;
+        }
+
+        comparison = compareNullableStrings(first.getHmacSha256SigningSecret(), second.getHmacSha256SigningSecret());
+        if (comparison != 0) {
+            return comparison;
+        }
+
+        return compareNullableIntegers(first.getMaxEventsPerBatch(), second.getMaxEventsPerBatch());
+    }
+
+    private static int compareCustomHeaders(TreeSet<B2WebhookCustomHeader> first,
+                                            TreeSet<B2WebhookCustomHeader> second) {
+        if (first == second) {
+            return 0;
+        }
+        if (first == null) {
+            return -1;
+        }
+        if (second == null) {
+            return 1;
+        }
+
+        final Iterator<B2WebhookCustomHeader> firstIterator = first.iterator();
+        final Iterator<B2WebhookCustomHeader> secondIterator = second.iterator();
+        while (firstIterator.hasNext() && secondIterator.hasNext()) {
+            final int comparison = firstIterator.next().compareTo(secondIterator.next());
+            if (comparison != 0) {
+                return comparison;
+            }
+        }
+        return Boolean.compare(firstIterator.hasNext(), secondIterator.hasNext());
+    }
+
+    private static int compareNullableStrings(String first, String second) {
+        if (first == second) {
+            return 0;
+        }
+        if (first == null) {
+            return -1;
+        }
+        if (second == null) {
+            return 1;
+        }
+        return first.compareTo(second);
+    }
+
+    private static int compareNullableIntegers(Integer first, Integer second) {
+        if (first == second) {
+            return 0;
+        }
+        if (first == null) {
+            return -1;
+        }
+        if (second == null) {
+            return 1;
+        }
+        return first.compareTo(second);
     }
 }
