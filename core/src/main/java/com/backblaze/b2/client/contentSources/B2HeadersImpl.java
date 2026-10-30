@@ -15,6 +15,8 @@ import java.util.TreeMap;
  * B2HeadersImpl implements the B2Headers interface.
  */
 public class B2HeadersImpl implements B2Headers {
+    private static final String REDACTED_VALUE = "[redacted]";
+
     private Map<String,String> pairs;
 
     private B2HeadersImpl(Map<String, String> pairs) {
@@ -72,8 +74,18 @@ public class B2HeadersImpl implements B2Headers {
 
     @Override
     public String toString() {
+        final Map<String, String> pairsForDisplay = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        pairs.forEach((name, value) -> pairsForDisplay.put(
+                name,
+                isSensitiveHeader(name) ? REDACTED_VALUE : value));
+
         return "B2HeadersImpl{" +
-                "pairs=" + pairs +
+                "pairs=" + pairsForDisplay +
                 '}';
+    }
+
+    private static boolean isSensitiveHeader(String name) {
+        return B2Headers.AUTHORIZATION.equalsIgnoreCase(name) ||
+                B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY.equalsIgnoreCase(name);
     }
 }

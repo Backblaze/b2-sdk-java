@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -242,5 +243,27 @@ public class B2HeadersImplTest extends B2BaseTest {
                     .set("one", "111")
                     .build();
         }
+    }
+
+    @Test
+    public void testToStringRedactsSensitiveHeaderValuesCaseInsensitively() {
+        final B2Headers headers = B2HeadersImpl
+                .builder()
+                .set("aUtHoRiZaTiOn", "SECRET-AUTHORIZATION")
+                .set("x-Bz-SeRvEr-SiDe-EnCrYpTiOn-CuStOmEr-KeY", "SECRET-SSE-C-KEY")
+                .set(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5, "customer-key-md5")
+                .set("X-Normal-Header", "normal-value")
+                .build();
+
+        final String value = headers.toString();
+
+        assertFalse(value.contains("SECRET-AUTHORIZATION"));
+        assertFalse(value.contains("SECRET-SSE-C-KEY"));
+        assertTrue(value.contains("aUtHoRiZaTiOn=[redacted]"));
+        assertTrue(value.contains("x-Bz-SeRvEr-SiDe-EnCrYpTiOn-CuStOmEr-KeY=[redacted]"));
+        assertTrue(value.contains(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY_MD5 + "=customer-key-md5"));
+        assertTrue(value.contains("X-Normal-Header=normal-value"));
+        assertEquals("SECRET-AUTHORIZATION", headers.getValueOrNull(B2Headers.AUTHORIZATION));
+        assertEquals("SECRET-SSE-C-KEY", headers.getValueOrNull(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY));
     }
 }

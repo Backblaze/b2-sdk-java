@@ -16,6 +16,8 @@ import java.util.Objects;
  */
 public class B2WebhookCustomHeader implements Comparable<B2WebhookCustomHeader> {
 
+    private static final String REDACTED_VALUE = "[redacted]";
+
     private static final Comparator<B2WebhookCustomHeader> COMPARATOR =
             Comparator.comparing(B2WebhookCustomHeader::getName, String.CASE_INSENSITIVE_ORDER)
                     .thenComparing(B2WebhookCustomHeader::getValue);
@@ -71,7 +73,7 @@ public class B2WebhookCustomHeader implements Comparable<B2WebhookCustomHeader> 
     public String toString() {
         return "B2CustomWebhookHeader{" +
                 "name='" + name + '\'' +
-                ", value='" + value + '\'' +
+                ", value='" + REDACTED_VALUE + '\'' +
                 '}';
     }
 

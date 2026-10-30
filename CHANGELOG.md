@@ -1,7 +1,7 @@
 # Changelog
 ## [Unreleased]
 ### Changed
-* `toString()` of `B2AccountAuthorization` and `B2FileSseForRequest` no longer includes the authorization token or SSE-C customer key.
+* `toString()` of `B2AccountAuthorization`, `B2FileSseForRequest`, `B2WebhookConfiguration`, and `B2HeadersImpl` no longer includes the authorization token, SSE-C customer key, or webhook credentials.
 
 ## [6.5.0] - 2025-12-15
 * Add `readBucketLifecycleRules` and `writeBucketLifecycleRules` capabilities. 

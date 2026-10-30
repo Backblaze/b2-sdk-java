@@ -14,6 +14,8 @@ import java.util.TreeSet;
  * Webhook destination for B2EventNotificationRule
  */
 public class B2WebhookConfiguration extends B2EventNotificationTargetConfiguration {
+    private static final String REDACTED_VALUE = "[redacted]";
+
     /**
      * The URL endpoint for the webhook, including the protocol, which
      * must be "https://".
@@ -105,7 +107,7 @@ public class B2WebhookConfiguration extends B2EventNotificationTargetConfigurati
         return "B2WebhookConfiguration{" +
                 "url='" + url + '\'' +
                 ", customHeaders=" + customHeaders +
-                ", hmacSha256SigningSecret='" + hmacSha256SigningSecret + '\'' +
+                ", hmacSha256SigningSecret='" + REDACTED_VALUE + '\'' +
                 '}';
     }
 }
