@@ -9,6 +9,8 @@ import org.junit.rules.ExpectedException;
 import java.util.Base64;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /*
  * Copyright 2020, Backblaze, Inc. All rights reserved.
@@ -48,6 +50,33 @@ public class B2FileSseForRequestTest extends B2BaseTest {
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
+        assertTrue(convertedJson.contains(key));
+    }
+
+    @Test
+    public void testToStringRedactsCustomerKey() {
+        final B2FileSseForRequest encryption = B2FileSseForRequest.createSseCAes256(
+                "SECRET-SSE-C-CUSTOMER-KEY",
+                "customer-key-md5");
+
+        final String value = encryption.toString();
+
+        assertFalse(value.contains("SECRET-SSE-C-CUSTOMER-KEY"));
+        assertTrue(value.contains("customerKey=[redacted]"));
+        assertTrue(value.contains("mode='SSE-C'"));
+        assertTrue(value.contains("algorithm=AES256"));
+        assertTrue(value.contains("customerKeyMd5=customer-key-md5"));
+    }
+
+    @Test
+    public void testContainingUploadRequestToStringDoesNotIncludeCustomerKey() {
+        final String customerKey = "SECRET-SSE-C-CUSTOMER-KEY";
+        final B2UploadFileRequest request = B2UploadFileRequest.builder(
+                        "bucket-id", "file-name", "text/plain", null)
+                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256(customerKey, "customer-key-md5"))
+                .build();
+
+        assertFalse(request.toString().contains(customerKey));
     }
 
     @Test

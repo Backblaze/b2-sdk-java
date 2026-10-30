@@ -9,6 +9,8 @@ import com.backblaze.b2.json.B2Json;
 import java.util.Objects;
 
 public class B2AccountAuthorization {
+    private static final String REDACTED_VALUE = "[redacted]";
+
     @B2Json.required
     private final String accountId;
     @B2Json.required
@@ -98,7 +100,7 @@ public class B2AccountAuthorization {
     public String toString() {
         return "B2AccountAuthorization{" +
                 "accountId='" + accountId + '\'' +
-                ", authorizationToken='" + authorizationToken + '\'' +
+                ", authorizationToken='" + REDACTED_VALUE + '\'' +
                 ", apiUrl='" + apiUrl + '\'' +
                 ", downloadUrl='" + downloadUrl + '\'' +
                 ", recommendedPartSize=" + recommendedPartSize +
