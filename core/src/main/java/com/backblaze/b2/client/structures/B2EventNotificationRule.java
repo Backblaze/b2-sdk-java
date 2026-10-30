@@ -196,7 +196,7 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
         if (first.equals(second)) {
             return 0;
         }
-        throw new IllegalArgumentException("Unsupported event notification target configuration type: " + first.getClass().getName());
+        return first.toString().compareTo(second.toString());
     }
 
     private static int compareWebhookConfigurations(B2WebhookConfiguration first,

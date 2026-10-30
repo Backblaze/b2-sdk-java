@@ -2,6 +2,7 @@
 ## [Unreleased]
 ### Changed
 * `toString()` of credential-bearing structures (`B2AccountAuthorization`, `B2FileSseForRequest`, `B2WebhookConfiguration`, `B2WebhookCustomHeader`, and `B2HeadersImpl`) omits sensitive values; `B2WebhookCustomHeader` omits all header values.
+* Event notification rule ordering compares webhook target settings (url, custom headers, signing secret, maxEventsPerBatch) directly instead of through `toString()`.
 
 ## [6.5.0] - 2025-12-15
 * Add `readBucketLifecycleRules` and `writeBucketLifecycleRules` capabilities. 

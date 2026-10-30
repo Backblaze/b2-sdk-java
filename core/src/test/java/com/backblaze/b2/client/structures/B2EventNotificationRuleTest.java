@@ -122,6 +122,41 @@ public class B2EventNotificationRuleTest extends B2BaseTest {
         assertEquals(0, first.compareTo(second));
     }
 
+    @Test
+    public void testCompareToOrdersUnknownTargetConfigurationsWithoutThrowing() {
+        final B2EventNotificationRule first = new B2EventNotificationRule(
+                "myRule",
+                new TreeSet<>(listOf("b2:ObjectCreated:Upload")),
+                "",
+                new B2EventNotificationTargetConfiguration(),
+                true,
+                false,
+                "");
+        final B2EventNotificationRule second = new B2EventNotificationRule(
+                "myRule",
+                new TreeSet<>(listOf("b2:ObjectCreated:Upload")),
+                "",
+                new B2EventNotificationTargetConfiguration(),
+                true,
+                false,
+                "");
+
+        try {
+            first.compareTo(second);
+        } catch (IllegalArgumentException e) {
+            fail("compareTo must support unknown target configurations: " + e.getMessage());
+        }
+
+        final TreeSet<B2EventNotificationRule> rules = new TreeSet<>();
+        try {
+            rules.add(first);
+            rules.add(second);
+        } catch (IllegalArgumentException e) {
+            fail("TreeSet must support unknown target configurations: " + e.getMessage());
+        }
+        assertEquals(2, rules.size());
+    }
+
     private B2EventNotificationRule makeWebhookRule(String signingSecret,
                                                      String customHeaderValue,
                                                      int maxEventsPerBatch) {
