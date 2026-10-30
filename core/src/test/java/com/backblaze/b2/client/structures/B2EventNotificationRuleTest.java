@@ -12,6 +12,8 @@ import java.util.TreeSet;
 
 import static com.backblaze.b2.util.B2Collections.listOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class B2EventNotificationRuleTest extends B2BaseTest {
@@ -76,5 +78,64 @@ public class B2EventNotificationRuleTest extends B2BaseTest {
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
+    }
+
+    @Test
+    public void testCompareToDistinguishesSigningSecrets() {
+        final B2EventNotificationRule first = makeWebhookRule("signing-secret-one", "header-value", 20);
+        final B2EventNotificationRule second = makeWebhookRule("signing-secret-two", "header-value", 20);
+
+        assertFalse(first.equals(second));
+        assertTrue(first.compareTo(second) != 0);
+
+        final TreeSet<B2EventNotificationRule> rules = new TreeSet<>(listOf(first, second));
+        assertEquals(2, rules.size());
+    }
+
+    @Test
+    public void testCompareToDistinguishesCustomHeaderValues() {
+        final B2EventNotificationRule first = makeWebhookRule("signing-secret", "header-value-one", 20);
+        final B2EventNotificationRule second = makeWebhookRule("signing-secret", "header-value-two", 20);
+
+        assertFalse(first.equals(second));
+        assertTrue(first.compareTo(second) != 0);
+
+        final TreeSet<B2EventNotificationRule> rules = new TreeSet<>(listOf(first, second));
+        assertEquals(2, rules.size());
+    }
+
+    @Test
+    public void testCompareToDistinguishesMaxEventsPerBatch() {
+        final B2EventNotificationRule first = makeWebhookRule("signing-secret", "header-value", 1);
+        final B2EventNotificationRule second = makeWebhookRule("signing-secret", "header-value", 2);
+
+        assertFalse(first.equals(second));
+        assertTrue(first.compareTo(second) != 0);
+    }
+
+    @Test
+    public void testCompareToIsConsistentWithEquals() {
+        final B2EventNotificationRule first = makeWebhookRule("signing-secret", "header-value", 20);
+        final B2EventNotificationRule second = makeWebhookRule("signing-secret", "header-value", 20);
+
+        assertEquals(first, second);
+        assertEquals(0, first.compareTo(second));
+    }
+
+    private B2EventNotificationRule makeWebhookRule(String signingSecret,
+                                                     String customHeaderValue,
+                                                     int maxEventsPerBatch) {
+        return new B2EventNotificationRule(
+                "myRule",
+                new TreeSet<>(listOf("b2:ObjectCreated:Upload")),
+                "",
+                new B2WebhookConfiguration(
+                        "https://www.example.com",
+                        new TreeSet<>(listOf(new B2WebhookCustomHeader("X-Webhook-Authorization", customHeaderValue))),
+                        signingSecret,
+                        maxEventsPerBatch),
+                true,
+                false,
+                "");
     }
 }

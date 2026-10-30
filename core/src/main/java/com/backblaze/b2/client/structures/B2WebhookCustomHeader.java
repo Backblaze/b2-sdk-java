@@ -73,7 +73,7 @@ public class B2WebhookCustomHeader implements Comparable<B2WebhookCustomHeader> 
     public String toString() {
         return "B2CustomWebhookHeader{" +
                 "name='" + name + '\'' +
-                ", value='" + REDACTED_VALUE + '\'' +
+                ", value='" + (value == null ? null : REDACTED_VALUE) + '\'' +
                 '}';
     }
 

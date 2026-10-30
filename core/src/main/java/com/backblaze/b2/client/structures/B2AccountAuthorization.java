@@ -100,7 +100,7 @@ public class B2AccountAuthorization {
     public String toString() {
         return "B2AccountAuthorization{" +
                 "accountId='" + accountId + '\'' +
-                ", authorizationToken='" + REDACTED_VALUE + '\'' +
+                ", authorizationToken='" + (authorizationToken == null ? null : REDACTED_VALUE) + '\'' +
                 ", apiUrl='" + apiUrl + '\'' +
                 ", downloadUrl='" + downloadUrl + '\'' +
                 ", recommendedPartSize=" + recommendedPartSize +

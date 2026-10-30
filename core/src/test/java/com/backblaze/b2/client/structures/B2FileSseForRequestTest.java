@@ -69,14 +69,11 @@ public class B2FileSseForRequestTest extends B2BaseTest {
     }
 
     @Test
-    public void testContainingUploadRequestToStringDoesNotIncludeCustomerKey() {
-        final String customerKey = "SECRET-SSE-C-CUSTOMER-KEY";
-        final B2UploadFileRequest request = B2UploadFileRequest.builder(
-                        "bucket-id", "file-name", "text/plain", null)
-                .setServerSideEncryption(B2FileSseForRequest.createSseCAes256(customerKey, "customer-key-md5"))
-                .build();
+    public void testToStringShowsNullCustomerKey() {
+        final String value = B2FileSseForRequest.createSseB2Aes256().toString();
 
-        assertFalse(request.toString().contains(customerKey));
+        assertTrue(value.contains("customerKey=null"));
+        assertFalse(value.contains("customerKey=[redacted]"));
     }
 
     @Test

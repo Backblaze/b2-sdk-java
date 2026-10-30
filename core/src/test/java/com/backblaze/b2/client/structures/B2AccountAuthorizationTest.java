@@ -56,4 +56,22 @@ public class B2AccountAuthorizationTest {
         assertTrue(json.contains("\"authorizationToken\": \"SECRET-ACCOUNT-TOKEN\""));
         assertEquals(authorization, B2Json.fromJsonOrThrowRuntime(json, B2AccountAuthorization.class));
     }
+
+    @Test
+    public void testToStringShowsNullAuthorizationToken() {
+        final B2AccountAuthorization authorization = new B2AccountAuthorization(
+                "account-id",
+                null,
+                "https://api.example.com",
+                "https://download.example.com",
+                100,
+                50,
+                new B2Allowed(B2Collections.listOf(B2Capabilities.LIST_FILES), "bucket-id", "bucket-name", "prefix"),
+                "https://s3.example.com");
+
+        final String value = authorization.toString();
+
+        assertTrue(value.contains("authorizationToken='null'"));
+        assertFalse(value.contains("authorizationToken='[redacted]'"));
+    }
 }

@@ -44,4 +44,12 @@ public class B2CustomWebhookHeaderTest extends B2BaseTest {
         assertTrue(value.contains("name='X-Webhook-Authorization'"));
         assertTrue(value.contains("value='[redacted]'"));
     }
+
+    @Test
+    public void testToStringShowsNullValue() {
+        final String value = new B2WebhookCustomHeader("X-Webhook-Authorization", null).toString();
+
+        assertTrue(value.contains("value='null'"));
+        assertFalse(value.contains("value='[redacted]'"));
+    }
 }

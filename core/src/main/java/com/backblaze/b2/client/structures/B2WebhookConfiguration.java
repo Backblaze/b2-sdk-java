@@ -107,7 +107,7 @@ public class B2WebhookConfiguration extends B2EventNotificationTargetConfigurati
         return "B2WebhookConfiguration{" +
                 "url='" + url + '\'' +
                 ", customHeaders=" + customHeaders +
-                ", hmacSha256SigningSecret='" + REDACTED_VALUE + '\'' +
+                ", hmacSha256SigningSecret='" + (hmacSha256SigningSecret == null ? null : REDACTED_VALUE) + '\'' +
                 '}';
     }
 }

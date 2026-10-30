@@ -126,7 +126,7 @@ public class B2FileSseForRequest {
         return "B2FileSseForRequest{" +
                 "mode='" + mode + "', " +
                 "algorithm=" + algorithm + ", " +
-                "customerKey=" + REDACTED_VALUE + ", " +
+                "customerKey=" + (customerKey == null ? null : REDACTED_VALUE) + ", " +
                 "customerKeyMd5=" + customerKeyMd5 +
                 '}';
     }

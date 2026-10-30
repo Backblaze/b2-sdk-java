@@ -266,4 +266,17 @@ public class B2HeadersImplTest extends B2BaseTest {
         assertEquals("SECRET-AUTHORIZATION", headers.getValueOrNull(B2Headers.AUTHORIZATION));
         assertEquals("SECRET-SSE-C-KEY", headers.getValueOrNull(B2Headers.SERVER_SIDE_ENCRYPTION_CUSTOMER_KEY));
     }
+
+    @Test
+    public void testToStringShowsNullSensitiveHeaderValue() {
+        final B2Headers headers = B2HeadersImpl
+                .builder()
+                .set("aUtHoRiZaTiOn", null)
+                .build();
+
+        final String value = headers.toString();
+
+        assertTrue(value.contains("aUtHoRiZaTiOn=null"));
+        assertFalse(value.contains("aUtHoRiZaTiOn=[redacted]"));
+    }
 }

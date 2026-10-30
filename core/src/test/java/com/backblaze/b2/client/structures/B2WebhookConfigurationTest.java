@@ -160,4 +160,12 @@ public class B2WebhookConfigurationTest extends B2BaseTest {
         assertTrue(json.contains("\"hmacSha256SigningSecret\": \"SECRET-WEBHOOK-SIGNING-SECRET\""));
         assertTrue(json.contains("\"value\": \"SECRET-WEBHOOK-HEADER\""));
     }
+
+    @Test
+    public void testToStringShowsNullSigningSecret() {
+        final String value = new B2WebhookConfiguration("https://www.example.com").toString();
+
+        assertTrue(value.contains("hmacSha256SigningSecret='null'"));
+        assertFalse(value.contains("hmacSha256SigningSecret='[redacted]'"));
+    }
 }
