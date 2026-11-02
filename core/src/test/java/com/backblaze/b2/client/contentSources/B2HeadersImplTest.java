@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -168,6 +169,10 @@ public class B2HeadersImplTest extends B2BaseTest {
 
         assertEquals(SAMPLE_SHA1, headers.getContentSha1EvenIfUnverifiedOrNull());
         assertNull(makeEmpty().getContentSha1OrNull());
+
+        // the strict getter keeps the prefix, so an unverified value can never equal a real sha1.
+        assertEquals("unverified:" + SAMPLE_SHA1, headers.getContentSha1OrNull());
+        assertNotEquals(SAMPLE_SHA1, headers.getContentSha1OrNull());
     }
 
     @Test

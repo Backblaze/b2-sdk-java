@@ -111,6 +111,13 @@ public class B2JsonTest extends B2BaseTest {
     }
 
     @Test
+    public void testLargeBigInteger() throws IOException, B2JsonException {
+        // testBigInteger passes BigDecimal.class for its large values, so BigInteger itself never sees one.
+        checkDeserializeSerialize("31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470", BigInteger.class);
+        checkDeserializeSerialize("-271828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746", BigInteger.class);
+    }
+
+    @Test
     public void testByte() throws IOException, B2JsonException {
         checkDeserializeSerialize("13", Byte.class);
         checkDeserializeSerialize("-37", Byte.class);
@@ -2157,7 +2164,7 @@ public class B2JsonTest extends B2BaseTest {
 
         // Version 6 is the last version where it's present
         {
-            final B2JsonOptions options = B2JsonOptions.builder().setVersion(4).build();
+            final B2JsonOptions options = B2JsonOptions.builder().setVersion(6).build();
             assertEquals(
                     "{\n  \"x\": 3\n}",
                     b2Json.toJson(new VersionedContainer(3, 5), options)
@@ -3326,5 +3333,63 @@ public class B2JsonTest extends B2BaseTest {
 
         final B2JsonException thrown = assertThrows(B2JsonException.class, () -> B2Json.get().toJson(obj, compactOptions));
         assertEquals("com.backblaze.b2.json.B2JsonTest$ClassWithBothB2JsonConstructorAndB2JsonTypeAnnotations has both @B2Json.type and @B2Json.constructor annotations", thrown.getMessage());
+    }
+
+    @Test
+    public void testSerializedNameFieldIsPopulated() throws B2JsonException {
+        // Container.equals ignores field d, so assert it directly, for both spellings of its serialized name.
+        final String json = "{\n  \"@d\": \"goodbye\",\n  \"a\": 41,\n  \"b\": \"hello\"\n}";
+        assertEquals("goodbye", b2Json.fromJson(json, Container.class).d);
+        final String alternateJson = "{ \"\\u0040d\": \"goodbye\", \"a\": 41 }";
+        assertEquals("goodbye", b2Json.fromJson(alternateJson, Container.class).d);
+        assertEquals(json, b2Json.toJson(new Container(41, "hello", "goodbye")));
+    }
+
+    @Test
+    public void testLocalDateThatDoesNotExistIsAJsonException() {
+        // Passes the range checks (day 1..31) but February 31 does not exist.
+        assertThrows(B2JsonException.class, () -> b2Json.fromJson("\"2015-02-31\"", LocalDate.class));
+        assertThrows(B2JsonException.class, () -> b2Json.fromJson("\"20150231\"", LocalDate.class));
+        assertThrows(B2JsonException.class, () -> b2Json.fromJson("\"2015-04-31\"", LocalDate.class));
+    }
+
+    @Test
+    public void testLocalDateUrlParamThatDoesNotExistIsAJsonException() {
+        final B2JsonLocalDateHandler handler = new B2JsonLocalDateHandler();
+        assertThrows(B2JsonException.class, () -> handler.deserializeUrlParam("2015-02-31"));
+        assertThrows(B2JsonException.class, () -> handler.deserializeUrlParam("20150231"));
+    }
+
+    private static class NullableConcurrentMapHolder {
+        @B2Json.required
+        public final ConcurrentMap<String, Integer> map;
+
+        @B2Json.constructor(params = "map")
+        public NullableConcurrentMapHolder(ConcurrentMap<String, Integer> map) {
+            this.map = map;
+        }
+    }
+
+    @Test
+    public void testConcurrentMapWithNullValueIsAJsonException() {
+        // ConcurrentHashMap cannot hold nulls, so this must be reported as bad JSON, not as a NullPointerException.
+        assertThrows(B2JsonException.class, () ->
+                b2Json.fromJson("{ \"map\": { \"a\": null } }", NullableConcurrentMapHolder.class));
+    }
+
+    private static class EnumSetHolder {
+        @B2Json.required
+        public final java.util.EnumSet<Color> colors;
+
+        @B2Json.constructor(params = "colors")
+        public EnumSetHolder(java.util.EnumSet<Color> colors) {
+            this.colors = colors;
+        }
+    }
+
+    @Test
+    public void testEnumSetWithNullItemIsAJsonException() {
+        assertThrows(B2JsonException.class, () ->
+                b2Json.fromJson("{ \"colors\": [ \"RED\", null ] }", EnumSetHolder.class));
     }
 }

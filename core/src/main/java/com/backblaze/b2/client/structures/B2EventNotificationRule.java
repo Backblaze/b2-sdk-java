@@ -20,7 +20,7 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
             .thenComparing(rule -> rule.getTargetConfiguration().toString())
             .thenComparing(B2EventNotificationRule::isEnabled)
             .thenComparing(B2EventNotificationRule::isSuspended)
-            .thenComparing(B2EventNotificationRule::getSuspensionReason);
+            .thenComparing(B2EventNotificationRule::getSuspensionReason, Comparator.nullsFirst(Comparator.naturalOrder()));
 
     /**
      * A name for identifying the rule. Names must be unique within a bucket.
@@ -118,7 +118,7 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
     }
 
     public boolean isSuspended() {
-        return isSuspended;
+        return Boolean.TRUE.equals(isSuspended);
     }
 
     public String getSuspensionReason() {

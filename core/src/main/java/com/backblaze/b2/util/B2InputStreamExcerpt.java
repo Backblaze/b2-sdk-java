@@ -82,9 +82,10 @@ public class B2InputStreamExcerpt extends InputStream {
         if (atEnd()) {
             return 0;
         }
-        final long actuallySkipped = super.skip(Math.min(n,getRemaining()));
-        iPosition += actuallySkipped;
-        return actuallySkipped;
+        // super.skip() reads through our own read(), which already advances iPosition.
+        final long positionBefore = iPosition;
+        super.skip(Math.min(n,getRemaining()));
+        return iPosition - positionBefore;
     }
 
     @Override
