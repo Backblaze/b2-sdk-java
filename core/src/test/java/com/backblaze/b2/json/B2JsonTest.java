@@ -85,7 +85,12 @@ public class B2JsonTest extends B2BaseTest {
                 return false;
             }
             Container other = (Container) o;
-            return a == other.a && (b == null ? other.b == null : b.equals(other.b));
+            return a == other.a && Objects.equals(b, other.b) && Objects.equals(d, other.d);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(a, b, d);
         }
     }
 
@@ -174,7 +179,10 @@ public class B2JsonTest extends B2BaseTest {
                 "  \"b\": \"hello\",\n" +
                 "  \"\\u0040d\": \"goodbye\"\n" +
                 "}";
-        assertEquals(obj, b2Json.fromJson(alternateJson, Container.class));
+        final Container decodedAlternate = b2Json.fromJson(alternateJson, Container.class);
+        assertEquals("goodbye", decodedAlternate.d);
+        assertEquals(obj, decodedAlternate);
+        assertFalse(new Container(41, "hello", "not-goodbye").equals(decodedAlternate));
     }
 
     @Test
@@ -2157,7 +2165,7 @@ public class B2JsonTest extends B2BaseTest {
 
         // Version 6 is the last version where it's present
         {
-            final B2JsonOptions options = B2JsonOptions.builder().setVersion(4).build();
+            final B2JsonOptions options = B2JsonOptions.builder().setVersion(6).build();
             assertEquals(
                     "{\n  \"x\": 3\n}",
                     b2Json.toJson(new VersionedContainer(3, 5), options)
