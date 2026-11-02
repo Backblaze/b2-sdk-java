@@ -211,6 +211,56 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     }
 
 
+    /**
+     * testExceptionFromUploadPart_inResume goes through uploadLargeFile(), which starts a new large file.
+     * This is the same failure through finishUploadingLargeFile(), which is the real resume path.
+     */
+    @Test
+    public void testExceptionFromUploadPart_inFinishUploadingLargeFile() throws B2Exception, IOException {
+        final B2FileVersion largeFileVersion = new B2FileVersion(
+                fileId(1),
+                fileName(1),
+                contentSource.getContentLength(),
+                B2ContentTypes.APPLICATION_OCTET,
+                null,
+                null,
+                B2Collections.mapOf(),
+                "upload",
+                123L,
+                null,
+                null,
+                null,
+                null);
+
+        final B2GetUploadPartUrlRequest partUrlRequest = B2GetUploadPartUrlRequest.builder(largeFileVersion.getFileId()).build();
+        final B2UploadPartUrlResponse partUrl = new B2UploadPartUrlResponse(largeFileVersion.getFileId(), "uploadPartUrl", "uploadPartAuthToken");
+        when(webifier.getUploadPartUrl(anyObject(), eq(partUrlRequest))).thenReturn(partUrl);
+
+        when(webifier.uploadPart(anyObject(), anyObject())).thenAnswer(invocationOnMock -> {
+            B2UploadPartRequest request = (B2UploadPartRequest) invocationOnMock.getArguments()[1];
+            return makePart(request.getPartNumber());
+        });
+
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=2, startByte=0, length=1000, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=0, partCount=2, startByte=0, length=1000, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=0, partCount=2, startByte=0, length=1000, bytesSoFar=1000, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=1, partCount=2, startByte=1000, length=1000, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=2, startByte=1000, length=1000, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=1, partCount=2, startByte=1000, length=1000, bytesSoFar=1000, state=SUCCEEDED}"
+        );
+
+        thrown.expect(B2Exception.class);
+        thrown.expectMessage("testing");
+        try {
+            makeUploader(PART_SIZES, new ThrowingExecutor(IN_GET_AFTER_RUNNING_IN_SUBMIT, ExceptionType.B2_EXCEPTION), contentSource, recordingListener)
+                    .finishUploadingLargeFile(largeFileVersion, B2Collections.listOf());
+        } finally {
+            // resuming must reuse the existing large file, not start another one.
+            verify(webifier, never()).startLargeFile(anyObject(), anyObject());
+        }
+    }
+
     @Test
     public void testExceptionFromGetSha1OrNull_inResume() throws B2Exception, IOException {
         // arrange to throw when asked for the sha1.
@@ -485,6 +535,75 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
         checkPartMatching(alreadyUploadedParts, 2, 3);
     }
 
+
+    /**
+     * Characterization of a documented limitation (by design, see similarEnough()):
+     * resume trusts an already-uploaded part when its part number and length match, and never
+     * compares its sha1 with the local content.  If the owner decides to change that, this test
+     * should be flipped, not deleted.
+     */
+    @Test
+    public void testAlreadyUploadedPartIsReusedByNumberAndLengthEvenIfSha1Differs() throws IOException, B2Exception {
+        final long contentLen = (3 * ACCOUNT_AUTH.getRecommendedPartSize() + 124);
+        final B2ContentSource contentSource = mock(B2ContentSource.class);
+        when(contentSource.getContentLength()).thenReturn(contentLen);
+
+        final String largeFileId = fileId(1);
+        final B2FileVersion largeFileVersion = new B2FileVersion(largeFileId,
+                fileName(1),
+                contentLen,
+                B2ContentTypes.APPLICATION_OCTET,
+                null,
+                null,
+                B2Collections.mapOf(),
+                "upload",
+                B2Clock.get().wallClockMillis(),
+                null,
+                null,
+                null,
+                null);
+
+        final String sha1OfSomeOtherContent = "ffffffffffffffffffffffffffffffffffffffff";
+        final List<B2Part> alreadyUploadedParts = B2Collections.listOf(
+                new B2Part(largeFileId, 1, 1041, sha1OfSomeOtherContent, makeMd5(1), 1111, null)
+        );
+
+        recordingListener.setExpected(
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=0, partCount=3, startByte=0, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=0, state=WAITING_TO_START}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=1, partCount=3, startByte=1041, length=1041, bytesSoFar=1041, state=SUCCEEDED}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=0, state=STARTING}",
+                "B2UploadProgress{partIndex=2, partCount=3, startByte=2082, length=1042, bytesSoFar=1042, state=SUCCEEDED}");
+
+        final B2GetUploadPartUrlRequest partUrlRequest = B2GetUploadPartUrlRequest.builder(largeFileId).build();
+        final B2UploadPartUrlResponse partUrl = new B2UploadPartUrlResponse(largeFileId, "uploadPartUrl", "uploadPartAuthToken");
+        when(webifier.getUploadPartUrl(anyObject(), eq(partUrlRequest))).thenReturn(partUrl);
+        when(webifier.uploadPart(anyObject(), anyObject())).thenAnswer(invocationOnMock -> {
+            B2UploadPartRequest request = (B2UploadPartRequest) invocationOnMock.getArguments()[1];
+            return makePart(request.getPartNumber());
+        });
+        when(webifier.finishLargeFile(anyObject(), anyObject())).thenReturn(largeFileVersion);
+
+        makeUploader(PART_SIZES, Executors.newSingleThreadExecutor(), contentSource, recordingListener)
+                .finishUploadingLargeFile(largeFileVersion, alreadyUploadedParts);
+
+        // part 1 was not uploaded again...
+        final ArgumentCaptor<B2UploadPartRequest> uploadCaptor = ArgumentCaptor.forClass(B2UploadPartRequest.class);
+        verify(webifier, times(2)).uploadPart(anyObject(), uploadCaptor.capture());
+        assertEquals(
+                B2Collections.unmodifiableSet(new Integer[] {2, 3}),
+                uploadCaptor.getAllValues().stream().map(B2UploadPartRequest::getPartNumber).collect(Collectors.toSet()));
+
+        // ...and the stale sha1 is what gets sent to finish the file.
+        final ArgumentCaptor<B2FinishLargeFileRequest> finishCaptor = ArgumentCaptor.forClass(B2FinishLargeFileRequest.class);
+        verify(webifier, times(1)).finishLargeFile(anyObject(), finishCaptor.capture());
+        assertEquals(
+                B2Collections.listOf(sha1OfSomeOtherContent, makeSha1(2), makeSha1(3)),
+                finishCaptor.getValue().getPartSha1Array());
+    }
 
     @Test
     public void testOneAlreadyUploadedPartThatMatches_part3() throws IOException, B2Exception {

@@ -77,4 +77,31 @@ public class B2EventNotificationRuleTest extends B2BaseTest {
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
     }
+
+    @Test
+    public void testIsSuspendedWhenNotProvided() {
+        final TreeSet<String> eventTypes = new TreeSet<>();
+        eventTypes.add("b2:ObjectCreated:Upload");
+        final B2EventNotificationRule rule = new B2EventNotificationRule(
+                "myRule",
+                eventTypes,
+                "",
+                new B2WebhookConfiguration("https://www.example.com", "3XDfkdQte2OgA78qCtSD17LAzpj6ay9H"),
+                true);
+
+        // the 5-argument constructor leaves isSuspended unset; that must read as "not suspended", not blow up.
+        assertEquals(false, rule.isSuspended());
+    }
+
+    @Test
+    public void testCompareToWhenSuspensionFieldsNotProvided() {
+        final TreeSet<String> eventTypes = new TreeSet<>();
+        eventTypes.add("b2:ObjectCreated:Upload");
+        final B2WebhookConfiguration target =
+                new B2WebhookConfiguration("https://www.example.com", "3XDfkdQte2OgA78qCtSD17LAzpj6ay9H");
+        final B2EventNotificationRule a = new B2EventNotificationRule("myRule", eventTypes, "", target, true);
+        final B2EventNotificationRule b = new B2EventNotificationRule("myRule", eventTypes, "", target, true);
+
+        assertEquals(0, a.compareTo(b));
+    }
 }

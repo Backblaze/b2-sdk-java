@@ -97,8 +97,9 @@ public class B2LargeFileStorer {
         this.largeFileId = storeLargeFileRequest.getFileId();
         this.serverSideEncryptionOrNull = storeLargeFileRequest.getServerSideEncryption();
         this.partStorers = validateAndSortPartStorers(new ArrayList<>(partStorers), partNumberGapsAllowed);
-        this.startingBytePositions = computeStartingBytePositions(partStorers);
-        this.indexesByPartNumber = computeIndexesByPartNumbers(partStorers);
+        // use the sorted list: positions and indexes are looked up by part number, in part order.
+        this.startingBytePositions = computeStartingBytePositions(this.partStorers);
+        this.indexesByPartNumber = computeIndexesByPartNumbers(this.partStorers);
 
         this.accountAuthCache = accountAuthCache;
         this.uploadPartUrlCache = new B2UploadPartUrlCache(webifier, accountAuthCache, largeFileId);

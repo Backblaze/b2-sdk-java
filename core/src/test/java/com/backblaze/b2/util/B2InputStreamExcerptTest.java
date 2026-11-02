@@ -33,6 +33,29 @@ public class B2InputStreamExcerptTest extends B2BaseTest {
         assertArrayEquals(B2StringUtil.getUtf8Bytes(DIGITS_STR), DIGITS_BYTES);
     }
 
+    /** An InputStream whose skip() skips at most one byte at a time, as the InputStream contract allows. */
+    private static class OneByteSkipper extends ByteArrayInputStream {
+        OneByteSkipper(byte[] bytes) {
+            super(bytes);
+        }
+
+        @Override
+        public synchronized long skip(long n) {
+            return super.skip(Math.min(n, 1));
+        }
+    }
+
+    @Test
+    public void testSkipThatSkipsLessThanRequested() throws IOException {
+        // the excerpt is "23456".  skip(3) on a stream that skips 1 byte at a time must leave "56".
+        final InputStream in = excerpt(new OneByteSkipper(DIGITS_BYTES), 2, 5);
+
+        assertEquals(3, in.skip(3));
+        assertEquals('5', in.read());
+        assertEquals('6', in.read());
+        assertEquals(EOF, in.read());
+    }
+
     @Test
     public void testNegativeStartThrowsInConstructor() {
         thrown.expect(IllegalArgumentException.class);

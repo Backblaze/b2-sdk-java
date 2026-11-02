@@ -49,6 +49,10 @@ public class B2JsonConcurrentMapHandler extends B2JsonNonUrlTypeHandler<Concurre
                 Object key = keyHandler.deserialize(in, options);
                 in.skipObjectColon();
                 Object value = B2JsonUtil.deserializeMaybeNull(valueHandler, in, options);
+                if (value == null) {
+                    // ConcurrentHashMap cannot hold null values.
+                    throw new B2JsonException("null value is not allowed in a ConcurrentMap");
+                }
                 result.put(key, value);
             } while (in.objectHasMoreFields());
         }

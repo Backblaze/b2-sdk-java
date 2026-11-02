@@ -71,6 +71,11 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
     }
 
     @Override
+    public RequestConfig getRequestConfig() {
+        return requestConfig;
+    }
+
+    @Override
     public CloseableHttpClient create() throws B2Exception {
         return HttpClients.custom()
                 .setUserAgent(APACHE_HTTP_CLIENT_USER_AGENT)
