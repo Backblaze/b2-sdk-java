@@ -29,6 +29,25 @@ case "$SCENARIO" in
   files.hide) class=FilesHide ;;
   files.metadata) class=FilesMetadata ;;
   bucket.crud) class=BucketCrud ;;
+  files.server_side_copy) class=FilesServerSideCopy ;;
+  large.multipart) class=LargeMultipart ;;
+  large.concurrent_parts) class=LargeConcurrentParts ;;
+  large.resume) class=LargeResume ;;
+  large.compose_mixed) class=LargeComposeMixed ;;
+  urls.native_download) class=UrlsNativeDownload ;;
+  client.progress) class=ClientProgress ;;
+  lock.bucket_default) class=LockBucketDefault ;;
+  lock.per_file_retention) class=LockPerFileRetention ;;
+  keys.crud) class=KeysCrud ;;
+  bucket.cors) class=BucketCors ;;
+  bucket.lifecycle) class=BucketLifecycle ;;
+  bucket.notification_rules) class=BucketNotificationRules ;;
+  bucket.inbound_webhook) class=BucketInboundWebhook ;;
+  bucket.replication_config) class=BucketReplicationConfig ;;
+  enc.sse_b2) class=EncSseB2 ;;
+  enc.sse_c) class=EncSseC ;;
+  lock.legal_hold) class=LockLegalHold ;;
+  lock.bypass_governance) class=LockBypassGovernance ;;
   *) fail 'configuration: no check for this scenario' ;;
 esac
 [[ "${SDKHARNESS_SIMULATOR_URL:-}" =~ ^http://127\.0\.0\.1:[0-9]{1,5}/?$ ]] \
@@ -44,7 +63,7 @@ for name in $(compgen -e); do case "$name" in B2_*) unset "$name" ;; esac; done
 work="$(mktemp -d "${TMPDIR:-/tmp}/sdkharness-java-conformance.XXXXXX")" || fail 'setup: could not create a scratch directory'
 trap 'rm -rf "$work"' EXIT
 
-if ! javac --release 11 -nowarn -d "$work/classes" -cp "$SDKHARNESS_JAVA_CLASSPATH" \
+if ! javac --release 11 -encoding UTF-8 -nowarn -d "$work/classes" -cp "$SDKHARNESS_JAVA_CLASSPATH" \
     "$HERE/conformance/Support.java" "$HERE/conformance/$class.java" >"$work/javac.log" 2>&1; then
   fail "build: the check did not compile against this checkout: $(tidy "$(head -c 400 "$work/javac.log")")"
 fi

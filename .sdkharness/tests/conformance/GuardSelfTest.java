@@ -17,7 +17,9 @@ import java.net.InetSocketAddress;
  *
  * <p>It checks that a request to a loopback server passes, that an absolute request URI to a
  * non-loopback host (a documentation address, never contacted) is refused before it is sent, and that
- * a loopback server redirecting to a non-loopback host is refused on the redirect hop.
+ * a loopback server redirecting to a non-loopback host is refused on the redirect hop. It also checks the one
+ * request path that does not go through the SDK's client, {@code Support.rawGet} (a share-link fetch, used by
+ * {@code urls.native_download}): loopback passes, a non-loopback host is refused before anything is sent.
  */
 public final class GuardSelfTest {
     private GuardSelfTest() {
@@ -58,6 +60,15 @@ public final class GuardSelfTest {
                 problem = mustBeBlocked(client, new HttpGet("http://localhost:" + server.getAddress().getPort() + "/ok"),
                         "a loopback name that is not 127.0.0.1", "localhost");
             }
+            if (problem == null) {
+                problem = rawGetMustBeBlocked("http://203.0.113.7:9/share-link", "a share-link fetch to a non-loopback host", "203.0.113.7");
+            }
+            if (problem == null) {
+                final Support.Raw ok = Support.rawGet(base + "/ok", null);
+                if (ok.status != 200) {
+                    problem = "a share-link fetch from loopback did not reach the server";
+                }
+            }
         } catch (Exception e) {
             problem = "unexpected " + Support.describe(e);
         } finally {
@@ -69,6 +80,20 @@ public final class GuardSelfTest {
         } else {
             System.out.println("GUARD-SELFTEST " + Support.SLUG + ": FAIL (" + Support.tidy(problem) + ")");
             System.exit(1);
+        }
+    }
+
+    /** {@code Support.rawGet} is the one request path that does not go through the SDK's client; it carries its own host check. */
+    private static String rawGetMustBeBlocked(String url, String what, String host) {
+        final int before = Support.blocked.size();
+        try {
+            Support.rawGet(url, null);
+            return what + " was sent";
+        } catch (Exception e) {
+            if (Support.blocked.size() != before + 1 || !host.equals(Support.blocked.get(before))) {
+                return what + " failed without being blocked by the guard: " + Support.describe(e);
+            }
+            return null;
         }
     }
 
