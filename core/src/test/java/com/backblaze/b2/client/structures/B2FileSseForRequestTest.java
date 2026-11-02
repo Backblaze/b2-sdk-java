@@ -9,6 +9,8 @@ import org.junit.rules.ExpectedException;
 import java.util.Base64;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /*
  * Copyright 2020, Backblaze, Inc. All rights reserved.
@@ -48,6 +50,30 @@ public class B2FileSseForRequestTest extends B2BaseTest {
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
+        assertTrue(convertedJson.contains(key));
+    }
+
+    @Test
+    public void testToStringRedactsCustomerKey() {
+        final B2FileSseForRequest encryption = B2FileSseForRequest.createSseCAes256(
+                "SECRET-SSE-C-CUSTOMER-KEY",
+                "customer-key-md5");
+
+        final String value = encryption.toString();
+
+        assertFalse(value.contains("SECRET-SSE-C-CUSTOMER-KEY"));
+        assertTrue(value.contains("customerKey=[redacted]"));
+        assertTrue(value.contains("mode='SSE-C'"));
+        assertTrue(value.contains("algorithm=AES256"));
+        assertTrue(value.contains("customerKeyMd5=customer-key-md5"));
+    }
+
+    @Test
+    public void testToStringShowsNullCustomerKey() {
+        final String value = B2FileSseForRequest.createSseB2Aes256().toString();
+
+        assertTrue(value.contains("customerKey=null"));
+        assertFalse(value.contains("customerKey=[redacted]"));
     }
 
     @Test

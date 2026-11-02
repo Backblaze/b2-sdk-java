@@ -10,6 +10,8 @@ import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class B2CustomWebhookHeaderTest extends B2BaseTest {
 
@@ -30,5 +32,24 @@ public class B2CustomWebhookHeaderTest extends B2BaseTest {
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
+    }
+
+    @Test
+    public void testToStringRedactsValue() {
+        final B2WebhookCustomHeader header = new B2WebhookCustomHeader("X-Webhook-Authorization", "SECRET-WEBHOOK-HEADER");
+
+        final String value = header.toString();
+
+        assertFalse(value.contains("SECRET-WEBHOOK-HEADER"));
+        assertTrue(value.contains("name='X-Webhook-Authorization'"));
+        assertTrue(value.contains("value='[redacted]'"));
+    }
+
+    @Test
+    public void testToStringShowsNullValue() {
+        final String value = new B2WebhookCustomHeader("X-Webhook-Authorization", null).toString();
+
+        assertTrue(value.contains("value='null'"));
+        assertFalse(value.contains("value='[redacted]'"));
     }
 }

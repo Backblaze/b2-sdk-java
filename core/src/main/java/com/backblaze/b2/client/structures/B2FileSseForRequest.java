@@ -15,6 +15,8 @@ import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.SSE_
 import static com.backblaze.b2.client.structures.B2ServerSideEncryptionMode.SSE_C;
 
 public class B2FileSseForRequest {
+    private static final String REDACTED_VALUE = "[redacted]";
+
     /**
      * The SSE mode, e.g. SSE-B2 or SSE-C
      */
@@ -124,7 +126,7 @@ public class B2FileSseForRequest {
         return "B2FileSseForRequest{" +
                 "mode='" + mode + "', " +
                 "algorithm=" + algorithm + ", " +
-                "customerKey=" + customerKey + ", " +
+                "customerKey=" + (customerKey == null ? null : REDACTED_VALUE) + ", " +
                 "customerKeyMd5=" + customerKeyMd5 +
                 '}';
     }

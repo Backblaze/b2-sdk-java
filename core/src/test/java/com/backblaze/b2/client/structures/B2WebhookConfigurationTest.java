@@ -13,6 +13,8 @@ import java.util.TreeSet;
 
 import static com.backblaze.b2.util.B2Collections.listOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class B2WebhookConfigurationTest extends B2BaseTest {
@@ -136,5 +138,34 @@ public class B2WebhookConfigurationTest extends B2BaseTest {
         final String convertedJson = B2Json.toJsonOrThrowRuntime(defaultConfig);
         assertEquals(defaultConfig, converted);
         assertEquals(jsonString, convertedJson);
+    }
+
+    @Test
+    public void testToStringRedactsSecrets() {
+        final B2WebhookConfiguration configuration = new B2WebhookConfiguration(
+                "https://www.example.com",
+                new TreeSet<>(listOf(new B2WebhookCustomHeader("X-Webhook-Authorization", "SECRET-WEBHOOK-HEADER"))),
+                "SECRET-WEBHOOK-SIGNING-SECRET",
+                null);
+
+        final String value = configuration.toString();
+        final String json = B2Json.toJsonOrThrowRuntime(configuration);
+
+        assertFalse(value.contains("SECRET-WEBHOOK-SIGNING-SECRET"));
+        assertFalse(value.contains("SECRET-WEBHOOK-HEADER"));
+        assertTrue(value.contains("url='https://www.example.com'"));
+        assertTrue(value.contains("X-Webhook-Authorization"));
+        assertTrue(value.contains("hmacSha256SigningSecret='[redacted]'"));
+        assertTrue(value.contains("value='[redacted]'"));
+        assertTrue(json.contains("\"hmacSha256SigningSecret\": \"SECRET-WEBHOOK-SIGNING-SECRET\""));
+        assertTrue(json.contains("\"value\": \"SECRET-WEBHOOK-HEADER\""));
+    }
+
+    @Test
+    public void testToStringShowsNullSigningSecret() {
+        final String value = new B2WebhookConfiguration("https://www.example.com").toString();
+
+        assertTrue(value.contains("hmacSha256SigningSecret='null'"));
+        assertFalse(value.contains("hmacSha256SigningSecret='[redacted]'"));
     }
 }
