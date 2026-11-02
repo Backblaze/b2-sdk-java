@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
  * server round trip: a payload shaped like the documented example is signed in this check with its own HMAC code (not
  * the SDK's), then given to {@code B2EventNotification.parse}. Asserted: with the right secret the payload is accepted
  * and every documented event field is read back; with another secret, with the payload changed after signing, and
- * with a signature that is not v1 hex, it is refused with {@code B2SignatureVerificationException}; a test event (no
+ * with a signature that is not v1 hex, with an empty signature, and with no signature header at all while a secret is given, it is refused with {@code B2SignatureVerificationException}; a test event (no
  * object fields) parses.
  */
 public class BucketInboundWebhook {
@@ -70,6 +70,10 @@ public class BucketInboundWebhook {
             Support.step("refuse a signature that is not v1 hex");
             refused("a signature without the v1= prefix", () -> B2EventNotification.parse(body, sign(body, SECRET).substring(3), SECRET));
             refused("an empty signature", () -> B2EventNotification.parse(body, "", SECRET));
+
+            Support.step("refuse a missing signature header when a secret is given");
+            refused("a missing signature header with a secret", () -> B2EventNotification.parse(body, null, SECRET));
+            refused("a missing signature header with a secret (string overload)", () -> B2EventNotification.parse(PAYLOAD, null, SECRET));
 
             Support.step("a test event");
             final byte[] test = TEST_PAYLOAD.getBytes(StandardCharsets.UTF_8);
