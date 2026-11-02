@@ -15,8 +15,8 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -61,13 +61,15 @@ public class B2EventNotification {
     }
 
     /**
-     * Create a new EventNotification from JSON content with signature check.
+     * Create a new EventNotification from JSON content WITHOUT verifying any signature.
+     * Only use this when the signature has been verified by other means; otherwise
+     * use {@link #parse(byte[], String, String)}.
      *
      * @param json - The JSON content to create an B2EventNotification object from. The byte array should be UTF-8 encoded
      * @return The B2EventNotification object
      * @throws B2JsonException - If the content is not valid JSON
      */
-    public static B2EventNotification parse(byte[] json) throws IOException, B2JsonException {
+    public static B2EventNotification parseUnverified(byte[] json) throws IOException, B2JsonException {
         B2Preconditions.checkArgumentIsNotNull(json, "json");
         B2Preconditions.checkArgument(json.length > 0);
 
@@ -75,27 +77,59 @@ public class B2EventNotification {
     }
 
     /**
-     * Create a new EventNotification from JSON content with signature check.
+     * Create a new EventNotification from JSON content WITHOUT verifying any signature.
+     * Only use this when the signature has been verified by other means; otherwise
+     * use {@link #parse(String, String, String)}.
      *
      * @param json - The JSON content to create an B2EventNotification object from.
      * @return The B2EventNotification object
      * @throws B2JsonException - If the content is not valid JSON
      */
-    public static B2EventNotification parse(String json) throws B2JsonException {
+    public static B2EventNotification parseUnverified(String json) throws B2JsonException {
         B2Preconditions.checkArgument(!B2StringUtil.isEmpty(json), "json is required");
 
         return B2Json.get().fromJson(json, B2EventNotification.class);
     }
 
     /**
-     * Create a new EventNotification from JSON content with signature check.
+     * Create a new EventNotification from JSON content WITHOUT verifying any signature.
+     *
+     * @param json - The JSON content to create an B2EventNotification object from. The byte array should be UTF-8 encoded
+     * @return The B2EventNotification object
+     * @throws B2JsonException - If the content is not valid JSON
+     * @deprecated This does not check a signature. Use {@link #parse(byte[], String, String)}
+     *             to verify one, or {@link #parseUnverified(byte[])} to make skipping it explicit.
+     */
+    @Deprecated
+    public static B2EventNotification parse(byte[] json) throws IOException, B2JsonException {
+        return parseUnverified(json);
+    }
+
+    /**
+     * Create a new EventNotification from JSON content WITHOUT verifying any signature.
+     *
+     * @param json - The JSON content to create an B2EventNotification object from.
+     * @return The B2EventNotification object
+     * @throws B2JsonException - If the content is not valid JSON
+     * @deprecated This does not check a signature. Use {@link #parse(String, String, String)}
+     *             to verify one, or {@link #parseUnverified(String)} to make skipping it explicit.
+     */
+    @Deprecated
+    public static B2EventNotification parse(String json) throws B2JsonException {
+        return parseUnverified(json);
+    }
+
+    /**
+     * Create a new EventNotification from JSON content, verifying its signature.
      *
      * @param json - The JSON content to create an B2EventNotification object from. The byte array should be UTF-8 encoded
      * @param signatureFromHeader - The value of the X-Bz-Event-Notification-Signature header
-     * @param signingSecret - The secret for computing the signature.
+     * @param signingSecret - The secret for computing the signature. Must not be null or empty.
      * @return The B2EventNotification object
      * @throws B2JsonException - If the content is not valid JSON
-     * @throws B2SignatureVerificationException - if the content does not match the signature from header.
+     * @throws B2SignatureVerificationException - if the signature header is missing or empty,
+     *         or the content does not match the signature from header.
+     * @throws IllegalArgumentException - if the signing secret is null or empty.
      */
     public static B2EventNotification parse(byte[] json,
                                             String signatureFromHeader,
@@ -103,45 +137,50 @@ public class B2EventNotification {
             throws B2JsonException, IOException, B2SignatureVerificationException {
         B2Preconditions.checkArgumentIsNotNull(json, "json");
         B2Preconditions.checkArgument(json.length > 0);
+        B2Preconditions.checkArgument(!B2StringUtil.isEmpty(signingSecret), "signingSecret is required");
 
-        // Only validate the signature if signature and secret are both provided
-        if (signatureFromHeader != null && signingSecret != null) {
-            SignatureUtils.verifySignature(json, signatureFromHeader, signingSecret);
-        }
+        SignatureUtils.verifySignature(json, signatureFromHeader, signingSecret);
         return B2Json.get().fromJson(json , B2EventNotification.class);
     }
 
     /**
-     * Create a new EventNotification from JSON content with signature check.
+     * Create a new EventNotification from JSON content, verifying its signature.
      *
      * @param json - The JSON content to create an B2EventNotification object from.
      * @param signatureFromHeader - The value of the X-Bz-Event-Notification-Signature header
-     * @param signingSecret - The secret for computing the signature.
+     * @param signingSecret - The secret for computing the signature. Must not be null or empty.
      * @return The B2EventNotification object
      * @throws B2JsonException - If the content is not valid JSON
-     * @throws B2SignatureVerificationException - if the content does not match the signature from header.
+     * @throws B2SignatureVerificationException - if the signature header is missing or empty,
+     *         or the content does not match the signature from header.
+     * @throws IllegalArgumentException - if the signing secret is null or empty.
      */
     public static B2EventNotification parse(String json,
                                             String signatureFromHeader,
                                             String signingSecret)
             throws B2JsonException, B2SignatureVerificationException {
         B2Preconditions.checkArgument(!B2StringUtil.isEmpty(json), "json is required");
+        B2Preconditions.checkArgument(!B2StringUtil.isEmpty(signingSecret), "signingSecret is required");
 
-        // Only validate the signature if signature and secret are both provided
-        if (signatureFromHeader != null && signingSecret != null) {
-            SignatureUtils.verifySignature(
-                    json.getBytes(StandardCharsets.UTF_8), signatureFromHeader, signingSecret);
-        }
+        SignatureUtils.verifySignature(
+                json.getBytes(StandardCharsets.UTF_8), signatureFromHeader, signingSecret);
         return B2Json.get().fromJson(json , B2EventNotification.class);
     }
 
     /*testing*/
     static class SignatureUtils {
         public static void verifySignature(byte[] json, String signatureFromHeader, String signingSecret) throws B2SignatureVerificationException {
+            if (B2StringUtil.isEmpty(signatureFromHeader)) {
+                throw new B2SignatureVerificationException("Signature header is missing", null);
+            }
             final String[] signatures = signatureFromHeader.split(",");
-            final String signature = computeHmacSha256Signature(signingSecret, json);
+            final byte[] signature = computeHmacSha256Signature(signingSecret, json).getBytes(StandardCharsets.UTF_8);
 
-            boolean signatureMatch = Arrays.stream(signatures).anyMatch(signatureToVerify -> Objects.equals(signatureToVerify, signature));
+            boolean signatureMatch = false;
+            for (String signatureToVerify : signatures) {
+                // Constant-time comparison; no short-circuit so every entry is compared.
+                signatureMatch |= MessageDigest.isEqual(signatureToVerify.getBytes(StandardCharsets.UTF_8), signature);
+            }
             if (!signatureMatch) {
                 throw new B2SignatureVerificationException("Signature from header does not match calculated signature", null);
             }

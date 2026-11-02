@@ -3,6 +3,12 @@
 ### Changed
 * `toString()` of credential-bearing structures (`B2AccountAuthorization`, `B2FileSseForRequest`, `B2WebhookConfiguration`, `B2WebhookCustomHeader`, and `B2HeadersImpl`) omits sensitive values; `B2WebhookCustomHeader` omits all header values.
 * `B2EventNotificationRule` now orders and deduplicates rules by `maxEventsPerBatch`, so rules that differ only by batch size no longer collapse in sorted collections; it also uses direct webhook settings instead of the former string-based order (url, headers, then signing secret), so callers that persist or diff ordered rules may observe a different order.
+* Security / behaviour change: the three-argument `B2EventNotification.parse` overloads now require a signature header and a signing secret; receivers should answer HTTP 401 on `B2SignatureVerificationException`.
+  A missing or empty signature header throws `B2SignatureVerificationException`; a null or empty signing secret throws `IllegalArgumentException`.
+* Signature comparison is now constant-time.
+
+### Added
+* Added `B2EventNotification.parseUnverified`, which parses without checking a signature. The one-argument `parse` overloads are deprecated in its favor.
 
 ## [6.5.0] - 2025-12-15
 * Add `readBucketLifecycleRules` and `writeBucketLifecycleRules` capabilities. 

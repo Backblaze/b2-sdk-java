@@ -125,25 +125,20 @@ public class B2EventNotificationTest extends B2BaseTest {
     }
 
     @Test
-    public void testParseSuccessWithNoSignature() throws B2JsonException, B2SignatureVerificationException {
-        final B2EventNotification b2EventNotification = B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, null, HMAC_SHA256_SIGNING_SECRET);
-        final B2EventNotification parsedEventNotification = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
-        assertEquals(parsedEventNotification, b2EventNotification);
+    public void testParseWithNoSignatureIsRejected() {
+        assertThrows(B2SignatureVerificationException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, null, HMAC_SHA256_SIGNING_SECRET));
     }
 
     @Test
-    public void testParseSuccessWithNoSecret() throws B2JsonException, B2SignatureVerificationException {
+    public void testParseWithNoSecretIsRejected() throws B2SignatureVerificationException {
         final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET, DEFAULT_EVENT_PAYLOAD.getBytes(StandardCharsets.UTF_8));
-        final B2EventNotification b2EventNotification = B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, signature, null);
-        final B2EventNotification parsedEventNotification = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
-        assertEquals(parsedEventNotification, b2EventNotification);
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, signature, null));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, signature, ""));
     }
 
     @Test
-    public void testParseSuccessWithNoSignatureOrSecret() throws B2JsonException, B2SignatureVerificationException {
-        final B2EventNotification b2EventNotification = B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, null, null);
-        final B2EventNotification parsedEventNotification = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
-        assertEquals(parsedEventNotification, b2EventNotification);
+    public void testParseWithNoSignatureOrSecretIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, null, null));
     }
 
     @Test
@@ -168,25 +163,20 @@ public class B2EventNotificationTest extends B2BaseTest {
     }
 
     @Test
-    public void testParseBytesSuccessWithNoSignature() throws B2JsonException, IOException, B2SignatureVerificationException {
-        final B2EventNotification b2EventNotification = B2EventNotification.parse(DEFAULT_EVENT_BYTES, null, HMAC_SHA256_SIGNING_SECRET);
-        final B2EventNotification parsedEventNotification = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
-        assertEquals(parsedEventNotification, b2EventNotification);
+    public void testParseBytesWithNoSignatureIsRejected() {
+        assertThrows(B2SignatureVerificationException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_BYTES, null, HMAC_SHA256_SIGNING_SECRET));
     }
 
     @Test
-    public void testParseBytesSuccessWithNoSecret() throws B2JsonException, IOException, B2SignatureVerificationException {
-        final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET, DEFAULT_EVENT_PAYLOAD.getBytes(StandardCharsets.UTF_8));
-        final B2EventNotification b2EventNotification = B2EventNotification.parse(DEFAULT_EVENT_BYTES, signature, null);
-        final B2EventNotification parsedEventNotification = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
-        assertEquals(parsedEventNotification, b2EventNotification);
+    public void testParseBytesWithNoSecretIsRejected() throws B2SignatureVerificationException {
+        final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET, DEFAULT_EVENT_BYTES);
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_BYTES, signature, null));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_BYTES, signature, ""));
     }
 
     @Test
-    public void testParseBytesSuccessWithNoSignatureOrSecret() throws B2JsonException, IOException, B2SignatureVerificationException {
-        final B2EventNotification b2EventNotification = B2EventNotification.parse(DEFAULT_EVENT_BYTES, null, null);
-        final B2EventNotification parsedEventNotification = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
-        assertEquals(parsedEventNotification, b2EventNotification);
+    public void testParseBytesWithNoSignatureOrSecretIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_BYTES, null, null));
     }
 
     @Test
@@ -232,5 +222,31 @@ public class B2EventNotificationTest extends B2BaseTest {
         final String signature = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET,
                 jsonBytes);
         assertThrows(B2JsonException.class, () -> B2EventNotification.parse(jsonBytes, signature, HMAC_SHA256_SIGNING_SECRET));
+    }
+
+    @Test
+    public void testParseWithEmptySignatureIsRejected() {
+        assertThrows(B2SignatureVerificationException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, "", HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(B2SignatureVerificationException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_BYTES, "", HMAC_SHA256_SIGNING_SECRET));
+    }
+
+    @Test
+    public void testParseAcceptsAnyValidSignatureInCommaSeparatedHeader() throws Exception {
+        final String valid = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET, DEFAULT_EVENT_BYTES);
+        final String other = B2EventNotification.SignatureUtils.computeHmacSha256Signature(HMAC_SHA256_SIGNING_SECRET2, DEFAULT_EVENT_BYTES);
+        final B2EventNotification expected = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
+
+        assertEquals(expected, B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, other + "," + valid, HMAC_SHA256_SIGNING_SECRET));
+        assertEquals(expected, B2EventNotification.parse(DEFAULT_EVENT_BYTES, valid + "," + other, HMAC_SHA256_SIGNING_SECRET));
+        assertThrows(B2SignatureVerificationException.class, () -> B2EventNotification.parse(DEFAULT_EVENT_PAYLOAD, other + ",v1=00", HMAC_SHA256_SIGNING_SECRET));
+    }
+
+    @Test
+    public void testParseUnverifiedStillParses() throws Exception {
+        final B2EventNotification expected = B2Json.get().fromJson(DEFAULT_EVENT_PAYLOAD, B2EventNotification.class);
+        assertEquals(expected, B2EventNotification.parseUnverified(DEFAULT_EVENT_PAYLOAD));
+        assertEquals(expected, B2EventNotification.parseUnverified(DEFAULT_EVENT_BYTES));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parseUnverified((String) null));
+        assertThrows(IllegalArgumentException.class, () -> B2EventNotification.parseUnverified((byte[]) null));
     }
 }
