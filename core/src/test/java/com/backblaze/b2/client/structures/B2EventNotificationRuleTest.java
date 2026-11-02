@@ -111,6 +111,9 @@ public class B2EventNotificationRuleTest extends B2BaseTest {
 
         assertFalse(first.equals(second));
         assertTrue(first.compareTo(second) != 0);
+
+        final TreeSet<B2EventNotificationRule> rules = new TreeSet<>(listOf(first, second));
+        assertEquals(2, rules.size());
     }
 
     @Test
@@ -120,6 +123,17 @@ public class B2EventNotificationRuleTest extends B2BaseTest {
 
         assertEquals(first, second);
         assertEquals(0, first.compareTo(second));
+    }
+
+    @Test
+    public void testCompareToIsConsistentWithDirectWebhookSubclass() {
+        final B2EventNotificationRule webhookRule = makeWebhookRule("signing-secret", "header-value", 20);
+        final B2EventNotificationRule subclassRule = makeDirectWebhookSubclassRule("signing-secret", "header-value", 20);
+        final B2EventNotificationRule matchingSubclassRule = makeDirectWebhookSubclassRule("signing-secret", "header-value", 20);
+
+        assertEquals(webhookRule.equals(subclassRule), webhookRule.compareTo(subclassRule) == 0);
+        assertEquals(subclassRule.equals(webhookRule), subclassRule.compareTo(webhookRule) == 0);
+        assertEquals(subclassRule.equals(matchingSubclassRule), subclassRule.compareTo(matchingSubclassRule) == 0);
     }
 
     @Test
@@ -160,17 +174,40 @@ public class B2EventNotificationRuleTest extends B2BaseTest {
     private B2EventNotificationRule makeWebhookRule(String signingSecret,
                                                      String customHeaderValue,
                                                      int maxEventsPerBatch) {
+        return makeRule(new B2WebhookConfiguration(
+                "https://www.example.com",
+                new TreeSet<>(listOf(new B2WebhookCustomHeader("X-Webhook-Authorization", customHeaderValue))),
+                signingSecret,
+                maxEventsPerBatch));
+    }
+
+    private B2EventNotificationRule makeDirectWebhookSubclassRule(String signingSecret,
+                                                                   String customHeaderValue,
+                                                                   int maxEventsPerBatch) {
+        return makeRule(new DirectWebhookConfiguration(
+                "https://www.example.com",
+                new TreeSet<>(listOf(new B2WebhookCustomHeader("X-Webhook-Authorization", customHeaderValue))),
+                signingSecret,
+                maxEventsPerBatch));
+    }
+
+    private B2EventNotificationRule makeRule(B2EventNotificationTargetConfiguration targetConfiguration) {
         return new B2EventNotificationRule(
                 "myRule",
                 new TreeSet<>(listOf("b2:ObjectCreated:Upload")),
                 "",
-                new B2WebhookConfiguration(
-                        "https://www.example.com",
-                        new TreeSet<>(listOf(new B2WebhookCustomHeader("X-Webhook-Authorization", customHeaderValue))),
-                        signingSecret,
-                        maxEventsPerBatch),
+                targetConfiguration,
                 true,
                 false,
                 "");
+    }
+
+    private static class DirectWebhookConfiguration extends B2WebhookConfiguration {
+        private DirectWebhookConfiguration(String url,
+                                           TreeSet<B2WebhookCustomHeader> customHeaders,
+                                           String hmacSha256SigningSecret,
+                                           Integer maxEventsPerBatch) {
+            super(url, customHeaders, hmacSha256SigningSecret, maxEventsPerBatch);
+        }
     }
 }

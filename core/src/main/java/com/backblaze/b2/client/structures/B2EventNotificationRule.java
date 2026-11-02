@@ -185,7 +185,7 @@ public class B2EventNotificationRule implements Comparable<B2EventNotificationRu
         if (second == null) {
             return 1;
         }
-        if (first instanceof B2WebhookConfiguration && second instanceof B2WebhookConfiguration) {
+        if (first.getClass() == B2WebhookConfiguration.class && second.getClass() == B2WebhookConfiguration.class) {
             return compareWebhookConfigurations((B2WebhookConfiguration) first, (B2WebhookConfiguration) second);
         }
 
