@@ -371,6 +371,59 @@ public class B2LargeFileUploaderTest extends B2BaseTest {
     }
 
     @Test
+    public void testThrowIfLargeFileVersionDoesntSeemToMatchRequest_matchingSha1IsNotAFileInfoMismatch() throws IOException, B2Exception {
+        // the SDK stores the sha1 of a large file as the file info "large_file_sha1" when it starts the file.
+        // that entry is checked as the sha1, so it must not also count as an unexpected file info entry.
+        when(contentSource.getSha1OrNull()).thenReturn(makeSha1(1));
+        final B2UploadFileRequest request = B2UploadFileRequest
+                .builder(bucketId(1), fileName(2), B2ContentTypes.APPLICATION_OCTET, contentSource)
+                .build();
+        final B2FileVersion largeFileVersion = new B2FileVersion(
+                fileId(1),
+                fileName(2),
+                contentSource.getContentLength(),
+                B2ContentTypes.APPLICATION_OCTET,
+                null,
+                null,
+                B2Collections.mapOf(B2Headers.LARGE_FILE_SHA1_INFO_NAME, makeSha1(1)),
+                "action",
+                1234,
+                null,
+                null,
+                null,
+                null);
+
+        // does not throw.
+        B2LargeFileUploader.throwIfLargeFileVersionDoesntSeemToMatchRequest(largeFileVersion, contentSource.getContentLength(), request);
+    }
+
+    @Test
+    public void testThrowIfLargeFileVersionDoesntSeemToMatchRequest_otherFileInfoStillMismatches() throws IOException, B2Exception {
+        when(contentSource.getSha1OrNull()).thenReturn(makeSha1(1));
+        final B2UploadFileRequest request = B2UploadFileRequest
+                .builder(bucketId(1), fileName(2), B2ContentTypes.APPLICATION_OCTET, contentSource)
+                .build();
+        final B2FileVersion largeFileVersion = new B2FileVersion(
+                fileId(1),
+                fileName(2),
+                contentSource.getContentLength(),
+                B2ContentTypes.APPLICATION_OCTET,
+                null,
+                null,
+                B2Collections.mapOf(B2Headers.LARGE_FILE_SHA1_INFO_NAME, makeSha1(1), "color", "blue"),
+                "action",
+                1234,
+                null,
+                null,
+                null,
+                null);
+
+        thrown.expect(B2LocalException.class);
+        thrown.expectMessage("contentSource has fileInfo");
+        B2LargeFileUploader.throwIfLargeFileVersionDoesntSeemToMatchRequest(largeFileVersion, contentSource.getContentLength(), request);
+    }
+
+    @Test
     public void testThrowIfLargeFileVersionDoesntSeemToMatchRequest_mismatchingContentType() throws IOException, B2Exception {
         final B2UploadFileRequest request = B2UploadFileRequest
                 .builder(bucketId(1), fileName(2), B2ContentTypes.APPLICATION_OCTET, contentSource)
