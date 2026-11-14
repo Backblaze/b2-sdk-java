@@ -25,22 +25,22 @@ jobs:
     runs-on: ${{ github.repository == 'Backblaze/b2-sdk-java-private' && 'self-hosted'|| 'ubuntu-latest' }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
         with:
           distribution: temurin
           java-version: '11'
 
-      - uses: gradle/actions/wrapper-validation@v4
+      - uses: gradle/actions/wrapper-validation@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       # --- uv + Python 3.13, then create a venv in $RUNNER_TEMP ---
       - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
         with:
           enable-cache: false
 
@@ -94,13 +94,13 @@ jobs:
 
       - name: Check GitHub Pages status
         if: github.ref == 'refs/heads/master'
-        uses: crazy-max/ghaction-github-status@v4
+        uses: crazy-max/ghaction-github-status@fa6ac37620bc5d44b93e15caed498629665e9ff5 # v4.2.0
         with:
           pages_threshold: major_outage
 
       - name: Deploy Javadoc
         if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x') && success()
-        uses: crazy-max/ghaction-github-pages@v3
+        uses: crazy-max/ghaction-github-pages@5859b4ea7efe6b470a5b19c570460eae9323aefc # v3.2.0
         with:
           target_branch: gh-pages
           build_dir: core/build/docs/javadoc
