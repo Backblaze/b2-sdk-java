@@ -178,7 +178,7 @@ public class B2Sample {
         bigHeader(writer, "list parts of any unfinished large files");
         for (B2FileVersion largeFileVersion : client.unfinishedLargeFiles(bucketId)) {
             System.out.println("====== unfinished large: " + largeFileVersion.getFileId() + " ======");
-            for (B2Part part : client.parts(file3.getFileId())) {
+            for (B2Part part : client.parts(largeFileVersion.getFileId())) {
                 System.out.println("  " + part);
             }
         }
