@@ -1,7 +1,7 @@
 
 | Status |
 | :------------ |
-| [![Build Status](https://travis-ci.org/Backblaze/b2-sdk-java.svg?branch=master)](https://travis-ci.org/Backblaze/b2-sdk-java) |
+| [![Build Status](https://github.com/Backblaze/b2-sdk-java/actions/workflows/ci_cd.yml/badge.svg?branch=master)](https://github.com/Backblaze/b2-sdk-java/actions/workflows/ci_cd.yml) |
 | [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://www.backblaze.com/using_b2_code.html)
 
 
@@ -41,7 +41,7 @@ FEATURES
 
 * The SDK provides three jars:
   * **b2-sdk-core** provides almost all of the SDK.  it does not contain the code for making HTTP requests (B2WebApiClient).
-  * **b2-sdk-httpclient** provides an implementation of B2WebApiClient built on Apache Commons HttpClient.
+  * **b2-sdk-httpclient** provides an implementation of B2WebApiClient built on Apache HttpComponents HttpClient.
   * **b2-sdk-samples** has some samples. 
 
 SAMPLE
@@ -58,11 +58,9 @@ SAMPLE
     * B2_APPLICATION_KEY
 
   * Be sure to add the jars to your class path along with their dependencies.  
-    If you put all the jar files into one directory and change to the directory,
-    here's a sample command line to run (after replacing 'N.N.N' with the version
-    of the sdk you're using):
+    Put all the jar files into a `lib/` directory, then run:
 
-    java -cp b2-sdk-samples-N.N.N.jar:b2-sdk-httpclient-N.N.N.jar:b2-sdk-core-0.0.1.jar:httpclient-4.5.3.jar:httpcore-4.4.4.jar:commons-logging-1.2.jar com.backblaze.b2.sample.B2Sample
+    java -cp "lib/*" com.backblaze.b2.sample.B2Sample
 
 
 
@@ -71,12 +69,12 @@ HOW TO USE
 
   * Add the jars to your build.  In the following examples, replace N.N.N
     with the version of the sdk you're using:
-    * If you're using gradle, here are the dependency lines to use the sdk with our Apache HttpClient-based B2WebApiClient:
+    * If you're using gradle, here are the dependency lines to use the sdk with our Apache HttpComponents HttpClient-based B2WebApiClient:
     ```gradle
-    compile 'com.backblaze.b2:b2-sdk-core:N.N.N'
-    compile 'com.backblaze.b2:b2-sdk-httpclient:N.N.N'
+    implementation 'com.backblaze.b2:b2-sdk-core:N.N.N'
+    implementation 'com.backblaze.b2:b2-sdk-httpclient:N.N.N'
     ```
-    * If you're using maven, here are the dependency tags to use the sdk with our Apache Commons HttpClient-based B2WebApiClient:
+    * If you're using maven, here are the dependency tags to use the sdk with our Apache HttpComponents HttpClient-based B2WebApiClient:
     ```xml
       <dependency>
         <groupId>com.backblaze.b2</groupId>
@@ -517,3 +515,4 @@ In addition to the team at Backblaze, the following people have contributed to t
 [B2UploadProgress]: https://backblaze.github.io/b2-sdk-java/com/backblaze/b2/client/structures/B2UploadProgress.html
 [B2UploadState]: https://backblaze.github.io/b2-sdk-java/com/backblaze/b2/client/structures/B2UploadState.html
 [json.org]: http://www.json.org/
+
