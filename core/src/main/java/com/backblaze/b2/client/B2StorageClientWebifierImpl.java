@@ -455,11 +455,26 @@ public class B2StorageClientWebifierImpl implements B2StorageClientWebifier {
     @Override
     public B2FileVersion finishLargeFile(B2AccountAuthorization accountAuth,
                                          B2FinishLargeFileRequest request) throws B2Exception {
-        return webApiClient.postJsonReturnJson(
-                makeUrl(accountAuth, "b2_finish_large_file"),
-                makeHeaders(accountAuth),
-                request,
-                B2FileVersion.class);
+        try {
+            return webApiClient.postJsonReturnJson(
+                    makeUrl(accountAuth, "b2_finish_large_file"),
+                    makeHeaders(accountAuth),
+                    request,
+                    B2FileVersion.class);
+        } catch (B2BadRequestException original) {
+            // The service waits for an in-progress finish before returning 400 (#41).
+            // File info can therefore confirm success after a lost finish response.
+            try {
+                final B2FileVersion version = getFileInfo(accountAuth,
+                        B2GetFileInfoRequest.builder(request.getFileId()).build());
+                if (version.isUpload()) {
+                    return version;
+                }
+            } catch (B2Exception ignored) {
+                // Preserve the finish error if the file's state cannot be checked.
+            }
+            throw original;
+        }
     }
 
     @Override
