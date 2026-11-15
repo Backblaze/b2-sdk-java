@@ -575,7 +575,7 @@ public class B2 implements AutoCloseable {
 
         final B2ContentSource source = B2FileContentSource
                 .builder(new File(localPath))
-                .setSha1(largeFileVersion.getContentSha1())
+                .setSha1(largeFileVersion.getLargeFileSha1OrNull())
                 .build();
 
         B2UploadFileRequest request = B2UploadFileRequest
