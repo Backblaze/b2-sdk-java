@@ -112,5 +112,25 @@ class ChangelogTest(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
 
 
+class ReleaseInstructionsTest(unittest.TestCase):
+    def test_tag_commands_work_with_only_tag_exported(self):
+        guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
+        block = guide.split("## Tag and deploy", 1)[1].split("```bash", 1)[1].split("```", 1)[0]
+        block = block.replace("<release-pr-number>", "123").replace("<fingerprint>", "fixture-key")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            git = root / "git"
+            git.write_text("#!/bin/sh\nif [ \"$1\" = show ]; then printf 'version=1.2.3\\n'; fi\n")
+            git.chmod(0o755)
+            gh = root / "gh"
+            gh.write_text("#!/bin/sh\nprintf '0123456789012345678901234567890123456789\\n'\n")
+            gh.chmod(0o755)
+            environment = dict(os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"], TAG="v1.2.3")
+            environment.pop("VERSION", None)
+            result = subprocess.run(["bash", "-euo", "pipefail", "-c", block], env=environment,
+                                    capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
