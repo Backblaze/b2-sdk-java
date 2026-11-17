@@ -75,6 +75,9 @@ class ChangelogTest(unittest.TestCase):
         for name in (".changie.yaml", "gradle.properties", "CHANGELOG.md"):
             shutil.copy(repository / name, self.root)
         shutil.copytree(repository / ".changes", self.root / ".changes")
+        (self.root / ".changes/unreleased/contract-test.yaml").write_text(
+            'kind: Fixed\nbody: Exercise a complete release batch.\ntime: 2026-01-01T00:00:00Z\n'
+        )
         self.changie = os.environ.get("CHANGIE", "changie")
 
     def run_check(self):
@@ -97,10 +100,14 @@ class ChangelogTest(unittest.TestCase):
         self.assertEqual(edited, path.read_text())
 
     def test_batch_and_merge_update_gradle_version_and_release_notes(self):
-        for arguments in (("batch", "v6.5.1", "--allow-no-changes=false"), ("merge",)):
+        current = next(line[8:] for line in (self.root / "gradle.properties").read_text().splitlines()
+                       if line.startswith("version="))
+        major, minor, patch = current.split("-")[0].split(".")
+        version = major + "." + minor + "." + str(int(patch) + 1)
+        for arguments in (("batch", "v" + version, "--allow-no-changes=false"), ("merge",)):
             subprocess.run([self.changie, *arguments], cwd=self.root, check=True, capture_output=True)
-        self.assertIn("version=6.5.1\n", (self.root / "gradle.properties").read_text())
-        self.assertTrue((self.root / ".changes/v6.5.1.md").is_file())
+        self.assertIn("version=" + version + "\n", (self.root / "gradle.properties").read_text())
+        self.assertTrue((self.root / (".changes/v" + version + ".md")).is_file())
         result = self.run_check()
         self.assertEqual(0, result.returncode, result.stderr)
 

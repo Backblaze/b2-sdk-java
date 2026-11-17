@@ -6,6 +6,7 @@ versionExt: md
 versionFormat: '## [{{.VersionNoPrefix}}] - {{.Time.Format "2006-01-02"}}'
 kindFormat: '### {{.Kind}}'
 changeFormat: '* {{.Body}}'
+footerFormat: '[{{.VersionNoPrefix}}]: https://github.com/Backblaze/b2-sdk-java/releases/tag/{{.Version}}'
 kinds:
   - label: Added
     auto: minor
