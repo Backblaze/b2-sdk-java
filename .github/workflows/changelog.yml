@@ -29,9 +29,12 @@ jobs:
       - name: Validate changelog
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
+          flags=()
+          if [ "$PR_AUTHOR" = 'dependabot[bot]' ]; then flags=(--dependabot); fi
           if [ -n "$BASE_SHA" ]; then
-            python3 scripts/release.py changelog-check --base "$BASE_SHA"
+            python3 scripts/release.py changelog-check --base "$BASE_SHA" "${flags[@]}"
           else
             python3 scripts/release.py changelog-check
           fi

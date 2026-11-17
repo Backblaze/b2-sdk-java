@@ -80,15 +80,48 @@ class ChangelogTest(unittest.TestCase):
         )
         self.changie = os.environ.get("CHANGIE", "changie")
 
-    def run_check(self):
+    def run_check(self, *arguments):
         return subprocess.run(
-            [sys.executable, str(SCRIPT), "--root", str(self.root), "changelog-check"],
+            [sys.executable, str(SCRIPT), "--root", str(self.root), "changelog-check", *arguments],
             capture_output=True, text=True,
         )
 
     def test_current_generated_changelog_matches(self):
         result = self.run_check()
         self.assertEqual(0, result.returncode, result.stderr)
+
+    def make_pull_request(self, path):
+        workflow = self.root / ".github/workflows/dependency.yml"
+        workflow.parent.mkdir(parents=True)
+        workflow.write_text("name: dependency\n")
+        for args in (("init", "-q"), ("config", "user.name", "Release Fixture"),
+                     ("config", "user.email", "fixture@example.invalid"), ("add", "."),
+                     ("-c", "commit.gpgSign=false", "commit", "-qm", "Base fixture")):
+            subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True)
+        base = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.root, text=True).strip()
+        changed = self.root / path
+        changed.write_text("updated fixture\n")
+        subprocess.run(["git", "add", "."], cwd=self.root, check=True, capture_output=True)
+        subprocess.run(["git", "-c", "commit.gpgSign=false", "commit", "-qm", "Update fixture"],
+                       cwd=self.root, check=True, capture_output=True)
+        return base
+
+    def test_dependabot_workflow_pin_update_needs_no_fragment(self):
+        base = self.make_pull_request(".github/workflows/dependency.yml")
+        result = self.run_check("--base", base, "--dependabot")
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_human_workflow_update_still_requires_fragment(self):
+        base = self.make_pull_request(".github/workflows/dependency.yml")
+        result = self.run_check("--base", base)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("fragment", result.stderr)
+
+    def test_dependabot_source_change_still_requires_fragment(self):
+        base = self.make_pull_request("Source.java")
+        result = self.run_check("--base", base, "--dependabot")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("fragment", result.stderr)
 
     def test_hand_edited_changelog_is_rejected_without_modifying_it(self):
         path = self.root / "CHANGELOG.md"

@@ -39,6 +39,9 @@ released history. `changie merge` also sets `version=` in `gradle.properties` fr
 version notes. Do not edit the generated changelog or bump the Gradle version independently.
 The `changelog-check` CI job verifies generated output, version consistency, and a fragment for
 each PR (or a complete batch and version update for a release-prep PR).
+Dependabot PRs that only modify existing workflow YAML files do not need a release fragment;
+generated-output checks and the release-tooling tests still run. Source/dependency changes outside
+workflow files and human-authored changes still need a fragment.
 
 ## Milestones and release preparation
 

@@ -38,7 +38,7 @@ def release_notes(root, tag):
     return notes + "\n"
 
 
-def changelog_check(root, base):
+def changelog_check(root, base, dependabot=False):
     changie = os.environ.get("CHANGIE", "changie")
     fragments = list((root / ".changes/unreleased").glob("*.yaml"))
     with tempfile.TemporaryDirectory(prefix="b2-changelog-") as temporary:
@@ -58,6 +58,13 @@ def changelog_check(root, base):
         changes = subprocess.check_output(
             ["git", "diff", "--name-status", base + "...HEAD"], cwd=root, text=True
         ).splitlines()
+        workflow_only = changes and all(
+            line.startswith("M\t.github/workflows/") and line.endswith((".yml", ".yaml"))
+            for line in changes
+        )
+        if dependabot and workflow_only:
+            print("changelog-check: validated automated workflow-only update; fragment not required")
+            return
         added = [line.split("\t")[-1] for line in changes if line.startswith(("A\t", "M\t"))]
         if not any(name.startswith(".changes/unreleased/") and name.endswith(".yaml") for name in added):
             tag = "v" + project_version(root)
@@ -75,12 +82,13 @@ def main():
     notes.add_argument("tag")
     changelog = commands.add_parser("changelog-check")
     changelog.add_argument("--base")
+    changelog.add_argument("--dependabot", action="store_true")
     args = parser.parse_args()
     try:
         if args.command == "notes":
             print(release_notes(args.root, args.tag), end="")
         elif args.command == "changelog-check":
-            changelog_check(args.root, args.base)
+            changelog_check(args.root, args.base, args.dependabot)
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
         print("HOLD: " + str(error), file=sys.stderr)
         return 1
