@@ -39,6 +39,29 @@ dependencies {
     testImplementation("org.mockito:mockito-core:1.9.5")
 }
 
+// Tests that document a defect that is still present carry @Category(KnownDefect.class).  The default
+// `test` task (and so `build` and CI) excludes them; `./gradlew knownDefectTests` runs only them and is
+// expected to fail until the defects are fixed.  Only modules that have the marker interface take part.
+val knownDefectMarker = "com.backblaze.b2.testing.KnownDefect"
+if (file("src/test/java/com/backblaze/b2/testing/KnownDefect.java").exists()) {
+    tasks.test {
+        useJUnit {
+            excludeCategories(knownDefectMarker)
+        }
+    }
+
+    tasks.register<Test>("knownDefectTests") {
+        group = "verification"
+        description = "Runs only the tests tagged KnownDefect; they fail until the defect they document is fixed."
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        useJUnit {
+            includeCategories(knownDefectMarker)
+        }
+        shouldRunAfter(tasks.test)
+    }
+}
+
 tasks.jar {
     manifest {
         attributes(
