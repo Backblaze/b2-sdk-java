@@ -2,6 +2,7 @@
 """Release metadata checks. Uses the standard library and the pinned Changie binary."""
 
 import argparse
+import json
 import os
 import pathlib
 import re
@@ -83,6 +84,104 @@ def changelog_check(root, base, dependabot=False):
     print("changelog-check: generated changelog, fragments, and version agree")
 
 
+def api_list(repo, resource):
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
+        raise ValueError("invalid repository name")
+    result = subprocess.run(["gh", "api", "--paginate", "--slurp",
+                             "repos/" + repo + "/" + resource], capture_output=True, text=True)
+    if result.returncode:
+        raise ValueError("cannot verify " + resource.split("?")[0] + "; check security-read access")
+    try:
+        pages = json.loads(result.stdout)
+        if not isinstance(pages, list) or not all(isinstance(page, list) for page in pages):
+            raise ValueError()
+        items = [item for page in pages for item in page]
+        if not all(isinstance(item, dict) for item in items):
+            raise ValueError()
+        return items
+    except (ValueError, TypeError):
+        raise ValueError("cannot verify " + resource.split("?")[0] + ": invalid API response") from None
+
+
+def blocks_release(severity):
+    if severity is None:
+        return True  # An untriaged advisory cannot establish a clear release gate.
+    if severity not in ("low", "medium", "high", "critical"):
+        raise ValueError("cannot verify an unknown severity")
+    return severity != "low"
+
+
+def security_gate(repo):
+    sources = (
+        ("Code scanning", "code-scanning/alerts?state=open&ref=refs/heads/master&per_page=100"),
+        ("Dependabot", "dependabot/alerts?state=open&per_page=100"),
+        ("Secret scanning", "secret-scanning/alerts?state=open&per_page=100"),
+        ("Repository advisories", "security-advisories?per_page=100"),
+        ("Issues", "issues?state=open&per_page=100"),
+    )
+    blocked = False
+    allowed_states = {
+        "Code scanning": ("open", "fixed", "dismissed"),
+        "Dependabot": ("open", "fixed", "dismissed", "auto_dismissed"),
+        "Secret scanning": ("open", "resolved"),
+        "Repository advisories": ("draft", "triage", "published", "closed", "withdrawn"),
+        "Issues": ("open", "closed"),
+    }
+    for name, endpoint in sources:
+        count = 0
+        try:
+            for item in api_list(repo, endpoint):
+                state = item["state"]
+                if state not in allowed_states[name]:
+                    raise ValueError("cannot verify " + name + ": unknown finding state")
+                if name == "Repository advisories":
+                    count += state in ("draft", "triage") and blocks_release(item["severity"])
+                elif state == "open":
+                    if name == "Code scanning":
+                        severity = item["rule"].get("security_severity_level")
+                        count += severity is not None and blocks_release(severity)
+                    elif name == "Dependabot":
+                        count += blocks_release(item["security_advisory"]["severity"])
+                    elif name == "Secret scanning":
+                        count += 1
+                    elif name == "Issues":
+                        labels = [re.sub(r"[\s:/_-]+", "", label["name"].lower()) for label in item["labels"]]
+                        count += any(label in ("medium", "high", "critical", "severitymedium",
+                                               "severityhigh", "severitycritical") for label in labels)
+        except (KeyError, TypeError, AttributeError):
+            raise ValueError("cannot verify " + name + ": incomplete API response") from None
+        print(name + (": HOLD (" + str(count) + " blocking finding(s))" if count else ": clear"))
+        blocked |= count > 0
+    if blocked:
+        raise ValueError("security gate holds this release")
+    print("security gate: clear")
+
+
+def milestone_gate(repo, tag):
+    if not re.fullmatch("v" + VERSION, tag):
+        raise ValueError("expected a version tag")
+    matches = [item for item in api_list(repo, "milestones?state=all&per_page=100") if item.get("title") == tag]
+    if len(matches) != 1 or matches[0].get("open_issues") != 0:
+        raise ValueError("milestone " + tag + " must exist and have no open issues or pull requests")
+    print("milestone gate: clear (" + tag + ")")
+
+
+def pages_status():
+    try:
+        components = json.load(sys.stdin)["components"]
+        pages = [item for item in components if item["name"] in ("Pages", "GitHub Pages")]
+        if len(pages) != 1:
+            raise ValueError()
+        status = pages[0]["status"]
+    except (ValueError, KeyError, TypeError):
+        raise ValueError("cannot verify GitHub Pages status") from None
+    if status == "major_outage":
+        raise ValueError("GitHub Pages has a major outage; hold Javadoc deployment")
+    if status not in ("operational", "degraded_performance", "partial_outage", "under_maintenance"):
+        raise ValueError("cannot verify GitHub Pages status")
+    print("GitHub Pages status: " + status)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=pathlib.Path, default=pathlib.Path(__file__).resolve().parents[1])
@@ -92,12 +191,24 @@ def main():
     changelog = commands.add_parser("changelog-check")
     changelog.add_argument("--base")
     changelog.add_argument("--dependabot", action="store_true")
+    security = commands.add_parser("security")
+    security.add_argument("--repo", default="Backblaze/b2-sdk-java")
+    milestone = commands.add_parser("milestone")
+    milestone.add_argument("tag")
+    milestone.add_argument("--repo", default="Backblaze/b2-sdk-java")
+    commands.add_parser("pages-status")
     args = parser.parse_args()
     try:
         if args.command == "notes":
             print(release_notes(args.root, args.tag), end="")
         elif args.command == "changelog-check":
             changelog_check(args.root, args.base, args.dependabot)
+        elif args.command == "security":
+            security_gate(args.repo)
+        elif args.command == "milestone":
+            milestone_gate(args.repo, args.tag)
+        elif args.command == "pages-status":
+            pages_status()
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
         print("HOLD: " + str(error), file=sys.stderr)
         return 1

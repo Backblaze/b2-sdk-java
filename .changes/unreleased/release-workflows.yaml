@@ -1,0 +1,3 @@
+kind: Changed
+body: Verify release metadata and milestones, check security findings, support phased signed-tag enforcement, and use pinned workflow actions and changelog-derived release notes.
+time: 2026-11-17T00:00:01Z

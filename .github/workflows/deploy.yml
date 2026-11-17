@@ -6,24 +6,79 @@ on:
   push:
     tags: ['v*']
 
+permissions:
+  contents: read
+
+concurrency:
+  group: maven-central-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  deploy:
-    name: Deploy
+  release-checks:
     if: github.repository == 'Backblaze/b2-sdk-java'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: read
+      issues: read
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
     steps:
-      - uses: actions/checkout@v4
+      # Read the key registry and gate implementation from the reviewed default branch.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: master
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify release tag
+        env:
+          ENFORCE_SIGNED_TAGS: ${{ vars.ENFORCE_SIGNED_TAGS }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git merge-base --is-ancestor "$RELEASE_TAG^{commit}" origin/master
+          bash scripts/verify-release-tag.sh "$RELEASE_TAG"
+      - name: Check tag, version, and changelog agreement
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/release-metadata" "$RELEASE_TAG"
+          python3 scripts/release.py --root "$RUNNER_TEMP/release-metadata" notes "$RELEASE_TAG" > /dev/null
+      - name: Require complete version milestone
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/release.py milestone "$RELEASE_TAG"
+      - name: Require security clearance
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_READ_TOKEN }}
+        run: python3 scripts/release.py security
+
+  deploy:
+    name: Deploy
+    needs: release-checks
+    if: github.repository == 'Backblaze/b2-sdk-java'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: 'temurin'
           java-version: '11'
 
-      - uses: gradle/actions/wrapper-validation@v4
+      - uses: gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+
+      - name: Build and test the release
+        run: ./gradlew build --no-daemon
+
+      - name: Extract release notes
+        run: python3 scripts/release.py notes "$RELEASE_TAG" > "$RUNNER_TEMP/release-notes.md"
 
       - name: Deploy to Maven Central
         run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository createBundle --no-daemon --stacktrace
@@ -34,23 +89,15 @@ jobs:
           ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_TOKEN_USERNAME }}
           ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_TOKEN_PASSWORD }}
 
-      - name: Get tag name
-        id: get_tag
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          tag_name="$(echo $GITHUB_REF | cut -d / -f 3)"
-          echo ::set-output name=tag::$tag_name
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.get_tag.outputs.tag }}
-          name: ${{ steps.get_tag.outputs.tag }}
-          prerelease: false
-          draft: false
-          files: |
-            core/build/libs/bundle-*.jar
-            httpclient/build/libs/bundle-*.jar
-            samples/build/libs/bundle-*.jar
+          shopt -s nullglob
+          assets=(core/build/libs/bundle-*.jar httpclient/build/libs/bundle-*.jar samples/build/libs/bundle-*.jar)
+          [ "${#assets[@]}" -eq 3 ] || { echo 'Expected one release bundle for each module' >&2; exit 1; }
+          flags=(--latest)
+          if [[ "$RELEASE_TAG" == *-* ]]; then flags=(--prerelease); fi
+          gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" "${flags[@]}" "${assets[@]}"

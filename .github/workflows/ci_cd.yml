@@ -11,9 +11,12 @@ on:
     - api-v2
     - 7.x # TODO: This is temporary and will be removed once we merge this branch to master branch
 
+permissions:
+  contents: read
+
 env:
-  OUTPUT_DIR: $GITHUB_WORKSPACE/build/outputs
-  OUTPUT_ZIP: b2-sdk-build-${GITHUB_RUN_NUMBER}.zip
+  OUTPUT_DIR: ${{ github.workspace }}/build/outputs
+  OUTPUT_ZIP: b2-sdk-build-${{ github.run_number }}.zip
   BUILD_NUMBER: ${{ github.run_number }}
   # These are stored in Bitwarden
   B2_ACCOUNT_ID: ${{ secrets.B2_ACCOUNT_ID }}
@@ -25,22 +28,23 @@ jobs:
     runs-on: ${{ github.repository == 'Backblaze/b2-sdk-java-private' && 'self-hosted'|| 'ubuntu-latest' }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: temurin
           java-version: '11'
 
-      - uses: gradle/actions/wrapper-validation@v4
+      - uses: gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
       # --- uv + Python 3.13, then create a venv in $RUNNER_TEMP ---
       - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           enable-cache: false
 
@@ -64,15 +68,15 @@ jobs:
 
       - name: Build the distribution
         run: |
-          $GITHUB_WORKSPACE/gradlew build
-          mkdir -p ${{ env.OUTPUT_DIR }}
-          cp -v */build/libs/b2-sdk-*.{jar,pom,module} ${{ env.OUTPUT_DIR }}
-          cd ${{ env.OUTPUT_DIR }}
-          zip -r $GITHUB_WORKSPACE/build/${{ env.OUTPUT_ZIP }} *
+          "$GITHUB_WORKSPACE/gradlew" build
+          mkdir -p "$OUTPUT_DIR"
+          cp -v ./*/build/libs/b2-sdk-*.{jar,pom,module} "$OUTPUT_DIR"
+          cd "$OUTPUT_DIR"
+          zip -r "$GITHUB_WORKSPACE/build/$OUTPUT_ZIP" ./*
 
       - name: Deploy to internal Maven repo
         if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x') && github.repository == 'Backblaze/b2-sdk-java-private'
-        run: $GITHUB_WORKSPACE/gradlew publishMavenPublicationToRemoteRepository
+        run: '"$GITHUB_WORKSPACE/gradlew" publishMavenPublicationToRemoteRepository'
         env:
           ORG_GRADLE_PROJECT_remoteUsername: ${{ secrets.ARTIFACTORY_USERNAME }}
           ORG_GRADLE_PROJECT_remotePassword: ${{ secrets.ARTIFACTORY_TOKEN }}
@@ -80,7 +84,7 @@ jobs:
 
       - name: Deploy to GH packages
         if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x') && github.repository == 'Backblaze/b2-sdk-java-private'
-        run: $GITHUB_WORKSPACE/gradlew publishMavenPublicationToRemoteRepository
+        run: '"$GITHUB_WORKSPACE/gradlew" publishMavenPublicationToRemoteRepository'
         env:
           ORG_GRADLE_PROJECT_remoteUsername: ${{ secrets.PACKAGES_USERNAME }}
           ORG_GRADLE_PROJECT_remotePassword: ${{ secrets.PACKAGES_TOKEN }}
@@ -92,17 +96,40 @@ jobs:
           export PATH="$UV_VENV/bin:$PATH"
           "$GITHUB_WORKSPACE/maybe_upload_build_results" "${{ env.OUTPUT_ZIP }}"
 
-      - name: Check GitHub Pages status
-        if: github.ref == 'refs/heads/master'
-        uses: crazy-max/ghaction-github-status@v4
+      - name: Upload Javadoc artifact
+        if: >-
+          github.event_name == 'push' && github.repository == 'Backblaze/b2-sdk-java' &&
+          contains(fromJSON('["refs/heads/master", "refs/heads/api-v2", "refs/heads/7.x"]'), github.ref)
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
-          pages_threshold: major_outage
+          path: core/build/docs/javadoc
 
-      - name: Deploy Javadoc
-        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/api-v2' || github.ref == 'refs/heads/7.x') && success()
-        uses: crazy-max/ghaction-github-pages@v3
+  deploy-pages:
+    needs: build
+    if: >-
+      github.event_name == 'push' && github.repository == 'Backblaze/b2-sdk-java' &&
+      contains(fromJSON('["refs/heads/master", "refs/heads/api-v2", "refs/heads/7.x"]'), github.ref)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          target_branch: gh-pages
-          build_dir: core/build/docs/javadoc
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
+      - name: Check GitHub Pages status
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --max-time 30 \
+            https://www.githubstatus.com/api/v2/components.json | python3 scripts/release.py pages-status
+      - name: Deploy Javadoc
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
