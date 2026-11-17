@@ -25,6 +25,8 @@ class SignedTagTest(unittest.TestCase):
         cls.call(["git", "config", "user.name", "Release Fixture"])
         cls.call(["git", "config", "user.email", "fixture@example.invalid"])
         cls.call(["git", "-c", "commit.gpgSign=false", "commit", "--allow-empty", "-qm", "Fixture"])
+        cls.reviewed = cls.call(["git", "rev-parse", "HEAD"]).stdout.strip()
+        cls.call(["git", "update-ref", "refs/remotes/origin/master", cls.reviewed])
         cls.call(["gpg", "--batch", "--pinentry-mode", "loopback", "--passphrase", "",
                   "--quick-generate-key", "Release Fixture <fixture@example.invalid>", "ed25519", "sign", "0"])
         keys = cls.call(["gpg", "--with-colons", "--list-secret-keys"]).stdout
@@ -38,6 +40,9 @@ class SignedTagTest(unittest.TestCase):
         cls.call(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(cls.ssh_key)])
         cls.call(["git", "-c", "gpg.format=ssh", "-c", "user.signingkey=" + str(cls.ssh_key),
                   "tag", "-s", "v1.2.5", "-m", "v1.2.5"])
+        cls.call(["git", "-c", "commit.gpgSign=false", "commit", "--allow-empty", "-qm", "Unreviewed fixture"])
+        cls.unreviewed = cls.call(["git", "rev-parse", "HEAD"]).stdout.strip()
+        cls.call(["git", "tag", "v1.2.8"])
         cls.maintainers = cls.root / "maintainers"
         cls.maintainers.write_text("fixture-maintainer\n")
         cls.bin = cls.root / "bin"
@@ -114,6 +119,25 @@ if path:
         result = self.verify(enforce="false", registered=False)
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("::warning::", result.stdout)
+
+    def check_commit(self, tag, commit):
+        return subprocess.run(["python3", str(SCRIPT.with_name("release.py")), "--root", str(self.repo),
+                               "verify-commit", tag, commit], cwd=self.repo, env=self.environment,
+                              text=True, capture_output=True)
+
+    def test_tag_moved_away_from_event_commit_is_rejected(self):
+        result = self.check_commit("v1.2.3", self.unreviewed)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("event commit", result.stderr)
+
+    def test_matching_event_commit_on_master_passes(self):
+        result = self.check_commit("v1.2.3", self.reviewed)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_matching_tag_outside_master_is_rejected(self):
+        result = self.check_commit("v1.2.8", self.unreviewed)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("origin/master", result.stderr)
 
 
 if __name__ == "__main__":

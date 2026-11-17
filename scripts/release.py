@@ -166,6 +166,20 @@ def milestone_gate(repo, tag):
     print("milestone gate: clear (" + tag + ")")
 
 
+def verify_commit(root, tag, expected):
+    if not re.fullmatch("v" + VERSION, tag) or not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", expected):
+        raise ValueError("expected a version tag and immutable event commit")
+    actual = subprocess.check_output(
+        ["git", "rev-parse", "--verify", "refs/tags/" + tag + "^{commit}"], cwd=root, text=True
+    ).strip()
+    if actual != expected:
+        raise ValueError("release tag no longer matches the event commit")
+    result = subprocess.run(["git", "merge-base", "--is-ancestor", expected, "origin/master"], cwd=root)
+    if result.returncode:
+        raise ValueError("release event commit is not on origin/master")
+    print("release commit: matches event and origin/master")
+
+
 def pages_status():
     try:
         components = json.load(sys.stdin)["components"]
@@ -197,6 +211,9 @@ def main():
     milestone.add_argument("tag")
     milestone.add_argument("--repo", default="Backblaze/b2-sdk-java")
     commands.add_parser("pages-status")
+    commit = commands.add_parser("verify-commit")
+    commit.add_argument("tag")
+    commit.add_argument("sha")
     args = parser.parse_args()
     try:
         if args.command == "notes":
@@ -209,6 +226,8 @@ def main():
             milestone_gate(args.repo, args.tag)
         elif args.command == "pages-status":
             pages_status()
+        elif args.command == "verify-commit":
+            verify_commit(args.root, args.tag, args.sha)
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
         print("HOLD: " + str(error), file=sys.stderr)
         return 1

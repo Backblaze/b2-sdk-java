@@ -184,9 +184,11 @@ Maven Central, GPG artifact signing, the Sonatype staging endpoint, and the rele
 are unchanged by the changelog tooling. Never run this production command as a dry-run substitute.
 
 Before publishing, `release-checks` reads its gate implementation and maintainer list from `master`,
-checks tag ancestry and version/changelog agreement, verifies the tag in the configured mode, and
-requires security clearance and a complete `vX.Y.Z` milestone. `deploy` depends on those checks and
-runs the Gradle build before publishing. After successful publication it runs `gh release create`
+requires the tag to resolve to the workflow's immutable event commit on `master`, checks
+version/changelog agreement, verifies the tag in the configured mode, and requires security clearance
+and a complete `vX.Y.Z` milestone. Metadata validation and the `deploy` checkout use that same event
+commit. `deploy` depends on those checks and runs the Gradle build before publishing. After successful
+publication it runs `gh release create`
 with the exact `.changes/vX.Y.Z.md` section as `--notes-file` and the three existing module bundles.
 No default or automatically generated release body is used.
 

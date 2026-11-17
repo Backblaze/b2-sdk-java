@@ -29,6 +29,12 @@ class WorkflowTest(unittest.TestCase):
         for secret in ("GPG_SIGNING_KEY", "GPG_PASSPHRASE", "SONATYPE_TOKEN_USERNAME", "SONATYPE_TOKEN_PASSWORD"):
             self.assertIn("secrets." + secret, workflow)
 
+    def test_release_checks_and_deploy_use_the_same_event_commit(self):
+        workflow = (ROOT / ".github/workflows/deploy.yml").read_text()
+        self.assertIn('verify-commit "$RELEASE_TAG" "$GITHUB_SHA"', workflow)
+        deploy = workflow.split("\n  deploy:\n", 1)[1]
+        self.assertIn("ref: ${{ github.sha }}", deploy)
+
 
 class PagesStatusTest(unittest.TestCase):
     def run_status(self, payload):

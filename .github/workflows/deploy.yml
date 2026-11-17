@@ -35,11 +35,11 @@ jobs:
           ENFORCE_SIGNED_TAGS: ${{ vars.ENFORCE_SIGNED_TAGS }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          git merge-base --is-ancestor "$RELEASE_TAG^{commit}" origin/master
+          python3 scripts/release.py verify-commit "$RELEASE_TAG" "$GITHUB_SHA"
           bash scripts/verify-release-tag.sh "$RELEASE_TAG"
       - name: Check tag, version, and changelog agreement
         run: |
-          git worktree add --detach "$RUNNER_TEMP/release-metadata" "$RELEASE_TAG"
+          git worktree add --detach "$RUNNER_TEMP/release-metadata" "$GITHUB_SHA"
           python3 scripts/release.py --root "$RUNNER_TEMP/release-metadata" notes "$RELEASE_TAG" > /dev/null
       - name: Require complete version milestone
         env:
@@ -62,6 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
