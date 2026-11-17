@@ -1,0 +1,36 @@
+name: Changelog
+
+on:
+  pull_request:
+    branches: [master, api-v2, 7.x]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  changelog-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: '1.24.0'
+          cache: false
+      - name: Install Changie
+        run: go install github.com/miniscruff/changie@v1.24.0
+      - name: Validate changelog
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "$BASE_SHA" ]; then
+            python3 scripts/release.py changelog-check --base "$BASE_SHA"
+          else
+            python3 scripts/release.py changelog-check
+          fi
+      - name: Test release metadata checks
+        run: python3 -m unittest discover -s scripts/tests -v

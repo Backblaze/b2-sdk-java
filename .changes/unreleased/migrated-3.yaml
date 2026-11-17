@@ -1,0 +1,3 @@
+kind: Changed
+body: "Security / behaviour change: the three-argument `B2EventNotification.parse` overloads now require a signature header and a signing secret; receivers should answer HTTP 401 on `B2SignatureVerificationException`.\n  A missing or empty signature header throws `B2SignatureVerificationException`; a null or empty signing secret throws `IllegalArgumentException`."
+time: 2026-11-16T00:00:00Z
