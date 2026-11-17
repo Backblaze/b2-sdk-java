@@ -139,7 +139,7 @@ def security_gate(repo):
                 elif state == "open":
                     if name == "Code scanning":
                         severity = item["rule"].get("security_severity_level")
-                        count += severity is not None and blocks_release(severity)
+                        count += blocks_release(severity)
                     elif name == "Dependabot":
                         count += blocks_release(item["security_advisory"]["severity"])
                     elif name == "Secret scanning":

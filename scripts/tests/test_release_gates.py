@@ -88,6 +88,12 @@ print(json.dumps(value))
         self.data["security-advisories"] = [[{"state": "triage", "severity": None}]]
         self.assertNotEqual(0, self.run_gate().returncode)
 
+    def test_unscored_code_scanning_alert_blocks(self):
+        self.data["code-scanning/alerts"] = [[{"state": "open", "rule": {"id": "unscored-fixture"}}]]
+        result = self.run_gate()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("Code scanning: HOLD", result.stdout)
+
     def test_unknown_finding_state_is_not_clean(self):
         self.data["dependabot/alerts"] = [[{"state": "unexpected", "security_advisory": {"severity": "high"}}]]
         result = self.run_gate()

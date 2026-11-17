@@ -103,7 +103,7 @@ workflow files and human-authored changes still need a fragment.
    The gate reads all pages of GitHub code-scanning alerts on `master`, Dependabot alerts,
    draft/triage repository advisories, secret-scanning alerts, and severity-labeled open issues.
    Medium/high/critical findings block even without a patched version; all open secret alerts
-   and unscored active advisories block. Low findings do not block. The gate prints counts,
+   and unscored active advisories or code-scanning alerts block. Low findings do not block. The gate prints counts,
    never unpublished advisory text or secret values. Do not put private advisory details in
    a public issue. API failures are not a waiver; restore access and rerun the gate.
 

@@ -91,6 +91,8 @@ if path:
         self.assertIn("verified", result.stdout)
 
     def test_registered_ssh_signature_passes_enforcing_gate(self):
+        tag = self.call(["git", "cat-file", "tag", "v1.2.5"]).stdout
+        self.assertIn("tagger Release Fixture <fixture@example.invalid>", tag)
         result = self.verify("v1.2.5")
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn("verified", result.stdout)
