@@ -326,7 +326,7 @@ class ReleaseInstructionsTest(unittest.TestCase):
                 if failure != "verify":
                     self.assertEqual([], calls)
 
-    def run_documented_maven_verification(self, failure="none"):
+    def run_documented_maven_verification(self, failure="none", fingerprint="A" * 40):
         guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
         section = guide.split("## Verify the published release", 1)[1].split("\n## ", 1)[0]
         blocks = [part.split("```", 1)[0] for part in section.split("```bash")[1:]]
@@ -351,21 +351,24 @@ class ReleaseInstructionsTest(unittest.TestCase):
             'case "$MAVEN_FAILURE:$*" in invalid-signature:*b2-sdk-core-1.2.3.pom*) exit 1;; esac\n'
             'case "$MAVEN_FAILURE" in\n'
             '  wrong-signer) signer=' + "C" * 40 + ';;\n'
-            '  *) signer=' + "A" * 40 + ';;\n'
+            '  *) signer="$MAVEN_FIXTURE_PRIMARY";;\n'
             'esac\n'
             'key="$signer"\n'
-            'if [ "$MAVEN_FAILURE" = signing-subkey ]; then key=' + "B" * 40 + '; fi\n'
+            'case "$MAVEN_FAILURE" in signing-subkey|subkey-as-primary) key=' + "B" * 40 + ';; esac\n'
             'if [ "$MAVEN_FAILURE" != missing-status ]; then\n'
             '  printf "[GNUPG:] VALIDSIG %s 2026-01-02 1767312000 0 4 0 22 8 00 %s\\n" "$key" "$signer"\n'
             'fi\n'
         )
         gpg.chmod(0o755)
         environment = dict(os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"],
-                           VERSION="1.2.3", MAVEN_SIGNING_FINGERPRINT="A" * 40,
+                           VERSION="1.2.3", MAVEN_SIGNING_FINGERPRINT=fingerprint,
+                           MAVEN_FIXTURE_PRIMARY=fingerprint,
                            MAVEN_FAILURE=failure, CURL_LOG=str(root / "curl.log"),
                            GPG_LOG=str(root / "gpg.log"))
         if failure == "missing-fingerprint":
             environment.pop("MAVEN_SIGNING_FINGERPRINT")
+        elif failure == "subkey-as-primary":
+            environment["MAVEN_SIGNING_FINGERPRINT"] = "B" * 40
         result = subprocess.run(["bash", "-c", block], env=environment, capture_output=True, text=True)
         urls = (root / "curl.log").read_text().splitlines() if (root / "curl.log").exists() else []
         signatures = (root / "gpg.log").read_text().splitlines() if (root / "gpg.log").exists() else []
@@ -393,7 +396,7 @@ class ReleaseInstructionsTest(unittest.TestCase):
                     self.assertEqual([], signatures)
 
     def test_maven_verification_requires_the_expected_signer(self):
-        for failure in ("wrong-signer", "missing-status", "missing-fingerprint"):
+        for failure in ("wrong-signer", "missing-status", "missing-fingerprint", "subkey-as-primary"):
             with self.subTest(failure=failure):
                 result, urls, _ = self.run_documented_maven_verification(failure)
                 self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
@@ -402,10 +405,22 @@ class ReleaseInstructionsTest(unittest.TestCase):
                     self.assertEqual([], urls)
 
     def test_maven_verification_accepts_the_expected_primary_keys_signing_subkey(self):
-        result, urls, signatures = self.run_documented_maven_verification("signing-subkey")
-        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(8, len(urls))
-        self.assertEqual(4, len(signatures))
+        for fingerprint in ("A" * 40, "D" * 40):
+            with self.subTest(fingerprint=fingerprint):
+                result, urls, signatures = self.run_documented_maven_verification("signing-subkey", fingerprint)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertEqual(8, len(urls))
+                self.assertEqual(4, len(signatures))
+
+    def test_maven_verification_uses_the_configured_primary_fingerprint(self):
+        for fingerprint in ("A" * 40, "D" * 40):
+            with self.subTest(fingerprint=fingerprint):
+                result, _, signatures = self.run_documented_maven_verification(fingerprint=fingerprint)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertEqual(4, len(signatures))
+                mismatch, urls, _ = self.run_documented_maven_verification("wrong-signer", fingerprint)
+                self.assertNotEqual(0, mismatch.returncode, mismatch.stdout + mismatch.stderr)
+                self.assertFalse(any("b2-sdk-httpclient" in url for url in urls), urls)
 
     def test_tag_commands_work_with_only_tag_exported(self):
         guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()

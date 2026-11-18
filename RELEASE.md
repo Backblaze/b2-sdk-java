@@ -161,9 +161,16 @@ are unchanged by the changelog tooling. Never run this production command as a d
 
 3. After Maven Central indexing completes, check each module and its signature:
 
-   Import the established Maven artifact-signing public key and independently confirm its
-   full uppercase primary-key fingerprint with the release maintainers. Export that value as
-   `MAVEN_SIGNING_FINGERPRINT`; do not derive it from the downloaded artifacts or signatures.
+   TODO (release owner): approve and record the public-key retrieval URL or file, the full
+   uppercase primary-key fingerprint, and the out-of-band fingerprint-confirmation channel
+   and procedure here. No Maven artifact-signing trust source is approved in this repository
+   yet. A key found in a historical Maven signature or on a keyserver is only a candidate.
+
+   Artifact verification remains blocked until the release owner completes that decision.
+   Once confirmed, obtain and import the key from the approved location, follow the recorded
+   independent confirmation procedure, and export the approved primary-key fingerprint as
+   `MAVEN_SIGNING_FINGERPRINT`. There is no default; do not derive the configured value from
+   the artifacts or signatures being verified.
 
    ```bash
    (
@@ -177,7 +184,7 @@ are unchanged by the changelog tooling. Never run this production command as a d
        signature_status=$(gpg --batch --status-fd=1 --verify \
          "/tmp/b2-sdk-$module-$VERSION.pom.asc" "/tmp/b2-sdk-$module-$VERSION.pom")
        printf '%s\n' "$signature_status" | awk -v expected="$MAVEN_SIGNING_FINGERPRINT" '
-         $1 == "[GNUPG:]" && $2 == "VALIDSIG" && ($3 == expected || $12 == expected) { found = 1 }
+         $1 == "[GNUPG:]" && $2 == "VALIDSIG" && $12 == expected { found = 1 }
          END { exit !found }
        ' || { printf '%s\n' 'Maven signature does not match the expected fingerprint' >&2; exit 1; }
      done
