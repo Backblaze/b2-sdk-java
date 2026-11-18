@@ -45,6 +45,31 @@ class WorkflowTest(unittest.TestCase):
         self.assertIn("needs: release-checks", deploy)
         self.assertIn("ref: ${{ github.sha }}", deploy)
 
+    def test_release_gate_commands_are_wired_before_deployment(self):
+        workflow = (ROOT / ".github/workflows/deploy.yml").read_text()
+        checks, deploy = workflow.split("\n  release-checks:\n", 1)[1].split("\n  deploy:\n", 1)
+        verification = step_script(checks, "Verify release tag")
+        self.assertIsNotNone(re.search(
+            r'^bash scripts/verify-release-tag\.sh "\$RELEASE_TAG"\s*$', verification, re.M),
+            "release-checks must invoke the signed-tag verifier")
+        for command in ('milestone "$RELEASE_TAG"', "security"):
+            with self.subTest(command=command):
+                self.assertIsNotNone(re.search(
+                    r"^        run: python3 scripts/release\.py " + re.escape(command) + r"\s*$", checks, re.M),
+                    "release-checks must invoke " + command)
+        self.assertIn("needs: release-checks", deploy)
+
+    def test_dependabot_updates_action_pins_weekly_from_repository_root(self):
+        configuration = (ROOT / ".github/dependabot.yml").read_text()
+        updates = re.findall(r"^  - package-ecosystem:.*?(?=^  - |\Z)", configuration, re.M | re.S)
+        action_updates = [entry for entry in updates if re.match(
+            r'''^  - package-ecosystem:\s*["']?github-actions["']?\s*(?:#.*)?$''',
+            entry.splitlines()[0])]
+        self.assertEqual(1, len(action_updates), "configure exactly one GitHub Actions update entry")
+        self.assertRegex(action_updates[0], re.compile(r'''^    directory:\s*["']?/["']?\s*(?:#.*)?$''', re.M))
+        self.assertRegex(action_updates[0], re.compile(
+            r'''^    schedule:\s*\n      interval:\s*["']?weekly["']?\s*(?:#.*)?$''', re.M))
+
     def test_official_pages_actions_and_status_gate_are_connected(self):
         workflow = (ROOT / ".github/workflows/ci_cd.yml").read_text()
         build, deploy = workflow.split("\n  deploy-pages:\n", 1)

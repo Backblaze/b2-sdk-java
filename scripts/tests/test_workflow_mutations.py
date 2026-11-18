@@ -10,16 +10,18 @@ import test_workflows as contracts
 
 class WorkflowMutationTest(unittest.TestCase):
     def setUp(self):
+        self.files = {name: pathlib.Path(".github/workflows") / name for name in ("ci_cd.yml", "deploy.yml")}
+        self.files["dependabot.yml"] = pathlib.Path(".github/dependabot.yml")
         self.originals = {
-            name: (contracts.ROOT / ".github/workflows" / name).read_text()
-            for name in ("ci_cd.yml", "deploy.yml")
+            name: (contracts.ROOT / filename).read_text()
+            for name, filename in self.files.items()
         }
         temporary = tempfile.TemporaryDirectory(prefix="b2-workflow-mutations-")
         self.addCleanup(temporary.cleanup)
         self.root = pathlib.Path(temporary.name)
         (self.root / ".github/workflows").mkdir(parents=True)
         for name, content in self.originals.items():
-            (self.root / ".github/workflows" / name).write_text(content)
+            (self.root / self.files[name]).write_text(content)
 
     def run_contract(self, method):
         result = unittest.TestResult()
@@ -34,7 +36,7 @@ class WorkflowMutationTest(unittest.TestCase):
         self.assertTrue(baseline.wasSuccessful(), baseline.failures)
         original = self.originals[workflow]
         self.assertEqual(1, original.count(before), "mutation must change exactly one occurrence")
-        (self.root / ".github/workflows" / workflow).write_text(original.replace(before, after, 1))
+        (self.root / self.files[workflow]).write_text(original.replace(before, after, 1))
         result = self.run_contract(method)
         self.assertFalse(result.wasSuccessful(), "workflow mutation escaped its contract check")
         self.assertTrue(result.failures, "mutation must fail an assertion, not fixture setup")
@@ -79,6 +81,28 @@ class WorkflowMutationTest(unittest.TestCase):
         self.assert_mutation_rejected(
             "ci_cd.yml", "--dry-run --no-daemon", "--no-daemon",
             "test_publication_task_graph_is_checked_without_publishing")
+
+    def test_missing_signed_tag_verification_is_rejected(self):
+        self.assert_mutation_rejected(
+            "deploy.yml", 'bash scripts/verify-release-tag.sh "$RELEASE_TAG"', "true",
+            "test_release_gate_commands_are_wired_before_deployment")
+
+    def test_missing_milestone_gate_is_rejected(self):
+        self.assert_mutation_rejected(
+            "deploy.yml", 'run: python3 scripts/release.py milestone "$RELEASE_TAG"', "run: true",
+            "test_release_gate_commands_are_wired_before_deployment")
+
+    def test_missing_security_gate_is_rejected(self):
+        self.assert_mutation_rejected(
+            "deploy.yml", "run: python3 scripts/release.py security", "run: true",
+            "test_release_gate_commands_are_wired_before_deployment")
+
+    def test_missing_dependabot_action_updates_is_rejected(self):
+        self.assert_mutation_rejected(
+            "dependabot.yml",
+            '  - package-ecosystem: "github-actions"\n    directory: "/"\n'
+            '    schedule:\n      interval: "weekly"\n', "",
+            "test_dependabot_updates_action_pins_weekly_from_repository_root")
 
 
 if __name__ == "__main__":
