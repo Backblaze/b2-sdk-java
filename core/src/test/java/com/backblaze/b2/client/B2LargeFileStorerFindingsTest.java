@@ -59,6 +59,10 @@ public class B2LargeFileStorerFindingsTest extends B2BaseTest {
         private final CountDownLatch release;
         private final boolean failImmediately;
         final AtomicReference<B2CancellationToken> token = new AtomicReference<>();
+        /** counted down when storePart() is entered. */
+        final CountDownLatch started = new CountDownLatch(1);
+        /** counted down when storePart() is left, however it is left. */
+        final CountDownLatch stopped = new CountDownLatch(1);
 
         FakePartStorer(int partNumber, long size, CountDownLatch release, boolean failImmediately) {
             this.partNumber = partNumber;
@@ -81,16 +85,30 @@ public class B2LargeFileStorerFindingsTest extends B2BaseTest {
         public B2Part storePart(B2LargeFileStorer storer, B2UploadListener listener, B2CancellationToken cancellationToken)
                 throws IOException, B2Exception {
             token.set(cancellationToken);
-            if (failImmediately) {
-                throw new B2InternalErrorException("simulated part failure");
-            }
+            started.countDown();
             try {
-                release.await(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new B2LocalException("interrupted", "interrupted");
+                if (failImmediately) {
+                    throw new B2InternalErrorException("simulated part failure");
+                }
+                // a worker that behaves like a real upload: it stops when interrupted or when it is told to cancel
+                final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+                try {
+                    while (!release.await(20, TimeUnit.MILLISECONDS)) {
+                        if (cancellationToken != null && cancellationToken.isCancelled()) {
+                            throw new B2LocalException("cancelled", "cancelled");
+                        }
+                        if (System.nanoTime() > deadline) {
+                            break;
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new B2LocalException("interrupted", "interrupted");
+                }
+                return new B2Part(fileId(1), partNumber, size, makeSha1(partNumber), makeMd5(partNumber), 1, null);
+            } finally {
+                stopped.countDown();
             }
-            return new B2Part(fileId(1), partNumber, size, makeSha1(partNumber), makeMd5(partNumber), 1, null);
         }
     }
 
@@ -126,28 +144,48 @@ public class B2LargeFileStorerFindingsTest extends B2BaseTest {
         assertTrue("interrupt flag was swallowed by storeParts", flagRestored);
     }
 
-    /** Finding C6: after the caller is interrupted, the part uploads in progress must be told to stop. */
+    /**
+     * Finding C6: after the caller is interrupted, the part uploads that were in progress must stop.
+     * The caller runs on its own thread; the test waits until both uploads have really started before
+     * interrupting it, then waits (bounded) for each started upload to stop, by whatever means (cancellation
+     * token or interrupt).
+     */
     @Category(KnownDefect.class)
     @Test
     public void testFindingC6_partUploadsAreCancelledWhenCallerInterrupted() throws Exception {
         final CountDownLatch never = new CountDownLatch(1);
-        final B2LargeFileStorer storer2 = storerFor(Arrays.<B2PartStorer>asList(
-                new FakePartStorer(1, 10, never, false), new FakePartStorer(2, 10, never, false)));
-        final FakePartStorer watched = (FakePartStorer) storer2.getPartStorers().get(0);
-        Thread.currentThread().interrupt();
+        final FakePartStorer part1 = new FakePartStorer(1, 10, never, false);
+        final FakePartStorer part2 = new FakePartStorer(2, 10, never, false);
+        final B2LargeFileStorer storer = storerFor(Arrays.<B2PartStorer>asList(part1, part2));
+
+        final AtomicReference<Throwable> callerOutcome = new AtomicReference<>();
+        final Thread caller = new Thread(() -> {
+            try {
+                storer.storeParts(null);
+            } catch (Throwable t) {
+                callerOutcome.set(t);
+            }
+        }, "C6-caller");
+        caller.setDaemon(true);
         try {
-            storer2.storeParts(null);
-        } catch (B2Exception expected) {
-            // expected
+            caller.start();
+            assertTrue("part 1 never started", part1.started.await(5, TimeUnit.SECONDS));
+            assertTrue("part 2 never started", part2.started.await(5, TimeUnit.SECONDS));
+
+            caller.interrupt();
+
+            caller.join(5000);
+            assertTrue("storeParts did not return after its caller was interrupted", !caller.isAlive());
+            assertTrue("part 1 upload was still running after the caller was interrupted",
+                    part1.stopped.await(3, TimeUnit.SECONDS));
+            assertTrue("part 2 upload was still running after the caller was interrupted",
+                    part2.stopped.await(3, TimeUnit.SECONDS));
+        } finally {
+            never.countDown();
+            caller.interrupt();
+            pool.shutdownNow();
+            pool.awaitTermination(5, TimeUnit.SECONDS);
         }
-        Thread.interrupted();
-        final long deadline2 = System.currentTimeMillis() + 2000;
-        while ((watched.token.get() == null || !watched.token.get().isCancelled()) && System.currentTimeMillis() < deadline2) {
-            Thread.sleep(5);
-        }
-        final boolean cancelled = watched.token.get() != null && watched.token.get().isCancelled();
-        never.countDown();
-        assertTrue("part uploads were not cancelled after the caller was interrupted", cancelled);
     }
 
     /** Finding C7: the exception raised for an interrupt must carry the InterruptedException as its cause. */

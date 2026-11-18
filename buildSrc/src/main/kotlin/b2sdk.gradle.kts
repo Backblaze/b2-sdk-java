@@ -42,6 +42,12 @@ dependencies {
 // Tests that document a defect that is still present carry @Category(KnownDefect.class).  The default
 // `test` task (and so `build` and CI) excludes them; `./gradlew knownDefectTests` runs only them and is
 // expected to fail until the defects are fixed.  Only modules that have the marker interface take part.
+//
+// A marked test is excluded from `test`, so it must not stay marked once its defect is fixed: the PR that
+// fixes a defect removes @Category(KnownDefect.class) from that defect's test(s) and confirms they pass under
+// the ordinary `./gradlew test`.  A marked test that starts passing in `knownDefectTests` is the signal that
+// this step is due.  Each marked test must fail only for the defect it documents (it asserts that specific
+// behaviour; a connection error, timeout or setup problem must not satisfy it).
 val knownDefectMarker = "com.backblaze.b2.testing.KnownDefect"
 if (file("src/test/java/com/backblaze/b2/testing/KnownDefect.java").exists()) {
     tasks.test {

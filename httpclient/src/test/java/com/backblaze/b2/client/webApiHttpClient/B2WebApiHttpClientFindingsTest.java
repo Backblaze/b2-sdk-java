@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -39,7 +41,7 @@ public class B2WebApiHttpClientFindingsTest {
 
     @Before
     public void startServer() throws Exception {
-        server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 10);
+        server = HttpServer.create(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0), 10);
         server.createContext("/", exchange -> {
             try {
                 handler.handle(exchange);
@@ -148,13 +150,21 @@ public class B2WebApiHttpClientFindingsTest {
     @Category(KnownDefect.class)
     @Test
     public void testFindingC11_negativeRetryAfterHeaderIsNotTrusted() throws Exception {
-        handler = ex -> reply(ex, 503, "{\"status\":503,\"code\":\"service_unavailable\",\"message\":\"m\"}",
-                "Retry-After", "-5");
+        final CountDownLatch requestSeen = new CountDownLatch(1);
+        handler = ex -> {
+            requestSeen.countDown();
+            reply(ex, 503, "{\"status\":503,\"code\":\"service_unavailable\",\"message\":\"m\"}",
+                    "Retry-After", "-5");
+        };
         final B2WebApiClient client = defaultClient();
         try {
             client.getContent(baseUrl, null, B2ContentMemoryWriter.build());
             fail("expected an exception");
         } catch (B2Exception e) {
+            // a connection failure is not the response under test
+            assertTrue("the server never received the request; the failure was: " + e,
+                    requestSeen.await(5, TimeUnit.SECONDS));
+            assertEquals("the 503 reply was not processed: " + e, 503, e.getStatus());
             final Integer retryAfter = e.getRetryAfterSecondsOrNull();
             assertTrue("negative wait passed on: " + retryAfter, retryAfter == null || retryAfter >= 0);
         } finally {

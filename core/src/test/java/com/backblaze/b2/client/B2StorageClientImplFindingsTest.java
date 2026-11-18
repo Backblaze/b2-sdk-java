@@ -47,6 +47,17 @@ public class B2StorageClientImplFindingsTest extends B2BaseTest {
         return new B2ConnectionBrokenException("broken", null, "reply lost");
     }
 
+    /** The failure the client reports must still be the lost reply (the exception itself, or one that names it). */
+    private static void assertLostReplyPropagated(B2Exception thrown) {
+        for (Throwable t = thrown; t != null; t = t.getCause()) {
+            if (t instanceof B2ConnectionBrokenException
+                    && t.getMessage() != null && t.getMessage().contains("reply lost")) {
+                return;
+            }
+        }
+        fail("the lost-reply failure was not propagated; the client threw: " + thrown);
+    }
+
     private void authorize() throws B2Exception {
         B2Clock.useSimulator(parseDateTime("2018-04-17 01:26:32"));
         when(webifier.authorizeAccount(anyObject())).thenReturn(ACCOUNT_AUTH);
@@ -60,8 +71,9 @@ public class B2StorageClientImplFindingsTest extends B2BaseTest {
         when(webifier.createKey(anyObject(), anyObject())).thenThrow(lostReply());
         try {
             client.createKey(B2CreateKeyRequest.builder(Collections.singleton("listFiles"), "k").build());
+            fail("client.createKey returned normally although the reply was lost");
         } catch (B2Exception expected) {
-            // expected
+            assertLostReplyPropagated(expected);
         }
         verify(webifier, times(1)).createKey(anyObject(), anyObject());
     }
@@ -74,8 +86,9 @@ public class B2StorageClientImplFindingsTest extends B2BaseTest {
         when(webifier.startLargeFile(anyObject(), anyObject())).thenThrow(lostReply());
         try {
             client.startLargeFile(B2StartLargeFileRequest.builder(bucketId(1), fileName(1), "text/plain").build());
+            fail("client.startLargeFile returned normally although the reply was lost");
         } catch (B2Exception expected) {
-            // expected
+            assertLostReplyPropagated(expected);
         }
         verify(webifier, times(1)).startLargeFile(anyObject(), anyObject());
     }
@@ -88,8 +101,9 @@ public class B2StorageClientImplFindingsTest extends B2BaseTest {
         when(webifier.createBucket(anyObject(), anyObject())).thenThrow(lostReply());
         try {
             client.createBucket("bucket1", "allPublic");
+            fail("client.createBucket returned normally although the reply was lost");
         } catch (B2Exception expected) {
-            // expected
+            assertLostReplyPropagated(expected);
         }
         verify(webifier, times(1)).createBucket(anyObject(), anyObject());
     }
@@ -102,8 +116,9 @@ public class B2StorageClientImplFindingsTest extends B2BaseTest {
         when(webifier.deleteKey(anyObject(), anyObject())).thenThrow(lostReply());
         try {
             client.deleteKey(B2DeleteKeyRequest.builder("keyId").build());
+            fail("client.deleteKey returned normally although the reply was lost");
         } catch (B2Exception expected) {
-            // expected
+            assertLostReplyPropagated(expected);
         }
         verify(webifier, times(1)).deleteKey(anyObject(), anyObject());
     }
@@ -116,8 +131,9 @@ public class B2StorageClientImplFindingsTest extends B2BaseTest {
         when(webifier.copyFile(anyObject(), anyObject())).thenThrow(lostReply());
         try {
             client.copySmallFile(B2CopyFileRequest.builder(fileId(1), fileName(2)).build());
+            fail("client.copySmallFile returned normally although the reply was lost");
         } catch (B2Exception expected) {
-            // expected
+            assertLostReplyPropagated(expected);
         }
         verify(webifier, times(1)).copyFile(anyObject(), anyObject());
     }

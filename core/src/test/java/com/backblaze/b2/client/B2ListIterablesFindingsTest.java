@@ -41,6 +41,8 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class B2ListIterablesFindingsTest extends B2BaseTest {
@@ -96,10 +98,13 @@ public class B2ListIterablesFindingsTest extends B2BaseTest {
     @Test
     public void testFindingC14_partsIteratorContinuesPastEmptyMiddlePage() throws B2Exception {
         final B2ListPartsRequest request = B2ListPartsRequest.builder(fileId(1)).build();
-        when(client.listParts(anyObject())).thenReturn(
-                new B2ListPartsResponse(B2Collections.listOf(part(1)), 2),
-                new B2ListPartsResponse(new ArrayList<B2Part>(), 3),
-                new B2ListPartsResponse(B2Collections.listOf(part(3)), null));
+        final B2ListPartsRequest second = B2ListPartsRequest.builder(fileId(1)).setStartPartNumber(2).build();
+        final B2ListPartsRequest third = B2ListPartsRequest.builder(fileId(1)).setStartPartNumber(3).build();
+        // each page is only returned for the request that really asks for it, so a listing that does not
+        // advance its continuation cursor cannot get the later pages.
+        when(client.listParts(request)).thenReturn(new B2ListPartsResponse(B2Collections.listOf(part(1)), 2));
+        when(client.listParts(second)).thenReturn(new B2ListPartsResponse(new ArrayList<B2Part>(), 3));
+        when(client.listParts(third)).thenReturn(new B2ListPartsResponse(B2Collections.listOf(part(3)), null));
 
         final List<Integer> seen = new ArrayList<>();
         final Iterator<B2Part> iter = new B2ListPartsIterableImpl(client, request).iterator();
@@ -107,6 +112,11 @@ public class B2ListIterablesFindingsTest extends B2BaseTest {
             seen.add(iter.next().getPartNumber());
         }
         assertEquals(B2Collections.listOf(1, 3), seen);
+        // and the requests were exactly: first page, then start part 2, then start part 3
+        verify(client).listParts(request);
+        verify(client).listParts(second);
+        verify(client).listParts(third);
+        verifyNoMoreInteractions(client);
     }
 
     /**

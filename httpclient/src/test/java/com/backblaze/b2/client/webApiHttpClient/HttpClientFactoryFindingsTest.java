@@ -8,24 +8,32 @@ import com.backblaze.b2.testing.KnownDefect;
 import org.junit.experimental.categories.Category;
 import org.junit.Test;
 
-import java.util.Map;
+import java.lang.reflect.Field;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
 
 public class HttpClientFactoryFindingsTest {
+    /** The cleaner thread that belongs to this very factory (not some other factory's). */
+    private static Thread cleanerThreadOf(HttpClientFactoryImpl factory) throws Exception {
+        final Field f = HttpClientFactoryImpl.class.getDeclaredField("connectionJanitor");
+        f.setAccessible(true);
+        return (Thread) f.get(factory);
+    }
+
     /** Finding C17: the idle-connection cleaner thread must be a daemon so it cannot keep the JVM alive. */
     @Category(KnownDefect.class)
     @Test
-    public void testFindingC17_idleConnectionMonitorThreadIsDaemon() {
+    public void testFindingC17_idleConnectionMonitorThreadIsDaemon() throws Exception {
         final HttpClientFactoryImpl factory = HttpClientFactoryImpl.build();
         try {
-            Thread monitor = null;
-            for (Thread t : Thread.getAllStackTraces().keySet()) {
-                if (t.getClass().getName().contains("IdleConnectionMonitorThread")) {
-                    monitor = t;
-                }
-            }
+            final Thread monitor = cleanerThreadOf(factory);
             assertNotNull("cleaner thread not found", monitor);
             assertTrue("cleaner thread is not a daemon", monitor.isDaemon());
         } finally {
@@ -35,33 +43,55 @@ public class HttpClientFactoryFindingsTest {
 
     /**
      * Guard for C18 (judged not a bug): close() must return promptly (it should not sit out the 5 s wait).
-     * The cleaner thread is first allowed to reach its wait, so the guard is deterministic: calling close()
-     * in the instant between thread start and its first wait() is a separate startup race, which would make
-     * this guard fail intermittently if it were not excluded here.
+     * This factory's own cleaner thread is first required to reach its wait, so the guard is deterministic:
+     * calling close() in the instant between thread start and its first wait() is a separate startup race.
+     * close() runs on a daemon thread and is given a bounded time, so a close() that hangs is reported as a
+     * timeout instead of blocking the test run.
      */
     @Test
-    public void testGuardC18_closeReturnsPromptly() {
-        for (int i = 0; i < 5; i++) {
-            final HttpClientFactoryImpl factory = HttpClientFactoryImpl.build();
-            awaitCleanerThreadWaiting();
-            final long start = System.nanoTime();
-            factory.close();
-            final long ms = (System.nanoTime() - start) / 1_000_000;
-            assertTrue("close() took " + ms + " ms", ms < 4000);
+    public void testGuardC18_closeReturnsPromptly() throws Exception {
+        final ExecutorService closer = Executors.newSingleThreadExecutor(r -> {
+            final Thread t = new Thread(r, "C18-closer");
+            t.setDaemon(true);
+            return t;
+        });
+        try {
+            for (int i = 0; i < 5; i++) {
+                final HttpClientFactoryImpl factory = HttpClientFactoryImpl.build();
+                boolean closeSubmitted = false;
+                try {
+                    awaitWaiting(cleanerThreadOf(factory));
+                    final long start = System.nanoTime();
+                    final Future<?> closing = closer.submit(factory::close);
+                    closeSubmitted = true;
+                    try {
+                        closing.get(4, TimeUnit.SECONDS);
+                    } catch (TimeoutException e) {
+                        closing.cancel(true);
+                        fail("close() did not return within 4 s");
+                    }
+                    final long ms = (System.nanoTime() - start) / 1_000_000;
+                    assertTrue("close() took " + ms + " ms", ms < 4000);
+                } finally {
+                    if (!closeSubmitted) {
+                        factory.close();
+                    }
+                }
+            }
+        } finally {
+            closer.shutdownNow();
         }
     }
 
-    /** Waits (bounded) until a cleaner thread is parked in wait(), so close() cannot race its startup. */
-    private static void awaitCleanerThreadWaiting() {
-        final long deadline = System.nanoTime() + 2_000_000_000L;
+    /** Waits (bounded) until the given cleaner thread is parked in wait(); fails if it never gets there. */
+    private static void awaitWaiting(Thread cleaner) {
+        final long deadline = System.nanoTime() + 5_000_000_000L;
         while (System.nanoTime() < deadline) {
-            for (Thread t : Thread.getAllStackTraces().keySet()) {
-                if (t.getClass().getName().contains("IdleConnectionMonitorThread")
-                        && t.getState() == Thread.State.TIMED_WAITING) {
-                    return;
-                }
+            if (cleaner.getState() == Thread.State.TIMED_WAITING || cleaner.getState() == Thread.State.WAITING) {
+                return;
             }
             Thread.yield();
         }
+        fail("the factory's cleaner thread did not reach its wait; state=" + cleaner.getState());
     }
 }
