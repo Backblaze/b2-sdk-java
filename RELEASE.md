@@ -148,6 +148,8 @@ are unchanged by the changelog tooling. Never run this production command as a d
    done
    ```
 
+   The shared Gradle publication plugin also publishes `b2-sdk-core-test-jdk17`, so this
+   loop verifies all four published modules, including that test module's POM and signature.
    Verify using the established Maven artifact-signing public key, independently of tag keys.
 4. Confirm there are no open issues/PRs left in the version milestone, then close it. Publish any
    advisories coordinated with the release only after the fixed artifacts are available.
