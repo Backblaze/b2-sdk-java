@@ -1,14 +1,23 @@
 """Release workflow policy and GitHub Pages status contract checks."""
 
 import json
+import os
 import pathlib
 import re
 import subprocess
 import sys
+import tempfile
 import unittest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+
+
+def step_script(workflow, name):
+    step = workflow.split("      - name: " + name + "\n", 1)[1]
+    step = step.split("\n      - ", 1)[0]
+    body = step.split("        run: |\n", 1)[1]
+    return "\n".join(line[10:] for line in body.splitlines()) + "\n"
 
 
 class WorkflowTest(unittest.TestCase):
@@ -33,7 +42,69 @@ class WorkflowTest(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/deploy.yml").read_text()
         self.assertIn('verify-commit "$RELEASE_TAG" "$GITHUB_SHA"', workflow)
         deploy = workflow.split("\n  deploy:\n", 1)[1]
+        self.assertIn("needs: release-checks", deploy)
         self.assertIn("ref: ${{ github.sha }}", deploy)
+
+    def test_official_pages_actions_and_status_gate_are_connected(self):
+        workflow = (ROOT / ".github/workflows/ci_cd.yml").read_text()
+        build, deploy = workflow.split("\n  deploy-pages:\n", 1)
+        self.assertRegex(build, r"uses: actions/upload-pages-artifact@[0-9a-f]{40}\b")
+        self.assertIn("path: core/build/docs/javadoc", build)
+        self.assertIn("needs: build", deploy)
+        self.assertRegex(deploy, r"uses: actions/deploy-pages@[0-9a-f]{40}\b")
+        self.assertIn("pages: write", deploy)
+        self.assertIn("id-token: write", deploy)
+        status = step_script(deploy, "Check GitHub Pages status")
+        self.assertRegex(status, re.compile(
+            r"^curl\b.*?https://www\.githubstatus\.com/api/v2/components\.json"
+            r"\s*\|\s*python3 scripts/release\.py pages-status\b", re.M | re.S))
+
+    def test_release_command_uses_notes_and_each_module_bundle(self):
+        workflow = (ROOT / ".github/workflows/deploy.yml").read_text()
+        script = step_script(workflow, "Create GitHub Release")
+        for tag, flag in (("v1.2.3", "--latest"), ("v1.2.3-rc.1", "--prerelease")):
+            with self.subTest(tag=tag), tempfile.TemporaryDirectory(prefix="b2-release-command-") as temporary:
+                root = pathlib.Path(temporary)
+                binary = root / "bin"
+                binary.mkdir()
+                gh = binary / "gh"
+                gh.write_text("#!" + sys.executable + "\n"
+                              "import json, os, pathlib, sys\n"
+                              "pathlib.Path(os.environ['GH_CALL']).write_text(json.dumps(sys.argv[1:]))\n")
+                gh.chmod(0o755)
+                assets = []
+                for module in ("core", "httpclient", "samples"):
+                    path = pathlib.Path(module) / "build/libs" / ("bundle-" + module + ".jar")
+                    (root / path).parent.mkdir(parents=True)
+                    (root / path).write_bytes(b"bundle fixture")
+                    assets.append(str(path))
+                notes = root / "release-notes.md"
+                notes.write_text("Release notes fixture\n")
+                output = root / "gh-call.json"
+                environment = dict(os.environ, PATH=str(binary) + os.pathsep + os.environ["PATH"],
+                                   RELEASE_TAG=tag, RUNNER_TEMP=str(root), GH_CALL=str(output))
+                result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
+                                        cwd=root, env=environment, text=True, capture_output=True)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertTrue(output.is_file(), "release command did not invoke gh")
+                arguments = json.loads(output.read_text())
+                self.assertEqual(["release", "create", tag], arguments[:3])
+                self.assertIn("--verify-tag", arguments)
+                self.assertIn("--title", arguments)
+                self.assertEqual(tag, arguments[arguments.index("--title") + 1])
+                self.assertIn("--notes-file", arguments)
+                self.assertEqual(str(notes), arguments[arguments.index("--notes-file") + 1])
+                self.assertIn(flag, arguments)
+                self.assertCountEqual(assets, [value for value in arguments if value.endswith(".jar")])
+
+    def test_publication_task_graph_is_checked_without_publishing(self):
+        workflow = (ROOT / ".github/workflows/ci_cd.yml").read_text()
+        self.assertIn("      - name: Validate publication task graph\n", workflow)
+        script = step_script(workflow, "Validate publication task graph")
+        for argument in ("./gradlew", "publishToSonatype", "closeAndReleaseSonatypeStagingRepository",
+                         "createBundle", "--dry-run", "--no-daemon",
+                         "-PsonatypeUsername=dry-run", "-PsonatypePassword=dry-run"):
+            self.assertIn(argument, script)
 
 
 class PagesStatusTest(unittest.TestCase):

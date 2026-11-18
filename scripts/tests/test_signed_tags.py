@@ -97,6 +97,13 @@ if path:
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn("verified", result.stdout)
 
+    def test_ssh_verification_uses_the_signed_tagger_email_principal(self):
+        trace = self.root / "ssh-principal.trace"
+        self.environment = dict(self.environment, GIT_TRACE=str(trace))
+        result = self.verify("v1.2.5")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertRegex(trace.read_text(), r"ssh-keygen -Y verify[^\n]* -I fixture@example\.invalid(?: |$)")
+
     def test_ssh_key_registered_only_for_signing_passes(self):
         result = self.verify("v1.2.5", registered=False, signing_only=True)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
