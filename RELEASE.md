@@ -161,13 +161,27 @@ are unchanged by the changelog tooling. Never run this production command as a d
 
 3. After Maven Central indexing completes, check each module and its signature:
 
+   Import the established Maven artifact-signing public key and independently confirm its
+   full uppercase primary-key fingerprint with the release maintainers. Export that value as
+   `MAVEN_SIGNING_FINGERPRINT`; do not derive it from the downloaded artifacts or signatures.
+
    ```bash
-   for module in core httpclient samples core-test-jdk17; do
-     url="https://repo.maven.apache.org/maven2/com/backblaze/b2/b2-sdk-$module/$VERSION/b2-sdk-$module-$VERSION.pom"
-     curl --fail --show-error --location "$url" -o "/tmp/b2-sdk-$module-$VERSION.pom"
-     curl --fail --show-error --location "$url.asc" -o "/tmp/b2-sdk-$module-$VERSION.pom.asc"
-     gpg --verify "/tmp/b2-sdk-$module-$VERSION.pom.asc" "/tmp/b2-sdk-$module-$VERSION.pom"
-   done
+   (
+     set -euo pipefail
+     : "${VERSION:?export the released version, e.g. 6.5.1}"
+     : "${MAVEN_SIGNING_FINGERPRINT:?export the independently confirmed full signing fingerprint}"
+     for module in core httpclient samples core-test-jdk17; do
+       url="https://repo.maven.apache.org/maven2/com/backblaze/b2/b2-sdk-$module/$VERSION/b2-sdk-$module-$VERSION.pom"
+       curl --fail --show-error --location "$url" -o "/tmp/b2-sdk-$module-$VERSION.pom"
+       curl --fail --show-error --location "$url.asc" -o "/tmp/b2-sdk-$module-$VERSION.pom.asc"
+       signature_status=$(gpg --batch --status-fd=1 --verify \
+         "/tmp/b2-sdk-$module-$VERSION.pom.asc" "/tmp/b2-sdk-$module-$VERSION.pom")
+       printf '%s\n' "$signature_status" | awk -v expected="$MAVEN_SIGNING_FINGERPRINT" '
+         $1 == "[GNUPG:]" && $2 == "VALIDSIG" && ($3 == expected || $12 == expected) { found = 1 }
+         END { exit !found }
+       ' || { printf '%s\n' 'Maven signature does not match the expected fingerprint' >&2; exit 1; }
+     done
+   )
    ```
 
    The shared Gradle publication plugin also publishes `b2-sdk-core-test-jdk17`, so this

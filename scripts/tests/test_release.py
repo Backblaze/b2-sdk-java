@@ -326,38 +326,86 @@ class ReleaseInstructionsTest(unittest.TestCase):
                 if failure != "verify":
                     self.assertEqual([], calls)
 
-    def test_maven_verification_checks_every_published_module_and_signature(self):
+    def run_documented_maven_verification(self, failure="none"):
         guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
         section = guide.split("## Verify the published release", 1)[1].split("\n## ", 1)[0]
         blocks = [part.split("```", 1)[0] for part in section.split("```bash")[1:]]
         block = next(block for block in blocks if "for module in" in block)
-        with tempfile.TemporaryDirectory() as temporary:
-            root = pathlib.Path(temporary)
-            curl = root / "curl"
-            curl.write_text(
-                '#!/bin/sh\nfor argument; do\n'
-                '  case "$argument" in https://*) printf "%s\\n" "$argument" >> "$CURL_LOG";; esac\n'
-                'done\n'
-            )
-            curl.chmod(0o755)
-            gpg = root / "gpg"
-            gpg.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "$GPG_LOG"\n')
-            gpg.chmod(0o755)
-            environment = dict(os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"],
-                               VERSION="1.2.3", CURL_LOG=str(root / "curl.log"), GPG_LOG=str(root / "gpg.log"))
-            result = subprocess.run(["bash", "-euo", "pipefail", "-c", block], env=environment,
-                                    capture_output=True, text=True)
-            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-            urls = (root / "curl.log").read_text().splitlines()
-            signatures = (root / "gpg.log").read_text().splitlines()
-            for module in ("core", "httpclient", "samples", "core-test-jdk17"):
-                with self.subTest(module=module):
-                    artifact = "b2-sdk-" + module
-                    url = "https://repo.maven.apache.org/maven2/com/backblaze/b2/" + artifact + "/1.2.3/" + artifact + "-1.2.3.pom"
-                    self.assertIn(url, urls)
-                    self.assertIn(url + ".asc", urls)
-                    pom = "/tmp/" + artifact + "-1.2.3.pom"
-                    self.assertIn("--verify " + pom + ".asc " + pom, signatures)
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        root = pathlib.Path(temporary.name)
+        curl = root / "curl"
+        curl.write_text(
+            '#!/bin/sh\nfor argument; do\n'
+            '  case "$argument" in https://*) printf "%s\\n" "$argument" >> "$CURL_LOG";; esac\n'
+            '  case "$MAVEN_FAILURE:$argument" in\n'
+            '    download:*b2-sdk-core-1.2.3.pom) exit 22;;\n'
+            '    signature-download:*b2-sdk-core-1.2.3.pom.asc) exit 22;;\n'
+            '  esac\n'
+            'done\n'
+        )
+        curl.chmod(0o755)
+        gpg = root / "gpg"
+        gpg.write_text(
+            '#!/bin/sh\nprintf "%s\\n" "$*" >> "$GPG_LOG"\n'
+            'case "$MAVEN_FAILURE:$*" in invalid-signature:*b2-sdk-core-1.2.3.pom*) exit 1;; esac\n'
+            'case "$MAVEN_FAILURE" in\n'
+            '  wrong-signer) signer=' + "C" * 40 + ';;\n'
+            '  *) signer=' + "A" * 40 + ';;\n'
+            'esac\n'
+            'key="$signer"\n'
+            'if [ "$MAVEN_FAILURE" = signing-subkey ]; then key=' + "B" * 40 + '; fi\n'
+            'if [ "$MAVEN_FAILURE" != missing-status ]; then\n'
+            '  printf "[GNUPG:] VALIDSIG %s 2026-01-02 1767312000 0 4 0 22 8 00 %s\\n" "$key" "$signer"\n'
+            'fi\n'
+        )
+        gpg.chmod(0o755)
+        environment = dict(os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"],
+                           VERSION="1.2.3", MAVEN_SIGNING_FINGERPRINT="A" * 40,
+                           MAVEN_FAILURE=failure, CURL_LOG=str(root / "curl.log"),
+                           GPG_LOG=str(root / "gpg.log"))
+        if failure == "missing-fingerprint":
+            environment.pop("MAVEN_SIGNING_FINGERPRINT")
+        result = subprocess.run(["bash", "-c", block], env=environment, capture_output=True, text=True)
+        urls = (root / "curl.log").read_text().splitlines() if (root / "curl.log").exists() else []
+        signatures = (root / "gpg.log").read_text().splitlines() if (root / "gpg.log").exists() else []
+        return result, urls, signatures
+
+    def test_maven_verification_checks_every_published_module_and_signature(self):
+        result, urls, signatures = self.run_documented_maven_verification()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        for module in ("core", "httpclient", "samples", "core-test-jdk17"):
+            with self.subTest(module=module):
+                artifact = "b2-sdk-" + module
+                url = "https://repo.maven.apache.org/maven2/com/backblaze/b2/" + artifact + "/1.2.3/" + artifact + "-1.2.3.pom"
+                self.assertIn(url, urls)
+                self.assertIn(url + ".asc", urls)
+                pom = "/tmp/" + artifact + "-1.2.3.pom"
+                self.assertTrue(any("--verify " + pom + ".asc " + pom in call for call in signatures))
+
+    def test_maven_verification_stops_on_download_or_signature_failure(self):
+        for failure in ("download", "signature-download", "invalid-signature"):
+            with self.subTest(failure=failure):
+                result, urls, signatures = self.run_documented_maven_verification(failure)
+                self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertFalse(any("b2-sdk-httpclient" in url for url in urls), urls)
+                if failure != "invalid-signature":
+                    self.assertEqual([], signatures)
+
+    def test_maven_verification_requires_the_expected_signer(self):
+        for failure in ("wrong-signer", "missing-status", "missing-fingerprint"):
+            with self.subTest(failure=failure):
+                result, urls, _ = self.run_documented_maven_verification(failure)
+                self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertFalse(any("b2-sdk-httpclient" in url for url in urls), urls)
+                if failure == "missing-fingerprint":
+                    self.assertEqual([], urls)
+
+    def test_maven_verification_accepts_the_expected_primary_keys_signing_subkey(self):
+        result, urls, signatures = self.run_documented_maven_verification("signing-subkey")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(8, len(urls))
+        self.assertEqual(4, len(signatures))
 
     def test_tag_commands_work_with_only_tag_exported(self):
         guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
