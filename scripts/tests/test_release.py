@@ -205,6 +205,59 @@ class ChangelogTest(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertIn("fragment", result.stderr)
 
+    def test_modifying_an_existing_fragment_does_not_cover_a_source_change(self):
+        base = self.make_pull_request("Source.java")
+        fragment = self.root / ".changes/unreleased/contract-test.yaml"
+        fragment.write_text(fragment.read_text().replace("complete release batch", "modified release batch"))
+        subprocess.run(["git", "-c", "commit.gpgSign=false", "commit", "-qam", "Edit existing fragment"],
+                       cwd=self.root, check=True, capture_output=True)
+        result = self.run_check("--base", base)
+        self.assertNotEqual(0, result.returncode, result.stdout)
+        self.assertIn("fragment", result.stderr)
+
+    def test_adding_a_new_fragment_covers_a_source_change(self):
+        base = self.make_pull_request("Source.java")
+        (self.root / ".changes/unreleased/new-change.yaml").write_text(
+            'kind: Fixed\nbody: Describe the source change.\ntime: 2026-01-02T00:00:00Z\n'
+        )
+        subprocess.run(["git", "add", "."], cwd=self.root, check=True, capture_output=True)
+        subprocess.run(["git", "-c", "commit.gpgSign=false", "commit", "-qm", "Add a change fragment"],
+                       cwd=self.root, check=True, capture_output=True)
+        result = self.run_check("--base", base)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_migrated_unreleased_entries_survive_a_release_batch_unchanged(self):
+        expected = (
+            "`toString()` of credential-bearing structures (`B2AccountAuthorization`, "
+            "`B2FileSseForRequest`, `B2WebhookConfiguration`, `B2WebhookCustomHeader`, and "
+            "`B2HeadersImpl`) omits sensitive values; `B2WebhookCustomHeader` omits all header values.",
+            "`B2EventNotificationRule` now orders and deduplicates rules by `maxEventsPerBatch`, "
+            "so rules that differ only by batch size no longer collapse in sorted collections; "
+            "it also uses direct webhook settings instead of the former string-based order "
+            "(url, headers, then signing secret), so callers that persist or diff ordered rules "
+            "may observe a different order.",
+            "Security / behaviour change: the three-argument `B2EventNotification.parse` overloads "
+            "now require a signature header and a signing secret; receivers should answer HTTP "
+            "401 on `B2SignatureVerificationException`.\n  A missing or empty signature header "
+            "throws `B2SignatureVerificationException`; a null or empty signing secret throws "
+            "`IllegalArgumentException`.",
+            "Signature comparison is now constant-time.",
+            "Added `B2EventNotification.parseUnverified`, which parses without checking a signature. "
+            "The one-argument `parse` overloads are deprecated in its favor.",
+        )
+        subprocess.run([self.changie, "batch", "patch", "--allow-no-changes=false"],
+                       cwd=self.root, check=True, capture_output=True)
+        subprocess.run([self.changie, "merge"], cwd=self.root, check=True, capture_output=True)
+        releases = [path.read_text() for path in (self.root / ".changes").glob("v*.md")]
+        migrated_releases = [notes for notes in releases if "* " + expected[0] + "\n" in notes]
+        self.assertEqual(1, len(migrated_releases), "migrated changes must survive in one release")
+        notes = migrated_releases[0]
+        changelog = (self.root / "CHANGELOG.md").read_text()
+        for body in expected:
+            with self.subTest(body=body):
+                self.assertIn("* " + body + "\n", notes)
+                self.assertIn("* " + body + "\n", changelog)
+
     def test_hand_edited_changelog_is_rejected_without_modifying_it(self):
         path = self.root / "CHANGELOG.md"
         edited = path.read_text() + "\nHand edited.\n"
@@ -228,6 +281,51 @@ class ChangelogTest(unittest.TestCase):
 
 
 class ReleaseInstructionsTest(unittest.TestCase):
+    def test_tag_guards_stop_before_tag_or_push(self):
+        guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
+        block = guide.split("## Tag and deploy", 1)[1].split("```bash", 1)[1].split("```", 1)[0]
+        block = block.replace("<release-pr-number>", "123").replace("<fingerprint>", "fixture-key")
+        for failure in ("gh", "empty-sha", "ancestor", "version", "verify"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                root = pathlib.Path(temporary)
+                git = root / "git"
+                git.write_text(
+                    "#!" + sys.executable + "\n"
+                    "import json, os, sys\n"
+                    "args = sys.argv[1:]\n"
+                    "failure = os.environ['TAG_GUARD_FAILURE']\n"
+                    "if 'tag' in args or args[0] in ('push', 'verify-tag'):\n"
+                    "    with open(os.environ['GIT_LOG'], 'a') as output:\n"
+                    "        output.write(json.dumps(args) + '\\n')\n"
+                    "if args[0] == 'merge-base' and (failure == 'ancestor' or not args[2]):\n"
+                    "    sys.exit(1)\n"
+                    "if args[0] == 'show':\n"
+                    "    print('version=9.9.9' if failure == 'version' else 'version=1.2.3')\n"
+                    "if args[0] == 'verify-tag' and failure == 'verify':\n"
+                    "    sys.exit(1)\n"
+                )
+                git.chmod(0o755)
+                gh = root / "gh"
+                gh.write_text(
+                    "#!" + sys.executable + "\n"
+                    "import os, sys\n"
+                    "failure = os.environ['TAG_GUARD_FAILURE']\n"
+                    "if failure == 'gh':\n"
+                    "    sys.exit(1)\n"
+                    "print('' if failure == 'empty-sha' else '0123456789012345678901234567890123456789')\n"
+                )
+                gh.chmod(0o755)
+                log = root / "git.jsonl"
+                environment = dict(os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"],
+                                   TAG="v1.2.3", TAG_GUARD_FAILURE=failure, GIT_LOG=str(log))
+                result = subprocess.run(["bash", "-c", block], env=environment,
+                                        capture_output=True, text=True)
+                calls = [json.loads(line) for line in log.read_text().splitlines()] if log.exists() else []
+                self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertFalse(any(call[0] == "push" for call in calls), calls)
+                if failure != "verify":
+                    self.assertEqual([], calls)
+
     def test_maven_verification_checks_every_published_module_and_signature(self):
         guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
         section = guide.split("## Verify the published release", 1)[1].split("\n## ", 1)[0]

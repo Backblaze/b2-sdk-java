@@ -70,10 +70,11 @@ def changelog_check(root, base, dependabot=False):
         if dependabot and workflow_only:
             print("changelog-check: validated automated workflow-only update; fragment not required")
             return
-        added = [line.split("\t")[-1] for line in changes if line.startswith(("A\t", "M\t"))]
+        added = [line.split("\t")[-1] for line in changes if line.startswith("A\t")]
         if not any(name.startswith(".changes/unreleased/") and name.endswith(".yaml") for name in added):
+            updated = [line.split("\t")[-1] for line in changes if line.startswith(("A\t", "M\t"))]
             tag = "v" + project_version(root)
-            if ".changes/" + tag + ".md" not in added or "gradle.properties" not in added or fragments:
+            if ".changes/" + tag + ".md" not in updated or "gradle.properties" not in updated or fragments:
                 raise ValueError("add a Changie fragment, or batch all fragments in a release-prep PR")
             release_notes(root, tag)
     print("changelog-check: generated changelog, fragments, and version agree")

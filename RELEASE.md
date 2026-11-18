@@ -102,24 +102,27 @@ workflow files and human-authored changes still need a fragment.
 Tag the merged release-prep commit, which may differ from the latest tip of `master`:
 
 ```bash
-: "${TAG:?export the release tag, e.g. v6.5.1}"
-VERSION="${TAG#v}"
-git fetch origin master --tags
-SHA=$(gh pr view <release-pr-number> --json mergeCommit --jq .mergeCommit.oid)
-git merge-base --is-ancestor "$SHA" origin/master
-git show "$SHA:gradle.properties" | grep -Fx "version=$VERSION"
-git log -1 --oneline "$SHA"
+(
+  set -euo pipefail
+  : "${TAG:?export the release tag, e.g. v6.5.1}"
+  VERSION="${TAG#v}"
+  git fetch origin master --tags
+  SHA=$(gh pr view <release-pr-number> --json mergeCommit --jq .mergeCommit.oid)
+  git merge-base --is-ancestor "$SHA" origin/master
+  git show "$SHA:gradle.properties" | grep -Fx "version=$VERSION"
+  git log -1 --oneline "$SHA"
 
-# GPG: use your full signing-key fingerprint.
-git -c gpg.format=openpgp tag -s -u <fingerprint> "$TAG" "$SHA" -m "$TAG"
-git verify-tag "$TAG"
+  # GPG: use your full signing-key fingerprint.
+  git -c gpg.format=openpgp tag -s -u <fingerprint> "$TAG" "$SHA" -m "$TAG"
+  git verify-tag "$TAG"
 
-# Alternatively, with a registered SSH signing key:
-# git -c gpg.format=ssh -c user.signingkey="$HOME/.ssh/id_ed25519.pub" \
-#   tag -s "$TAG" "$SHA" -m "$TAG"
-# git -c gpg.format=ssh -c gpg.ssh.allowedSignersFile=<allowed-signers-file> verify-tag "$TAG"
+  # Alternatively, with a registered SSH signing key:
+  # git -c gpg.format=ssh -c user.signingkey="$HOME/.ssh/id_ed25519.pub" \
+  #   tag -s "$TAG" "$SHA" -m "$TAG"
+  # git -c gpg.format=ssh -c gpg.ssh.allowedSignersFile=<allowed-signers-file> verify-tag "$TAG"
 
-git push origin "$TAG"
+  git push origin "$TAG"
+)
 ```
 
 The tag-triggered deploy workflow publishes using the existing Gradle command:
