@@ -90,6 +90,32 @@ class ChangelogTest(unittest.TestCase):
         result = self.run_check()
         self.assertEqual(0, result.returncode, result.stderr)
 
+    def test_rejects_gradle_version_mismatch_with_or_without_replacements(self):
+        path = self.root / "gradle.properties"
+        properties = path.read_text()
+        current = next(line for line in properties.splitlines() if line.startswith("version="))
+        mismatched = properties.replace(current, "version=0.0.0", 1)
+        path.write_text(mismatched)
+        for replacements in (True, False):
+            with self.subTest(replacements=replacements):
+                if not replacements:
+                    config = self.root / ".changie.yaml"
+                    config.write_text(config.read_text().split("\nreplacements:", 1)[0] + "\n")
+                result = self.run_check()
+                self.assertNotEqual(0, result.returncode, result.stdout)
+                self.assertIn("gradle.properties", result.stderr)
+                self.assertEqual(mismatched, path.read_text())
+
+    def test_rejects_latest_notes_with_a_mismatched_version_heading(self):
+        current = next(line[8:] for line in (self.root / "gradle.properties").read_text().splitlines()
+                       if line.startswith("version="))
+        path = self.root / (".changes/v" + current + ".md")
+        path.write_text(path.read_text().replace("## [" + current + "]", "## [0.0.0]", 1))
+        subprocess.run([self.changie, "merge"], cwd=self.root, check=True, capture_output=True)
+        result = self.run_check()
+        self.assertNotEqual(0, result.returncode, result.stdout)
+        self.assertIn("gradle.properties", result.stderr)
+
     def make_pull_request(self, path):
         workflow = self.root / ".github/workflows/dependency.yml"
         workflow.parent.mkdir(parents=True)
@@ -146,6 +172,37 @@ class ChangelogTest(unittest.TestCase):
 
 
 class ReleaseInstructionsTest(unittest.TestCase):
+    def test_maven_verification_checks_every_published_module_and_signature(self):
+        guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
+        block = guide.split("## Verify the published release", 1)[1].split("```bash", 1)[1].split("```", 1)[0]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            curl = root / "curl"
+            curl.write_text(
+                '#!/bin/sh\nfor argument; do\n'
+                '  case "$argument" in https://*) printf "%s\\n" "$argument" >> "$CURL_LOG";; esac\n'
+                'done\n'
+            )
+            curl.chmod(0o755)
+            gpg = root / "gpg"
+            gpg.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "$GPG_LOG"\n')
+            gpg.chmod(0o755)
+            environment = dict(os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"],
+                               VERSION="1.2.3", CURL_LOG=str(root / "curl.log"), GPG_LOG=str(root / "gpg.log"))
+            result = subprocess.run(["bash", "-euo", "pipefail", "-c", block], env=environment,
+                                    capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+            urls = (root / "curl.log").read_text().splitlines()
+            signatures = (root / "gpg.log").read_text().splitlines()
+            for module in ("core", "httpclient", "samples", "core-test-jdk17"):
+                with self.subTest(module=module):
+                    artifact = "b2-sdk-" + module
+                    url = "https://repo.maven.apache.org/maven2/com/backblaze/b2/" + artifact + "/1.2.3/" + artifact + "-1.2.3.pom"
+                    self.assertIn(url, urls)
+                    self.assertIn(url + ".asc", urls)
+                    pom = "/tmp/" + artifact + "-1.2.3.pom"
+                    self.assertIn("--verify " + pom + ".asc " + pom, signatures)
+
     def test_tag_commands_work_with_only_tag_exported(self):
         guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
         block = guide.split("## Tag and deploy", 1)[1].split("```bash", 1)[1].split("```", 1)[0]

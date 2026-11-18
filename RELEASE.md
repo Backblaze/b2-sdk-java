@@ -140,7 +140,7 @@ are unchanged by the changelog tooling. Never run this production command as a d
 3. After Maven Central indexing completes, check each module and its signature:
 
    ```bash
-   for module in core httpclient samples; do
+   for module in core httpclient samples core-test-jdk17; do
      url="https://repo.maven.apache.org/maven2/com/backblaze/b2/b2-sdk-$module/$VERSION/b2-sdk-$module-$VERSION.pom"
      curl --fail --show-error --location "$url" -o "/tmp/b2-sdk-$module-$VERSION.pom"
      curl --fail --show-error --location "$url.asc" -o "/tmp/b2-sdk-$module-$VERSION.pom.asc"

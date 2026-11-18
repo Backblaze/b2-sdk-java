@@ -51,6 +51,11 @@ def changelog_check(root, base, dependabot=False):
             raise ValueError("CHANGELOG.md is generated; run changie merge")
         if project_version(target) != project_version(root):
             raise ValueError("gradle.properties must match the latest Changie version")
+        latest = re.search(r"^## \[(" + VERSION + r")\]",
+                           (root / "CHANGELOG.md").read_text(), re.M)
+        if not latest:
+            raise ValueError("CHANGELOG.md must contain a released version heading")
+        release_notes(root, "v" + latest.group(1))
         if fragments:
             subprocess.run([changie, "batch", "patch", "--dry-run", "--allow-no-changes=false"],
                            cwd=target, check=True, stdout=subprocess.DEVNULL)
