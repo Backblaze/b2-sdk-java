@@ -325,6 +325,27 @@ class ReleaseInstructionsTest(unittest.TestCase):
                 self.assertFalse(any(call[0] == "push" for call in calls), calls)
                 if failure != "verify":
                     self.assertEqual([], calls)
+                else:
+                    self.assertIn(["tag", "--delete", "v1.2.3"], calls,
+                                  "delete the newly created local tag if signature verification fails")
+
+    def test_health_example_passes_an_unexported_simulator_url_to_the_harness(self):
+        guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
+        block = guide.split("## Local health check", 1)[1].split("```bash", 1)[1].split("```", 1)[0]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            gradle = root / "gradlew"
+            gradle.write_text('#!/bin/sh\ncase "$*" in *healthClasspath*) printf /fixture/health.jar;; esac\n')
+            gradle.chmod(0o755)
+            harness = root / ".sdkharness/tests/run-health"
+            harness.parent.mkdir(parents=True)
+            harness.write_text('#!/bin/sh\n[ "$SDKHARNESS_SIMULATOR_URL" = http://127.0.0.1:8180 ] || exit 42\n'
+                               '[ "$SDKHARNESS_JAVA_CLASSPATH" = /fixture/health.jar ] || exit 43\n')
+            harness.chmod(0o755)
+            result = subprocess.run(
+                ["bash", "-euo", "pipefail", "-c", "SDKHARNESS_SIMULATOR_URL=http://127.0.0.1:8180\n" + block],
+                cwd=root, env={"PATH": os.defpath}, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def run_documented_maven_verification(self, failure="none", fingerprint="A" * 40):
         guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()

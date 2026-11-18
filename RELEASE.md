@@ -114,7 +114,10 @@ Tag the merged release-prep commit, which may differ from the latest tip of `mas
 
   # GPG: use your full signing-key fingerprint.
   git -c gpg.format=openpgp tag -s -u <fingerprint> "$TAG" "$SHA" -m "$TAG"
-  git verify-tag "$TAG"
+  if ! git verify-tag "$TAG"; then
+    git tag --delete "$TAG"
+    exit 1
+  fi
 
   # Alternatively, with a registered SSH signing key:
   # git -c gpg.format=ssh -c user.signingkey="$HOME/.ssh/id_ed25519.pub" \
@@ -211,7 +214,8 @@ Set `SDKHARNESS_SIMULATOR_URL` to the running simulator's IPv4 loopback URL, the
 : "${SDKHARNESS_SIMULATOR_URL:?set the local simulator URL, e.g. http://127.0.0.1:8180}"
 ./gradlew build --no-daemon
 CP=$(./gradlew -q -I scripts/health-classpath.gradle :b2-sdk-httpclient:healthClasspath)
-SDKHARNESS_TEST_LEVEL=health SDKHARNESS_SCENARIO=golden-path \
+SDKHARNESS_SIMULATOR_URL="$SDKHARNESS_SIMULATOR_URL" \
+  SDKHARNESS_TEST_LEVEL=health SDKHARNESS_SCENARIO=golden-path \
   B2_BUCKET_NAME=sdkharness-healthcheck SDKHARNESS_JAVA_CLASSPATH="$CP" \
   .sdkharness/tests/run-health
 ```
