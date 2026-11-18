@@ -341,6 +341,7 @@ class ReleaseInstructionsTest(unittest.TestCase):
             '  case "$MAVEN_FAILURE:$argument" in\n'
             '    download:*b2-sdk-core-1.2.3.pom) exit 22;;\n'
             '    signature-download:*b2-sdk-core-1.2.3.pom.asc) exit 22;;\n'
+            '    jar-signature-download:*b2-sdk-core-1.2.3.jar.asc) exit 22;;\n'
             '  esac\n'
             'done\n'
         )
@@ -349,10 +350,12 @@ class ReleaseInstructionsTest(unittest.TestCase):
         gpg.write_text(
             '#!/bin/sh\nprintf "%s\\n" "$*" >> "$GPG_LOG"\n'
             'case "$MAVEN_FAILURE:$*" in invalid-signature:*b2-sdk-core-1.2.3.pom*) exit 1;; esac\n'
+            'case "$MAVEN_FAILURE:$*" in invalid-jar-signature:*b2-sdk-core-1.2.3.jar*) exit 1;; esac\n'
             'case "$MAVEN_FAILURE" in\n'
             '  wrong-signer) signer=' + "C" * 40 + ';;\n'
             '  *) signer="$MAVEN_FIXTURE_PRIMARY";;\n'
             'esac\n'
+            'case "$MAVEN_FAILURE:$*" in wrong-jar-signer:*b2-sdk-core-1.2.3.jar*) signer=' + "C" * 40 + ';; esac\n'
             'key="$signer"\n'
             'case "$MAVEN_FAILURE" in signing-subkey|subkey-as-primary) key=' + "B" * 40 + ';; esac\n'
             'if [ "$MAVEN_FAILURE" != missing-status ]; then\n'
@@ -380,11 +383,16 @@ class ReleaseInstructionsTest(unittest.TestCase):
         for module in ("core", "httpclient", "samples", "core-test-jdk17"):
             with self.subTest(module=module):
                 artifact = "b2-sdk-" + module
-                url = "https://repo.maven.apache.org/maven2/com/backblaze/b2/" + artifact + "/1.2.3/" + artifact + "-1.2.3.pom"
-                self.assertIn(url, urls)
-                self.assertIn(url + ".asc", urls)
-                pom = "/tmp/" + artifact + "-1.2.3.pom"
-                self.assertTrue(any("--verify " + pom + ".asc " + pom in call for call in signatures))
+                for suffix in (".pom", ".jar", "-sources.jar", "-javadoc.jar"):
+                    with self.subTest(suffix=suffix):
+                        filename = artifact + "-1.2.3" + suffix
+                        url = "https://repo.maven.apache.org/maven2/com/backblaze/b2/" + artifact + "/1.2.3/" + filename
+                        self.assertIn(url, urls)
+                        self.assertIn(url + ".asc", urls)
+                        local_file = "/tmp/" + filename
+                        self.assertTrue(any("--verify " + local_file + ".asc " + local_file in call for call in signatures))
+        self.assertEqual(32, len(urls))
+        self.assertEqual(16, len(signatures))
 
     def test_maven_verification_stops_on_download_or_signature_failure(self):
         for failure in ("download", "signature-download", "invalid-signature"):
@@ -394,6 +402,14 @@ class ReleaseInstructionsTest(unittest.TestCase):
                 self.assertFalse(any("b2-sdk-httpclient" in url for url in urls), urls)
                 if failure != "invalid-signature":
                     self.assertEqual([], signatures)
+
+    def test_maven_verification_rejects_bad_jars_even_with_a_valid_pom(self):
+        for failure in ("jar-signature-download", "invalid-jar-signature", "wrong-jar-signer"):
+            with self.subTest(failure=failure):
+                result, urls, signatures = self.run_documented_maven_verification(failure)
+                self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertFalse(any("b2-sdk-httpclient" in url for url in urls), urls)
+                self.assertTrue(any("b2-sdk-core-1.2.3.pom.asc" in call for call in signatures))
 
     def test_maven_verification_requires_the_expected_signer(self):
         for failure in ("wrong-signer", "missing-status", "missing-fingerprint", "subkey-as-primary"):
@@ -409,15 +425,15 @@ class ReleaseInstructionsTest(unittest.TestCase):
             with self.subTest(fingerprint=fingerprint):
                 result, urls, signatures = self.run_documented_maven_verification("signing-subkey", fingerprint)
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-                self.assertEqual(8, len(urls))
-                self.assertEqual(4, len(signatures))
+                self.assertEqual(32, len(urls))
+                self.assertEqual(16, len(signatures))
 
     def test_maven_verification_uses_the_configured_primary_fingerprint(self):
         for fingerprint in ("A" * 40, "D" * 40):
             with self.subTest(fingerprint=fingerprint):
                 result, _, signatures = self.run_documented_maven_verification(fingerprint=fingerprint)
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-                self.assertEqual(4, len(signatures))
+                self.assertEqual(16, len(signatures))
                 mismatch, urls, _ = self.run_documented_maven_verification("wrong-signer", fingerprint)
                 self.assertNotEqual(0, mismatch.returncode, mismatch.stdout + mismatch.stderr)
                 self.assertFalse(any("b2-sdk-httpclient" in url for url in urls), urls)
@@ -434,8 +450,7 @@ class ReleaseInstructionsTest(unittest.TestCase):
             gh = root / "gh"
             gh.write_text("#!/bin/sh\nprintf '0123456789012345678901234567890123456789\\n'\n")
             gh.chmod(0o755)
-            environment = dict(os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"], TAG="v1.2.3")
-            environment.pop("VERSION", None)
+            environment = {"PATH": str(root) + os.pathsep + os.defpath, "TAG": "v1.2.3"}
             result = subprocess.run(["bash", "-euo", "pipefail", "-c", block], env=environment,
                                     capture_output=True, text=True)
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)

@@ -178,21 +178,24 @@ are unchanged by the changelog tooling. Never run this production command as a d
      : "${VERSION:?export the released version, e.g. 6.5.1}"
      : "${MAVEN_SIGNING_FINGERPRINT:?export the independently confirmed full signing fingerprint}"
      for module in core httpclient samples core-test-jdk17; do
-       url="https://repo.maven.apache.org/maven2/com/backblaze/b2/b2-sdk-$module/$VERSION/b2-sdk-$module-$VERSION.pom"
-       curl --fail --show-error --location "$url" -o "/tmp/b2-sdk-$module-$VERSION.pom"
-       curl --fail --show-error --location "$url.asc" -o "/tmp/b2-sdk-$module-$VERSION.pom.asc"
-       signature_status=$(gpg --batch --status-fd=1 --verify \
-         "/tmp/b2-sdk-$module-$VERSION.pom.asc" "/tmp/b2-sdk-$module-$VERSION.pom")
-       printf '%s\n' "$signature_status" | awk -v expected="$MAVEN_SIGNING_FINGERPRINT" '
-         $1 == "[GNUPG:]" && $2 == "VALIDSIG" && $12 == expected { found = 1 }
-         END { exit !found }
-       ' || { printf '%s\n' 'Maven signature does not match the expected fingerprint' >&2; exit 1; }
+       for suffix in .pom .jar -sources.jar -javadoc.jar; do
+         artifact="b2-sdk-$module-$VERSION$suffix"
+         url="https://repo.maven.apache.org/maven2/com/backblaze/b2/b2-sdk-$module/$VERSION/$artifact"
+         curl --fail --show-error --location "$url" -o "/tmp/$artifact"
+         curl --fail --show-error --location "$url.asc" -o "/tmp/$artifact.asc"
+         signature_status=$(gpg --batch --status-fd=1 --verify "/tmp/$artifact.asc" "/tmp/$artifact")
+         printf '%s\n' "$signature_status" | awk -v expected="$MAVEN_SIGNING_FINGERPRINT" '
+           $1 == "[GNUPG:]" && $2 == "VALIDSIG" && $12 == expected { found = 1 }
+           END { exit !found }
+         ' || { printf '%s\n' 'Maven signature does not match the expected fingerprint' >&2; exit 1; }
+       done
      done
    )
    ```
 
    The shared Gradle publication plugin also publishes `b2-sdk-core-test-jdk17`, so this
-   loop verifies all four published modules, including that test module's POM and signature.
+   loop verifies the POM, main JAR, sources JAR, and Javadoc JAR for all four published
+   modules, including that test module, against the configured signing fingerprint.
    Verify using the established Maven artifact-signing public key, independently of tag keys.
 4. Confirm there are no open issues/PRs left in the version milestone, then close it. Publish any
    advisories coordinated with the release only after the fixed artifacts are available.
