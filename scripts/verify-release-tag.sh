@@ -29,8 +29,6 @@ mkdir -m 700 "$temporary/gnupg"
 printf 'no-auto-key-retrieve\nauto-key-locate clear\n' > "$temporary/gnupg/gpg.conf"
 export GNUPGHOME="$temporary/gnupg"
 touch "$temporary/allowed_signers"
-tagger_email=$(git for-each-ref --format='%(taggeremail:trim)' "refs/tags/$tag")
-[[ "$tagger_email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+$ ]] || reject 'Release tagger email must be a single plain email address'
 
 while IFS= read -r username || [ -n "$username" ]; do
   case "$username" in ''|'#'*) continue ;; esac
@@ -45,7 +43,7 @@ while IFS= read -r username || [ -n "$username" ]; do
   gh api --paginate "users/$username/ssh_signing_keys?per_page=100" --jq '.[].key' >> "$temporary/key.ssh" 2>/dev/null || true
   while IFS= read -r key; do
     case "$key" in
-      ssh-*|ecdsa-*) printf '%s namespaces="git" %s\n' "$tagger_email" "$key" >> "$temporary/allowed_signers" ;;
+      ssh-*|ecdsa-*) printf 'release-maintainer namespaces="git" %s\n' "$key" >> "$temporary/allowed_signers" ;;
     esac
   done < "$temporary/key.ssh"
 done < "$maintainers"

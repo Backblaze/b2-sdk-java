@@ -26,7 +26,8 @@ The intended release maintainers are `goanpeca`, `ffumero2003`, and `sophiecarre
 `users/<username>/ssh_signing_keys` API at check time and runs
 `git verify-tag` with an isolated keyring and SSH allowed-signers file. GitHub profile key changes
 therefore affect the next verification; review the username list through a PR.
-Use a plain ASCII email address for the Git tagger identity, without whitespace or signer-pattern characters.
+SSH authorization uses the registered keys under a fixed signer principal. The tagger email is
+descriptive metadata and is not used to construct the allowed-signers file.
 
 Tag verification is **warn-only by default**. Before enabling it, each intended signer must create a
 GPG or SSH signing key and register the public key on their GitHub account. Confirm that their signed

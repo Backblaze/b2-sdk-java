@@ -97,12 +97,21 @@ if path:
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn("verified", result.stdout)
 
-    def test_ssh_verification_uses_the_signed_tagger_email_principal(self):
+    def test_ssh_verification_uses_a_fixed_registered_key_principal(self):
         trace = self.root / "ssh-principal.trace"
         self.environment = dict(self.environment, GIT_TRACE=str(trace))
         result = self.verify("v1.2.5")
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertRegex(trace.read_text(), r"ssh-keygen -Y verify[^\n]* -I fixture@example\.invalid(?: |$)")
+        self.assertRegex(trace.read_text(), r"ssh-keygen -Y verify[^\n]* -I release-maintainer(?: |$)")
+
+    def test_registered_ssh_key_accepts_valid_tagger_email_punctuation(self):
+        for index, email in enumerate(("o'hara@example.org", "fixture+release@example.invalid")):
+            with self.subTest(email=email):
+                tag = "v1.2." + str(30 + index)
+                self.make_ssh_tag(tag, email, self.ssh_key)
+                result = self.verify(tag)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertIn("verified", result.stdout)
 
     def make_ssh_tag(self, name, email, key):
         content = ("object " + self.reviewed + "\ntype commit\ntag " + name + "\n"
@@ -124,16 +133,18 @@ if path:
         self.make_ssh_tag("v1.2.10", 'fixture namespaces="git" ' + public, key)
         result = self.verify("v1.2.10")
         self.assertNotEqual(0, result.returncode, result.stdout)
-        self.assertIn("tagger email", result.stderr)
+        self.assertIn("not verified", result.stderr)
 
-    def test_ssh_tagger_email_cannot_contain_signer_patterns(self):
+    def test_signed_tagger_text_cannot_change_the_registered_key_principal(self):
         for index, email in enumerate(("fixture,*@example.invalid", "fixture?@example.invalid")):
             with self.subTest(email=email):
                 tag = "v1.2." + str(20 + index)
                 self.make_ssh_tag(tag, email, self.ssh_key)
+                trace = self.root / (tag + ".trace")
+                self.environment = dict(self.environment, GIT_TRACE=str(trace))
                 result = self.verify(tag)
-                self.assertNotEqual(0, result.returncode, result.stdout)
-                self.assertIn("tagger email", result.stderr)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertRegex(trace.read_text(), r"ssh-keygen -Y verify[^\n]* -I release-maintainer(?: |$)")
 
     def test_ssh_key_registered_only_for_signing_passes(self):
         result = self.verify("v1.2.5", registered=False, signing_only=True)
