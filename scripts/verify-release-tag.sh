@@ -30,6 +30,7 @@ printf 'no-auto-key-retrieve\nauto-key-locate clear\n' > "$temporary/gnupg/gpg.c
 export GNUPGHOME="$temporary/gnupg"
 touch "$temporary/allowed_signers"
 tagger_email=$(git for-each-ref --format='%(taggeremail:trim)' "refs/tags/$tag")
+[[ "$tagger_email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+$ ]] || reject 'Release tagger email must be a single plain email address'
 
 while IFS= read -r username || [ -n "$username" ]; do
   case "$username" in ''|'#'*) continue ;; esac

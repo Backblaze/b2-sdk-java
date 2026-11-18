@@ -104,6 +104,37 @@ if path:
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertRegex(trace.read_text(), r"ssh-keygen -Y verify[^\n]* -I fixture@example\.invalid(?: |$)")
 
+    def make_ssh_tag(self, name, email, key):
+        content = ("object " + self.reviewed + "\ntype commit\ntag " + name + "\n"
+                   "tagger Release Fixture <" + email + "> 1700000000 +0000\n\n" + name + "\n")
+        unsigned = self.root / (name + ".txt")
+        unsigned.write_text(content)
+        self.call(["ssh-keygen", "-Y", "sign", "-f", str(key), "-n", "git", str(unsigned)])
+        signed = content + unsigned.with_suffix(".txt.sig").read_text()
+        result = subprocess.run(["git", "hash-object", "-t", "tag", "-w", "--stdin"],
+                                cwd=self.repo, env=self.environment, input=signed,
+                                text=True, capture_output=True)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.call(["git", "update-ref", "refs/tags/" + name, result.stdout.strip()])
+
+    def test_ssh_tagger_email_cannot_add_an_unregistered_key(self):
+        key = self.root / "other-ssh-key"
+        self.call(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(key)])
+        public = " ".join(key.with_suffix(".pub").read_text().split()[:2])
+        self.make_ssh_tag("v1.2.10", 'fixture namespaces="git" ' + public, key)
+        result = self.verify("v1.2.10")
+        self.assertNotEqual(0, result.returncode, result.stdout)
+        self.assertIn("tagger email", result.stderr)
+
+    def test_ssh_tagger_email_cannot_contain_signer_patterns(self):
+        for index, email in enumerate(("fixture,*@example.invalid", "fixture?@example.invalid")):
+            with self.subTest(email=email):
+                tag = "v1.2." + str(20 + index)
+                self.make_ssh_tag(tag, email, self.ssh_key)
+                result = self.verify(tag)
+                self.assertNotEqual(0, result.returncode, result.stdout)
+                self.assertIn("tagger email", result.stderr)
+
     def test_ssh_key_registered_only_for_signing_passes(self):
         result = self.verify("v1.2.5", registered=False, signing_only=True)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)

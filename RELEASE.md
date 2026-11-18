@@ -26,6 +26,7 @@ The intended release maintainers are `goanpeca`, `ffumero2003`, and `sophiecarre
 `users/<username>/ssh_signing_keys` API at check time and runs
 `git verify-tag` with an isolated keyring and SSH allowed-signers file. GitHub profile key changes
 therefore affect the next verification; review the username list through a PR.
+Use a plain ASCII email address for the Git tagger identity, without whitespace or signer-pattern characters.
 
 Tag verification is **warn-only by default**. Before enabling it, each intended signer must create a
 GPG or SSH signing key and register the public key on their GitHub account. Confirm that their signed
@@ -39,8 +40,9 @@ An administrator must complete the following before the workflow changes are use
 - Supply `RELEASE_READ_TOKEN`, a read-only token authorized for this repository's code-scanning,
   Dependabot, secret-scanning alerts, repository security advisories (including drafts), and issues.
   Enable these sources and grant access: a disabled or unreadable source holds publication.
-  The ordinary workflow token is used only for milestone reads and release creation, with explicit
-  job permissions; Maven signing/publishing secrets are exposed only to the publish step.
+  The ordinary workflow token is used for checkout, signing-key API lookups, milestone reads,
+  and release creation, with explicit job permissions; Maven signing/publishing secrets are exposed
+  only to the publish step.
 - Change Settings → Pages → Build and deployment → Source from **Deploy from a branch** to
   **GitHub Actions**. Configure the `github-pages` environment to allow the documentation branches
   `master`, `api-v2`, and `7.x`. The official Pages deployment uses GitHub OIDC with `pages: write`

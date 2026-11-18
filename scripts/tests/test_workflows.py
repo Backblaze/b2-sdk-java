@@ -106,6 +106,10 @@ class WorkflowTest(unittest.TestCase):
                          "-PsonatypeUsername=dry-run", "-PsonatypePassword=dry-run"):
             self.assertIn(argument, script)
 
+    def test_runbook_describes_the_workflow_token_uses(self):
+        guide = " ".join((ROOT / "RELEASE.md").read_text().split())
+        self.assertIn("checkout, signing-key API lookups, milestone reads, and release creation", guide)
+
 
 class PagesStatusTest(unittest.TestCase):
     def run_status(self, payload):
