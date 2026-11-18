@@ -1,5 +1,6 @@
 """Local contract tests for release preparation; no network or credentials required."""
 
+import json
 import pathlib
 import os
 import shutil
@@ -64,6 +65,61 @@ class ReleaseNotesTest(unittest.TestCase):
         result = self.run_notes()
         self.assertNotEqual(0, result.returncode)
         self.assertIn("exactly one", result.stderr)
+
+    def run_documented_manual_update(self):
+        guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
+        section = guide.split("## Verify the published release", 1)[1].split("\n## ", 1)[0]
+        blocks = [part.split("```", 1)[0] for part in section.split("```bash")[1:]]
+        updates = [block for block in blocks if "gh release edit" in block]
+        self.assertEqual(1, len(updates), "release guide must document a validated manual notes update")
+        script = self.root / "scripts/release.py"
+        script.parent.mkdir()
+        shutil.copy(SCRIPT, script)
+        binaries = self.root / "bin"
+        binaries.mkdir()
+        gh = binaries / "gh"
+        gh.write_text(
+            "#!" + sys.executable + "\n"
+            "import json, os, pathlib, sys\n"
+            "arguments = sys.argv[1:]\n"
+            "record = {'argv': arguments}\n"
+            "if arguments[:2] == ['release', 'edit']:\n"
+            "    notes = pathlib.Path(arguments[arguments.index('--notes-file') + 1])\n"
+            "    record.update(notes_file=str(notes), body=notes.read_text())\n"
+            "with open(os.environ['GH_LOG'], 'a') as output:\n"
+            "    output.write(json.dumps(record) + '\\n')\n"
+        )
+        gh.chmod(0o755)
+        notes_directory = self.root / "temporary-notes"
+        notes_directory.mkdir()
+        log = self.root / "gh.jsonl"
+        environment = dict(os.environ, PATH=str(binaries) + os.pathsep + os.environ["PATH"],
+                           TAG="v1.2.3", GH_LOG=str(log), TMPDIR=str(notes_directory))
+        result = subprocess.run(["bash", "-euo", "pipefail", "-c", updates[0]], cwd=self.root,
+                                env=environment, capture_output=True, text=True)
+        records = [json.loads(line) for line in log.read_text().splitlines()] if log.exists() else []
+        return result, records, notes_directory
+
+    def test_documented_manual_update_uses_only_validated_version_notes(self):
+        result, records, notes_directory = self.run_documented_manual_update()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(2, len(records), records)
+        update, view = records
+        self.assertEqual(["release", "edit", "v1.2.3", "--notes-file", update["notes_file"]], update["argv"])
+        self.assertEqual(self.notes, update["body"])
+        self.assertNotIn("Older", update["body"])
+        self.assertEqual(["release", "view", "v1.2.3", "--json", "tagName,body,assets"], view["argv"])
+        self.assertFalse(pathlib.Path(update["notes_file"]).exists())
+        self.assertEqual([], list(notes_directory.iterdir()))
+
+    def test_documented_manual_update_rejects_invalid_notes_and_cleans_up(self):
+        path = self.root / ".changes/v1.2.3.md"
+        path.write_text(self.notes.replace("Keep", "Changed"))
+        result, records, notes_directory = self.run_documented_manual_update()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("disagree", result.stderr)
+        self.assertEqual([], records)
+        self.assertEqual([], list(notes_directory.iterdir()))
 
 
 class ChangelogTest(unittest.TestCase):
@@ -174,7 +230,9 @@ class ChangelogTest(unittest.TestCase):
 class ReleaseInstructionsTest(unittest.TestCase):
     def test_maven_verification_checks_every_published_module_and_signature(self):
         guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
-        block = guide.split("## Verify the published release", 1)[1].split("```bash", 1)[1].split("```", 1)[0]
+        section = guide.split("## Verify the published release", 1)[1].split("\n## ", 1)[0]
+        blocks = [part.split("```", 1)[0] for part in section.split("```bash")[1:]]
+        block = next(block for block in blocks if "for module in" in block)
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)
             curl = root / "curl"

@@ -137,6 +137,25 @@ are unchanged by the changelog tooling. Never run this production command as a d
    `gh run list --workflow deploy.yml --branch "$TAG"` and `gh run view <run-id> --log-failed`.
 2. Confirm the GitHub Release contains this version's changelog section and all three module bundles:
    `gh release view "$TAG" --json tagName,body,assets`.
+
+   Release standardization rolls out in stages: changelog tooling and this guide first,
+   then automated release notes. For releases made before notes automation is enabled,
+   the deployment workflow attaches the three bundles without setting a changelog-derived
+   body. From a checkout of the tagged commit, update those releases manually before
+   verifying them. Once enabled, automation supplies the notes body.
+
+   ```bash
+   (
+     set -euo pipefail
+     : "${TAG:?export the release tag, e.g. v6.5.1}"
+     NOTES_FILE=$(mktemp)
+     trap 'rm -f "$NOTES_FILE"' EXIT
+     python3 scripts/release.py notes "$TAG" > "$NOTES_FILE"
+     gh release edit "$TAG" --notes-file "$NOTES_FILE"
+     gh release view "$TAG" --json tagName,body,assets
+   )
+   ```
+
 3. After Maven Central indexing completes, check each module and its signature:
 
    ```bash
