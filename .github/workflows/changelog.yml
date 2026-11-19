@@ -24,6 +24,10 @@ jobs:
         with:
           go-version: '1.24.0'
           cache: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '11'
       - name: Install Changie
         run: go install github.com/miniscruff/changie@v1.24.0
       - name: Validate changelog

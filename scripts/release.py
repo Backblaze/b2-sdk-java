@@ -61,7 +61,7 @@ def changelog_check(root, base, dependabot=False):
                            cwd=target, check=True, stdout=subprocess.DEVNULL)
     if base:
         changes = subprocess.check_output(
-            ["git", "diff", "--name-status", base + "...HEAD"], cwd=root, text=True
+            ["git", "diff", "--name-status", "--no-renames", base + "...HEAD"], cwd=root, text=True
         ).splitlines()
         workflow_only = changes and all(
             line.startswith("M\t.github/workflows/") and line.endswith((".yml", ".yaml"))
