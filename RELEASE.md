@@ -122,7 +122,10 @@ Tag the merged release-prep commit, which may differ from the latest tip of `mas
   # Alternatively, with a registered SSH signing key:
   # git -c gpg.format=ssh -c user.signingkey="$HOME/.ssh/id_ed25519.pub" \
   #   tag -s "$TAG" "$SHA" -m "$TAG"
-  # git -c gpg.format=ssh -c gpg.ssh.allowedSignersFile=<allowed-signers-file> verify-tag "$TAG"
+  # if ! git -c gpg.format=ssh -c gpg.ssh.allowedSignersFile=<allowed-signers-file> verify-tag "$TAG"; then
+  #   git tag --delete "$TAG"
+  #   exit 1
+  # fi
 
   git push origin "$TAG"
 )

@@ -281,6 +281,71 @@ class ChangelogTest(unittest.TestCase):
 
 
 class ReleaseInstructionsTest(unittest.TestCase):
+    def test_documented_ssh_verification_cleans_up_failed_tag(self):
+        guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
+        block = guide.split("## Tag and deploy", 1)[1].split("```bash", 1)[1].split("```", 1)[0]
+        alternative = block.split("  # Alternatively, with a registered SSH signing key:\n", 1)[1].split("\n\n", 1)[0]
+        script = "\n".join(line[4:] for line in alternative.splitlines() if line.startswith("  # "))
+        script = script.replace("$HOME/.ssh/id_ed25519.pub", "$RELEASE_TEST_SIGNING_KEY")
+        script = script.replace("<allowed-signers-file>", '"$RELEASE_TEST_ALLOWED_SIGNERS"')
+        with tempfile.TemporaryDirectory(prefix="b2-guide-ssh-") as temporary:
+            root = pathlib.Path(temporary)
+            real_git = shutil.which("git")
+            environment = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+            for arguments in (("init", "-q"), ("config", "user.name", "Release Fixture"),
+                              ("config", "user.email", "fixture@example.invalid"),
+                              ("-c", "commit.gpgSign=false", "commit", "--allow-empty", "-qm", "Release fixture")):
+                subprocess.run([real_git, *arguments], cwd=root, env=environment, check=True, capture_output=True)
+            commit = subprocess.check_output([real_git, "rev-parse", "HEAD"], cwd=root,
+                                             env=environment, text=True).strip()
+            key = root / "signing-key"
+            subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(key)],
+                           check=True, capture_output=True)
+            allowed = root / "allowed-signers"
+            log = root / "git.jsonl"
+            binaries = root / "bin"
+            binaries.mkdir()
+            git = binaries / "git"
+            git.write_text(
+                "#!" + sys.executable + "\n"
+                "import json, os, subprocess, sys\n"
+                "arguments = sys.argv[1:]\n"
+                "result = subprocess.run([os.environ['RELEASE_TEST_REAL_GIT'], *arguments])\n"
+                "with open(os.environ['RELEASE_TEST_GIT_LOG'], 'a') as output:\n"
+                "    output.write(json.dumps({'argv': arguments, 'status': result.returncode}) + '\\n')\n"
+                "sys.exit(result.returncode)\n"
+            )
+            git.chmod(0o755)
+            environment.update(PATH=str(binaries) + os.pathsep + os.environ["PATH"], SHA=commit,
+                               RELEASE_TEST_SIGNING_KEY=str(key) + ".pub",
+                               RELEASE_TEST_ALLOWED_SIGNERS=str(allowed), RELEASE_TEST_REAL_GIT=real_git,
+                               RELEASE_TEST_GIT_LOG=str(log))
+            for trusted in (True, False):
+                with self.subTest(trusted=trusted):
+                    tag = "v9.9.9-ssh-" + ("trusted" if trusted else "untrusted")
+                    environment["TAG"] = tag
+                    allowed.write_text('release-maintainer namespaces="git" ' + (root / "signing-key.pub").read_text()
+                                       if trusted else "")
+                    log.write_text("")
+                    result = subprocess.run(["bash", "-euo", "pipefail", "-c", script], cwd=root,
+                                            env=environment, capture_output=True, text=True)
+                    calls = [json.loads(line) for line in log.read_text().splitlines()]
+                    creations = [call for call in calls if "tag" in call["argv"] and "-s" in call["argv"]]
+                    verifications = [call for call in calls if "verify-tag" in call["argv"]]
+                    self.assertEqual([0], [call["status"] for call in creations], result.stderr)
+                    self.assertEqual(1, len(verifications), calls)
+                    reference = subprocess.run([real_git, "show-ref", "--verify", "--quiet", "refs/tags/" + tag],
+                                               cwd=root, env=environment, capture_output=True)
+                    if trusted:
+                        self.assertEqual(0, result.returncode, result.stderr)
+                        self.assertEqual(0, verifications[0]["status"], calls)
+                        self.assertEqual(0, reference.returncode)
+                    else:
+                        self.assertNotEqual(0, result.returncode)
+                        self.assertNotEqual(0, verifications[0]["status"], calls)
+                        self.assertNotEqual(0, reference.returncode, "failed SSH verification left the local tag")
+                        self.assertIn({"argv": ["tag", "--delete", tag], "status": 0}, calls)
+
     def test_tag_guards_stop_before_tag_or_push(self):
         guide = (SCRIPT.parents[1] / "RELEASE.md").read_text()
         block = guide.split("## Tag and deploy", 1)[1].split("```bash", 1)[1].split("```", 1)[0]
