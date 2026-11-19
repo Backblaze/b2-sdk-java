@@ -97,6 +97,12 @@ class WorkflowMutationTest(unittest.TestCase):
             "deploy.yml", "run: python3 scripts/release.py security", "run: true",
             "test_release_gate_commands_are_wired_before_deployment")
 
+    def test_missing_release_metadata_gate_is_rejected(self):
+        self.assert_mutation_rejected(
+            "deploy.yml",
+            'python3 scripts/release.py --root "$RUNNER_TEMP/release-metadata" notes "$RELEASE_TAG" > /dev/null',
+            "true", "test_release_gate_commands_are_wired_before_deployment")
+
     def test_missing_dependabot_action_updates_is_rejected(self):
         self.assert_mutation_rejected(
             "dependabot.yml",

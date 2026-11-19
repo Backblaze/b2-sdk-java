@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -57,7 +58,47 @@ class WorkflowTest(unittest.TestCase):
                 self.assertIsNotNone(re.search(
                     r"^        run: python3 scripts/release\.py " + re.escape(command) + r"\s*$", checks, re.M),
                     "release-checks must invoke " + command)
+        metadata = step_script(checks, "Check tag, version, and changelog agreement")
+        self.assertIn(
+            'python3 scripts/release.py --root "$RUNNER_TEMP/release-metadata" notes "$RELEASE_TAG" > /dev/null',
+            metadata, "release-checks must validate metadata from the event commit")
         self.assertIn("needs: release-checks", deploy)
+
+    def test_metadata_gate_runs_against_the_event_commit_and_rejects_mismatches(self):
+        workflow = (ROOT / ".github/workflows/deploy.yml").read_text()
+        script = step_script(workflow, "Check tag, version, and changelog agreement")
+        notes = "## [1.2.3] - 2026-01-01\n\n### Fixed\n\n* Release fixture.\n"
+        cases = (("v1.2.3", notes, ""),
+                 ("v1.2.4", notes, "tag does not match gradle.properties"),
+                 ("v1.2.3", notes + "\n* Unreviewed notes.\n", "release notes and CHANGELOG.md disagree"))
+        for tag, changelog, error in cases:
+            with self.subTest(tag=tag, error=error), tempfile.TemporaryDirectory(prefix="b2-metadata-gate-") as temporary:
+                root = pathlib.Path(temporary)
+                (root / ".changes").mkdir()
+                (root / ".changes/v1.2.3.md").write_text(notes)
+                (root / "CHANGELOG.md").write_text("# Changelog\n\n" + changelog)
+                (root / "gradle.properties").write_text("version=1.2.3\n")
+                (root / "scripts").mkdir()
+                shutil.copy(ROOT / "scripts/release.py", root / "scripts/release.py")
+                environment = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+                for args in (("init", "-q"), ("config", "user.name", "Release Fixture"),
+                             ("config", "user.email", "fixture@example.invalid"), ("add", "."),
+                             ("-c", "commit.gpgSign=false", "commit", "-qm", "Release metadata fixture")):
+                    subprocess.run(["git", *args], cwd=root, env=environment, check=True, capture_output=True)
+                commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, env=environment,
+                                                 text=True).strip()
+                runner = root / "runner"
+                runner.mkdir()
+                environment.update(RELEASE_TAG=tag, GITHUB_SHA=commit, RUNNER_TEMP=str(runner))
+                # An uncommitted local version must not replace the immutable event's metadata.
+                (root / "gradle.properties").write_text("version=9.9.9\n")
+                result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script], cwd=root,
+                                        env=environment, text=True, capture_output=True)
+                if error:
+                    self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+                    self.assertIn(error, result.stderr)
+                else:
+                    self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def test_dependabot_updates_action_pins_weekly_from_repository_root(self):
         configuration = (ROOT / ".github/dependabot.yml").read_text()
