@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -45,6 +46,19 @@ class WorkflowTest(unittest.TestCase):
 
     def test_publish_command_and_signing_secrets_are_preserved(self):
         workflow = (ROOT / ".github/workflows/deploy.yml").read_text()
+        deploy = workflow.split("\n  deploy:\n", 1)[1]
+        build_step = "      - name: Build and test the release\n"
+        publish_step = "      - name: Deploy to Maven Central\n"
+        self.assertIn(build_step, deploy)
+        self.assertIn(publish_step, deploy)
+        self.assertLess(deploy.index(build_step), deploy.index(publish_step))
+        build = deploy.split(build_step, 1)[1].split("\n      - ", 1)[0]
+        command = re.search(r"^        run:[ \t]+(.+)$", build, re.M)
+        self.assertIsNotNone(command, "release deployment must run the Gradle build")
+        arguments = shlex.split(command.group(1))
+        self.assertEqual("./gradlew", arguments[0])
+        self.assertIn("build", arguments[1:])
+        self.assertNotIn("--dry-run", arguments)
         self.assertIn("./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository createBundle --no-daemon --stacktrace", workflow)
         for secret in ("GPG_SIGNING_KEY", "GPG_PASSPHRASE", "SONATYPE_TOKEN_USERNAME", "SONATYPE_TOKEN_PASSWORD"):
             self.assertIn("secrets." + secret, workflow)

@@ -83,6 +83,11 @@ class WorkflowMutationTest(unittest.TestCase):
             "ci_cd.yml", "--dry-run --no-daemon", "--no-daemon",
             "test_publication_task_graph_is_checked_without_publishing")
 
+    def test_missing_release_build_is_rejected(self):
+        self.assert_mutation_rejected(
+            "deploy.yml", "run: ./gradlew build --no-daemon", "run: true",
+            "test_publish_command_and_signing_secrets_are_preserved")
+
     def test_missing_signed_tag_verification_is_rejected(self):
         self.assert_mutation_rejected(
             "deploy.yml", 'bash scripts/verify-release-tag.sh "$RELEASE_TAG"', "true",
