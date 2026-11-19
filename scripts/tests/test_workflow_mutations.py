@@ -10,7 +10,8 @@ import test_workflows as contracts
 
 class WorkflowMutationTest(unittest.TestCase):
     def setUp(self):
-        self.files = {name: pathlib.Path(".github/workflows") / name for name in ("ci_cd.yml", "deploy.yml")}
+        self.files = {name: pathlib.Path(".github/workflows") / name
+                      for name in ("ci_cd.yml", "deploy.yml", "changelog.yml")}
         self.files["dependabot.yml"] = pathlib.Path(".github/dependabot.yml")
         self.originals = {
             name: (contracts.ROOT / filename).read_text()
@@ -109,6 +110,11 @@ class WorkflowMutationTest(unittest.TestCase):
             '  - package-ecosystem: "github-actions"\n    directory: "/"\n'
             '    schedule:\n      interval: "weekly"\n', "",
             "test_dependabot_updates_action_pins_weekly_from_repository_root")
+
+    def test_changelog_pull_request_branch_filter_is_rejected(self):
+        self.assert_mutation_rejected(
+            "changelog.yml", "  pull_request:\n", "  pull_request:\n    branches: [master, api-v2, 7.x]\n",
+            "test_changelog_check_runs_for_pull_requests_without_branch_filters")
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ import unittest
 
 
 SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "verify-release-tag.sh"
+REGISTRY = SCRIPT.parents[1] / ".github/signing-maintainers"
 
 
 class SignedTagTest(unittest.TestCase):
@@ -53,6 +54,9 @@ class SignedTagTest(unittest.TestCase):
         curl = cls.bin / "curl"
         curl.write_text("""#!/usr/bin/env python3
 import os, pathlib, sys
+if os.environ.get('FIXTURE_KEY_REQUESTS'):
+    with open(os.environ['FIXTURE_KEY_REQUESTS'], 'a') as output:
+        output.write(sys.argv[-1] + '\\n')
 path = os.environ.get('FIXTURE_GPG' if sys.argv[-1].endswith('.gpg') else 'FIXTURE_SSH')
 if path:
     print(pathlib.Path(path).read_text(), end='')
@@ -60,7 +64,10 @@ if path:
         curl.chmod(0o755)
         gh = cls.bin / "gh"
         gh.write_text("""#!/usr/bin/env python3
-import os, pathlib
+import os, pathlib, sys
+if os.environ.get('FIXTURE_KEY_REQUESTS'):
+    with open(os.environ['FIXTURE_KEY_REQUESTS'], 'a') as output:
+        output.write(sys.argv[3] + '\\n')
 path = os.environ.get('FIXTURE_SSH_SIGNING')
 if path:
     print(pathlib.Path(path).read_text(), end='')
@@ -92,6 +99,28 @@ if path:
         result = self.verify()
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn("verified", result.stdout)
+
+    def test_default_maintainer_registry_is_consumed(self):
+        maintainers = ("goanpeca", "ffumero2003", "sophiecarreras")
+        registered = [line.strip() for line in REGISTRY.read_text().splitlines()
+                      if line.strip() and not line.lstrip().startswith("#")]
+        self.assertCountEqual(maintainers, registered)
+        default = self.repo / ".github/signing-maintainers"
+        default.parent.mkdir(exist_ok=True)
+        shutil.copyfile(REGISTRY, default)
+        requests = self.root / "default-maintainer-requests.log"
+        environment = dict(self.environment, PATH=str(self.bin) + os.pathsep + self.environment["PATH"],
+                           ENFORCE_SIGNED_TAGS="true", FIXTURE_GPG=str(self.public_gpg),
+                           FIXTURE_SSH="", FIXTURE_SSH_SIGNING="", FIXTURE_KEY_REQUESTS=str(requests))
+        result = subprocess.run(["bash", str(SCRIPT), "v1.2.3"], cwd=self.repo,
+                                env=environment, text=True, capture_output=True)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        expected = []
+        for username in maintainers:
+            expected.extend(("https://github.com/" + username + ".gpg",
+                             "https://github.com/" + username + ".keys",
+                             "users/" + username + "/ssh_signing_keys?per_page=100"))
+        self.assertCountEqual(expected, requests.read_text().splitlines())
 
     def test_registered_ssh_signature_passes_enforcing_gate(self):
         tag = self.call(["git", "cat-file", "tag", "v1.2.5"]).stdout

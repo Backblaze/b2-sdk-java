@@ -22,6 +22,16 @@ def step_script(workflow, name):
 
 
 class WorkflowTest(unittest.TestCase):
+    def test_changelog_check_runs_for_pull_requests_without_branch_filters(self):
+        workflow = (ROOT / ".github/workflows/changelog.yml").read_text()
+        triggers = re.search(r"^on:[ \t]*\n(.*?)(?=^[^\s#]|\Z)", workflow, re.M | re.S)
+        self.assertIsNotNone(triggers, "changelog workflow must declare its triggers")
+        pull_request = re.search(r"^  pull_request:[ \t]*\n(.*?)(?=^  \S|\Z)",
+                                 triggers.group(1), re.M | re.S)
+        self.assertIsNotNone(pull_request, "changelog-check must run on pull requests")
+        self.assertNotRegex(pull_request.group(1), r"(?m)^    branches(?:-ignore)?:")
+        self.assertIn("\n  changelog-check:\n", workflow)
+
     def test_every_external_action_is_pinned_to_commit(self):
         for workflow in (ROOT / ".github/workflows").glob("*.yml"):
             for action in re.findall(r"uses:\s*([^\s#]+)", workflow.read_text()):
