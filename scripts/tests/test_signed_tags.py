@@ -1,7 +1,10 @@
 """Verify real disposable Git/GPG/SSH signatures; mock only the key-download boundary."""
 
+import base64
 import os
 import pathlib
+import shutil
+import struct
 import subprocess
 import tempfile
 import unittest
@@ -150,6 +153,55 @@ if path:
         result = self.verify("v1.2.5", registered=False, signing_only=True)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn("verified", result.stdout)
+
+    def test_registered_security_key_types_reach_allowed_signers(self):
+        def fields(public_key):
+            blob = base64.b64decode(public_key.read_text().split()[1])
+            result = []
+            while blob:
+                length = struct.unpack(">I", blob[:4])[0]
+                result.append(blob[4:4 + length])
+                blob = blob[4 + length:]
+            return result
+
+        def public_line(key_type, *parts):
+            values = (key_type.encode(),) + parts + (b"ssh:",)
+            blob = b"".join(struct.pack(">I", len(value)) + value for value in values)
+            return key_type + " " + base64.b64encode(blob).decode() + " fixture"
+
+        ecdsa = self.root / "security-key-ecdsa-fixture"
+        self.call(["ssh-keygen", "-q", "-t", "ecdsa", "-b", "256", "-N", "", "-f", str(ecdsa)])
+        ed25519_fields = fields(self.ssh_key.with_suffix(".pub"))
+        ecdsa_fields = fields(ecdsa.with_suffix(".pub"))
+        keys = (public_line("sk-ssh-ed25519@openssh.com", ed25519_fields[1]),
+                public_line("sk-ecdsa-sha2-nistp256@openssh.com", *ecdsa_fields[1:]))
+        capture_bin = self.root / "capture-bin"
+        capture_bin.mkdir()
+        capture = self.root / "allowed-signers.capture"
+        real_git = shutil.which("git", path=self.environment["PATH"])
+        git = capture_bin / "git"
+        git.write_text("""#!/usr/bin/env python3
+import os, pathlib, shutil, subprocess, sys
+for argument in sys.argv[1:]:
+    if argument.startswith('gpg.ssh.allowedSignersFile='):
+        shutil.copyfile(argument.partition('=')[2], os.environ['FIXTURE_ALLOWED_CAPTURE'])
+sys.exit(subprocess.run([os.environ['FIXTURE_REAL_GIT'], *sys.argv[1:]]).returncode)
+""")
+        git.chmod(0o755)
+        self.environment = dict(self.environment, PATH=str(capture_bin) + os.pathsep + self.environment["PATH"],
+                                FIXTURE_REAL_GIT=real_git, FIXTURE_ALLOWED_CAPTURE=str(capture))
+        self.ssh_key = self.root / "registered-security-key"
+        for key in keys:
+            public = self.ssh_key.with_suffix(".pub")
+            public.write_text(key + "\n")
+            # Validate the public wire format without requiring a hardware authenticator.
+            self.call(["ssh-keygen", "-l", "-f", str(public)])
+            for signing_only in (False, True):
+                with self.subTest(key_type=key.split()[0], signing_only=signing_only):
+                    result = self.verify("v1.2.5", registered=not signing_only, signing_only=signing_only)
+                    # The tag uses a different ordinary key: real verification must still reject it.
+                    self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+                    self.assertEqual('release-maintainer namespaces="git" ' + key + "\n", capture.read_text())
 
     def test_unsigned_tag_blocks_when_enforced(self):
         result = self.verify("v1.2.4")

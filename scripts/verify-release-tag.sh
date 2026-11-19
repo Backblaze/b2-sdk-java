@@ -43,7 +43,7 @@ while IFS= read -r username || [ -n "$username" ]; do
   gh api --paginate "users/$username/ssh_signing_keys?per_page=100" --jq '.[].key' >> "$temporary/key.ssh" 2>/dev/null || true
   while IFS= read -r key; do
     case "$key" in
-      ssh-*|ecdsa-*) printf 'release-maintainer namespaces="git" %s\n' "$key" >> "$temporary/allowed_signers" ;;
+      ssh-*|ecdsa-*|sk-ssh-*|sk-ecdsa-*) printf 'release-maintainer namespaces="git" %s\n' "$key" >> "$temporary/allowed_signers" ;;
     esac
   done < "$temporary/key.ssh"
 done < "$maintainers"

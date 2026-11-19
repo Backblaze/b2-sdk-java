@@ -112,10 +112,16 @@ def blocks_release(severity):
 
 
 def security_gate(repo):
+    # Generic patterns require an explicit secret_type filter in GitHub's REST API.
+    generic_types = ("ec_private_key", "generic_private_key", "http_basic_authentication_header",
+                     "http_bearer_authentication_header", "mongodb_connection_string", "mysql_connection_url",
+                     "openssh_private_key", "pgp_private_key", "postgres_connection_string", "rsa_private_key", "password")
     sources = (
         ("Code scanning", "code-scanning/alerts?state=open&ref=refs/heads/master&per_page=100"),
         ("Dependabot", "dependabot/alerts?state=open&per_page=100"),
-        ("Secret scanning", "secret-scanning/alerts?state=open&per_page=100"),
+        ("Secret scanning", "secret-scanning/alerts?state=open&per_page=100&hide_secret=true"),
+        ("Generic secret scanning", "secret-scanning/alerts?state=open&per_page=100&hide_secret=true&secret_type="
+         + ",".join(generic_types)),
         ("Repository advisories", "security-advisories?per_page=100"),
         ("Issues", "issues?state=open&per_page=100"),
     )
@@ -124,6 +130,7 @@ def security_gate(repo):
         "Code scanning": ("open", "fixed", "dismissed"),
         "Dependabot": ("open", "fixed", "dismissed", "auto_dismissed"),
         "Secret scanning": ("open", "resolved"),
+        "Generic secret scanning": ("open", "resolved"),
         "Repository advisories": ("draft", "triage", "published", "closed", "withdrawn"),
         "Issues": ("open", "closed"),
     }
@@ -142,7 +149,7 @@ def security_gate(repo):
                         count += blocks_release(severity)
                     elif name == "Dependabot":
                         count += blocks_release(item["security_advisory"]["severity"])
-                    elif name == "Secret scanning":
+                    elif name in ("Secret scanning", "Generic secret scanning"):
                         count += 1
                     elif name == "Issues":
                         labels = [re.sub(r"[\s:/_-]+", "", label["name"].lower()) for label in item["labels"]]
