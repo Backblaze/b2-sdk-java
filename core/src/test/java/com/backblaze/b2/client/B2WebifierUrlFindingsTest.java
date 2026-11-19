@@ -29,6 +29,15 @@ public class B2WebifierUrlFindingsTest extends B2BaseTest {
         assertFalse("raw & survived in: " + url, url.substring(url.indexOf("fileId=")).contains("&"));
     }
 
+    /** Finding C24: an "=" in a file id must be encoded as part of the query value. */
+    @Category(KnownDefect.class)
+    @Test
+    public void testFindingC24_fileIdWithEqualsIsEncodedInDownloadByIdUrl() throws Exception {
+        final String url = webifier.getDownloadByIdUrl(B2TestHelpers.makeAuth(1),
+                B2DownloadByIdRequest.builder("4_zid=only").build());
+        assertEquals("fileId=4_zid%3Donly", url.substring(url.indexOf('?') + 1));
+    }
+
     /** Finding C24: an "&" in a bucket name must be encoded in the download-by-name URL. */
     @Category(KnownDefect.class)
     @Test
