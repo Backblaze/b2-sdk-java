@@ -61,7 +61,7 @@ def changelog_check(root, base, dependabot=False):
                            cwd=target, check=True, stdout=subprocess.DEVNULL)
     if base:
         changes = subprocess.check_output(
-            ["git", "diff", "--name-status", "--no-renames", base + "...HEAD"], cwd=root, text=True
+            ["git", "diff", "--name-status", "--find-renames", base + "...HEAD"], cwd=root, text=True
         ).splitlines()
         workflow_only = changes and all(
             line.startswith("M\t.github/workflows/") and line.endswith((".yml", ".yaml"))
@@ -72,7 +72,10 @@ def changelog_check(root, base, dependabot=False):
             return
         added = [line.split("\t")[-1] for line in changes if line.startswith("A\t")]
         if not any(name.startswith(".changes/unreleased/") and name.endswith(".yaml") for name in added):
-            updated = [line.split("\t")[-1] for line in changes if line.startswith(("A\t", "M\t"))]
+            release_changes = subprocess.check_output(
+                ["git", "diff", "--name-status", "--no-renames", base + "...HEAD"], cwd=root, text=True
+            ).splitlines()
+            updated = [line.split("\t")[-1] for line in release_changes if line.startswith(("A\t", "M\t"))]
             tag = "v" + project_version(root)
             if ".changes/" + tag + ".md" not in updated or "gradle.properties" not in updated or fragments:
                 raise ValueError("add a Changie fragment, or batch all fragments in a release-prep PR")
