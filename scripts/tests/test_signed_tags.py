@@ -1,0 +1,276 @@
+"""Verify real disposable Git/GPG/SSH signatures; mock only the key-download boundary."""
+
+import base64
+import os
+import pathlib
+import shutil
+import struct
+import subprocess
+import tempfile
+import unittest
+
+
+SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "verify-release-tag.sh"
+REGISTRY = SCRIPT.parents[1] / ".github/signing-maintainers"
+
+
+class SignedTagTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.temporary = tempfile.TemporaryDirectory(prefix="b2-tag-", dir="/tmp")
+        cls.root = pathlib.Path(cls.temporary.name)
+        cls.home = cls.root / "gnupg"
+        cls.home.mkdir(mode=0o700)
+        cls.environment = dict(os.environ, GNUPGHOME=str(cls.home), GIT_CONFIG_GLOBAL=os.devnull,
+                               GIT_CONFIG_NOSYSTEM="1")
+        cls.repo = cls.root / "repo"
+        cls.repo.mkdir()
+        cls.call(["git", "init", "-q"])
+        cls.call(["git", "config", "user.name", "Release Fixture"])
+        cls.call(["git", "config", "user.email", "fixture@example.invalid"])
+        cls.call(["git", "-c", "commit.gpgSign=false", "commit", "--allow-empty", "-qm", "Fixture"])
+        cls.reviewed = cls.call(["git", "rev-parse", "HEAD"]).stdout.strip()
+        cls.call(["git", "update-ref", "refs/remotes/origin/master", cls.reviewed])
+        cls.call(["gpg", "--batch", "--pinentry-mode", "loopback", "--passphrase", "",
+                  "--quick-generate-key", "Release Fixture <fixture@example.invalid>", "ed25519", "sign", "0"])
+        keys = cls.call(["gpg", "--with-colons", "--list-secret-keys"]).stdout
+        fingerprint = next(line.split(":")[9] for line in keys.splitlines() if line.startswith("fpr:"))
+        cls.public_gpg = cls.root / "fixture.gpg"
+        cls.public_gpg.write_text(cls.call(["gpg", "--armor", "--export", fingerprint]).stdout)
+        cls.call(["git", "-c", "gpg.format=openpgp", "-c", "user.signingkey=" + fingerprint,
+                  "tag", "-s", "v1.2.3", "-m", "v1.2.3"])
+        cls.call(["git", "tag", "v1.2.4"])
+        cls.ssh_key = cls.root / "ssh-key"
+        cls.call(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(cls.ssh_key)])
+        cls.call(["git", "-c", "gpg.format=ssh", "-c", "user.signingkey=" + str(cls.ssh_key),
+                  "tag", "-s", "v1.2.5", "-m", "v1.2.5"])
+        cls.call(["git", "-c", "commit.gpgSign=false", "commit", "--allow-empty", "-qm", "Unreviewed fixture"])
+        cls.unreviewed = cls.call(["git", "rev-parse", "HEAD"]).stdout.strip()
+        cls.call(["git", "tag", "v1.2.8"])
+        cls.maintainers = cls.root / "maintainers"
+        cls.maintainers.write_text("fixture-maintainer\n")
+        cls.bin = cls.root / "bin"
+        cls.bin.mkdir()
+        curl = cls.bin / "curl"
+        curl.write_text("""#!/usr/bin/env python3
+import os, pathlib, sys
+if os.environ.get('FIXTURE_KEY_REQUESTS'):
+    with open(os.environ['FIXTURE_KEY_REQUESTS'], 'a') as output:
+        output.write(sys.argv[-1] + '\\n')
+path = os.environ.get('FIXTURE_GPG' if sys.argv[-1].endswith('.gpg') else 'FIXTURE_SSH')
+if path:
+    print(pathlib.Path(path).read_text(), end='')
+""")
+        curl.chmod(0o755)
+        gh = cls.bin / "gh"
+        gh.write_text("""#!/usr/bin/env python3
+import os, pathlib, sys
+if os.environ.get('FIXTURE_KEY_REQUESTS'):
+    with open(os.environ['FIXTURE_KEY_REQUESTS'], 'a') as output:
+        output.write(sys.argv[3] + '\\n')
+path = os.environ.get('FIXTURE_SSH_SIGNING')
+if path:
+    print(pathlib.Path(path).read_text(), end='')
+""")
+        gh.chmod(0o755)
+
+    @classmethod
+    def call(cls, command):
+        result = subprocess.run(command, cwd=cls.repo, env=cls.environment, text=True, capture_output=True)
+        if result.returncode:
+            raise RuntimeError(str(command) + ": " + result.stderr)
+        return result
+
+    @classmethod
+    def tearDownClass(cls):
+        subprocess.run(["gpgconf", "--kill", "all"], env=cls.environment, capture_output=True)
+        cls.temporary.cleanup()
+
+    def verify(self, tag="v1.2.3", enforce="true", registered=True, signing_only=False):
+        environment = dict(self.environment, PATH=str(self.bin) + os.pathsep + self.environment["PATH"],
+                           ENFORCE_SIGNED_TAGS=enforce,
+                           FIXTURE_GPG=str(self.public_gpg) if registered else "",
+                           FIXTURE_SSH=str(self.ssh_key) + ".pub" if registered else "",
+                           FIXTURE_SSH_SIGNING=str(self.ssh_key) + ".pub" if signing_only else "")
+        return subprocess.run(["bash", str(SCRIPT), tag, str(self.maintainers)],
+                              cwd=self.repo, env=environment, text=True, capture_output=True)
+
+    def test_registered_gpg_signature_passes_enforcing_gate(self):
+        result = self.verify()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("verified", result.stdout)
+
+    def test_default_maintainer_registry_is_consumed(self):
+        maintainers = ("goanpeca", "ffumero2003", "sophiecarreras")
+        registered = [line.strip() for line in REGISTRY.read_text().splitlines()
+                      if line.strip() and not line.lstrip().startswith("#")]
+        self.assertCountEqual(maintainers, registered)
+        default = self.repo / ".github/signing-maintainers"
+        default.parent.mkdir(exist_ok=True)
+        shutil.copyfile(REGISTRY, default)
+        requests = self.root / "default-maintainer-requests.log"
+        environment = dict(self.environment, PATH=str(self.bin) + os.pathsep + self.environment["PATH"],
+                           ENFORCE_SIGNED_TAGS="true", FIXTURE_GPG=str(self.public_gpg),
+                           FIXTURE_SSH="", FIXTURE_SSH_SIGNING="", FIXTURE_KEY_REQUESTS=str(requests))
+        result = subprocess.run(["bash", str(SCRIPT), "v1.2.3"], cwd=self.repo,
+                                env=environment, text=True, capture_output=True)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        expected = []
+        for username in maintainers:
+            expected.extend(("https://github.com/" + username + ".gpg",
+                             "https://github.com/" + username + ".keys",
+                             "users/" + username + "/ssh_signing_keys?per_page=100"))
+        self.assertCountEqual(expected, requests.read_text().splitlines())
+
+    def test_registered_ssh_signature_passes_enforcing_gate(self):
+        tag = self.call(["git", "cat-file", "tag", "v1.2.5"]).stdout
+        self.assertIn("tagger Release Fixture <fixture@example.invalid>", tag)
+        result = self.verify("v1.2.5")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("verified", result.stdout)
+
+    def test_ssh_verification_uses_a_fixed_registered_key_principal(self):
+        trace = self.root / "ssh-principal.trace"
+        self.environment = dict(self.environment, GIT_TRACE=str(trace))
+        result = self.verify("v1.2.5")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertRegex(trace.read_text(), r"ssh-keygen -Y verify[^\n]* -I release-maintainer(?: |$)")
+
+    def test_registered_ssh_key_accepts_valid_tagger_email_punctuation(self):
+        for index, email in enumerate(("o'hara@example.org", "fixture+release@example.invalid")):
+            with self.subTest(email=email):
+                tag = "v1.2." + str(30 + index)
+                self.make_ssh_tag(tag, email, self.ssh_key)
+                result = self.verify(tag)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertIn("verified", result.stdout)
+
+    def make_ssh_tag(self, name, email, key):
+        content = ("object " + self.reviewed + "\ntype commit\ntag " + name + "\n"
+                   "tagger Release Fixture <" + email + "> 1700000000 +0000\n\n" + name + "\n")
+        unsigned = self.root / (name + ".txt")
+        unsigned.write_text(content)
+        self.call(["ssh-keygen", "-Y", "sign", "-f", str(key), "-n", "git", str(unsigned)])
+        signed = content + unsigned.with_suffix(".txt.sig").read_text()
+        result = subprocess.run(["git", "hash-object", "-t", "tag", "-w", "--stdin"],
+                                cwd=self.repo, env=self.environment, input=signed,
+                                text=True, capture_output=True)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.call(["git", "update-ref", "refs/tags/" + name, result.stdout.strip()])
+
+    def test_ssh_tagger_email_cannot_add_an_unregistered_key(self):
+        key = self.root / "other-ssh-key"
+        self.call(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(key)])
+        public = " ".join(key.with_suffix(".pub").read_text().split()[:2])
+        self.make_ssh_tag("v1.2.10", 'fixture namespaces="git" ' + public, key)
+        result = self.verify("v1.2.10")
+        self.assertNotEqual(0, result.returncode, result.stdout)
+        self.assertIn("not verified", result.stderr)
+
+    def test_signed_tagger_text_cannot_change_the_registered_key_principal(self):
+        for index, email in enumerate(("fixture,*@example.invalid", "fixture?@example.invalid")):
+            with self.subTest(email=email):
+                tag = "v1.2." + str(20 + index)
+                self.make_ssh_tag(tag, email, self.ssh_key)
+                trace = self.root / (tag + ".trace")
+                self.environment = dict(self.environment, GIT_TRACE=str(trace))
+                result = self.verify(tag)
+                self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                self.assertRegex(trace.read_text(), r"ssh-keygen -Y verify[^\n]* -I release-maintainer(?: |$)")
+
+    def test_ssh_key_registered_only_for_signing_passes(self):
+        result = self.verify("v1.2.5", registered=False, signing_only=True)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("verified", result.stdout)
+
+    def test_registered_security_key_types_reach_allowed_signers(self):
+        def fields(public_key):
+            blob = base64.b64decode(public_key.read_text().split()[1])
+            result = []
+            while blob:
+                length = struct.unpack(">I", blob[:4])[0]
+                result.append(blob[4:4 + length])
+                blob = blob[4 + length:]
+            return result
+
+        def public_line(key_type, *parts):
+            values = (key_type.encode(),) + parts + (b"ssh:",)
+            blob = b"".join(struct.pack(">I", len(value)) + value for value in values)
+            return key_type + " " + base64.b64encode(blob).decode() + " fixture"
+
+        ecdsa = self.root / "security-key-ecdsa-fixture"
+        self.call(["ssh-keygen", "-q", "-t", "ecdsa", "-b", "256", "-N", "", "-f", str(ecdsa)])
+        ed25519_fields = fields(self.ssh_key.with_suffix(".pub"))
+        ecdsa_fields = fields(ecdsa.with_suffix(".pub"))
+        keys = (public_line("sk-ssh-ed25519@openssh.com", ed25519_fields[1]),
+                public_line("sk-ecdsa-sha2-nistp256@openssh.com", *ecdsa_fields[1:]))
+        capture_bin = self.root / "capture-bin"
+        capture_bin.mkdir()
+        capture = self.root / "allowed-signers.capture"
+        real_git = shutil.which("git", path=self.environment["PATH"])
+        git = capture_bin / "git"
+        git.write_text("""#!/usr/bin/env python3
+import os, pathlib, shutil, subprocess, sys
+for argument in sys.argv[1:]:
+    if argument.startswith('gpg.ssh.allowedSignersFile='):
+        shutil.copyfile(argument.partition('=')[2], os.environ['FIXTURE_ALLOWED_CAPTURE'])
+sys.exit(subprocess.run([os.environ['FIXTURE_REAL_GIT'], *sys.argv[1:]]).returncode)
+""")
+        git.chmod(0o755)
+        self.environment = dict(self.environment, PATH=str(capture_bin) + os.pathsep + self.environment["PATH"],
+                                FIXTURE_REAL_GIT=real_git, FIXTURE_ALLOWED_CAPTURE=str(capture))
+        self.ssh_key = self.root / "registered-security-key"
+        for key in keys:
+            public = self.ssh_key.with_suffix(".pub")
+            public.write_text(key + "\n")
+            # Validate the public wire format without requiring a hardware authenticator.
+            self.call(["ssh-keygen", "-l", "-f", str(public)])
+            for signing_only in (False, True):
+                with self.subTest(key_type=key.split()[0], signing_only=signing_only):
+                    result = self.verify("v1.2.5", registered=not signing_only, signing_only=signing_only)
+                    # The tag uses a different ordinary key: real verification must still reject it.
+                    self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+                    self.assertEqual('release-maintainer namespaces="git" ' + key + "\n", capture.read_text())
+
+    def test_unsigned_tag_blocks_when_enforced(self):
+        result = self.verify("v1.2.4")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("annotated", result.stdout + result.stderr)
+
+    def test_unregistered_signature_blocks_when_enforced(self):
+        result = self.verify(registered=False)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("not verified", result.stdout + result.stderr)
+
+    def test_default_mode_warns_without_blocking(self):
+        result = self.verify("v1.2.4", enforce="")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("::warning::", result.stdout)
+
+    def test_missing_registered_keys_warns_without_blocking(self):
+        result = self.verify(enforce="false", registered=False)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("::warning::", result.stdout)
+
+    def check_commit(self, tag, commit):
+        return subprocess.run(["python3", str(SCRIPT.with_name("release.py")), "--root", str(self.repo),
+                               "verify-commit", tag, commit], cwd=self.repo, env=self.environment,
+                              text=True, capture_output=True)
+
+    def test_tag_moved_away_from_event_commit_is_rejected(self):
+        result = self.check_commit("v1.2.3", self.unreviewed)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("event commit", result.stderr)
+
+    def test_matching_event_commit_on_master_passes(self):
+        result = self.check_commit("v1.2.3", self.reviewed)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_matching_tag_outside_master_is_rejected(self):
+        result = self.check_commit("v1.2.8", self.unreviewed)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("origin/master", result.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()

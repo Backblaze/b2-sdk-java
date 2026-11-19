@@ -18,6 +18,39 @@ approach in [Blazer's release guide](https://github.com/Backblaze/blazer/blob/ma
 Do not run a publishing task locally as a verification step. A tag push starts the production
 deployment, including closing and releasing the Sonatype staging repository.
 
+## Repository setup and signed-tag rollout
+
+The intended release maintainers are `goanpeca`, `ffumero2003`, and `sophiecarreras`, listed in
+`.github/signing-maintainers`. The verifier resolves their public keys from
+`https://github.com/<username>.gpg`, `https://github.com/<username>.keys`, and the paginated public
+`users/<username>/ssh_signing_keys` API at check time and runs
+`git verify-tag` with an isolated keyring and SSH allowed-signers file. GitHub profile key changes
+therefore affect the next verification; review the username list through a PR.
+SSH authorization uses the registered keys under a fixed signer principal. The tagger email is
+descriptive metadata and is not used to construct the allowed-signers file.
+
+Tag verification is **warn-only by default**. Before enabling it, each intended signer must create a
+GPG or SSH signing key and register the public key on their GitHub account. Confirm that their signed
+tag passes verification, then run `gh variable set ENFORCE_SIGNED_TAGS --body true` for this repository.
+Once enabled, an
+unsigned, lightweight, unrecognized, or unverifiable tag blocks publication. In warn-only mode those
+conditions produce a workflow warning; the security, milestone, and metadata gates still enforce.
+
+An administrator must complete the following before the workflow changes are used for a release:
+
+- Supply `RELEASE_READ_TOKEN`, a read-only token authorized for this repository's code-scanning,
+  Dependabot, secret-scanning alerts, repository security advisories (including drafts), and issues.
+  Enable these sources and grant access: a disabled or unreadable source holds publication.
+  The ordinary workflow token is used for checkout, signing-key API lookups, milestone reads,
+  and release creation, with explicit job permissions; Maven signing/publishing secrets are exposed
+  only to the publish step.
+- Change Settings → Pages → Build and deployment → Source from **Deploy from a branch** to
+  **GitHub Actions**. Configure the `github-pages` environment to allow the documentation branches
+  `master`, `api-v2`, and `7.x`. The official Pages deployment uses GitHub OIDC with `pages: write`
+  and `id-token: write`; this does not change Maven Central authentication.
+- Make `changelog-check` a required PR check and protect `.github/signing-maintainers` and the
+  release workflows through maintainer review. Keep Dependabot's GitHub Actions updates enabled.
+
 ## Changelog and versioning
 
 Use semantic versioning: fixes use a patch release, compatible features a minor release, and
@@ -63,6 +96,19 @@ workflow files and human-authored changes still need a fragment.
    repository Security tab: an open medium, high, or critical finding holds the release,
    including findings without a patched dependency. Failures to read findings are unverified,
    not clean. A maintainer must resolve or dismiss findings with a written reason before release.
+
+   ```bash
+   GH_TOKEN="$RELEASE_READ_TOKEN" python3 scripts/release.py security
+   # After the release-prep PR has merged, the milestone must contain no open issues or PRs:
+   python3 scripts/release.py milestone "$TAG"
+   ```
+
+   The gate reads all pages of GitHub code-scanning alerts on `master`, Dependabot alerts,
+   draft/triage repository advisories, secret-scanning alerts, and severity-labeled open issues.
+   Medium/high/critical findings block even without a patched version; all open secret alerts
+   and unscored active advisories or code-scanning alerts block. Low findings do not block. The gate prints counts,
+   never unpublished advisory text or secret values. Do not put private advisory details in
+   a public issue. API failures are not a waiver; restore access and rerun the gate.
 
 3. Batch the changelog and update the version in one operation:
 
@@ -139,6 +185,15 @@ The tag-triggered deploy workflow publishes using the existing Gradle command:
 
 Maven Central, GPG artifact signing, the Sonatype staging endpoint, and the release/close tasks
 are unchanged by the changelog tooling. Never run this production command as a dry-run substitute.
+
+Before publishing, `release-checks` reads its gate implementation and maintainer list from `master`,
+requires the tag to resolve to the workflow's immutable event commit on `master`, checks
+version/changelog agreement, verifies the tag in the configured mode, and requires security clearance
+and a complete `vX.Y.Z` milestone. Metadata validation and the `deploy` checkout use that same event
+commit. `deploy` depends on those checks and runs the Gradle build before publishing. After successful
+publication it runs `gh release create`
+with the exact `.changes/vX.Y.Z.md` section as `--notes-file` and the three existing module bundles.
+No default or automatically generated release body is used.
 
 ## Verify the published release
 
