@@ -1,0 +1,3 @@
+kind: Changed
+body: "`B2EventNotificationRule` now orders and deduplicates rules by `maxEventsPerBatch`, so rules that differ only by batch size no longer collapse in sorted collections; it also uses direct webhook settings instead of the former string-based order (url, headers, then signing secret), so callers that persist or diff ordered rules may observe a different order."
+time: 2026-11-16T00:00:00Z

@@ -1,0 +1,12 @@
+// Prints the SDK and dependency classpath after ./gradlew build; does not change publication tasks.
+allprojects {
+    afterEvaluate {
+        if (path == ':b2-sdk-httpclient') {
+            tasks.register('healthClasspath') {
+                doLast {
+                    println sourceSets.main.runtimeClasspath.asPath
+                }
+            }
+        }
+    }
+}

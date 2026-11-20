@@ -1,0 +1,3 @@
+kind: Added
+body: "Added `B2EventNotification.parseUnverified`, which parses without checking a signature. The one-argument `parse` overloads are deprecated in its favor."
+time: 2026-11-16T00:00:00Z

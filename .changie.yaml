@@ -1,0 +1,32 @@
+changesDir: .changes
+unreleasedDir: unreleased
+headerPath: header.tpl.md
+changelogPath: CHANGELOG.md
+versionExt: md
+versionFormat: '## [{{.VersionNoPrefix}}] - {{.Time.Format "2006-01-02"}}'
+kindFormat: '### {{.Kind}}'
+changeFormat: '* {{.Body}}'
+footerFormat: '[{{.VersionNoPrefix}}]: https://github.com/Backblaze/b2-sdk-java/releases/tag/{{.Version}}'
+kinds:
+  - label: Added
+    auto: minor
+  - label: Changed
+    auto: minor
+  - label: Deprecated
+    auto: minor
+  - label: Removed
+    auto: major
+  - label: Fixed
+    auto: patch
+  - label: Security
+    auto: patch
+newlines:
+  afterChangelogHeader: 0
+  beforeChangelogVersion: 1
+  endOfVersion: 1
+  afterKind: 1
+  beforeKind: 1
+replacements:
+  - path: gradle.properties
+    find: '^version=.*'
+    replace: 'version={{.VersionNoPrefix}}'

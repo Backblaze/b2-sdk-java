@@ -12,5 +12,6 @@ out/
 
 hs_err_pid*
 .DS_Store
+__pycache__/
 
 !gradle/wrapper/gradle-wrapper.jar

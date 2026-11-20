@@ -1,0 +1,3 @@
+kind: Changed
+body: "Signature comparison is now constant-time."
+time: 2026-11-16T00:00:00Z

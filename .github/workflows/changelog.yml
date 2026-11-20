@@ -1,0 +1,46 @@
+# Copyright 2026, Backblaze Inc. All Rights Reserved.
+# License https://www.backblaze.com/using_b2_code.html
+
+name: Changelog
+
+on:
+  pull_request:
+    branches: [master, api-v2, 7.x]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  changelog-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: '1.24.0'
+          cache: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install Changie
+        run: go install github.com/miniscruff/changie@v1.24.0
+      - name: Validate changelog
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          flags=()
+          if [ "$PR_AUTHOR" = 'dependabot[bot]' ]; then flags=(--dependabot); fi
+          if [ -n "$BASE_SHA" ]; then
+            python3 scripts/release.py changelog-check --base "$BASE_SHA" "${flags[@]}"
+          else
+            python3 scripts/release.py changelog-check
+          fi
+      - name: Test release metadata checks
+        run: python3 -m unittest discover -s scripts/tests -v
