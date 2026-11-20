@@ -846,6 +846,56 @@ public class B2StorageClientWebifierImplTest extends B2BaseTest {
     }
 
     @Test
+    public void testFinishLargeFileAlreadyFinished() throws B2Exception {
+        checkFinishLargeFileAfterBadRequest(true, false);
+    }
+
+    @Test
+    public void testFinishLargeFileStillUnfinished() throws B2Exception {
+        checkFinishLargeFileAfterBadRequest(false, false);
+    }
+
+    @Test
+    public void testFinishLargeFileInfoFails() throws B2Exception {
+        checkFinishLargeFileAfterBadRequest(false, true);
+    }
+
+    private void checkFinishLargeFileAfterBadRequest(boolean uploaded, boolean infoFails) throws B2Exception {
+        final B2BadRequestException original = new B2BadRequestException("bad_request", null, "finish failed");
+        final B2FileVersion version = mock(B2FileVersion.class);
+        org.mockito.Mockito.when(version.isUpload()).thenReturn(uploaded);
+        final B2WebApiClient client = new AlwaysThrowsUnauthorizedWebClientApi() {
+            @Override
+            public <ResponseType> ResponseType postJsonReturnJson(String url,
+                                                                  B2Headers headersOrNull,
+                                                                  Object request,
+                                                                  Class<ResponseType> responseClass) throws B2Exception {
+                if (url.endsWith("/b2_finish_large_file")) {
+                    throw original;
+                }
+                assertEquals("apiUrl1/b2api/v2/b2_get_file_info", url);
+                assertEquals(B2GetFileInfoRequest.builder(fileId(1)).build(), request);
+                if (infoFails) {
+                    throw new B2UnauthorizedException("unauthorized", null, "info failed");
+                }
+                return responseClass.cast(version);
+            }
+        };
+        final B2StorageClientWebifierImpl localWebifier = new B2StorageClientWebifierImpl(
+                client, USER_AGENT, MASTER_URL, null);
+        final B2FinishLargeFileRequest request = B2FinishLargeFileRequest
+                .builder(fileId(1), B2Collections.listOf("sha1_1")).build();
+        try {
+            final B2FileVersion result = localWebifier.finishLargeFile(ACCOUNT_AUTH, request);
+            assertTrue(uploaded && !infoFails);
+            org.junit.Assert.assertSame(version, result);
+        } catch (B2BadRequestException e) {
+            assertFalse(uploaded && !infoFails);
+            org.junit.Assert.assertSame(original, e);
+        }
+    }
+
+    @Test
     public void testCancelLargeFile() throws B2Exception {
         final B2CancelLargeFileRequest request = B2CancelLargeFileRequest
                 .builder(fileId(1))
