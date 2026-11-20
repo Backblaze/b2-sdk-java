@@ -8,6 +8,7 @@
 * Signature comparison is now constant-time.
 
 ### Added
+* `HttpClientFactoryImpl` now honors the JVM's proxy settings (`https.proxyHost`, `https.proxyPort`, `http.nonProxyHosts`); call `setUseSystemProxy(false)` on the builder to ignore them. Destinations using `http` are still rejected unless `setSupportInsecureHttp(true)` is used.
 * Added `B2EventNotification.parseUnverified`, which parses without checking a signature. The one-argument `parse` overloads are deprecated in its favor.
 
 ## [6.5.0] - 2025-12-15

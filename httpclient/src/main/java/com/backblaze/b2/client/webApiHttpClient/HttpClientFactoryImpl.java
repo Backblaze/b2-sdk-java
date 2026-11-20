@@ -6,21 +6,30 @@ package com.backblaze.b2.client.webApiHttpClient;
 
 import com.backblaze.b2.client.exceptions.B2Exception;
 import com.backblaze.b2.util.B2Preconditions;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.DefaultRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.VersionInfo;
 
 import javax.net.ssl.SSLContext;
+import java.net.ProxySelector;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,10 +42,20 @@ import java.util.concurrent.TimeUnit;
  * If you have a non-https implementation of B2 that you test against,
  * you *may* choose to enable 'http' support when creating the factory.
  * We really do *not* recommend that in production.
+ *
+ * By default, created HttpClients use the JVM's default ProxySelector, so
+ * system properties such as https.proxyHost, https.proxyPort and
+ * http.nonProxyHosts are honored.  When no proxy is configured, connections
+ * are made directly, as before.  Talking to a proxy requires a plain 'http'
+ * connection to the proxy itself (before it tunnels to the https server with
+ * CONNECT), so that scheme is registered internally, but requests whose
+ * *destination* uses 'http' are still rejected unless insecure http was
+ * enabled on the builder.  Use setUseSystemProxy(false) to ignore proxies.
  */
 public class HttpClientFactoryImpl implements HttpClientFactory {
     private final HttpClientConnectionManager connectionManager;
     private final RequestConfig requestConfig;
+    private final HttpRoutePlanner routePlanner;
     private final IdleConnectionMonitorThread connectionJanitor;
 
     /**
@@ -54,9 +73,11 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
 
 
     private HttpClientFactoryImpl(HttpClientConnectionManager connectionManager,
-                          RequestConfig requestConfig) {
+                          RequestConfig requestConfig,
+                          HttpRoutePlanner routePlanner) {
         this.connectionManager = connectionManager;
         this.requestConfig = requestConfig;
+        this.routePlanner = routePlanner;
         connectionJanitor = new IdleConnectionMonitorThread(connectionManager);
         connectionJanitor.start();
     }
@@ -76,6 +97,7 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
                 .setUserAgent(APACHE_HTTP_CLIENT_USER_AGENT)
                 .setConnectionManager(connectionManager)
                 .setDefaultRequestConfig(requestConfig)
+                .setRoutePlanner(routePlanner)
                 // Allow connections to be idle for up to 4 seconds before not reusing. This strategy is needed
                 // because we are seeing connections being closed by the server after 4 seconds, then when we attempt
                 // to use, the call fails.
@@ -116,6 +138,10 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
         // http is only supported for use with some test environments.
         private boolean supportInsecureHttp;
 
+        // should the clients use the JVM's default ProxySelector (https.proxyHost, etc)?
+        // when no proxy is configured, this has no effect.
+        private boolean useSystemProxy = true;
+
         // for RequestConfig
         private int connectionRequestTimeoutSeconds = DEFAULT_CONNECTION_REQUEST_TIMEOUT_SECONDS;
         private int connectTimeoutSeconds = DEFAULT_CONNECT_TIMEOUT_SECONDS;
@@ -127,6 +153,11 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
 
         public Builder setSupportInsecureHttp(boolean supportInsecureHttp) {
             this.supportInsecureHttp = supportInsecureHttp;
+            return this;
+        }
+
+        public Builder setUseSystemProxy(boolean useSystemProxy) {
+            this.useSystemProxy = useSystemProxy;
             return this;
         }
 
@@ -162,7 +193,32 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
 
             return new HttpClientFactoryImpl(
                     createConnectionManager(),
-                    createRequestConfig());
+                    createRequestConfig(),
+                    createRoutePlanner());
+        }
+
+        private HttpRoutePlanner createRoutePlanner() {
+            // DefaultRoutePlanner always connects directly.
+            final HttpRoutePlanner planner = useSystemProxy
+                    ? new SystemDefaultRoutePlanner(ProxySelector.getDefault())
+                    : new DefaultRoutePlanner(null);
+            if (supportInsecureHttp) {
+                return planner;
+            }
+
+            // The connection manager has to know about 'http' to reach a proxy, so
+            // it can't be what keeps us from sending data to an http destination.
+            return new HttpRoutePlanner() {
+                @Override
+                public HttpRoute determineRoute(HttpHost target, HttpRequest request, HttpContext context)
+                        throws HttpException {
+                    final String scheme = target.getSchemeName();
+                    if (!"https".equalsIgnoreCase(scheme)) {
+                        throw new HttpException("unsupported scheme '" + scheme + "'; only https is enabled");
+                    }
+                    return planner.determineRoute(target, request, context);
+                }
+            };
         }
 
         public RequestConfig createRequestConfig() {
@@ -201,7 +257,8 @@ public class HttpClientFactoryImpl implements HttpClientFactory {
                 registryBuilder.register("https", sslFactory);
             }
 
-            if (supportInsecureHttp) {
+            // 'http' is also needed to connect to a proxy.  See createRoutePlanner().
+            if (supportInsecureHttp || useSystemProxy) {
                 ConnectionSocketFactory plainFactory = new PlainConnectionSocketFactory();
                 registryBuilder.register("http", plainFactory);
             }
