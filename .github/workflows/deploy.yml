@@ -11,6 +11,8 @@ jobs:
     name: Deploy
     if: github.repository == 'Backblaze/b2-sdk-java'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,19 +40,44 @@ jobs:
         id: get_tag
         shell: bash
         run: |
-          tag_name="$(echo $GITHUB_REF | cut -d / -f 3)"
-          echo ::set-output name=tag::$tag_name
+          printf 'tag=%s\n' "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
 
+      # - name: Create GitHub Release
+      #   uses: softprops/action-gh-release@v2 # actions-governance: replaced by gh release create/upload; remove after a real run verifies it
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: ${{ steps.get_tag.outputs.tag }}
+      #     name: ${{ steps.get_tag.outputs.tag }}
+      #     prerelease: false
+      #     draft: false
+      #     files: |
+      #       core/build/libs/bundle-*.jar
+      #       httpclient/build/libs/bundle-*.jar
+      #       samples/build/libs/bundle-*.jar
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.get_tag.outputs.tag }}
-          name: ${{ steps.get_tag.outputs.tag }}
-          prerelease: false
-          draft: false
-          files: |
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.get_tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          assets=(
             core/build/libs/bundle-*.jar
             httpclient/build/libs/bundle-*.jar
             samples/build/libs/bundle-*.jar
+          )
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "$TAG" --draft=false --prerelease=false
+            if (( ${#assets[@]} )); then
+              gh release upload "$TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY" --clobber
+            fi
+          else
+            create_args=(--repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --notes '' --draft=false --prerelease=false)
+            if (( ${#assets[@]} )); then
+              create_args+=("${assets[@]}")
+            fi
+            gh release create "$TAG" "${create_args[@]}"
+          fi
