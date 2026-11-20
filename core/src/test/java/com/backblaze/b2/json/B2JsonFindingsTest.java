@@ -40,7 +40,7 @@ public class B2JsonFindingsTest extends B2BaseTest {
         final Versioned v;
         try {
             v = B2Json.get().fromUrlParameterMap(Collections.singletonMap("x", "7"), Versioned.class, options);
-        } catch (RuntimeException | B2JsonException e) {
+        } catch (IllegalArgumentException | B2JsonException e) {
             fail("could not build a versioned type from url parameters: " + e);
             return;
         }
