@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           tag_name="$(echo $GITHUB_REF | cut -d / -f 3)"
-          echo ::set-output name=tag::$tag_name
+          echo "tag=$tag_name" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
