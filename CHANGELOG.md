@@ -11,7 +11,9 @@
 * Added `B2EventNotification.parseUnverified`, which parses without checking a signature. The one-argument `parse` overloads are deprecated in its favor.
 
 ## [6.5.0] - 2025-12-15
-* Add `readBucketLifecycleRules` and `writeBucketLifecycleRules` capabilities. 
+### Added
+* Add `readBucketLifecycleRules` and `writeBucketLifecycleRules` capabilities.
+
 ## [6.4.0] - 2025-05-14
 ### Added
 * Add `readBucketLogging` and `writeBucketLogging` capabilities.
@@ -19,8 +21,10 @@
 
 ## [6.3.0] - 2024-11-08
 ### Added
-* Fixed `B2StorageClient.deleteAllFilesInBucket` so it uses `fileVersions` instead of `fileNames`.
 * Added `maxEventsPerBatch` field to `B2WebhookConfiguration`.
+
+### Fixed
+* Fixed `B2StorageClient.deleteAllFilesInBucket` so it uses `fileVersions` instead of `fileNames`.
 
 ### Changed
 * Validate idle connections after 2 seconds of inactivity
@@ -258,7 +262,8 @@
 * These changes were driven by switching our internal b2-sdk uses to use the http client from the sdk instead of a 
 different, custom interface.
 
-[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.4.0...HEAD
+[Unreleased]: https://github.com/Backblaze/b2-sdk-java/compare/v6.5.0...HEAD
+[6.5.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.5.0
 [6.4.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.4.0
 [6.3.0]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.3.0
 [6.2.1]: https://github.com/Backblaze/b2-sdk-java/releases/tag/v6.2.1
