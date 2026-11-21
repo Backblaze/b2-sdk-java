@@ -562,7 +562,7 @@ public class B2 implements AutoCloseable {
 
     private void finish_uploading_large_file(String[] args) throws B2Exception {
         // [--noProgress] [--threads N] <bucketName> <largeFileId> <localPath>
-        checkArgCount(args, 3, 5);
+        checkArgCount(args, 3, 6);
         final int iLastArg = args.length - 1;
         final String bucketName = args[iLastArg-2];
         final String largeFileId = args[iLastArg-1];
