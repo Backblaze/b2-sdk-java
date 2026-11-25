@@ -16,6 +16,8 @@ import com.backblaze.b2.client.structures.B2FileVersion;
 import com.backblaze.b2.client.structures.B2ListFileNamesRequest;
 import com.backblaze.b2.client.structures.B2ListFileVersionsRequest;
 import com.backblaze.b2.client.structures.B2UploadFileRequest;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.Before;
@@ -29,6 +31,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -45,12 +48,17 @@ import static org.junit.Assert.assertTrue;
  *   <li>{@code B2_APPLICATION_KEY}</li>
  * </ul>
  * Plain http is accepted only for a loopback host; any other http endpoint fails the test.
- * Everything the test creates is removed in {@link #cleanUp()}.
+ * Everything the test creates is removed in {@link #cleanUp()}; a cleanup failure is logged.
+ *
+ * <p>Run with {@code ./gradlew :b2-sdk-httpclient:integrationTest} (the Gradle project is
+ * named {@code b2-sdk-httpclient}, directory {@code httpclient}).
  */
 public class B2StorageClientIntegrationTest {
     private static final String ENDPOINT_VAR = "B2_ENDPOINT";
     private static final String KEY_ID_VAR = "B2_APPLICATION_KEY_ID";
     private static final String KEY_VAR = "B2_APPLICATION_KEY";
+
+    private static final Log LOG = LogFactory.getLog(B2StorageClientIntegrationTest.class);
 
     private static B2StorageClient client;
     private static B2Bucket bucket;
@@ -64,9 +72,9 @@ public class B2StorageClientIntegrationTest {
             return; // not configured: every test is skipped by requireConfigured()
         }
 
-        final boolean loopbackHttp = isLoopbackHttp(endpoint);
-        assertTrue(ENDPOINT_VAR + " must be https, or http on a loopback host: " + endpoint,
-                loopbackHttp || endpoint.startsWith("https://"));
+        final boolean loopbackHttp = IntegrationEndpoint.isLoopbackHttp(endpoint);
+        assertTrue(ENDPOINT_VAR + " must be https, or http on a loopback host",
+                loopbackHttp || IntegrationEndpoint.isHttps(endpoint));
 
         final B2ClientConfig config = B2ClientConfig
                 .builder(keyId, key, "b2-sdk-java-integration-test")
@@ -93,10 +101,11 @@ public class B2StorageClientIntegrationTest {
     }
 
     @AfterClass
-    public static void cleanUp() throws B2Exception {
+    public static void cleanUp() {
         if (client == null) {
             return;
         }
+        // Cleanup problems are logged, never thrown, so they cannot mask a test assertion.
         try {
             if (bucket != null) {
                 final List<B2FileVersion> leftovers = new ArrayList<B2FileVersion>();
@@ -108,8 +117,14 @@ public class B2StorageClientIntegrationTest {
                 }
                 client.deleteBucket(bucket.getBucketId());
             }
+        } catch (Exception e) {
+            LOG.warn("integration test cleanup failed; bucket " + bucket.getBucketName() + " may need manual removal", e);
         } finally {
-            client.close();
+            try {
+                client.close();
+            } catch (Exception e) {
+                LOG.warn("closing the client failed", e);
+            }
         }
     }
 
@@ -143,18 +158,12 @@ public class B2StorageClientIntegrationTest {
         client.deleteFileVersion(uploaded);
 
         for (B2FileVersion v : client.fileVersions(B2ListFileVersionsRequest.builder(bucket.getBucketId()).setPrefix(name).build())) {
-            assertTrue("no version of " + name + " remains after delete", !name.equals(v.getFileName()));
+            assertFalse("no version of " + name + " remains after delete", name.equals(v.getFileName()));
         }
     }
 
     private static String nonEmptyEnv(String name) {
         final String v = System.getenv(name);
         return (v == null || v.trim().isEmpty()) ? null : v.trim();
-    }
-
-    private static boolean isLoopbackHttp(String endpoint) {
-        return endpoint.startsWith("http://127.0.0.1")
-                || endpoint.startsWith("http://localhost")
-                || endpoint.startsWith("http://[::1]");
     }
 }

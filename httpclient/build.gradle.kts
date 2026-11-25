@@ -27,7 +27,8 @@ dependencies {
 }
 
 // Integration tests: run against a B2-compatible endpoint named by the environment (see
-// IntegrationTestConfig). Not part of `check`/`build`; they SKIP when B2_ENDPOINT,
+// B2StorageClientIntegrationTest). Run with `./gradlew :b2-sdk-httpclient:integrationTest`
+// (the project is named b2-sdk-httpclient). Not part of `check`/`build`; they SKIP when B2_ENDPOINT,
 // B2_APPLICATION_KEY_ID or B2_APPLICATION_KEY is unset, so existing CI is unchanged.
 val integrationTest: SourceSet by sourceSets.creating {
     compileClasspath += sourceSets.main.get().output
