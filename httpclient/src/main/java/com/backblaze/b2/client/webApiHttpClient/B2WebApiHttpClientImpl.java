@@ -57,7 +57,7 @@ public class B2WebApiHttpClientImpl implements B2WebApiClient {
         this.clientFactory = (clientFactory != null) ?
                 clientFactory :
                 HttpClientFactoryImpl.build();
-        defaultRequestConfig = HttpClientFactoryImpl.builder().createRequestConfig();
+        defaultRequestConfig = this.clientFactory.getRequestConfig();
     }
 
     @SuppressWarnings("WeakerAccess")

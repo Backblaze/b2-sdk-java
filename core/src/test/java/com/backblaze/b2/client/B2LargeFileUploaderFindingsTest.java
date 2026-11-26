@@ -46,7 +46,6 @@ public class B2LargeFileUploaderFindingsTest extends B2BaseTest {
     }
 
     /** Finding C34: resuming a large file that was started with a known SHA-1 must not be refused as a "fileInfo mismatch". */
-    @Category(KnownDefect.class)
     @Test
     public void testFindingC34_resumeOfFileStartedWithKnownSha1IsAccepted() throws Exception {
         final String sha1 = makeSha1(7);

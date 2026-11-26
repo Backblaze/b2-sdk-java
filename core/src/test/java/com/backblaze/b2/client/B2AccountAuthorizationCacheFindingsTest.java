@@ -31,7 +31,6 @@ public class B2AccountAuthorizationCacheFindingsTest extends B2BaseTest {
     }
 
     /** Finding C1 (and C2: the existing test never made a second get() call). */
-    @Category(KnownDefect.class)
     @Test
     public void testFindingC1_C2_mismatchedAccountAuthIsNotStoredAndServedOnNextGet() throws B2Exception {
         authorizeThenSwitchToOtherAccount();

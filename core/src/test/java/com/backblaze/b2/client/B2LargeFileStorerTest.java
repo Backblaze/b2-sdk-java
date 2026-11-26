@@ -256,6 +256,29 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         assertEquals(B2UploadProgress.UNKNOWN_PART_START_BYTE, largeFileStorer.getStartByteOrUnknown(4));
     }
 
+    @Test
+    public void testStartByte_outOfOrderPartStorers() throws IOException {
+        // same parts as testStartByte, but handed over out of order.  positions depend on part numbers, not list order.
+        final List<B2PartStorer> partStorers = Arrays.asList(
+                new B2AlreadyStoredPartStorer(part2),
+                new B2CopyingPartStorer(3, fileId(3)),
+                new B2UploadingPartStorer(1, createContentSourceWithSize(100)));
+
+        final B2LargeFileStorer largeFileStorer = new B2LargeFileStorer(
+                B2StoreLargeFileRequest.builder(largeFileVersion.getFileId()).build(),
+                partStorers,
+                authCache,
+                webifier,
+                retryer,
+                retryPolicySupplier,
+                singleThreadedExecutor,
+                false);
+
+        assertEquals(0, largeFileStorer.getStartByteOrUnknown(1));
+        assertEquals(100, largeFileStorer.getStartByteOrUnknown(2));
+        assertEquals(100 + PART_SIZE_FOR_FIRST_TWO, largeFileStorer.getStartByteOrUnknown(3));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testStartByte_partNumberTooLow() throws IOException {
         createLargeFileStorerForStartByteTests(false).getStartByteOrUnknown(0);
@@ -480,6 +503,14 @@ public class B2LargeFileStorerTest extends B2BaseTest {
                         B2UploadState.SUCCEEDED));
     }
 
+    private void drainSingleThreadedExecutor() {
+        try {
+            singleThreadedExecutor.submit(() -> { }).get(30, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (Exception e) {
+            Assert.fail("executor did not drain: " + e);
+        }
+    }
+
     @Test
     public void testStoreFileAsyncCancelled() throws B2Exception, IOException {
         final List<B2PartStorer> partStorers = new ArrayList<>();
@@ -521,6 +552,11 @@ public class B2LargeFileStorerTest extends B2BaseTest {
             future.get().get();
             Assert.fail("we should have gotten a CancellationException");
         } catch (CancellationException e) {
+            // The future is cancelled as soon as the first upload starts, so get() returns while the
+            // executor may still be running later tasks.  Wait for everything already queued on the
+            // single-threaded executor to drain, or the verify below runs before part 2 could ever
+            // reach the webifier and cannot fail.
+            drainSingleThreadedExecutor();
             // upload part should only be called once
             verify(webifier, times(1)).uploadPart(anyObject(), anyObject());
             verify(webifier, times(0)).finishLargeFile(anyObject(), anyObject());
@@ -570,6 +606,11 @@ public class B2LargeFileStorerTest extends B2BaseTest {
             future.get().get();
             Assert.fail("we should have gotten a CancellationException");
         } catch (CancellationException e) {
+            // The future is cancelled as soon as the first upload starts, so get() returns while the
+            // executor may still be running later tasks.  Wait for everything already queued on the
+            // single-threaded executor to drain, or the verify below runs before part 2 could ever
+            // reach the webifier and cannot fail.
+            drainSingleThreadedExecutor();
             // upload part should only be called once
             verify(webifier, times(1)).uploadPart(anyObject(), anyObject());
         } catch (Exception e) {
@@ -645,6 +686,24 @@ public class B2LargeFileStorerTest extends B2BaseTest {
         final B2ContentSource secondRangedContentSource = B2LargeFileStorer.createRangedContentSource(
                 firstRangedContentSource, 10, 50);
         assertTrue(secondRangedContentSource instanceof B2PartOfContentSource);
+    }
+
+    @Test
+    public void testCreateRangedContentSource_usesStartAndLength() throws IOException {
+        final B2ContentSource contentSource = new TestContentSource(100, 1000);
+
+        // the source can make its own range: start is relative to the source, length is the part length.
+        final B2ContentSource firstRangedContentSource = B2LargeFileStorer.createRangedContentSource(
+                contentSource, 5, 200);
+        assertEquals(new TestContentSource(105, 200, false), firstRangedContentSource);
+
+        // that one cannot, so a B2PartOfContentSource wraps it with the requested start and length.
+        final B2ContentSource secondRangedContentSource = B2LargeFileStorer.createRangedContentSource(
+                firstRangedContentSource, 10, 50);
+        assertTrue(secondRangedContentSource instanceof B2PartOfContentSource);
+        assertEquals(50, secondRangedContentSource.getContentLength());
+        assertTrue(secondRangedContentSource.toString(),
+                secondRangedContentSource.toString().startsWith("B2PartOfContentSource{start=10, length=50, source="));
 
     }
 

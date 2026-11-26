@@ -234,7 +234,6 @@ public class B2LargeFileStorerFindingsTest extends B2BaseTest {
     }
 
     /** Finding C22: start bytes must follow part-number order even when the caller lists the parts out of order. */
-    @Category(KnownDefect.class)
     @Test
     public void testFindingC22_startBytesComputedInPartNumberOrder() throws Exception {
         final List<B2PartStorer> outOfOrder = new ArrayList<>(Arrays.<B2PartStorer>asList(

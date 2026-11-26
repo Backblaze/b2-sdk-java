@@ -81,6 +81,56 @@ public class B2EventNotificationRuleTest extends B2BaseTest {
     }
 
     @Test
+    public void testIsSuspendedWhenNotProvided() {
+        final TreeSet<String> eventTypes = new TreeSet<>();
+        eventTypes.add("b2:ObjectCreated:Upload");
+        final B2EventNotificationRule rule = new B2EventNotificationRule(
+                "myRule",
+                eventTypes,
+                "",
+                new B2WebhookConfiguration("https://www.example.com", "3XDfkdQte2OgA78qCtSD17LAzpj6ay9H"),
+                true);
+
+        // the 5-argument constructor leaves isSuspended unset; that must read as "not suspended", not blow up.
+        assertEquals(false, rule.isSuspended());
+    }
+
+    @Test
+    public void testCompareToWhenSuspensionFieldsNotProvided() {
+        final TreeSet<String> eventTypes = new TreeSet<>();
+        eventTypes.add("b2:ObjectCreated:Upload");
+        final B2WebhookConfiguration target =
+                new B2WebhookConfiguration("https://www.example.com", "3XDfkdQte2OgA78qCtSD17LAzpj6ay9H");
+        final B2EventNotificationRule a = new B2EventNotificationRule("myRule", eventTypes, "", target, true);
+        final B2EventNotificationRule b = new B2EventNotificationRule("myRule", eventTypes, "", target, true);
+
+        assertEquals(0, a.compareTo(b));
+    }
+
+    @Test
+    public void testEqualsAndHashCodeAgreeWithCompareToWhenSuspensionNotProvided() {
+        final TreeSet<String> eventTypes = new TreeSet<>();
+        eventTypes.add("b2:ObjectCreated:Upload");
+        final B2WebhookConfiguration target =
+                new B2WebhookConfiguration("https://www.example.com", "3XDfkdQte2OgA78qCtSD17LAzpj6ay9H");
+        // 5-argument constructor: isSuspended and suspensionReason are not provided (null).
+        final B2EventNotificationRule notProvided = new B2EventNotificationRule("myRule", eventTypes, "", target, true);
+        // explicitly not suspended, with no reason.
+        final B2EventNotificationRule notSuspended =
+                new B2EventNotificationRule("myRule", eventTypes, "", target, true, false, null);
+
+        assertEquals(false, notProvided.isSuspended());
+        assertEquals(0, notProvided.compareTo(notSuspended));
+        assertEquals(0, notSuspended.compareTo(notProvided));
+        // equals and hashCode must agree with compareTo, so sorted and hashed collections agree.
+        assertEquals(notProvided, notSuspended);
+        assertEquals(notSuspended, notProvided);
+        assertEquals(notProvided.hashCode(), notSuspended.hashCode());
+        assertEquals(1, new java.util.HashSet<>(listOf(notProvided, notSuspended)).size());
+        assertEquals(1, new TreeSet<>(listOf(notProvided, notSuspended)).size());
+    }
+
+    @Test
     public void testCompareToDistinguishesSigningSecrets() {
         final B2EventNotificationRule first = makeWebhookRule("signing-secret-one", "header-value", 20);
         final B2EventNotificationRule second = makeWebhookRule("signing-secret-two", "header-value", 20);

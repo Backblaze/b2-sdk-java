@@ -38,11 +38,11 @@ import java.util.List;
  * <p>Two legs, because the SDK treats the two content shapes differently. Leg "no sha1": the content source does
  * not know its sha1, so the large file carries no large_file_sha1 and the rerun is the same request as the first
  * run. Leg "sha1": the content source knows its sha1 (the SDK records it as the large_file_sha1 file info); the
- * rerun is again the same request as the first run. If the SDK refuses it with a "mismatch" error, the scenario
- * FAILS with a FINDING as the reason: the check detects, it does not work around the refusal. The finding is about
- * the SDK, not about B2: B2LargeFileUploader removes the key
- * {@code X-Bz-Info-large_file_sha1} (B2Headers.LARGE_FILE_SHA1) from the file info before comparing it with the
- * request's, but the info map is keyed {@code large_file_sha1} (B2Headers.LARGE_FILE_SHA1_INFO_NAME).
+ * rerun is again the same request as the first run, and the SDK must accept it. An earlier SDK version refused it
+ * with a "mismatch" error, because B2LargeFileUploader removed the key {@code X-Bz-Info-large_file_sha1}
+ * (B2Headers.LARGE_FILE_SHA1) from the stored file info before comparing it with the request's, while the info map
+ * is keyed {@code large_file_sha1} (B2Headers.LARGE_FILE_SHA1_INFO_NAME). This leg fails with a FINDING as the
+ * reason if that refusal comes back; the check detects, it does not work around the refusal.
  */
 public class LargeResume {
     private static final int PARTS = 4;

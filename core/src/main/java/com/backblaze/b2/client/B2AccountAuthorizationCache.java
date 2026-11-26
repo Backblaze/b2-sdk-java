@@ -56,8 +56,6 @@ class B2AccountAuthorizationCache {
             localAuthorization = authorization;
             if (localAuthorization == null) {
                 localAuthorization = accountAuthorizer.authorize(webifier);
-                authorization = localAuthorization;
-
                 final String accountIdFromAuthorization = localAuthorization.getAccountId();
                 if (accountId == null) {
                     accountId = accountIdFromAuthorization;
@@ -67,6 +65,7 @@ class B2AccountAuthorizationCache {
                                 "but previously authorized as accountId " + accountId);
                     }
                 }
+                authorization = localAuthorization;
             }
             return localAuthorization;
         }

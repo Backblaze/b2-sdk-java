@@ -9,6 +9,17 @@
 
 ### Added
 * Added `B2EventNotification.parseUnverified`, which parses without checking a signature. The one-argument `parse` overloads are deprecated in its favor.
+* Added and strengthened unit tests for the fixes listed under Fixed, for the finish-large-file request payload, content writer sha1 handling, and several previously vacuous tests.
+
+### Fixed
+* `B2AccountAuthorizationCache` no longer caches (and returns on later calls) an authorization for a different account after the account-id mismatch check fails.
+* `B2WebApiHttpClientImpl.getContent` now honors the connect, socket and pool timeouts configured on the `HttpClientFactory`. Added a default `HttpClientFactory.getRequestConfig()` that `HttpClientFactoryImpl` overrides.
+* `B2LargeFileStorer` computes part indexes and start bytes from the sorted part list, so progress events are correct when parts are supplied out of order.
+* `B2CancellableContentSource`'s input stream now closes the wrapped stream even when `close()` reports the cancellation.
+* `B2EventNotificationRule.isSuspended()` and `compareTo()` no longer throw `NullPointerException` when suspension fields were not provided; `equals()` and `hashCode()` now also treat a missing suspension flag as not suspended, consistent with `compareTo()`.
+* `B2InputStreamExcerpt.skip()` no longer advances the position twice.
+* JSON handlers for `LocalDate`, `ConcurrentMap` and `EnumSet` throw `B2JsonException` for invalid dates and null elements instead of unchecked exceptions.
+* `finishUploadingLargeFile` no longer throws a local `mismatch` error when resuming a large file whose content source knows its sha1.
 
 ## [6.5.0] - 2025-12-15
 * Add `readBucketLifecycleRules` and `writeBucketLifecycleRules` capabilities. 

@@ -138,7 +138,8 @@ class B2LargeFileUploader {
         final Map<String,String> infos = new TreeMap<>();
         //noinspection CollectionAddAllCanBeReplacedWithConstructor
         infos.putAll(largeFileVersion.getFileInfo());
-        infos.remove(B2Headers.LARGE_FILE_SHA1);
+        // the stored file info is keyed by the bare name, "large_file_sha1", not by the "X-Bz-Info-" header name.
+        infos.remove(B2Headers.LARGE_FILE_SHA1_INFO_NAME);
         throwIfMismatch("fileInfo", toString(request.getFileInfo()), toString(infos));
     }
 

@@ -4,8 +4,6 @@
  */
 package com.backblaze.b2.client.structures;
 
-import com.backblaze.b2.testing.KnownDefect;
-import org.junit.experimental.categories.Category;
 import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
 
@@ -16,7 +14,6 @@ import static org.junit.Assert.fail;
 
 public class B2EventNotificationRuleFindingsTest extends B2BaseTest {
     /** Finding C36: a rule built with the 5-argument constructor must answer isSuspended() (false), not throw a NullPointerException. */
-    @Category(KnownDefect.class)
     @Test
     public void testFindingC36_isSuspendedOnFiveArgConstructorReturnsFalse() {
         final B2EventNotificationRule rule = new B2EventNotificationRule(

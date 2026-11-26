@@ -5,6 +5,7 @@
 package com.backblaze.b2.client.webApiHttpClient;
 
 import com.backblaze.b2.client.exceptions.B2Exception;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 public interface HttpClientFactory extends AutoCloseable {
@@ -23,6 +24,15 @@ public interface HttpClientFactory extends AutoCloseable {
      * @throws B2Exception if there's any trouble creating the client.
      */
     CloseableHttpClient create() throws B2Exception;
+
+    /**
+     * @return the RequestConfig (timeouts, etc.) the clients from create() use by default.
+     *         The SDK copies this for downloads, so custom factories should override it
+     *         if they configure non-default timeouts.
+     */
+    default RequestConfig getRequestConfig() {
+        return HttpClientFactoryImpl.builder().createRequestConfig();
+    }
 
     /**
      * Called to release resources, such as an HttpClientConnectionManager.
