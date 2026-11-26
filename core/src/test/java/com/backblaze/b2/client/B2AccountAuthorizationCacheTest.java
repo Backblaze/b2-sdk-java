@@ -106,6 +106,28 @@ public class B2AccountAuthorizationCacheTest extends B2BaseTest {
     }
 
     @Test
+    public void testMismatchAccountIdIsNotCached() throws B2Exception {
+        doReturn(makeAuthWithAccountId(accountId, 1)).when(authorizer).authorize(webifier);
+        cache.get();
+        cache.clear();
+        final B2AccountAuthorization auth2 = makeAuthWithAccountId("anotherAccountId", 2);
+        doReturn(auth2).when(authorizer).authorize(webifier);
+        try {
+            cache.get();
+            org.junit.Assert.fail("expected mismatch");
+        } catch (B2LocalException expected) {
+            // ok
+        }
+        // second call must not hand back the wrong-account authorization
+        try {
+            final B2AccountAuthorization got = cache.get();
+            org.junit.Assert.fail("wrong-account authorization was cached and returned: " + got.getAccountId());
+        } catch (B2LocalException expected) {
+            // ok
+        }
+    }
+
+    @Test
     public void testGetAccountIdCallsGet() throws B2Exception {
         final B2AccountAuthorization auth1 = makeAuthWithAccountId(accountId, 1);
         doReturn(auth1).when(authorizer).authorize(webifier);

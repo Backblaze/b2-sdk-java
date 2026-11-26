@@ -48,8 +48,13 @@ public class B2JsonEnumSetHandler extends B2JsonNonUrlTypeHandler<EnumSet> {
         EnumSet result = EnumSet.noneOf(handledClass);
         if (in.startArrayAndCheckForContents()) {
             do {
+                final Object item = B2JsonUtil.deserializeMaybeNull(itemHandler, in, options);
+                if (item == null) {
+                    // EnumSet cannot hold nulls.
+                    throw new B2JsonException("null item is not allowed in an EnumSet");
+                }
                 //noinspection unchecked
-                result.add(B2JsonUtil.deserializeMaybeNull(itemHandler, in, options));
+                result.add(item);
             } while (in.arrayHasMoreValues());
         }
         in.finishArray();

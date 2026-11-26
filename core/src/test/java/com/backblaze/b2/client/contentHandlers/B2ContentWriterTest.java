@@ -186,6 +186,26 @@ public class B2ContentWriterTest extends B2BaseTest {
     }
 
     @Test
+    public void testContentRangeResponseSkipsSha1Checks() throws B2Exception {
+        // a range response carries only part of the file, so the whole-file sha1 in the headers
+        // cannot match what we received.  the writer must not check it.
+        final String wrongSha1 = B2Sha1.hexSha1OfBytes(makeBytes(LEN + 1));
+        final B2Headers headers = B2HeadersImpl
+                .builder()
+                .set(B2Headers.CONTENT_LENGTH, "" + LEN)
+                .set(B2Headers.CONTENT_RANGE, "bytes 1-" + LEN + "/" + (LEN + 1))
+                .set(B2Headers.CONTENT_SHA1, wrongSha1)
+                .build();
+
+        assertEquals(null, getSha1ToCheckOrNull(headers));
+
+        writer.readContent(headers, in);   // must not throw a sha1 mismatch
+
+        assertArrayEquals(makeBytes(LEN), writer.getBytes());
+        assertTrue(!sha1WasVerifiedFromDestination(writer));
+    }
+
+    @Test
     public void testBothSha1ChecksPass_withSmallFileSha1Header() throws B2Exception {
         writer.readContent(makeHeadersWithLenAndSha1(bytes.length, rightSha1), in);
 

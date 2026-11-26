@@ -81,6 +81,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -1104,6 +1105,56 @@ public class B2StorageClientImplTest extends B2BaseTest {
         verify(webifier, times(1)).getUploadPartUrl(anyObject(), anyObject());
         verify(webifier, times(1)).uploadPart(anyObject(), anyObject());
         verify(webifier, times(1)).finishLargeFile(anyObject(), anyObject());
+    }
+
+    @Test
+    public void testFinishUploadingLargeFile_sendsEveryPartSha1InPartOrder() throws B2Exception, IOException {
+        final long contentLen = (3 * ACCOUNT_AUTH.getRecommendedPartSize() + 124);
+        final B2ContentSource contentSource = mock(B2ContentSource.class);
+        when(contentSource.getContentLength()).thenReturn(contentLen);
+
+        final B2UploadFileRequest request = B2UploadFileRequest
+                .builder(bucketId(1), fileName(1), B2ContentTypes.TEXT_PLAIN, contentSource)
+                .build();
+
+        final B2FileVersion largeFileVersion = new B2FileVersion(fileId(1),
+                fileName(1),
+                contentLen,
+                B2ContentTypes.TEXT_PLAIN,
+                null,
+                null,
+                B2Collections.mapOf(),
+                "upload",
+                B2Clock.get().wallClockMillis(),
+                null,
+                null,
+                null,
+                null);
+        final String largeFileId = largeFileVersion.getFileId();
+
+        // parts 1 and 3 are already on the server, with the lengths the splitter computes for this content
+        // (3124 bytes in 3 parts: 1041, 1041, 1042).
+        final List<B2Part> alreadyUploadedParts = listOf(
+                new B2Part(largeFileId, 1, 1041, makeSha1(1), makeMd5(1), 1111, null),
+                new B2Part(largeFileId, 3, 1042, makeSha1(3), makeMd5(3), 3333, null)
+        );
+        when(webifier.listParts(anyObject(), anyObject()))
+                .thenReturn(new B2ListPartsResponse(alreadyUploadedParts, null));
+        when(webifier.getUploadPartUrl(anyObject(), anyObject()))
+                .thenReturn(new B2UploadPartUrlResponse(largeFileId, "uploadPartUrl", "uploadPartAuthToken"));
+        when(webifier.uploadPart(anyObject(), anyObject())).thenReturn(makePart(2));
+        when(webifier.finishLargeFile(anyObject(), anyObject())).thenReturn(largeFileVersion);
+
+        client.finishUploadingLargeFile(largeFileVersion, request, executor);
+
+        // only part 2 needed uploading ...
+        verify(webifier, times(1)).uploadPart(anyObject(), anyObject());
+
+        // ... and b2_finish_large_file must list all three sha1s, in part order.
+        final ArgumentCaptor<B2FinishLargeFileRequest> captor = ArgumentCaptor.forClass(B2FinishLargeFileRequest.class);
+        verify(webifier, times(1)).finishLargeFile(anyObject(), captor.capture());
+        assertEquals(largeFileId, captor.getValue().getFileId());
+        assertEquals(listOf(makeSha1(1), makeSha1(2), makeSha1(3)), captor.getValue().getPartSha1Array());
     }
 
     @Test

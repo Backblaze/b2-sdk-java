@@ -95,9 +95,12 @@ public class B2CancellableContentSource implements B2ContentSource {
 
         @Override
         public void close() throws IOException {
-            throwIfCancelled();
-
-            source.close();
+            try {
+                throwIfCancelled();
+            } finally {
+                // always release the wrapped stream, even if we report the cancellation.
+                source.close();
+            }
         }
 
         @Override

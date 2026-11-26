@@ -155,6 +155,21 @@ public class B2CancellableContentSourceTest {
     }
 
     @Test
+    public void testInputStreamCloseCancelledStillClosesWrappedStream() throws B2Exception, IOException {
+        final InputStream inputStream = cancellableContentSource.createInputStream();
+        cancellationToken.cancel();
+
+        try {
+            inputStream.close();
+        } catch (IOException e) {
+            // closing a cancelled stream is allowed to report the cancellation.
+        }
+
+        // whatever close() reports, the wrapped stream (a file handle or socket) must be released.
+        verify(mockInputStream).close();
+    }
+
+    @Test
     public void testInputStreamResetCancelled() throws B2Exception, IOException {
         final InputStream inputStream = cancellableContentSource.createInputStream();
         cancellationToken.cancel();

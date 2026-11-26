@@ -118,6 +118,7 @@ public class B2WebApiHttpClientImplTest {
         // call getContent and verify the returned exception response data
         try {
             b2WebApiClient.getContent(url, requestHeaderBuilder.build(), sink);
+            org.junit.Assert.fail("expected B2Exception");
         } catch (B2Exception b2Exception) {
             assertEquals(INTERNAL_ERROR_STRUCTURE.status, b2Exception.getStatus());
             assertEquals(INTERNAL_ERROR_STRUCTURE.code, b2Exception.getCode());
@@ -135,6 +136,7 @@ public class B2WebApiHttpClientImplTest {
         // call getContent and verify the returned exception response data
         try {
             b2WebApiClient.getContent(url, requestHeaderBuilder.build(), sink);
+            org.junit.Assert.fail("expected B2Exception");
         } catch (B2Exception b2Exception) {
             assertEquals(B2InternalErrorException.class, b2Exception.getClass());
             assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, b2Exception.getStatus());
