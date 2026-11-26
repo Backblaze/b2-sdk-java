@@ -7,9 +7,6 @@
   A missing or empty signature header throws `B2SignatureVerificationException`; a null or empty signing secret throws `IllegalArgumentException`.
 * Signature comparison is now constant-time.
 
-### Fixed
-* `finishUploadingLargeFile` no longer throws a local `mismatch` error when resuming a large file whose content source knows its sha1.
-
 ### Added
 * Added `B2EventNotification.parseUnverified`, which parses without checking a signature. The one-argument `parse` overloads are deprecated in its favor.
 
@@ -21,6 +18,7 @@
 * `B2EventNotificationRule.isSuspended()` and `compareTo()` no longer throw `NullPointerException` when suspension fields were not provided.
 * `B2InputStreamExcerpt.skip()` no longer advances the position twice.
 * JSON handlers for `LocalDate`, `ConcurrentMap` and `EnumSet` throw `B2JsonException` for invalid dates and null elements instead of unchecked exceptions.
+* `finishUploadingLargeFile` no longer throws a local `mismatch` error when resuming a large file whose content source knows its sha1.
 ### Tests
 * Added and strengthened unit tests for the above, for the finish-large-file request payload, content writer sha1 handling, and several previously vacuous tests.
 
