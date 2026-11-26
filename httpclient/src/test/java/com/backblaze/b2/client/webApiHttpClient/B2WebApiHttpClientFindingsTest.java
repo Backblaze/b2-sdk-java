@@ -87,7 +87,6 @@ public class B2WebApiHttpClientFindingsTest {
     }
 
     /** Finding C25: downloads must honour the read timeout configured on the HTTP factory. */
-    @Category(KnownDefect.class)
     @Test
     public void testFindingC25_downloadHonoursConfiguredSocketTimeout() throws Exception {
         handler = ex -> {

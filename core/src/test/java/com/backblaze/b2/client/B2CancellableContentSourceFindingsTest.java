@@ -4,8 +4,6 @@
  */
 package com.backblaze.b2.client;
 
-import com.backblaze.b2.testing.KnownDefect;
-import org.junit.experimental.categories.Category;
 import com.backblaze.b2.client.contentSources.B2ContentSource;
 import com.backblaze.b2.util.B2BaseTest;
 import org.junit.Test;
@@ -20,7 +18,6 @@ import static org.mockito.Mockito.when;
 
 public class B2CancellableContentSourceFindingsTest extends B2BaseTest {
     /** Finding C35: closing the stream after a cancel may complain, but the wrapped stream must still be closed. */
-    @Category(KnownDefect.class)
     @Test
     public void testFindingC35_wrappedStreamClosedEvenAfterCancel() throws Exception {
         final boolean[] closed = {false};

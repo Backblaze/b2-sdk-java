@@ -36,7 +36,6 @@ public class B2UtilFindingsTest extends B2BaseTest {
     }
 
     /** Finding C21: after skip(n) the excerpt must still return all of its remaining bytes. */
-    @Category(KnownDefect.class)
     @Test
     public void testFindingC21_skipDoesNotShortenExcerpt() throws IOException {
         final B2InputStreamExcerpt excerpt = new B2InputStreamExcerpt(new ByteArrayInputStream(seq(10)), 0, 10);
