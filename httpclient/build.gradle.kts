@@ -30,9 +30,11 @@ dependencies {
 // B2StorageClientIntegrationTest). Run with `./gradlew :b2-sdk-httpclient:integrationTest`
 // (the project is named b2-sdk-httpclient). Not part of `check`/`build`; they SKIP when B2_ENDPOINT,
 // B2_APPLICATION_KEY_ID or B2_APPLICATION_KEY is unset, so existing CI is unchanged.
+// The endpoint safety check they use (IntegrationEndpoint: https, or plain http only to loopback) lives in the
+// `test` source set with its unit test, so `build` exercises it without credentials or network.
 val integrationTest: SourceSet by sourceSets.creating {
-    compileClasspath += sourceSets.main.get().output
-    runtimeClasspath += sourceSets.main.get().output
+    compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+    runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
 }
 
 configurations[integrationTest.implementationConfigurationName].extendsFrom(configurations.testImplementation.get())
