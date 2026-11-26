@@ -9,6 +9,7 @@
 
 ### Added
 * Added `B2EventNotification.parseUnverified`, which parses without checking a signature. The one-argument `parse` overloads are deprecated in its favor.
+* Added and strengthened unit tests for the fixes listed under Fixed, for the finish-large-file request payload, content writer sha1 handling, and several previously vacuous tests.
 
 ### Fixed
 * `B2AccountAuthorizationCache` no longer caches (and returns on later calls) an authorization for a different account after the account-id mismatch check fails.
@@ -19,8 +20,6 @@
 * `B2InputStreamExcerpt.skip()` no longer advances the position twice.
 * JSON handlers for `LocalDate`, `ConcurrentMap` and `EnumSet` throw `B2JsonException` for invalid dates and null elements instead of unchecked exceptions.
 * `finishUploadingLargeFile` no longer throws a local `mismatch` error when resuming a large file whose content source knows its sha1.
-### Tests
-* Added and strengthened unit tests for the above, for the finish-large-file request payload, content writer sha1 handling, and several previously vacuous tests.
 
 ## [6.5.0] - 2025-12-15
 * Add `readBucketLifecycleRules` and `writeBucketLifecycleRules` capabilities. 
