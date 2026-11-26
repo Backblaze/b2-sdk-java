@@ -7,6 +7,9 @@
   A missing or empty signature header throws `B2SignatureVerificationException`; a null or empty signing secret throws `IllegalArgumentException`.
 * Signature comparison is now constant-time.
 
+### Fixed
+* `finishUploadingLargeFile` no longer throws a local `mismatch` error when resuming a large file whose content source knows its sha1.
+
 ### Added
 * Added `B2EventNotification.parseUnverified`, which parses without checking a signature. The one-argument `parse` overloads are deprecated in its favor.
 
